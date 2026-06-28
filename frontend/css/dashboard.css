@@ -1,0 +1,432 @@
+/* ============================================
+   LIBRIQ DASHBOARD
+   ============================================ */
+
+/* ── Dashboard Header ─────────────────────── */
+.dashboard-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.dashboard-greeting {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.greeting-label {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.02em;
+}
+
+.greeting-title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semi);
+  color: var(--text-primary);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.02em;
+}
+
+.greeting-title span {
+  color: var(--text-accent);
+}
+
+.dashboard-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* ── Stats Row ────────────────────────────── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.stat-card-icon.amber {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.stat-card-icon.blue {
+  background: var(--color-info-dim);
+  color: var(--color-info);
+}
+
+.stat-card-icon.green {
+  background: var(--color-success-dim);
+  color: var(--color-success);
+}
+
+.stat-card-icon.orange {
+  background: var(--color-warning-dim);
+  color: var(--color-warning);
+}
+
+/* ── Dashboard Grid ───────────────────────── */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: var(--space-6);
+}
+
+.dashboard-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.dashboard-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* ── Currently Reading Section ────────────── */
+.currently-reading-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.reading-card {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  transition:
+    border-color var(--duration-base),
+    box-shadow var(--duration-base),
+    transform var(--duration-base) var(--ease-out);
+  cursor: pointer;
+}
+
+.reading-card:hover {
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.reading-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.reading-card-title {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semi);
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.reading-card-author {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-3);
+}
+
+.reading-card-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+/* ── Goal Widget ──────────────────────────── */
+.goal-widget {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+
+.goal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.goal-title {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semi);
+  color: var(--text-primary);
+}
+
+.goal-year {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.goal-progress-ring {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.goal-ring-wrap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.goal-ring-svg {
+  transform: rotate(-90deg);
+  width: 120px;
+  height: 120px;
+}
+
+.goal-ring-bg {
+  fill: none;
+  stroke: var(--bg-overlay);
+  stroke-width: 8;
+}
+
+.goal-ring-fill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 283;
+  stroke-dashoffset: 283;
+  transition: stroke-dashoffset 1s var(--ease-out);
+}
+
+.goal-ring-fill.complete {
+  stroke: var(--color-success);
+}
+
+.goal-ring-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.goal-ring-value {
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.goal-ring-total {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.goal-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.goal-stat {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  text-align: center;
+}
+
+.goal-stat-value {
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semi);
+  color: var(--text-primary);
+}
+
+.goal-stat-label {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+/* ── Recent Activity ──────────────────────── */
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.activity-item:last-child { border-bottom: none; }
+
+.activity-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.activity-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-title {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activity-subtitle {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.activity-time {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+/* ── Genre Breakdown ──────────────────────── */
+.genre-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.genre-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.genre-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.genre-name {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-weight: var(--weight-medium);
+}
+
+.genre-count {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+
+/* ── Monthly Chart ────────────────────────── */
+.monthly-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-2);
+  height: 80px;
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.chart-bar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  height: 100%;
+}
+
+.chart-bar {
+  width: 100%;
+  background: var(--accent-dim);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border: 1px solid var(--accent);
+  border-bottom: none;
+  transition: background var(--duration-fast), height 0.6s var(--ease-out);
+  min-height: 4px;
+  position: relative;
+  cursor: pointer;
+}
+
+.chart-bar.current {
+  background: var(--accent);
+  border-color: var(--accent-hover);
+}
+
+.chart-bar:hover {
+  background: var(--accent);
+}
+
+.chart-bar-label {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+  text-align: center;
+  line-height: 1;
+}
+
+/* ── Responsive ───────────────────────────── */
+@media (max-width: 1100px) {
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-aside {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+  }
+
+  .dashboard-aside {
+    grid-template-columns: 1fr;
+  }
+}
