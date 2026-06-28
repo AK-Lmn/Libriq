@@ -1,185 +1,203 @@
 # 📚 LibriQ
 
-> Your personal digital bookshelf for tracking, organizing, and discovering books.
+**LibriQ** is a modern personal library and reading tracker built with **HTML, CSS, and Vanilla JavaScript**. It helps readers organize their books, track reading progress, discover new titles through online book APIs, and view reading statistics—all without requiring an account or backend.
 
-LibriQ is a modern web application built with **HTML, CSS, and Vanilla JavaScript** that helps readers manage their personal library, monitor reading progress, and discover books from multiple online sources.
-
-Designed with a clean interface and modular architecture, LibriQ combines local library management with live book discovery using the **Open Library API** and **Google Books API**.
-
-**🌐 Live Demo:** https://libriq.vercel.app
+> Read smarter. Track better. Discover more.
 
 ---
 
 ## ✨ Features
 
-### 📖 Personal Library
+### 📖 Library Management
 
-* Add books to your collection
-* Track reading progress
-* Organize books by reading status:
+* Add books from online search or manually
+* Edit book information
+* Remove books from your library
+* Mark books as:
 
-  * Reading
-  * Completed
-  * On Hold
-  * Dropped
+  * 📚 To Read
+  * 📖 Reading
+  * ✅ Finished
 * Favorite books
-* Edit and delete entries
+* Track reading progress
+* Responsive book cards with detailed information
 
 ### 🔍 Smart Book Search
 
-* Search your personal library instantly
-* Search millions of books online
-* Unified search powered by:
+* Search millions of books using:
 
   * Open Library API
   * Google Books API
-* Automatic merging and deduplication of results
-* Rich metadata from multiple providers
+* Automatic result merging and deduplication
+* Book descriptions and genre badges
+* High-quality cover images
+* Session caching for faster repeated searches
 
-### 📊 Reading Dashboard
+### 📊 Dashboard
 
-* Total books overview
 * Reading statistics
-* Reading progress tracking
-* Reading distribution
-* Favorite books summary
+* Total books
+* Books currently reading
+* Completed books
+* Favorite books
+* Reading progress overview
 
-### ⚡ Performance
+### 📄 Book Details
 
-* Modular API architecture
-* Session-based search caching
-* Debounced search input
-* Optimized API requests
-* Responsive user interface
+* Large book cover
+* Synopsis / description
+* Author
+* Publisher
+* Publication year
+* Language
+* Genre
+* ISBN
+* Reading progress
+* Quick actions
+
+### ⚡ User Experience
+
+* Responsive design
+* Keyboard shortcuts
+* Toast notifications
+* Smooth modal interactions
+* Fast client-side performance
+* Local storage persistence
 
 ---
 
-# 🛠 Tech Stack
-
-### Frontend
+## 🛠️ Built With
 
 * HTML5
 * CSS3
-* Vanilla JavaScript (ES6)
-
-### APIs
-
+* Vanilla JavaScript (ES6+)
+* Local Storage API
 * Open Library API
 * Google Books API
 
-### Deployment
-
-* Vercel
-
 ---
 
-# 📂 Project Structure
+## 📂 Project Structure
 
-```text
-frontend/
+```
+LibriQ/
 │
-├── css/
-│
-├── js/
-│   ├── api/
-│   │   ├── cache.js
-│   │   ├── googleBooks.js
-│   │   ├── index.js
-│   │   ├── mergeBooks.js
-│   │   ├── normalizeBook.js
-│   │   └── openLibrary.js
-│   │
-│   ├── app.js
-│   ├── dashboard.js
-│   ├── data.js
-│   ├── library.js
-│   ├── navigation.js
-│   ├── search.js
-│   ├── storage.js
-│   └── utils.js
-│
-├── index.html
+├── frontend/
+│   ├── css/
+│   ├── js/
+│   │   ├── api/
+│   │   │   ├── cache.js
+│   │   │   ├── googleBooks.js
+│   │   │   ├── index.js
+│   │   │   ├── mergeBooks.js
+│   │   │   ├── normalizeBook.js
+│   │   │   └── openLibrary.js
+│   │   ├── app.js
+│   │   ├── dashboard.js
+│   │   ├── library.js
+│   │   ├── navigation.js
+│   │   ├── search.js
+│   │   ├── storage.js
+│   │   ├── utils.js
+│   │   └── data.js
+│   └── index.html
 └── README.md
 ```
 
 ---
 
-# 🚀 Getting Started
+## 🚀 Getting Started
 
-Clone the repository:
+### Clone the repository
 
 ```bash
 git clone https://github.com/yourusername/libriq.git
 ```
 
-Navigate to the project:
+### Open the project
 
-```bash
-cd libriq
-```
+Since LibriQ is built with Vanilla JavaScript, you can run it using any local development server.
 
-Run the project using your preferred local server, such as:
+For example, with VS Code:
 
-* VS Code Live Server
-* Vite
-* Any static HTTP server
+* Install **Live Server**
+* Right-click `index.html`
+* Select **Open with Live Server**
 
 ---
 
-# 🔍 Search Architecture
+## 🌐 APIs Used
 
-LibriQ uses a modular search pipeline that combines multiple book providers into a single search experience.
+### Open Library API
 
-```text
-User Search
-      │
-      ▼
- BookAPI.searchBooks()
-      │
- ┌───────────────┐
- │               │
- ▼               ▼
-Open Library   Google Books
- │               │
- └──────┬────────┘
-        ▼
- Normalize Data
-        ▼
- Merge Results
-        ▼
- Session Cache
-        ▼
- Display Results
-```
+Used for:
 
-This architecture makes it easy to integrate additional providers in the future without changing the application's search interface.
+* Book search
+* Cover images
+* Publication data
+* Subjects / genres
+
+### Google Books API
+
+Used for:
+
+* Rich book descriptions
+* Publisher information
+* Language
+* Ratings
+* Preview links
+* Missing metadata enrichment
 
 ---
 
-# 🎯 Future Improvements
+## 💾 Data Storage
 
-* ISBN barcode scanning
-* Personalized book recommendations
+LibriQ stores all user data locally using the browser's **Local Storage**.
+
+This includes:
+
+* Library
+* Favorites
+* Reading progress
+* Reading status
+* Dashboard statistics
+
+No user data is sent to a server.
+
+---
+
+## 🎯 Current Features
+
+* [x] Personal library
+* [x] Reading tracker
+* [x] Favorites
+* [x] Progress tracking
+* [x] Reading dashboard
+* [x] Open Library integration
+* [x] Google Books integration
+* [x] Book details modal
+* [x] Search caching
+* [x] Responsive UI
+
+---
+
+## 🚧 Future Plans
+
 * Reading goals
 * Reading streaks
-* Export/Import library
-* User authentication
-* Cloud synchronization
+* Search filters
+* Recently viewed books
+* Book recommendations
+* Notes and highlights
+* CSV / JSON import & export
 * Dark mode
-* Advanced reading analytics
-* Wishlist
-* Book notes and highlights
+* PWA support
+* Cloud synchronization
 
 ---
 
-# 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome. Feel free to fork the repository and submit a pull request.
-
----
-
-# 📄 License
+## 📄 License
 
 This project is licensed under the MIT License.
 
-⭐ If you found LibriQ useful or interesting, consider giving the repository a star!
+Feel free to use, learn from, and contribute to the project.
