@@ -4,8 +4,8 @@
    ============================================ */
 
 const Search = (() => {
-  const OPEN_LIBRARY_SEARCH = 'https://openlibrary.org/search.json';
-  const OPEN_LIBRARY_COVER  = 'https://covers.openlibrary.org/b/id';
+  // API communication is fully handled by BookAPI (js/api/index.js).
+  // This module is responsible only for UI, rendering, and user interaction.
 
   let currentQuery = '';
   let focusedIndex = -1;
@@ -27,17 +27,15 @@ const Search = (() => {
 
   function open() {
     const { modal, input } = getEls();
-    if (!modal) return;
     Utils.show(modal);
-    requestAnimationFrame(() => input?.focus());
+    requestAnimationFrame(() => input.focus());
     document.body.style.overflow = 'hidden';
   }
 
   function close() {
-    const { modal, input } = getEls();
-    if (!modal) return;
+    const { modal, input, resultsArea } = getEls();
     Utils.hide(modal);
-    if (input) input.value = '';
+    input.value = '';
     currentQuery = '';
     results = [];
     focusedIndex = -1;
@@ -50,12 +48,11 @@ const Search = (() => {
   // element and causes appendChild(null) on the next close() call.
   function _clearResults() {
     const { resultsArea, emptyState } = getEls();
-    if (!resultsArea) return;
     // Remove every child except the empty-state element
     Array.from(resultsArea.childNodes).forEach(node => {
       if (node !== emptyState) resultsArea.removeChild(node);
     });
-    if (emptyState) Utils.show(emptyState);
+    Utils.show(emptyState);
   }
 
   // ── Search execution ─────────────────────
@@ -84,7 +81,7 @@ const Search = (() => {
     try {
       const [localResults, apiResults] = await Promise.all([
         searchLocal(query),
-        searchOpenLibrary(query),
+        BookAPI.searchBooks(query),   // delegates to OL + GB merge via api/index.js
       ]);
 
       results = [...localResults.map(r => ({ ...r, _source: 'local' })),
@@ -113,32 +110,6 @@ const Search = (() => {
         (b.isbn || '').includes(q)
       ).slice(0, 3)
     );
-  }
-
-  /** Search Open Library API */
-  async function searchOpenLibrary(query) {
-    const params = new URLSearchParams({
-      q:      query,
-      fields: 'key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject',
-      limit:  '8',
-    });
-
-    const res = await fetch(`${OPEN_LIBRARY_SEARCH}?${params}`);
-    if (!res.ok) throw new Error(`OL API ${res.status}`);
-    const data = await res.json();
-
-    return (data.docs || [])
-      .filter(doc => doc.title)   // skip docs with no title — they'd render as "undefined"
-      .map(doc => ({
-        id:            doc.key,
-        title:         doc.title,
-        author:        (doc.author_name || [])[0] || 'Unknown Author',
-        coverUrl:      doc.cover_i ? `${OPEN_LIBRARY_COVER}/${doc.cover_i}-M.jpg` : null,
-        publishYear:   doc.first_publish_year || null,
-        pageCount:     doc.number_of_pages_median || 0,
-        genres:        (doc.subject || []).slice(0, 3),
-        openLibraryId: doc.key,
-      }));
   }
 
   // ── Render results ────────────────────────
@@ -176,7 +147,7 @@ const Search = (() => {
     // API results
     if (apiResults.length > 0) {
       resultsArea.insertAdjacentHTML('beforeend',
-        `<div class="search-section-label">From Open Library</div>`);
+        `<div class="search-section-label">From the web</div>`);
       apiResults.forEach(book => {
         resultsArea.appendChild(buildApiResultItem(book));
       });
@@ -252,7 +223,7 @@ const Search = (() => {
 
   function handleKeydown(e) {
     const { modal } = getEls();
-    if (!modal || modal.hasAttribute('hidden')) return;
+    if (modal.hasAttribute('hidden')) return;
 
     const items = Utils.$$('.search-result-item');
 
@@ -293,8 +264,7 @@ const Search = (() => {
   // ── Init ─────────────────────────────────
 
   function init() {
-    const { input, modal } = getEls();
-    if (!input || !modal) return;
+    const { input } = getEls();
 
     searchDebounced = Utils.debounce((q) => {
       currentQuery = q;
@@ -315,6 +285,7 @@ const Search = (() => {
     document.addEventListener('keydown', (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
+        const { modal } = getEls();
         modal.hasAttribute('hidden') ? open() : close();
       }
       handleKeydown(e);
