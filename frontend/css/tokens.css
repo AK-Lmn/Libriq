@@ -1,0 +1,178 @@
+/* ============================================
+   LIBRIQ DESIGN TOKENS
+   Single source of truth for all design values
+   ============================================ */
+
+:root {
+  /* --- Typography --- */
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-ui:      'DM Sans', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+
+  --text-xs:   0.6875rem;  /* 11px */
+  --text-sm:   0.8125rem;  /* 13px */
+  --text-base: 0.9375rem;  /* 15px */
+  --text-md:   1.0625rem;  /* 17px */
+  --text-lg:   1.25rem;    /* 20px */
+  --text-xl:   1.5rem;     /* 24px */
+  --text-2xl:  2rem;       /* 32px */
+  --text-3xl:  2.75rem;    /* 44px */
+
+  --weight-light:   300;
+  --weight-regular: 400;
+  --weight-medium:  500;
+  --weight-semi:    600;
+  --weight-bold:    700;
+
+  --leading-tight:  1.2;
+  --leading-snug:   1.4;
+  --leading-normal: 1.6;
+  --leading-loose:  1.8;
+
+  /* --- Spacing Scale (8pt grid) --- */
+  --space-1:  0.25rem;   /* 4px  */
+  --space-2:  0.5rem;    /* 8px  */
+  --space-3:  0.75rem;   /* 12px */
+  --space-4:  1rem;      /* 16px */
+  --space-5:  1.25rem;   /* 20px */
+  --space-6:  1.5rem;    /* 24px */
+  --space-8:  2rem;      /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+  --space-16: 4rem;      /* 64px */
+  --space-20: 5rem;      /* 80px */
+
+  /* --- Border Radius --- */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
+  --radius-full: 9999px;
+
+  /* --- Shadows --- */
+  --shadow-sm:  0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:  0 4px 12px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.08);
+  --shadow-lg:  0 12px 32px rgba(0,0,0,.18), 0 4px 12px rgba(0,0,0,.10);
+  --shadow-xl:  0 24px 56px rgba(0,0,0,.28), 0 8px 20px rgba(0,0,0,.14);
+
+  /* --- Transitions --- */
+  --ease-out:   cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in:    cubic-bezier(0.4, 0, 1, 1);
+  --ease-inout: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast:   120ms;
+  --duration-base:   200ms;
+  --duration-slow:   350ms;
+  --duration-slower: 500ms;
+
+  /* --- Layout --- */
+  --sidebar-width: 240px;
+  --topbar-height: 56px;
+  --content-max:   1200px;
+}
+
+/* ============================================
+   DARK THEME (default)
+   ============================================ */
+[data-theme="dark"] {
+  /* Backgrounds */
+  --bg-base:      #0E0E14;
+  --bg-surface:   #16161F;
+  --bg-elevated:  #1E1E2A;
+  --bg-overlay:   #252533;
+  --bg-hover:     rgba(255,255,255,0.05);
+  --bg-active:    rgba(255,255,255,0.08);
+
+  /* Brand */
+  --accent:          #C9A84C;
+  --accent-dim:      rgba(201,168,76,0.15);
+  --accent-hover:    #D4B86A;
+  --accent-muted:    #9A7A32;
+
+  /* Text */
+  --text-primary:   #F0EDE8;
+  --text-secondary: #9896A4;
+  --text-tertiary:  #5E5C6E;
+  --text-inverse:   #0E0E14;
+  --text-accent:    #C9A84C;
+
+  /* Borders */
+  --border-subtle:  rgba(255,255,255,0.06);
+  --border-default: rgba(255,255,255,0.10);
+  --border-strong:  rgba(255,255,255,0.18);
+
+  /* Semantic colors */
+  --color-success:     #4CAF7D;
+  --color-success-dim: rgba(76,175,125,0.15);
+  --color-warning:     #E8965A;
+  --color-warning-dim: rgba(232,150,90,0.15);
+  --color-danger:      #E05A5A;
+  --color-danger-dim:  rgba(224,90,90,0.15);
+  --color-info:        #5A9EE0;
+  --color-info-dim:    rgba(90,158,224,0.15);
+
+  /* Status badges */
+  --status-reading:  #5A9EE0;
+  --status-finished: #4CAF7D;
+  --status-wishlist: #C9A84C;
+  --status-dnf:      #9896A4;
+
+  /* Scrollbar */
+  --scrollbar-track: #16161F;
+  --scrollbar-thumb: #2E2E40;
+}
+
+/* ============================================
+   LIGHT THEME
+   ============================================ */
+[data-theme="light"] {
+  /* Backgrounds */
+  --bg-base:      #F5F2EC;
+  --bg-surface:   #FDFAF6;
+  --bg-elevated:  #FFFFFF;
+  --bg-overlay:   #F0EBE1;
+  --bg-hover:     rgba(0,0,0,0.04);
+  --bg-active:    rgba(0,0,0,0.07);
+
+  /* Brand */
+  --accent:          #9A6F1E;
+  --accent-dim:      rgba(154,111,30,0.12);
+  --accent-hover:    #7D5A18;
+  --accent-muted:    #C9A84C;
+
+  /* Text */
+  --text-primary:   #1A1825;
+  --text-secondary: #5E5C6E;
+  --text-tertiary:  #9896A4;
+  --text-inverse:   #FDFAF6;
+  --text-accent:    #9A6F1E;
+
+  /* Borders */
+  --border-subtle:  rgba(0,0,0,0.05);
+  --border-default: rgba(0,0,0,0.09);
+  --border-strong:  rgba(0,0,0,0.16);
+
+  /* Semantic colors */
+  --color-success:     #2E8B5C;
+  --color-success-dim: rgba(46,139,92,0.12);
+  --color-warning:     #C97230;
+  --color-warning-dim: rgba(201,114,48,0.12);
+  --color-danger:      #C94040;
+  --color-danger-dim:  rgba(201,64,64,0.12);
+  --color-info:        #2E6FB5;
+  --color-info-dim:    rgba(46,111,181,0.12);
+
+  /* Status badges */
+  --status-reading:  #2E6FB5;
+  --status-finished: #2E8B5C;
+  --status-wishlist: #9A6F1E;
+  --status-dnf:      #5E5C6E;
+
+  /* Scrollbar */
+  --scrollbar-track: #F0EBE1;
+  --scrollbar-thumb: #D4CCBB;
+
+  /* Light-specific shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.05);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,.10), 0 4px 12px rgba(0,0,0,.06);
+}
