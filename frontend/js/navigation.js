@@ -88,25 +88,29 @@ const Navigation = (() => {
 
   // ── Theme ─────────────────────────────────
 
-  function initTheme() {
-    const profile   = Storage.getProfile();
-    const savedTheme = profile.theme || 'dark';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    updateThemeToggle(savedTheme);
+  // applyTheme() is the single function that reads
+  // the saved theme and updates the DOM. Called on
+  // init AND after a data reset so the toggle always
+  // reflects the current profile state.
+  function applyTheme() {
+    const profile  = Storage.getProfile();
+    const theme    = (profile && profile.theme) ? profile.theme : 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    _updateThemeToggleUI(theme);
   }
 
   function toggleTheme() {
-    const current = document.documentElement.getAttribute('data-theme');
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
     const next    = current === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     Storage.saveProfile({ theme: next });
-    updateThemeToggle(next);
+    _updateThemeToggleUI(next);
   }
 
-  function updateThemeToggle(theme) {
+  function _updateThemeToggleUI(theme) {
     const icon  = document.getElementById('themeIcon');
     const label = document.getElementById('themeLabel');
-    if (icon)  icon.className  = theme === 'dark' ? 'ph ph-moon' : 'ph ph-sun';
+    if (icon)  icon.className   = theme === 'dark' ? 'ph ph-moon' : 'ph ph-sun';
     if (label) label.textContent = theme === 'dark' ? 'Dark mode' : 'Light mode';
   }
 
@@ -125,11 +129,14 @@ const Navigation = (() => {
     // Theme toggle
     document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
 
-    initTheme();
+    applyTheme();
     updateBadges();
   }
 
-return { init, goTo, renderCurrentPage, updateBadges, toggleTheme };
+  return {
+    init, goTo, renderCurrentPage, updateBadges, toggleTheme, applyTheme,
+    get currentPage() { return _currentPage; },
+  };
 })();
 
 /* ============================================
@@ -568,6 +575,12 @@ function exportData() {
 
 function clearAllData() {
   if (!confirm('This will delete all your books and settings. Are you sure?')) return;
-  localStorage.clear();
-  location.reload();
+
+  // Storage.resetAll() removes all Libriq keys then immediately
+  // re-runs bootstrap() so every key exists with valid defaults.
+  // The libriq:reset event (dispatched inside resetAll) is caught
+  // in app.js, which re-applies the theme and navigates to dashboard.
+  // No page reload needed — the app returns to a fully valid state.
+  Storage.resetAll();
+  Utils.toast('Library cleared. Starting fresh.', 'info');
 }
