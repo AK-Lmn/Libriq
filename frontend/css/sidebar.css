@@ -266,10 +266,11 @@
 
   .sidebar-overlay {
     display: block;
+    pointer-events: none;
   }
 
   .sidebar-overlay.visible {
     opacity: 1;
-    pointer-events: all;
+    pointer-events: auto;
   }
 }

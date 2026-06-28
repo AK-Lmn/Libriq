@@ -27,22 +27,35 @@ const Search = (() => {
 
   function open() {
     const { modal, input } = getEls();
+    if (!modal) return;
     Utils.show(modal);
-    requestAnimationFrame(() => input.focus());
+    requestAnimationFrame(() => input?.focus());
     document.body.style.overflow = 'hidden';
   }
 
   function close() {
-    const { modal, input, resultsArea, emptyState } = getEls();
+    const { modal, input } = getEls();
+    if (!modal) return;
     Utils.hide(modal);
-    input.value = '';
+    if (input) input.value = '';
     currentQuery = '';
     results = [];
     focusedIndex = -1;
-    resultsArea.innerHTML = '';
-    resultsArea.appendChild(emptyState);
-    Utils.show(emptyState);
+    _clearResults();  // safe clear that never destroys #searchEmptyState
     document.body.style.overflow = '';
+  }
+
+  // Remove all dynamic result nodes while keeping #searchEmptyState intact.
+  // Never use resultsArea.innerHTML = '' — that destroys the static empty-state
+  // element and causes appendChild(null) on the next close() call.
+  function _clearResults() {
+    const { resultsArea, emptyState } = getEls();
+    if (!resultsArea) return;
+    // Remove every child except the empty-state element
+    Array.from(resultsArea.childNodes).forEach(node => {
+      if (node !== emptyState) resultsArea.removeChild(node);
+    });
+    if (emptyState) Utils.show(emptyState);
   }
 
   // ── Search execution ─────────────────────
@@ -50,19 +63,23 @@ const Search = (() => {
   async function executeSearch(query) {
     const { resultsArea, emptyState } = getEls();
 
-    if (!query || query.length < 2) {
-      resultsArea.innerHTML = '';
-      resultsArea.appendChild(emptyState);
-      Utils.show(emptyState);
+    // OL's FastAPI layer returns HTTP 422 for queries shorter than 3 characters.
+    if (!query || query.length < 3) {
+      _clearResults();
       return;
     }
 
-    // Show loading state
-    resultsArea.innerHTML = `
-      <div class="search-loading">
+    // Hide empty state, show loading spinner
+    Utils.hide(emptyState);
+    // Remove any previous result nodes (keep emptyState hidden in place)
+    Array.from(resultsArea.childNodes).forEach(node => {
+      if (node !== emptyState) resultsArea.removeChild(node);
+    });
+    resultsArea.insertAdjacentHTML('afterbegin', `
+      <div class="search-loading" id="searchSpinner">
         <div class="spinner"></div>
         <span>Searching…</span>
-      </div>`;
+      </div>`);
 
     try {
       const [localResults, apiResults] = await Promise.all([
@@ -75,11 +92,14 @@ const Search = (() => {
 
       renderResults(localResults, apiResults);
     } catch (err) {
-      resultsArea.innerHTML = `
-        <div class="search-empty-state">
-          <i class="ph ph-wifi-slash"></i>
-          <p>Couldn't connect. Check your internet and try again.</p>
-        </div>`;
+      console.error('[Libriq] Search error:', err);
+      _clearResults();
+      const { emptyState } = getEls();
+      Utils.hide(emptyState);
+      const errEl = document.createElement('div');
+      errEl.className = 'search-empty-state';
+      errEl.innerHTML = `<i class="ph ph-wifi-slash"></i><p>Couldn't connect. Check your internet and try again.</p>`;
+      getEls().resultsArea.appendChild(errEl);
     }
   }
 
@@ -104,38 +124,45 @@ const Search = (() => {
     });
 
     const res = await fetch(`${OPEN_LIBRARY_SEARCH}?${params}`);
-    if (!res.ok) throw new Error('API error');
+    if (!res.ok) throw new Error(`OL API ${res.status}`);
     const data = await res.json();
 
-    return (data.docs || []).map(doc => ({
-      id:          doc.key,
-      title:       doc.title,
-      author:      (doc.author_name || [])[0] || 'Unknown Author',
-      coverUrl:    doc.cover_i
-        ? `${OPEN_LIBRARY_COVER}/${doc.cover_i}-M.jpg`
-        : null,
-      publishYear: doc.first_publish_year || null,
-      pageCount:   doc.number_of_pages_median || 0,
-      genres:      (doc.subject || []).slice(0, 3),
-      openLibraryId: doc.key,
-    }));
+    return (data.docs || [])
+      .filter(doc => doc.title)   // skip docs with no title — they'd render as "undefined"
+      .map(doc => ({
+        id:            doc.key,
+        title:         doc.title,
+        author:        (doc.author_name || [])[0] || 'Unknown Author',
+        coverUrl:      doc.cover_i ? `${OPEN_LIBRARY_COVER}/${doc.cover_i}-M.jpg` : null,
+        publishYear:   doc.first_publish_year || null,
+        pageCount:     doc.number_of_pages_median || 0,
+        genres:        (doc.subject || []).slice(0, 3),
+        openLibraryId: doc.key,
+      }));
   }
 
   // ── Render results ────────────────────────
 
   function renderResults(localResults, apiResults) {
-    const { resultsArea } = getEls();
-    resultsArea.innerHTML = '';
+    const { resultsArea, emptyState } = getEls();
+
+    // Remove the spinner and any previous result rows, keeping emptyState in place
+    Array.from(resultsArea.childNodes).forEach(node => {
+      if (node !== emptyState) resultsArea.removeChild(node);
+    });
     focusedIndex = -1;
 
     if (localResults.length === 0 && apiResults.length === 0) {
-      resultsArea.innerHTML = `
-        <div class="search-empty-state">
-          <i class="ph ph-magnifying-glass"></i>
-          <p>No results found for "<strong>${Utils.sanitize(currentQuery)}</strong>"</p>
-        </div>`;
+      // Show the persistent empty-state node with a custom message
+      emptyState.innerHTML = `
+        <i class="ph ph-magnifying-glass"></i>
+        <p>No results found for "<strong>${Utils.sanitize(currentQuery)}</strong>"</p>`;
+      Utils.show(emptyState);
       return;
     }
+
+    // Keep emptyState hidden while results are showing
+    Utils.hide(emptyState);
 
     // In-library results
     if (localResults.length > 0) {
@@ -225,7 +252,7 @@ const Search = (() => {
 
   function handleKeydown(e) {
     const { modal } = getEls();
-    if (modal.hasAttribute('hidden')) return;
+    if (!modal || modal.hasAttribute('hidden')) return;
 
     const items = Utils.$$('.search-result-item');
 
@@ -266,7 +293,8 @@ const Search = (() => {
   // ── Init ─────────────────────────────────
 
   function init() {
-    const { input } = getEls();
+    const { input, modal } = getEls();
+    if (!input || !modal) return;
 
     searchDebounced = Utils.debounce((q) => {
       currentQuery = q;
@@ -287,7 +315,6 @@ const Search = (() => {
     document.addEventListener('keydown', (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        const { modal } = getEls();
         modal.hasAttribute('hidden') ? open() : close();
       }
       handleKeydown(e);
