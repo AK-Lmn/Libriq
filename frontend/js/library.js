@@ -369,12 +369,15 @@ const Library = (() => {
     if (book.isFavorite) favIcon.style.color = 'var(--color-danger)';
     favBtn.appendChild(favIcon);
     favBtn.addEventListener('click', () => {
-      const updated = Library.toggleFavorite(book.id);
-      // Update icon live without re-opening the modal
-      favIcon.className = `ph ${updated?.isFavorite ? 'ph-heart-fill' : 'ph-heart'}`;
-      favIcon.style.color = updated?.isFavorite ? 'var(--color-danger)' : '';
-      favBtn.title = updated?.isFavorite ? 'Remove from favorites' : 'Add to favorites';
-    });
+    const updated = Library.toggleFavorite(book.id);
+
+    favIcon.className = `ph ${updated?.isFavorite ? 'ph-heart-fill' : 'ph-heart'}`;
+    favIcon.style.color = updated?.isFavorite ? 'var(--color-danger)' : '';
+    favBtn.title = updated?.isFavorite ? 'Remove from favorites' : 'Add to favorites';
+
+    Navigation.updateBadges();
+    Navigation.renderCurrentPage();
+});
     actions.appendChild(favBtn);
 
     const removeBtn = document.createElement('button');
@@ -477,9 +480,13 @@ const Library = (() => {
     favBtn.innerHTML = `<i class="ph ${book.isFavorite ? 'ph-heart-fill' : 'ph-heart'}"
       style="color:${book.isFavorite ? 'var(--color-danger)' : ''}"></i>`;
     favBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      Library.toggleFavorite(book.id);
-    });
+  e.stopPropagation();
+
+  Library.toggleFavorite(book.id);
+
+  Navigation.updateBadges();
+  Navigation.renderCurrentPage();
+});
     actions.appendChild(favBtn);
 
     const removeBtn = document.createElement('button');
