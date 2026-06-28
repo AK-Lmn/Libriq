@@ -8,9 +8,13 @@ const Library = (() => {
   // ── Add Book Modal ────────────────────────
 
   function showAddModal(bookData) {
-    const modal   = document.getElementById('addBookModal');
-    const body    = document.getElementById('addBookBody');
+    const modal    = document.getElementById('addBookModal');
+    const body     = document.getElementById('addBookBody');
     const closeBtn = document.getElementById('closeAddBook');
+    const header   = modal.querySelector('.modal-title');
+
+    // Always reset — showProgressModal changes this to 'Update Progress'
+    if (header) header.textContent = 'Add to Library';
 
     body.innerHTML = buildAddForm(bookData);
     Utils.show(modal);
@@ -237,6 +241,167 @@ const Library = (() => {
     Navigation.renderCurrentPage();
   }
 
+  // ── Book Details Modal ────────────────────
+  // Opens when user clicks any book card in the library.
+  // Reuses the existing #addBookModal element under a new title
+  // so we don't need a second modal in the HTML.
+
+  function showDetailsModal(bookId) {
+    const book   = Storage.getBookById(bookId);
+    if (!book) return;
+
+    const modal  = document.getElementById('bookDetailsModal');
+    const body   = document.getElementById('bookDetailsBody');
+    if (!modal || !body) return;
+
+    const pct       = Utils.readingProgress(book.currentPage, book.pageCount);
+    const isReading = book.status === LIBRIQ.STATUS.READING;
+    const hasPages  = book.pageCount > 0;
+
+    // Strip any HTML from stored descriptions (GB descriptions can contain tags)
+    const description = book.description
+      ? book.description.replace(/<[^>]*>/g, '')
+      : null;
+
+    const genreBadges = (book.genres || []).slice(0, 3)
+      .map(g => `<span class="badge badge-genre">${Utils.sanitize(g)}</span>`)
+      .join('');
+
+    body.innerHTML = `
+      <div class="book-details-hero">
+        ${Utils.buildCover(book, 'cover-xl')}
+        <div class="book-details-hero-info">
+          <h2 class="book-details-title">${Utils.sanitize(book.title)}</h2>
+          <div class="book-details-author">${Utils.sanitize(book.author)}</div>
+
+          <div class="book-details-badges">
+            <span class="badge ${Utils.statusBadgeClass(book.status)}">
+              ${Utils.statusLabel(book.status)}
+            </span>
+            ${genreBadges}
+          </div>
+
+          ${book.rating ? `
+            <div class="book-details-rating">
+              ${Utils.buildStars(book.rating, false)}
+            </div>` : ''}
+
+          <dl class="book-details-meta">
+            ${book.publishYear ? `<div class="book-details-meta-row">
+              <dt>Published</dt><dd>${book.publishYear}</dd>
+            </div>` : ''}
+            ${book.publisher ? `<div class="book-details-meta-row">
+              <dt>Publisher</dt><dd>${Utils.sanitize(book.publisher)}</dd>
+            </div>` : ''}
+            ${book.language ? `<div class="book-details-meta-row">
+              <dt>Language</dt><dd>${Utils.sanitize(book.language)}</dd>
+            </div>` : ''}
+            ${hasPages ? `<div class="book-details-meta-row">
+              <dt>Pages</dt><dd>${book.pageCount.toLocaleString()}</dd>
+            </div>` : ''}
+            ${book.dateStarted ? `<div class="book-details-meta-row">
+              <dt>Started</dt><dd>${Utils.formatDate(book.dateStarted)}</dd>
+            </div>` : ''}
+            ${book.dateFinished ? `<div class="book-details-meta-row">
+              <dt>Finished</dt><dd>${Utils.formatDate(book.dateFinished)}</dd>
+            </div>` : ''}
+          </dl>
+        </div>
+      </div>
+
+      ${(isReading && hasPages) ? `
+        <div class="book-details-progress">
+          <div class="book-details-progress-header">
+            <span class="book-details-progress-label">Reading Progress</span>
+            <span class="book-details-progress-pct">${pct}% Complete</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:${pct}%"></div>
+          </div>
+          <div class="book-details-progress-pages">
+            Page ${book.currentPage.toLocaleString()} of ${book.pageCount.toLocaleString()}
+          </div>
+        </div>` : ''}
+
+      ${description ? `
+        <div class="book-details-description">
+          <h3 class="book-details-section-title">About this book</h3>
+          <p class="book-details-desc-text">${Utils.sanitize(description)}</p>
+        </div>` : ''}
+
+      <div class="book-details-actions" id="bookDetailsActions"></div>`;
+
+    Utils.show(modal);
+    document.body.style.overflow = 'hidden';
+
+    // Build action buttons with real event listeners — avoids all string-escaping
+    // issues and correctly reads live state (e.g. isFavorite after toggling).
+    const actions = body.querySelector('#bookDetailsActions');
+
+    if (isReading) {
+      const updateBtn = document.createElement('button');
+      updateBtn.className = 'btn btn-primary';
+      updateBtn.innerHTML = '<i class="ph ph-pencil"></i> Update Progress';
+      updateBtn.addEventListener('click', () => {
+        closeDetailsModal();
+        Library.showProgressModal(book.id);
+      });
+      actions.appendChild(updateBtn);
+    }
+
+    if (book.status !== LIBRIQ.STATUS.FINISHED) {
+      const finishBtn = document.createElement('button');
+      finishBtn.className = 'btn btn-secondary';
+      finishBtn.innerHTML = '<i class="ph ph-check"></i> Mark Finished';
+      finishBtn.addEventListener('click', () => {
+        Library.setStatus(book.id, LIBRIQ.STATUS.FINISHED);
+        closeDetailsModal();
+        Navigation.renderCurrentPage();
+      });
+      actions.appendChild(finishBtn);
+    }
+
+    const favBtn = document.createElement('button');
+    favBtn.className = 'btn btn-ghost btn-icon';
+    favBtn.title = book.isFavorite ? 'Remove from favorites' : 'Add to favorites';
+    const favIcon = document.createElement('i');
+    favIcon.className = `ph ${book.isFavorite ? 'ph-heart-fill' : 'ph-heart'}`;
+    if (book.isFavorite) favIcon.style.color = 'var(--color-danger)';
+    favBtn.appendChild(favIcon);
+    favBtn.addEventListener('click', () => {
+      const updated = Library.toggleFavorite(book.id);
+      // Update icon live without re-opening the modal
+      favIcon.className = `ph ${updated?.isFavorite ? 'ph-heart-fill' : 'ph-heart'}`;
+      favIcon.style.color = updated?.isFavorite ? 'var(--color-danger)' : '';
+      favBtn.title = updated?.isFavorite ? 'Remove from favorites' : 'Add to favorites';
+    });
+    actions.appendChild(favBtn);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'btn btn-ghost';
+    removeBtn.innerHTML = '<i class="ph ph-trash"></i> Remove';
+    removeBtn.addEventListener('click', () => {
+      // Close first only if the user confirms — removeBook calls confirm() internally.
+      // We do the confirm here so we can control modal state.
+      if (!confirm(`Remove "${book.title}" from your library?`)) return;
+      closeDetailsModal();
+      Storage.removeBook(book.id);
+      Utils.toast(`"${book.title}" removed`, 'info');
+      Navigation.updateBadges();
+      Navigation.renderCurrentPage();
+    });
+    actions.appendChild(removeBtn);
+
+    modal.querySelector('.modal-close').onclick = closeDetailsModal;
+    modal.onclick = (e) => { if (e.target === modal) closeDetailsModal(); };
+  }
+
+  function closeDetailsModal() {
+    const modal = document.getElementById('bookDetailsModal');
+    Utils.hide(modal);
+    document.body.style.overflow = '';
+  }
+
   // ── Render a full book card ───────────────
 
   function renderBookCard(book) {
@@ -246,6 +411,11 @@ const Library = (() => {
     const card = document.createElement('div');
     card.className = 'book-card';
     card.dataset.bookId = book.id;
+
+    // Genre badges — first 2 only to keep cards compact
+    const genreBadges = (book.genres || []).slice(0, 2)
+      .map(g => `<span class="badge badge-genre">${Utils.sanitize(g)}</span>`)
+      .join('');
 
     card.innerHTML = `
       ${Utils.buildCover(book, 'cover-md')}
@@ -257,7 +427,7 @@ const Library = (() => {
             ${Utils.statusLabel(book.status)}
           </span>
           ${book.rating ? Utils.buildStars(book.rating) : ''}
-          ${book.genres[0] ? `<span class="badge">${Utils.sanitize(book.genres[0])}</span>` : ''}
+          ${genreBadges}
         </div>
 
         ${isReading ? `
@@ -271,29 +441,63 @@ const Library = (() => {
             </div>
           </div>` : ''}
 
-        <div class="book-card-actions">
-          ${isReading ? `
-            <button class="btn btn-primary btn-sm" onclick="Library.showProgressModal('${book.id}')">
-              <i class="ph ph-pencil"></i> Update
-            </button>` : ''}
-          ${book.status !== LIBRIQ.STATUS.FINISHED ? `
-            <button class="btn btn-secondary btn-sm"
-              onclick="Library.setStatus('${book.id}', '${LIBRIQ.STATUS.FINISHED}')">
-              <i class="ph ph-check"></i> Finish
-            </button>` : ''}
-          <button class="btn btn-ghost btn-sm btn-icon"
-            onclick="Library.toggleFavorite('${book.id}')"
-            title="${book.isFavorite ? 'Unfavorite' : 'Favorite'}">
-            <i class="ph ${book.isFavorite ? 'ph-heart-fill' : 'ph-heart'}"
-               style="color: ${book.isFavorite ? 'var(--color-danger)' : ''}"></i>
-          </button>
-          <button class="btn btn-ghost btn-sm btn-icon"
-            onclick="Library.removeBook('${book.id}', '${Utils.sanitize(book.title).replace(/'/g, "\\'")}')"
-            title="Remove">
-            <i class="ph ph-trash"></i>
-          </button>
-        </div>
+        <div class="book-card-actions"></div>
       </div>`;
+
+    // Build action buttons with addEventListener — avoids inline onclick string escaping
+    // and keeps title-with-apostrophe handling safe.
+    const actions = card.querySelector('.book-card-actions');
+
+    if (isReading) {
+      const updateBtn = document.createElement('button');
+      updateBtn.className = 'btn btn-primary btn-sm';
+      updateBtn.innerHTML = '<i class="ph ph-pencil"></i> Update';
+      updateBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        Library.showProgressModal(book.id);
+      });
+      actions.appendChild(updateBtn);
+    }
+
+    if (book.status !== LIBRIQ.STATUS.FINISHED) {
+      const finishBtn = document.createElement('button');
+      finishBtn.className = 'btn btn-secondary btn-sm';
+      finishBtn.innerHTML = '<i class="ph ph-check"></i> Finish';
+      finishBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        Library.setStatus(book.id, LIBRIQ.STATUS.FINISHED);
+        Navigation.renderCurrentPage();
+      });
+      actions.appendChild(finishBtn);
+    }
+
+    const favBtn = document.createElement('button');
+    favBtn.className = 'btn btn-ghost btn-sm btn-icon';
+    favBtn.title = book.isFavorite ? 'Unfavorite' : 'Favorite';
+    favBtn.innerHTML = `<i class="ph ${book.isFavorite ? 'ph-heart-fill' : 'ph-heart'}"
+      style="color:${book.isFavorite ? 'var(--color-danger)' : ''}"></i>`;
+    favBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      Library.toggleFavorite(book.id);
+    });
+    actions.appendChild(favBtn);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'btn btn-ghost btn-sm btn-icon';
+    removeBtn.title = 'Remove';
+    removeBtn.innerHTML = '<i class="ph ph-trash"></i>';
+    removeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      Library.removeBook(book.id, book.title);
+    });
+    actions.appendChild(removeBtn);
+
+    // Click the card body (not action buttons) → open details modal
+    card.addEventListener('click', (e) => {
+      if (!e.target.closest('.book-card-actions')) {
+        Library.showDetailsModal(book.id);
+      }
+    });
 
     return card;
   }
@@ -372,6 +576,7 @@ const Library = (() => {
     updateProgress, setStatus, setRating,
     toggleFavorite, removeBook,
     renderBookCard, showProgressModal,
+    showDetailsModal, closeDetailsModal,
     _setFormRating,
   };
 })();
