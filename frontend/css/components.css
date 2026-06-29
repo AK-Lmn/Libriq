@@ -1456,3 +1456,41 @@
   }
 }
 
+/* ============================================
+   PHASE 7 - PAGE GRID AND CONTROL POLISH
+   Tighten responsive behavior without changing layout logic.
+   ============================================ */
+
+.page,
+.books-grid,
+.dashboard-grid,
+.stats-row {
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .books-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat-card,
+  .goal-widget,
+  .book-card,
+  .reading-card {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 430px) {
+  .books-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .btn,
+  .btn-sm,
+  .btn-icon,
+  .btn-icon.btn-sm,
+  .chip {
+    min-height: 44px;
+  }
+}

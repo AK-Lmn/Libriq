@@ -310,3 +310,26 @@
   background: var(--gold-04);
   color: var(--text-primary);
 }
+
+/* ============================================
+   PHASE 7 - SIDEBAR MOBILE POLISH
+   Safe-area aware navigation only.
+   ============================================ */
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: min(86vw, 320px);
+    padding-top: calc(var(--space-5) + env(safe-area-inset-top));
+    padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom));
+    padding-left: calc(var(--space-3) + env(safe-area-inset-left));
+    padding-right: calc(var(--space-3) + env(safe-area-inset-right));
+  }
+
+  .sidebar-logo {
+    padding-top: var(--space-2);
+  }
+
+  .sidebar-streak {
+    margin-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+  }
+}

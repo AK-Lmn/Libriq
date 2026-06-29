@@ -221,3 +221,40 @@ kbd {
     padding: var(--space-6) var(--space-4) var(--space-16);
   }
 }
+
+/* ============================================
+   PHASE 7 - GLOBAL MOBILE POLISH
+   Responsive shell only; no behavior changes.
+   ============================================ */
+
+html, body {
+  overflow-x: hidden;
+}
+
+.page,
+.modal,
+.sidebar,
+.main-content {
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+    padding-top: var(--space-6);
+    padding-bottom: calc(var(--space-16) + env(safe-area-inset-bottom));
+  }
+
+  .mobile-topbar {
+    padding-left: calc(var(--space-4) + env(safe-area-inset-left));
+    padding-right: calc(var(--space-4) + env(safe-area-inset-right));
+  }
+}
+
+@media (max-width: 430px) {
+  .page {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+}
