@@ -12,6 +12,7 @@ html {
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  background: var(--bg-base);
 }
 
 body {
@@ -31,7 +32,6 @@ input, button, textarea, select {
   color: inherit;
   background: none;
   border: none;
-  outline: none;
 }
 
 button {
@@ -52,11 +52,11 @@ p, h1, h2, h3, h4, h5, h6 {
   overflow-wrap: break-word;
 }
 
-/* Focus visible — keyboard only */
+/* Focus visible - keyboard only */
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--gold);
   outline-offset: 2px;
-  border-radius: var(--radius-sm);
+  border-radius: inherit;
 }
 
 /* Custom scrollbar */
@@ -86,6 +86,7 @@ p, h1, h2, h3, h4, h5, h6 {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
 }
