@@ -355,3 +355,141 @@
     padding-top: var(--space-4);
   }
 }
+
+/* ============================================
+   PHASE 2 - MODAL, SEARCH, AND FORM CONTROLS
+   ============================================ */
+
+.modal-overlay {
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(10px);
+}
+
+.modal {
+  background: var(--surface-3);
+  border-color: var(--gold-12);
+  box-shadow: var(--shadow-modal);
+}
+
+.modal-title {
+  font-family: var(--font-serif);
+  color: var(--text-strong);
+}
+
+.modal-close {
+  min-width: 40px;
+  min-height: 40px;
+  color: var(--text-dim);
+}
+
+.modal-close:hover {
+  background: var(--gold-06);
+  color: var(--text-strong);
+}
+
+.search-input-wrap {
+  min-height: 54px;
+  background: var(--surface-3);
+  border-bottom-color: var(--border-soft);
+}
+
+.search-input-icon {
+  color: var(--gold);
+}
+
+.search-input {
+  color: var(--text-strong);
+  caret-color: var(--gold);
+}
+
+.search-input::placeholder {
+  color: var(--text-dim);
+}
+
+.search-close-btn {
+  min-height: 36px;
+  border-radius: var(--radius-md);
+}
+
+.search-close-btn:hover {
+  background: var(--gold-06);
+  color: var(--text-primary);
+}
+
+.search-result-item {
+  border-left: 2px solid transparent;
+}
+
+.search-result-item:hover,
+.search-result-item.focused {
+  background: var(--gold-04);
+  border-left-color: var(--gold);
+}
+
+.search-result-title {
+  color: var(--text-strong);
+}
+
+.search-result-meta,
+.search-section-label,
+.search-footer span {
+  color: var(--text-dim);
+}
+
+.spinner {
+  border-color: var(--border-soft);
+  border-top-color: var(--gold);
+}
+
+.book-preview {
+  background: var(--surface-2);
+  border-color: var(--border-hairline);
+}
+
+.status-option {
+  min-height: 88px;
+  background: var(--gold-04);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.status-option:hover {
+  border-color: var(--gold-18);
+  background: var(--gold-06);
+}
+
+.status-option:active {
+  transform: scale(0.98);
+}
+
+.status-option:focus-within {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.status-option.selected {
+  border-color: var(--gold);
+  background: var(--gold-12);
+}
+
+.status-option.selected i,
+.status-option.selected span {
+  color: var(--gold);
+}
+
+@media (max-width: 640px) {
+  .modal-close,
+  .search-close-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .search-input-wrap {
+    min-height: 56px;
+  }
+}
