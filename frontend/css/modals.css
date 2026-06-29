@@ -764,3 +764,31 @@
   }
 }
 
+/* ============================================
+   PHASE 7 - MODAL SHEET POLISH
+   Shared responsive modal behavior only.
+   ============================================ */
+
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding-top: var(--space-4);
+    padding-left: calc(var(--space-4) + env(safe-area-inset-left));
+    padding-right: calc(var(--space-4) + env(safe-area-inset-right));
+    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  }
+
+  .modal {
+    max-width: 100%;
+    max-height: min(92dvh, calc(100dvh - var(--space-4) - env(safe-area-inset-top)));
+  }
+
+  .search-modal,
+  .add-book-modal,
+  #bookDetailsModal .book-details-modal {
+    width: 100%;
+  }
+
+  .modal-body {
+    padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom));
+  }
+}
