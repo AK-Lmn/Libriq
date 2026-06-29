@@ -150,11 +150,19 @@ const Navigation = (() => {
 function renderLibraryPage() {
   const main  = document.getElementById('mainContent');
   const books = Storage.getBooks();
+  const counts = {
+    all: books.length,
+    reading: books.filter(b => b.status === LIBRIQ.STATUS.READING).length,
+    wishlist: books.filter(b => b.status === LIBRIQ.STATUS.WISHLIST).length,
+    finished: books.filter(b => b.status === LIBRIQ.STATUS.FINISHED).length,
+    favorites: books.filter(b => b.isFavorite).length,
+  };
 
   main.innerHTML = `
     <div class="page" id="libraryPage">
-      <div class="page-header flex justify-between items-center" style="margin-bottom: var(--space-6);">
-        <div>
+      <div class="page-header library-header">
+        <div class="library-heading">
+          <span class="library-eyebrow">Personal collection</span>
           <h1 class="page-title">My Library</h1>
           <p class="page-subtitle">${books.length} book${books.length !== 1 ? 's' : ''} total</p>
         </div>
@@ -164,12 +172,12 @@ function renderLibraryPage() {
       </div>
 
       <!-- Filters -->
-      <div class="chip-group" style="margin-bottom: var(--space-6);" id="libraryFilters">
-        <button class="chip active" data-filter="all">All</button>
-        <button class="chip" data-filter="reading">Reading</button>
-        <button class="chip" data-filter="wishlist">Want to Read</button>
-        <button class="chip" data-filter="finished">Finished</button>
-        <button class="chip" data-filter="favorites">Favorites</button>
+      <div class="chip-group library-filters" id="libraryFilters">
+        <button class="chip active" data-filter="all">All <span>${counts.all}</span></button>
+        <button class="chip" data-filter="reading">Reading <span>${counts.reading}</span></button>
+        <button class="chip" data-filter="wishlist">Want to Read <span>${counts.wishlist}</span></button>
+        <button class="chip" data-filter="finished">Finished <span>${counts.finished}</span></button>
+        <button class="chip" data-filter="favorites">Favorites <span>${counts.favorites}</span></button>
       </div>
 
       <div class="books-grid" id="libraryGrid">
