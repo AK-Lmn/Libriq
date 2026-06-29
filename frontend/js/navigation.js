@@ -311,10 +311,13 @@ function renderStatsPage() {
   const streak = Storage.getStreak();
 
   main.innerHTML = `
-    <div class="page">
-      <div class="page-header" style="margin-bottom: var(--space-6);">
-        <h1 class="page-title">Statistics</h1>
-        <p class="page-subtitle">Your reading at a glance</p>
+    <div class="page stats-page" id="statsPage">
+      <div class="page-header stats-header">
+        <div class="stats-heading">
+          <span class="library-eyebrow">Reading analytics</span>
+          <h1 class="page-title">Statistics</h1>
+          <p class="page-subtitle">Your reading at a glance</p>
+        </div>
       </div>
 
       <div class="stats-row stagger" style="margin-bottom: var(--space-8);">

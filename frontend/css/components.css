@@ -1246,3 +1246,213 @@
   }
 }
 
+/* ============================================
+   PHASE 6 - STATISTICS REDESIGN
+   Scoped to the Statistics page only.
+   ============================================ */
+
+#statsPage {
+  max-width: 1180px;
+}
+
+#statsPage .stats-header {
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border-divider);
+}
+
+#statsPage .stats-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+#statsPage .library-eyebrow {
+  color: var(--text-muted);
+  font-size: var(--t-eyebrow);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#statsPage .page-title {
+  font-family: var(--font-serif);
+  font-size: var(--t-h1-app);
+  color: var(--text-strong);
+  letter-spacing: 0;
+}
+
+#statsPage .page-subtitle {
+  color: var(--text-body);
+}
+
+#statsPage .stats-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+#statsPage .stat-card {
+  min-height: 144px;
+  padding: var(--space-5);
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+}
+
+#statsPage .stat-card:hover {
+  border-color: var(--gold-18);
+  box-shadow: var(--shadow-card);
+}
+
+#statsPage .stat-card-icon {
+  background: var(--surface-3);
+  border: 1px solid var(--border-soft);
+}
+
+#statsPage .stat-card-value {
+  font-family: var(--font-serif);
+  font-size: var(--t-stat);
+  color: var(--text-strong);
+}
+
+#statsPage .stat-card-label {
+  color: var(--text-dim);
+}
+
+#statsPage .dashboard-grid {
+  grid-template-columns: minmax(0, 1fr) 360px;
+}
+
+#statsPage .goal-widget {
+  padding: var(--space-5);
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+}
+
+#statsPage .goal-widget:hover {
+  border-color: var(--gold-18);
+  box-shadow: var(--shadow-card);
+}
+
+#statsPage .goal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+#statsPage .goal-header::before {
+  content: '';
+  width: 3px;
+  align-self: stretch;
+  min-height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--gold);
+  opacity: 0.65;
+}
+
+#statsPage .goal-header > :first-child {
+  flex: 1;
+}
+
+#statsPage .goal-title {
+  font-family: var(--font-serif);
+  color: var(--text-strong);
+  font-size: var(--t-card);
+}
+
+#statsPage .monthly-chart {
+  height: 148px;
+  padding: var(--space-4) 0 var(--space-3);
+}
+
+#statsPage .chart-bar {
+  width: min(100%, 20px);
+}
+
+#statsPage .genre-list,
+#statsPage .activity-list {
+  gap: var(--space-2);
+}
+
+#statsPage .genre-row,
+#statsPage .activity-item {
+  padding: var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--surface-3);
+}
+
+#statsPage .genre-row:hover,
+#statsPage .activity-item:hover {
+  background: var(--gold-04);
+  border-color: var(--gold-12);
+}
+
+#statsPage .genre-name,
+#statsPage .activity-title {
+  color: var(--text-body);
+}
+
+#statsPage .genre-count,
+#statsPage .activity-subtitle,
+#statsPage .activity-time {
+  color: var(--text-dim);
+}
+
+#statsPage .monthly-chart {
+  border-bottom-color: var(--border-divider);
+}
+
+#statsPage .goal-widget .empty-state {
+  min-height: 220px;
+  padding: var(--space-8);
+}
+
+@media (max-width: 1100px) {
+  #statsPage .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #statsPage .dashboard-grid > div:last-child {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-6);
+  }
+}
+
+@media (max-width: 820px) {
+  #statsPage .stats-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  #statsPage .dashboard-grid > div:last-child {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 430px) {
+  #statsPage .stats-row {
+    grid-template-columns: 1fr;
+  }
+
+  #statsPage .monthly-chart {
+    overflow-x: auto;
+    gap: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #statsPage .stat-card,
+  #statsPage .goal-widget,
+  #statsPage .genre-row,
+  #statsPage .activity-item,
+  #statsPage .chart-bar {
+    transition-duration: 0.01ms !important;
+  }
+}
+
