@@ -274,3 +274,39 @@
     pointer-events: auto;
   }
 }
+
+/* ============================================
+   PHASE 2 - SHARED SEARCH AND ICON CONTROL POLISH
+   ============================================ */
+
+.sidebar-search-btn {
+  min-height: 44px;
+  background: var(--surface-3);
+  border-color: var(--border-soft);
+  color: var(--text-dim);
+}
+
+.sidebar-search-btn:hover {
+  background: var(--gold-04);
+  border-color: var(--gold-18);
+  color: var(--text-primary);
+}
+
+.sidebar-search-btn i {
+  color: var(--text-faint);
+}
+
+.sidebar-search-btn:hover i {
+  color: var(--gold);
+}
+
+.mobile-menu-btn,
+.mobile-search-btn,
+.theme-toggle {
+  min-height: 44px;
+}
+
+.theme-toggle:hover {
+  background: var(--gold-04);
+  color: var(--text-primary);
+}
