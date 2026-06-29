@@ -3,11 +3,11 @@
    ============================================ */
 
 body {
-  font-family: var(--font-ui);
+  font-family: var(--font-sans);
   font-size: var(--text-base);
   font-weight: var(--weight-regular);
   line-height: var(--leading-normal);
-  color: var(--text-primary);
+  color: var(--text-body);
   background-color: var(--bg-base);
   transition: background-color var(--duration-slow) var(--ease-out),
               color var(--duration-slow) var(--ease-out);
@@ -36,28 +36,36 @@ body {
 }
 
 h1, .h1 {
+  font-family: var(--font-serif);
   font-size: var(--text-2xl);
-  font-weight: var(--weight-semi);
+  font-weight: var(--weight-bold);
   line-height: var(--leading-tight);
-  letter-spacing: -0.02em;
+  color: var(--text-strong);
+  letter-spacing: 0;
 }
 
 h2, .h2 {
+  font-family: var(--font-serif);
   font-size: var(--text-xl);
-  font-weight: var(--weight-semi);
+  font-weight: var(--weight-bold);
   line-height: var(--leading-snug);
-  letter-spacing: -0.01em;
+  color: var(--text-strong);
+  letter-spacing: 0;
 }
 
 h3, .h3 {
+  font-family: var(--font-serif);
   font-size: var(--text-md);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-semi);
   line-height: var(--leading-snug);
+  color: var(--text-primary);
 }
 
 h4, .h4 {
+  font-family: var(--font-serif);
   font-size: var(--text-base);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-semi);
+  color: var(--text-primary);
 }
 
 .text-sm    { font-size: var(--text-sm); }
@@ -81,10 +89,11 @@ h4, .h4 {
 }
 
 .page-title {
+  font-family: var(--font-serif);
   font-size: var(--text-2xl);
-  font-weight: var(--weight-semi);
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0;
+  color: var(--text-strong);
 }
 
 .page-subtitle {
@@ -95,11 +104,11 @@ h4, .h4 {
 
 /* ── Section Labels ───────────────────────── */
 .section-label {
-  font-size: var(--text-xs);
-  font-weight: var(--weight-semi);
+  font-size: var(--t-eyebrow);
+  font-weight: var(--weight-medium);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: var(--text-muted);
 }
 
 /* ── Divider ──────────────────────────────── */

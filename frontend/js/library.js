@@ -158,7 +158,7 @@ const Library = (() => {
     closeAddModal();
     Utils.toast(`"${book.title}" added to your library`, 'success');
     Navigation.updateBadges();
-    if (Navigation.currentPage === 'dashboard') Dashboard.render();
+    Navigation.renderCurrentPage();
   }
 
   function closeAddModal() {
@@ -365,13 +365,13 @@ const Library = (() => {
     favBtn.className = 'btn btn-ghost btn-icon';
     favBtn.title = book.isFavorite ? 'Remove from favorites' : 'Add to favorites';
     const favIcon = document.createElement('i');
-    favIcon.className = `ph ${book.isFavorite ? 'ph-heart-fill' : 'ph-heart'}`;
+    favIcon.className = book.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart';
     if (book.isFavorite) favIcon.style.color = 'var(--color-danger)';
     favBtn.appendChild(favIcon);
     favBtn.addEventListener('click', () => {
     const updated = Library.toggleFavorite(book.id);
 
-    favIcon.className = `ph ${updated?.isFavorite ? 'ph-heart-fill' : 'ph-heart'}`;
+    favIcon.className = updated?.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart';
     favIcon.style.color = updated?.isFavorite ? 'var(--color-danger)' : '';
     favBtn.title = updated?.isFavorite ? 'Remove from favorites' : 'Add to favorites';
 
@@ -477,7 +477,7 @@ const Library = (() => {
     const favBtn = document.createElement('button');
     favBtn.className = 'btn btn-ghost btn-sm btn-icon';
     favBtn.title = book.isFavorite ? 'Unfavorite' : 'Favorite';
-    favBtn.innerHTML = `<i class="ph ${book.isFavorite ? 'ph-heart-fill' : 'ph-heart'}"
+    favBtn.innerHTML = `<i class="${book.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart'}"
       style="color:${book.isFavorite ? 'var(--color-danger)' : ''}"></i>`;
     favBtn.addEventListener('click', (e) => {
   e.stopPropagation();

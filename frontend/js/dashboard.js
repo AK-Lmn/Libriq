@@ -235,8 +235,8 @@ function buildReadingCard(book) {
             <i class="ph ph-pencil"></i> Update
           </button>
           <button class="btn btn-ghost btn-sm"
-            onclick="Library.toggleFavorite('${book.id}')">
-            <i class="ph ${book.isFavorite ? 'ph-heart-fill' : 'ph-heart'}"
+            onclick="Library.toggleFavorite('${book.id}'); Navigation.updateBadges(); Navigation.renderCurrentPage();">
+            <i class="${book.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart'}"
                style="color: ${book.isFavorite ? 'var(--color-danger)' : ''}"></i>
           </button>
         </div>
