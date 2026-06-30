@@ -267,6 +267,7 @@ const Library = (() => {
     const description = book.description
       ? book.description.replace(/<[^>]*>/g, '')
       : null;
+    const synopsis = description || 'No description available yet.';
 
     const genreBadges = (book.genres || []).slice(0, 3)
       .map(g => `<span class="badge badge-genre">${Utils.sanitize(g)}</span>`)
@@ -331,11 +332,10 @@ const Library = (() => {
           </div>
         </div>` : ''}
 
-      ${description ? `
-        <div class="book-details-description">
-          <h3 class="book-details-section-title">About this book</h3>
-          <p class="book-details-desc-text">${Utils.sanitize(description)}</p>
-        </div>` : ''}
+      <div class="book-details-description">
+        <h3 class="book-details-section-title">About this book</h3>
+        <p class="book-details-desc-text">${Utils.sanitize(synopsis)}</p>
+      </div>
 
       <div class="book-details-actions" id="bookDetailsActions"></div>`;
 
