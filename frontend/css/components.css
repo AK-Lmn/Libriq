@@ -1320,6 +1320,13 @@
   color: var(--text-dim);
 }
 
+#statsPage .stat-card-footnote {
+  margin-top: auto;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
+}
+
 #statsPage .dashboard-grid {
   grid-template-columns: minmax(0, 1fr) 360px;
 }
@@ -1364,6 +1371,13 @@
   font-size: var(--t-card);
 }
 
+#statsPage .stats-section-meta {
+  align-self: center;
+  color: var(--text-dim);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
 #statsPage .monthly-chart {
   height: 148px;
   padding: var(--space-4) 0 var(--space-3);
@@ -1376,6 +1390,12 @@
 #statsPage .genre-list,
 #statsPage .activity-list {
   gap: var(--space-2);
+}
+
+#statsPage .stats-side-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
 }
 
 #statsPage .genre-row,
@@ -1407,6 +1427,82 @@
   border-bottom-color: var(--border-divider);
 }
 
+#statsPage .rated-book-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+#statsPage .rated-book-row {
+  display: grid;
+  grid-template-columns: auto 52px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-3);
+}
+
+#statsPage .rated-book-row:hover {
+  background: var(--gold-04);
+  border-color: var(--gold-12);
+}
+
+#statsPage .rated-book-rank {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--gold-12);
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+}
+
+#statsPage .rated-book-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+#statsPage .rated-book-title {
+  color: var(--text-strong);
+  font-family: var(--font-serif);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semi);
+  line-height: var(--leading-snug);
+}
+
+#statsPage .rated-book-author {
+  color: var(--text-dim);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#statsPage .rated-book-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--gold);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+}
+
+#statsPage .rated-book-rating .star-rating {
+  gap: 1px;
+}
+
+#statsPage .rated-book-rating .star {
+  font-size: 0.82rem;
+}
+
 #statsPage .goal-widget .empty-state {
   min-height: 220px;
   padding: var(--space-8);
@@ -1417,7 +1513,7 @@
     grid-template-columns: 1fr;
   }
 
-  #statsPage .dashboard-grid > div:last-child {
+  #statsPage .stats-side-stack {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-6);
@@ -1430,7 +1526,7 @@
     gap: var(--space-3);
   }
 
-  #statsPage .dashboard-grid > div:last-child {
+  #statsPage .stats-side-stack {
     grid-template-columns: 1fr;
   }
 }
@@ -1438,6 +1534,29 @@
 @media (max-width: 430px) {
   #statsPage .stats-row {
     grid-template-columns: 1fr;
+  }
+
+  #statsPage .stats-side-stack {
+    gap: var(--space-4);
+  }
+
+  #statsPage .stats-section-meta {
+    white-space: normal;
+  }
+
+  #statsPage .rated-book-row {
+    grid-template-columns: 24px 44px minmax(0, 1fr);
+    gap: var(--space-2);
+    padding: var(--space-2);
+  }
+
+  #statsPage .rated-book-rank {
+    width: 24px;
+    height: 24px;
+  }
+
+  #statsPage .rated-book-rating {
+    flex-wrap: wrap;
   }
 
   #statsPage .monthly-chart {

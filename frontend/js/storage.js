@@ -283,7 +283,7 @@ const Storage = (() => {
       .filter(b => b.status === LIBRIQ.STATUS.FINISHED)
       .reduce((sum, b) => sum + (b.pageCount || 0), 0);
 
-    const rated     = books.filter(b => b.rating !== null && b.rating !== undefined);
+    const rated     = books.filter(b => typeof b.rating === 'number' && b.rating > 0);
     const avgRating = rated.length
       ? (rated.reduce((sum, b) => sum + b.rating, 0) / rated.length).toFixed(1)
       : null;
@@ -308,7 +308,7 @@ const Storage = (() => {
 
     return {
       total, reading, finished, wishlist, favorites,
-      finishedThisYear, totalPages, avgRating,
+      finishedThisYear, totalPages, avgRating, ratedCount: rated.length,
       topGenres, monthlyData,
     };
   }
