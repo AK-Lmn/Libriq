@@ -216,6 +216,11 @@ const Library = (() => {
     const newRating = current.rating === rating ? null : rating;
     Storage.updateBook(bookId, { rating: newRating });
     Utils.toast(newRating ? `Rated ${newRating} ★` : 'Rating cleared', 'info');
+    const detailsModal = document.getElementById('bookDetailsModal');
+    if (detailsModal && !detailsModal.hasAttribute('hidden')) {
+      Library.showDetailsModal(bookId);
+      return;
+    }
     // Re-render if we're on the library page
     if (Navigation.currentPage === 'library' || Navigation.currentPage === 'finished') {
       Navigation.renderCurrentPage();
@@ -281,10 +286,13 @@ const Library = (() => {
             ${genreBadges}
           </div>
 
-          ${book.rating ? `
+          <div class="book-details-rating-panel">
+            <h3 class="book-details-section-title">Your rating</h3>
             <div class="book-details-rating">
-              ${Utils.buildStars(book.rating, false)}
-            </div>` : ''}
+              ${Utils.buildStars(book.rating ?? 0, true, book.id)}
+              <span class="book-details-rating-text">${book.rating ? `${book.rating}/5` : 'Not rated'}</span>
+            </div>
+          </div>
 
           <dl class="book-details-meta">
             ${book.publishYear ? `<div class="book-details-meta-row">
