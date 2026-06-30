@@ -309,6 +309,11 @@ function renderStatsPage() {
   const stats = Storage.getStats();
   const goals = Storage.getGoals();
   const streak = Storage.getStreak();
+  const ratedBooks = Storage.getBooks()
+    .filter(book => typeof book.rating === 'number' && book.rating > 0)
+    .map((book, index) => ({ book, index }))
+    .sort((a, b) => b.book.rating - a.book.rating || a.index - b.index)
+    .map(entry => entry.book);
 
   main.innerHTML = `
     <div class="page stats-page" id="statsPage">
@@ -341,6 +346,12 @@ function renderStatsPage() {
           <div class="stat-card-value">${streak.longest}</div>
           <div class="stat-card-label">Longest streak</div>
         </div>
+        <div class="stat-card">
+          <div class="stat-card-icon gold"><i class="ph ph-star"></i></div>
+          <div class="stat-card-value">${stats.avgRating || '–'}</div>
+          <div class="stat-card-label">Avg rating</div>
+          <div class="stat-card-footnote">${stats.ratedCount ? `${stats.ratedCount} rated book${stats.ratedCount !== 1 ? 's' : ''}` : 'No rated books yet'}</div>
+        </div>
       </div>
 
       <div class="dashboard-grid">
@@ -359,29 +370,47 @@ function renderStatsPage() {
             </div>` : ''}
         </div>
 
-        <div class="goal-widget" style="height: fit-content;">
-          <div class="goal-header"><div class="goal-title">All-Time Summary</div></div>
-          <div class="activity-list">
-            ${[
-              ['Total in library',   stats.total],
-              ['Currently reading',  stats.reading],
-              ['Finished',           stats.finished],
-              ['Want to read',       stats.wishlist],
-              ['Favorites',          stats.favorites],
-              ['Average rating',     stats.avgRating ? `${stats.avgRating} ★` : '–'],
-              ['Pages read',         stats.totalPages.toLocaleString()],
-              ['Current streak',     `${streak.current} days`],
-              ['Longest streak',     `${streak.longest} days`],
-              ['This year\'s goal',  `${stats.finishedThisYear} / ${goals.yearly}`],
-            ].map(([label, val]) => `
-              <div class="activity-item" style="cursor:default;">
-                <div class="activity-text">
-                  <div class="activity-subtitle">${label}</div>
-                </div>
-                <div class="activity-time" style="font-family: var(--font-mono); font-weight: 600; color: var(--text-primary);">
-                  ${val}
-                </div>
-              </div>`).join('')}
+        <div class="stats-side-stack">
+          <div class="goal-widget" style="height: fit-content;">
+            <div class="goal-header"><div class="goal-title">All-Time Summary</div></div>
+            <div class="activity-list">
+              ${[
+                ['Total in library',   stats.total],
+                ['Currently reading',  stats.reading],
+                ['Finished',           stats.finished],
+                ['Want to read',       stats.wishlist],
+                ['Favorites',          stats.favorites],
+                ['Average rating',     stats.avgRating ? `${stats.avgRating} ★` : '–'],
+                ['Pages read',         stats.totalPages.toLocaleString()],
+                ['Current streak',     `${streak.current} days`],
+                ['Longest streak',     `${streak.longest} days`],
+                ['This year\'s goal',  `${stats.finishedThisYear} / ${goals.yearly}`],
+              ].map(([label, val]) => `
+                <div class="activity-item" style="cursor:default;">
+                  <div class="activity-text">
+                    <div class="activity-subtitle">${label}</div>
+                  </div>
+                  <div class="activity-time" style="font-family: var(--font-mono); font-weight: 600; color: var(--text-primary);">
+                    ${val}
+                  </div>
+                </div>`).join('')}
+            </div>
+          </div>
+
+          <div class="goal-widget" style="height: fit-content;">
+            <div class="goal-header">
+              <div class="goal-title">Highest Rated</div>
+              ${ratedBooks.length ? `<div class="stats-section-meta">${ratedBooks.length} rated book${ratedBooks.length !== 1 ? 's' : ''}</div>` : ''}
+            </div>
+            ${ratedBooks.length ? `
+              <div class="rated-book-list">
+                ${ratedBooks.map((book, index) => buildRatedBookRow(book, index + 1)).join('')}
+              </div>` : `
+              <div class="empty-state stats-empty-state">
+                <div class="empty-state-icon"><i class="ph ph-star"></i></div>
+                <div class="empty-state-title">No ratings yet</div>
+                <div class="empty-state-body">Rate a few books in Book Details and they will appear here.</div>
+              </div>`}
           </div>
         </div>
       </div>
@@ -594,4 +623,20 @@ function clearAllData() {
   // No page reload needed — the app returns to a fully valid state.
   Storage.resetAll();
   Utils.toast('Library cleared. Starting fresh.', 'info');
+}
+
+function buildRatedBookRow(book, rank) {
+  return `
+    <div class="rated-book-row">
+      <div class="rated-book-rank">${rank}</div>
+      ${Utils.buildCover(book, 'cover-sm')}
+      <div class="rated-book-info">
+        <div class="rated-book-title">${Utils.sanitize(book.title)}</div>
+        <div class="rated-book-author">${Utils.sanitize(book.author)}</div>
+        <div class="rated-book-rating">
+          ${Utils.buildStars(book.rating, false)}
+          <span>${book.rating}/5</span>
+        </div>
+      </div>
+    </div>`;
 }
