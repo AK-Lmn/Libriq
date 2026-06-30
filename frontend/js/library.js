@@ -246,6 +246,20 @@ const Library = (() => {
     Navigation.renderCurrentPage();
   }
 
+  async function refreshMetadata(bookId) {
+    const current = Storage.getBookById(bookId);
+    if (!current) return { status: 'error' };
+
+    const candidate = await _fetchMetadataCandidate(current);
+    if (!candidate) return { status: 'no-new' };
+
+    const updates = _buildMetadataUpdates(current, candidate);
+    if (Object.keys(updates).length === 0) return { status: 'no-new' };
+
+    Storage.updateBook(bookId, updates);
+    return { status: 'updated' };
+  }
+
   // ── Book Details Modal ────────────────────
   // Opens when user clicks any book card in the library.
   // Reuses the existing #addBookModal element under a new title
@@ -369,6 +383,34 @@ const Library = (() => {
       actions.appendChild(finishBtn);
     }
 
+    const refreshBtn = document.createElement('button');
+    refreshBtn.className = 'btn btn-secondary';
+    refreshBtn.innerHTML = '<i class="ph ph-arrow-clockwise"></i> Refresh metadata';
+    refreshBtn.addEventListener('click', async () => {
+      refreshBtn.disabled = true;
+      try {
+        const result = await Library.refreshMetadata(book.id);
+        if (result.status === 'updated') {
+          Utils.toast('Metadata updated', 'success');
+          Navigation.updateBadges();
+          Navigation.renderCurrentPage();
+          if (!document.getElementById('bookDetailsModal')?.hasAttribute('hidden')) {
+            Library.showDetailsModal(book.id);
+          }
+          return;
+        }
+
+        if (result.status === 'no-new') {
+          Utils.toast('No new metadata found', 'info');
+        } else {
+          Utils.toast("Couldn't refresh metadata", 'error');
+        }
+      } finally {
+        refreshBtn.disabled = false;
+      }
+    });
+    actions.appendChild(refreshBtn);
+
     const favBtn = document.createElement('button');
     favBtn.className = 'btn btn-ghost btn-icon';
     favBtn.title = book.isFavorite ? 'Remove from favorites' : 'Add to favorites';
@@ -411,6 +453,61 @@ const Library = (() => {
     const modal = document.getElementById('bookDetailsModal');
     Utils.hide(modal);
     document.body.style.overflow = '';
+  }
+
+  function _normalizeMatchKey(book) {
+    const clean = (str) => (str || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const authorWord = clean(book.author).split(' ')[0] || '';
+    return `${clean(book.title)}|${authorWord}`;
+  }
+
+  async function _fetchMetadataCandidate(book) {
+    try {
+      if (book.isbn) {
+        return await BookAPI.lookupISBN(book.isbn);
+      }
+
+      const query = `${book.title} ${book.author}`.trim();
+      const results = await BookAPI.searchBooks(query);
+      const targetKey = _normalizeMatchKey(book);
+      return results.find(result => _normalizeMatchKey(result) === targetKey) || null;
+    } catch (err) {
+      console.warn('[Libriq] Metadata refresh failed:', err);
+      return null;
+    }
+  }
+
+  function _buildMetadataUpdates(current, candidate) {
+    const updates = {};
+    const fields = ['description', 'pageCount', 'publisher', 'publishYear', 'coverUrl', 'genres', 'language', 'isbn', 'googleBooksId', 'openLibraryId'];
+
+    fields.forEach((field) => {
+      const currentValue = current[field];
+      const candidateValue = candidate[field];
+      const currentMissing =
+        currentValue === null ||
+        currentValue === undefined ||
+        currentValue === '' ||
+        (field === 'pageCount' && currentValue <= 0) ||
+        (field === 'genres' && (!Array.isArray(currentValue) || currentValue.length === 0));
+      const candidateValid =
+        candidateValue !== null &&
+        candidateValue !== undefined &&
+        candidateValue !== '' &&
+        (field !== 'pageCount' || candidateValue > 0) &&
+        (field !== 'genres' || (Array.isArray(candidateValue) && candidateValue.length > 0));
+
+      if (currentMissing && candidateValid) {
+        updates[field] = candidateValue;
+      }
+    });
+
+    return updates;
   }
 
   // ── Render a full book card ───────────────
@@ -591,7 +688,7 @@ const Library = (() => {
     updateProgress, setStatus, setRating,
     toggleFavorite, removeBook,
     renderBookCard, showProgressModal,
-    showDetailsModal, closeDetailsModal,
+    showDetailsModal, closeDetailsModal, refreshMetadata,
     _setFormRating,
   };
 })();
