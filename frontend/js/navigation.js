@@ -354,11 +354,24 @@ function renderStatsPage() {
         </div>
       </div>
 
-      <div class="dashboard-grid">
+      <div class="dashboard-grid stats-layout">
         <div>
-          <div class="goal-widget" style="margin-bottom: var(--space-6);">
-            <div class="goal-header"><div class="goal-title">Books Read by Month — ${new Date().getFullYear()}</div></div>
-            ${buildMonthlyChart(stats.monthlyData)}
+          <div class="stats-chart-grid">
+            <div class="goal-widget stats-chart-card">
+              <div class="goal-header">
+                <div class="goal-title">Books per Month</div>
+                <div class="stats-section-meta">Finished books by finish date</div>
+              </div>
+              ${buildMonthlyChart(stats.monthlyData)}
+            </div>
+
+            <div class="goal-widget stats-chart-card">
+              <div class="goal-header">
+                <div class="goal-title">Pages per Month</div>
+                <div class="stats-section-meta">Finished-book pages only</div>
+              </div>
+              ${buildPagesChart(stats.pagesByMonth)}
+            </div>
           </div>
 
           ${stats.topGenres.length ? `
@@ -640,3 +653,35 @@ function buildRatedBookRow(book, rank) {
       </div>
     </div>`;
 }
+
+function buildPagesChart(monthlyPages) {
+  const data = Array.isArray(monthlyPages) ? monthlyPages : [];
+  const max = Math.max(...data, 1);
+  const currentMonth = new Date().getMonth();
+  const hasData = data.some(val => val > 0);
+
+  if (!hasData) {
+    return `
+      <div class="stats-empty-state">
+        <div class="empty-state-icon"><i class="ph ph-chart-line-up"></i></div>
+        <div class="empty-state-title">Not enough data yet</div>
+        <div class="empty-state-body">Pages per month will appear after a few finished books with page counts.</div>
+      </div>`;
+  }
+
+  return `
+    <div class="monthly-chart monthly-chart-pages">
+      ${LIBRIQ.MONTHS.map((m, i) => {
+        const val = data[i] || 0;
+        const pct = Math.round((val / max) * 100);
+        const isCurrent = i === currentMonth;
+        return `
+          <div class="chart-bar-wrap" data-tooltip="${Utils.formatNumber(val)} pages in ${m}">
+            <div class="chart-bar ${isCurrent ? 'current' : ''} chart-bar-pages"
+                 style="height: ${Math.max(pct, 0)}%"></div>
+            <div class="chart-bar-label">${m}</div>
+          </div>`;
+      }).join('')}
+    </div>`;
+}
+

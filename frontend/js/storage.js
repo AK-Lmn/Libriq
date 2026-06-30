@@ -283,6 +283,14 @@ const Storage = (() => {
       .filter(b => b.status === LIBRIQ.STATUS.FINISHED)
       .reduce((sum, b) => sum + (b.pageCount || 0), 0);
 
+    const pagesByMonth = Array(12).fill(0);
+    books
+      .filter(b => b.status === LIBRIQ.STATUS.FINISHED && b.dateFinished)
+      .forEach(b => {
+        const d = new Date(b.dateFinished);
+        if (d.getFullYear() === thisYear) pagesByMonth[d.getMonth()] += (b.pageCount || 0);
+      });
+
     const rated     = books.filter(b => typeof b.rating === 'number' && b.rating > 0);
     const avgRating = rated.length
       ? (rated.reduce((sum, b) => sum + b.rating, 0) / rated.length).toFixed(1)
@@ -309,7 +317,7 @@ const Storage = (() => {
     return {
       total, reading, finished, wishlist, favorites,
       finishedThisYear, totalPages, avgRating, ratedCount: rated.length,
-      topGenres, monthlyData,
+      topGenres, monthlyData, pagesByMonth,
     };
   }
 
