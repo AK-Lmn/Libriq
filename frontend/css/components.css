@@ -1378,9 +1378,25 @@
   white-space: nowrap;
 }
 
+#statsPage .stats-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+#statsPage .stats-chart-card,
+#statsPage .stats-genre-card {
+  min-width: 0;
+}
+
 #statsPage .monthly-chart {
   height: 148px;
   padding: var(--space-4) 0 var(--space-3);
+}
+
+#statsPage .monthly-chart-pages {
+  height: 156px;
 }
 
 #statsPage .chart-bar {
@@ -1503,6 +1519,18 @@
   font-size: 0.82rem;
 }
 
+#statsPage .stats-empty-state {
+  min-height: 220px;
+  padding: var(--space-8);
+  background: var(--surface-3);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+}
+
+#statsPage .chart-bar-pages {
+  background: linear-gradient(180deg, var(--gold), var(--gold-strong));
+}
+
 #statsPage .goal-widget .empty-state {
   min-height: 220px;
   padding: var(--space-8);
@@ -1510,6 +1538,10 @@
 
 @media (max-width: 1100px) {
   #statsPage .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #statsPage .stats-chart-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1538,6 +1570,11 @@
 
   #statsPage .stats-side-stack {
     gap: var(--space-4);
+  }
+
+  #statsPage .stats-chart-grid {
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
   }
 
   #statsPage .stats-section-meta {
