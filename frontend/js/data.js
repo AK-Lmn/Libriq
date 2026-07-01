@@ -60,7 +60,8 @@ function createBook(data) {
     // Extras
     isFavorite:   data.isFavorite   || false,
     tags:         data.tags         || [],
-    notes:        data.notes        || null,
+    notes:        data.notes        ?? '',
+    notesUpdatedAt: data.notesUpdatedAt || null,
 
     // Source metadata (from API search)
     googleBooksId: data.googleBooksId || null,

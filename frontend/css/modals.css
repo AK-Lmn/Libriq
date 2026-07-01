@@ -645,6 +645,62 @@
   background: linear-gradient(180deg, var(--surface-2), rgba(201,168,76,0.03));
 }
 
+#bookDetailsModal .book-details-notes {
+  padding: var(--space-5);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xl);
+  background: var(--surface-2);
+  margin: 0;
+}
+
+#bookDetailsModal .book-details-notes-label {
+  display: block;
+  margin-bottom: var(--space-2);
+  color: var(--text-dim);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semi);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+#bookDetailsModal .book-details-notes-textarea {
+  width: 100%;
+  min-height: 140px;
+  resize: vertical;
+  padding: var(--space-3);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-3);
+  color: var(--text-strong);
+  font: inherit;
+  line-height: var(--leading-loose);
+}
+
+#bookDetailsModal .book-details-notes-textarea:focus {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-color: var(--gold);
+}
+
+#bookDetailsModal .book-details-notes-meta {
+  margin-top: var(--space-2);
+  color: var(--text-dim);
+  font-size: var(--text-xs);
+}
+
+#bookDetailsModal .book-details-notes-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-3);
+}
+
+#bookDetailsModal .book-details-notes-actions .btn {
+  min-height: 44px;
+}
+
 #bookDetailsModal .book-details-progress-header {
   display: flex;
   align-items: center;
@@ -774,7 +830,8 @@
   }
 
   #bookDetailsModal .book-details-progress,
-  #bookDetailsModal .book-details-description {
+  #bookDetailsModal .book-details-description,
+  #bookDetailsModal .book-details-notes {
     padding: var(--space-4);
   }
 
@@ -824,6 +881,11 @@
   #bookDetailsModal .book-details-author,
   #bookDetailsModal .book-details-desc-text {
     font-size: var(--text-sm);
+  }
+
+  #bookDetailsModal .book-details-notes-actions .btn {
+    flex: 1 1 100%;
+    width: 100%;
   }
 
   #bookDetailsModal .book-details-rating {

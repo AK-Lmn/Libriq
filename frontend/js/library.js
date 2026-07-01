@@ -282,6 +282,10 @@ const Library = (() => {
       ? book.description.replace(/<[^>]*>/g, '')
       : null;
     const synopsis = description || 'No description available yet.';
+    const notes = book.notes ?? '';
+    const notesUpdatedText = book.notesUpdatedAt
+      ? `Last updated ${Utils.formatDate(book.notesUpdatedAt)}`
+      : '';
 
     const genreBadges = (book.genres || []).slice(0, 3)
       .map(g => `<span class="badge badge-genre">${Utils.sanitize(g)}</span>`)
@@ -351,6 +355,28 @@ const Library = (() => {
         <p class="book-details-desc-text">${Utils.sanitize(synopsis)}</p>
       </div>
 
+      <div class="book-details-notes" data-book-id="${book.id}">
+        <h3 class="book-details-section-title">Private Notes</h3>
+        <label class="book-details-notes-label" for="bookNotesTextarea">My Thoughts</label>
+        <textarea
+          id="bookNotesTextarea"
+          class="book-details-notes-textarea"
+          rows="6"
+          placeholder="Write your private thoughts about this book..."
+        >${Utils.sanitize(notes)}</textarea>
+        <div class="book-details-notes-meta" id="bookNotesMeta"${notesUpdatedText ? '' : ' hidden'}>${Utils.sanitize(notesUpdatedText)}</div>
+        <div class="book-details-notes-actions">
+          <button type="button" class="btn btn-primary" id="saveBookNoteBtn">
+            <i class="ph ph-floppy-disk"></i>
+            Save Note
+          </button>
+          <button type="button" class="btn btn-ghost" id="clearBookNoteBtn">
+            <i class="ph ph-eraser"></i>
+            Clear Note
+          </button>
+        </div>
+      </div>
+
       <div class="book-details-actions" id="bookDetailsActions"></div>`;
 
     Utils.show(modal);
@@ -359,6 +385,46 @@ const Library = (() => {
     // Build action buttons with real event listeners — avoids all string-escaping
     // issues and correctly reads live state (e.g. isFavorite after toggling).
     const actions = body.querySelector('#bookDetailsActions');
+    const notesTextarea = body.querySelector('#bookNotesTextarea');
+    const notesMeta = body.querySelector('#bookNotesMeta');
+    const saveNoteBtn = body.querySelector('#saveBookNoteBtn');
+    const clearNoteBtn = body.querySelector('#clearBookNoteBtn');
+
+    function syncNotesMeta(updatedAt) {
+      if (!notesMeta) return;
+      if (!updatedAt) {
+        notesMeta.textContent = '';
+        notesMeta.hidden = true;
+        return;
+      }
+      notesMeta.textContent = `Last updated ${Utils.formatDate(updatedAt)}`;
+      notesMeta.hidden = false;
+    }
+
+    function saveNotes(nextNotes) {
+      const updatedAt = new Date().toISOString();
+      const updated = Storage.updateBook(book.id, {
+        notes: nextNotes,
+        notesUpdatedAt: updatedAt,
+      });
+      syncNotesMeta(updated?.notesUpdatedAt || updatedAt);
+      return updated;
+    }
+
+    if (saveNoteBtn && notesTextarea) {
+      saveNoteBtn.addEventListener('click', () => {
+        saveNotes(notesTextarea.value.trimEnd());
+        Utils.toast('Note saved', 'success');
+      });
+    }
+
+    if (clearNoteBtn && notesTextarea) {
+      clearNoteBtn.addEventListener('click', () => {
+        notesTextarea.value = '';
+        saveNotes('');
+        Utils.toast('Note cleared', 'info');
+      });
+    }
 
     if (isReading) {
       const updateBtn = document.createElement('button');
