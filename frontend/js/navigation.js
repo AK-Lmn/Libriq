@@ -135,6 +135,7 @@ const Navigation = (() => {
 
   return {
     init, goTo, renderCurrentPage, updateBadges, toggleTheme, applyTheme,
+    clearLibrarySearch,
     get currentPage() { return _currentPage; },
   };
 })();
@@ -155,6 +156,7 @@ Navigation.clearAllData = clearAllData;
 function renderLibraryPage() {
   const main  = document.getElementById('mainContent');
   const books = Storage.getBooks();
+  const state = _getLibraryState();
   const counts = {
     all: books.length,
     reading: books.filter(b => b.status === LIBRIQ.STATUS.READING).length,
@@ -176,6 +178,36 @@ function renderLibraryPage() {
         </button>
       </div>
 
+      <div class="library-tools">
+        <div class="library-search-wrap">
+          <i class="ph ph-magnifying-glass library-search-icon"></i>
+          <input
+            type="search"
+            id="librarySearchInput"
+            class="library-search-input"
+            placeholder="Search your library..."
+            value="${Utils.sanitize(state.query)}"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button type="button" class="library-search-clear" id="clearLibrarySearch" aria-label="Clear search" ${state.query ? '' : 'hidden'}>
+            <i class="ph ph-x"></i>
+          </button>
+        </div>
+
+        <div class="library-sort-wrap">
+          <label class="library-sort-label" for="librarySortSelect">Sort by</label>
+          <select id="librarySortSelect" class="library-sort-select">
+            <option value="recently-added" ${state.sort === 'recently-added' ? 'selected' : ''}>Recently added</option>
+            <option value="title-az" ${state.sort === 'title-az' ? 'selected' : ''}>Title A–Z</option>
+            <option value="author-az" ${state.sort === 'author-az' ? 'selected' : ''}>Author A–Z</option>
+            <option value="highest-rated" ${state.sort === 'highest-rated' ? 'selected' : ''}>Highest rated</option>
+            <option value="reading-progress" ${state.sort === 'reading-progress' ? 'selected' : ''}>Reading progress</option>
+            <option value="recently-updated" ${state.sort === 'recently-updated' ? 'selected' : ''}>Recently updated</option>
+          </select>
+        </div>
+      </div>
+
       <!-- Filters -->
       <div class="chip-group library-filters" id="libraryFilters">
         <button class="chip active" data-filter="all">All <span>${counts.all}</span></button>
@@ -193,21 +225,34 @@ function renderLibraryPage() {
       </div>
     </div>`;
 
-  renderLibraryGrid('all', books);
+  renderLibraryGrid(books);
   initLibraryFilters();
+  initLibraryTools();
 }
 
-function renderLibraryGrid(filter, books) {
+function _getLibraryState() {
+  return {
+    filter: sessionStorage.getItem('libriq_library_filter') || 'all',
+    query: sessionStorage.getItem('libriq_library_query') || '',
+    sort: sessionStorage.getItem('libriq_library_sort') || 'recently-added',
+  };
+}
+
+function _setLibraryState(updates) {
+  if ('filter' in updates) sessionStorage.setItem('libriq_library_filter', updates.filter);
+  if ('query' in updates) sessionStorage.setItem('libriq_library_query', updates.query);
+  if ('sort' in updates) sessionStorage.setItem('libriq_library_sort', updates.sort);
+}
+
+function renderLibraryGrid(books) {
   const grid = document.getElementById('libraryGrid');
   if (!grid) return;
+  const state = _getLibraryState();
 
-  let filtered;
-  if (filter === 'all')       filtered = books;
-  else if (filter === 'favorites') filtered = books.filter(b => b.isFavorite);
-  else filtered = books.filter(b => b.status === filter);
+  const filtered = _filterAndSortLibraryBooks(books, state);
 
   if (filtered.length === 0) {
-    grid.innerHTML = buildLibraryEmpty(filter);
+    grid.innerHTML = buildLibraryEmpty(state.filter, state.query);
     return;
   }
 
@@ -221,17 +266,101 @@ function initLibraryFilters() {
   const filters = document.getElementById('libraryFilters');
   if (!filters) return;
   const books = Storage.getBooks();
+  const state = _getLibraryState();
 
   filters.querySelectorAll('.chip').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === state.filter);
     btn.addEventListener('click', () => {
       filters.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
       btn.classList.add('active');
-      renderLibraryGrid(btn.dataset.filter, books);
+      _setLibraryState({ filter: btn.dataset.filter });
+      renderLibraryGrid(books);
     });
   });
 }
 
-function buildLibraryEmpty(filter = 'all') {
+function initLibraryTools() {
+  const searchInput = document.getElementById('librarySearchInput');
+  const sortSelect = document.getElementById('librarySortSelect');
+  const clearBtn = document.getElementById('clearLibrarySearch');
+  const books = Storage.getBooks();
+  const state = _getLibraryState();
+
+  searchInput?.addEventListener('input', Utils.debounce((e) => {
+    const query = e.target.value.trim();
+    _setLibraryState({ query });
+    if (clearBtn) clearBtn.hidden = !query;
+    renderLibraryGrid(books);
+  }, 150));
+
+  sortSelect?.addEventListener('change', (e) => {
+    _setLibraryState({ sort: e.target.value });
+    renderLibraryGrid(books);
+  });
+
+  clearBtn?.addEventListener('click', () => {
+    _setLibraryState({ query: '' });
+    if (searchInput) searchInput.value = '';
+    clearBtn.hidden = true;
+    renderLibraryGrid(books);
+  });
+
+  if (searchInput && state.query) searchInput.focus();
+}
+
+function clearLibrarySearch() {
+  _setLibraryState({ query: '' });
+  renderLibraryPage();
+}
+
+function _filterAndSortLibraryBooks(books, state) {
+  const q = (state.query || '').toLowerCase();
+  let filtered = books.slice();
+
+  if (state.filter === 'favorites') filtered = filtered.filter(b => b.isFavorite);
+  else if (state.filter !== 'all') filtered = filtered.filter(b => b.status === state.filter);
+
+  if (q) {
+    filtered = filtered.filter(book => {
+      const haystack = [
+        book.title,
+        book.author,
+        (book.genres || []).join(' '),
+        book.description || '',
+      ].join(' ').toLowerCase();
+      return haystack.includes(q);
+    });
+  }
+
+  return _sortLibraryBooks(filtered, state.sort);
+}
+
+function _sortLibraryBooks(books, sort) {
+  const list = books.slice();
+  const byDate = (field) => (a, b) => new Date(b[field] || 0) - new Date(a[field] || 0);
+
+  switch (sort) {
+    case 'title-az':
+      return list.sort((a, b) => a.title.localeCompare(b.title));
+    case 'author-az':
+      return list.sort((a, b) => a.author.localeCompare(b.author));
+    case 'highest-rated':
+      return list.sort((a, b) => (b.rating || 0) - (a.rating || 0) || new Date(b.dateAdded || 0) - new Date(a.dateAdded || 0));
+    case 'reading-progress':
+      return list.sort((a, b) => Utils.readingProgress(b.currentPage, b.pageCount) - Utils.readingProgress(a.currentPage, a.pageCount));
+    case 'recently-updated':
+      return list.sort((a, b) => {
+        const aTime = new Date(a.notesUpdatedAt || a.dateFinished || a.dateStarted || a.dateAdded || 0).getTime();
+        const bTime = new Date(b.notesUpdatedAt || b.dateFinished || b.dateStarted || b.dateAdded || 0).getTime();
+        return bTime - aTime;
+      });
+    case 'recently-added':
+    default:
+      return list.sort(byDate('dateAdded'));
+  }
+}
+
+function buildLibraryEmpty(filter = 'all', query = '') {
   const messages = {
     all:       ['Your library is empty', 'Search for books to build your collection.'],
     reading:   ['Nothing in progress', 'Pick a book and start reading.'],
@@ -239,15 +368,19 @@ function buildLibraryEmpty(filter = 'all') {
     finished:  ['No finished books yet', 'Keep reading — you\'re getting there.'],
     favorites: ['No favorites yet', 'Heart a book to save it here.'],
   };
-  const [title, body] = messages[filter] || messages.all;
+  const hasQuery = !!query;
+  const [title, body] = hasQuery
+    ? ['No books match your search.', 'Try a different keyword or clear the search to see everything again.']
+    : (messages[filter] || messages.all);
   return `
     <div class="empty-state" style="grid-column: 1/-1;">
       <div class="empty-state-icon"><i class="ph ph-books"></i></div>
       <div class="empty-state-title">${title}</div>
       <div class="empty-state-body">${body}</div>
-      <button class="btn btn-primary" onclick="Search.open()">
-        <i class="ph ph-magnifying-glass"></i> Search Books
-      </button>
+      ${hasQuery ? `<button class="btn btn-secondary" onclick="Navigation.clearLibrarySearch()"><i class="ph ph-x"></i> Clear Search</button>` : `
+        <button class="btn btn-primary" onclick="Search.open()">
+          <i class="ph ph-magnifying-glass"></i> Search Books
+        </button>`}
     </div>`;
 }
 

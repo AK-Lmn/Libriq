@@ -387,6 +387,7 @@ Future improvements may include:
 * Better metadata matching
 * Reading activity history
 * Activity heatmap
+* Help & Guide Center
 * Better mobile navigation
 * Local recommendations based on saved library data
 * PWA support
