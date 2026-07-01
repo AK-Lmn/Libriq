@@ -190,6 +190,18 @@
   margin-top: 3px;
 }
 
+.search-result-description {
+  margin-top: var(--space-2);
+  color: var(--text-dim);
+  font-size: var(--text-xs);
+  line-height: var(--leading-loose);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .search-result-add {
   flex-shrink: 0;
 }
@@ -375,6 +387,11 @@
     margin-left: 0;
     width: 100%;
     justify-content: center;
+  }
+
+  .search-result-description {
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
 }
 
