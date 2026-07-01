@@ -255,15 +255,35 @@ This allows the app to preserve reading progress, ratings, private notes, and pe
 ```text
 LibriQ/
 ├── backend/
+├── docs/
+│   └── screenshots/
 ├── frontend/
 │   ├── assets/
 │   ├── css/
 │   ├── js/
 │   └── index.html
+├── scripts/
+│   └── capture-screenshots.js
+├── package.json
 ├── README.md
 ├── LICENSE
 └── TESTING.md
 ```
+
+---
+
+## Generating Screenshots
+
+LibriQ includes an automated Playwright script to capture polished screenshots for project showcases or documentation without modifying your real, local reading data.
+
+To generate screenshots:
+
+1. Ensure you have installed dependencies via `npm install`
+2. Run the capture script:
+   ```bash
+   npm run screenshots
+   ```
+3. The screenshots will be saved automatically to `docs/screenshots/` and include desktop and mobile views with sample data.
 
 ---
 
