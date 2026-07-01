@@ -372,6 +372,24 @@ This section tracks notable LibriQ updates. New version logs can be added here a
 * Search filters only affect online search results and do not change saved library search or sorting
 * Manual entry, book details, notes, backups, and Help remain unchanged
 
+### v2.8.0 — Local Recommendations
+
+**Added**
+
+* Recommendations page in the app navigation
+* Local suggestion groups based on saved library signals like favorite genres, authors, ratings, favorites, currently reading mood, and Want to Read shelf
+* Recommendation cards with cover, title, author, reason label, and saved status
+
+**Changed**
+
+* Recommendations are generated fully from the user’s local library data
+* Saved recommendation cards open the existing Book Details modal
+
+**Notes**
+
+* No backend, analytics, cloud sync, or generated book data were added
+* Import/export, manual entry, search, Help, and existing library behavior remain unchanged
+
 ### v2.1.0 — Private Notes
 
 **Added**
