@@ -1,0 +1,26 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "**LibriQ** is a personal book-tracking web app designed to help readers organize their library, track reading progress, rate books, save favorites, write private notes, refresh book metadata, and view reading statistics in one calm and focused workspace.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "screenshots": "node scripts/capture-screenshots.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AK-Lmn/Libriq.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/AK-Lmn/Libriq/issues"
+  },
+  "homepage": "https://github.com/AK-Lmn/Libriq#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "serve-handler": "^6.1.7"
+  }
+}
