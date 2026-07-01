@@ -1,50 +1,49 @@
 # LibriQ
 
-**LibriQ** is a personal book-tracking web app designed to help readers organize their library, track reading progress, save favorites, rate books, and view reading insights in one calm and focused workspace.
+**LibriQ** is a personal book-tracking web app designed to help readers organize their library, track reading progress, rate books, save favorites, refresh book metadata, and view reading statistics in one calm and focused workspace.
 
-The project is built with **HTML, CSS, and Vanilla JavaScript**, with book data powered by **Open Library** and **Google Books**.
+The app is built with **HTML, CSS, and Vanilla JavaScript**, with book data powered by **Open Library** and **Google Books**.
 
-LibriQ focuses on a clean reading experience: search for books, add them to your library, update your progress, revisit your favorites, and understand your reading habits through simple statistics.
+LibriQ is currently focused on being a polished local-first reading tracker. Saved library data is stored in the browser using `localStorage`.
 
 ---
 
 ## Overview
 
-LibriQ is made for personal reading management.
+LibriQ helps users manage their personal reading life through a simple and organized interface.
 
-It allows users to:
+With LibriQ, users can:
 
 * Search for books online
-* Save books to a personal library
+* Add books to a personal library
 * Organize books by reading status
 * Track reading progress by page
 * Mark books as finished
-* Favorite books
+* Favorite and unfavorite books
 * Rate books
-* View book details and metadata
-* Refresh missing book information
-* See reading statistics and progress summaries
+* View detailed book information
+* Refresh missing book metadata
+* View reading statistics and progress summaries
 
-All saved library data is stored locally in the browser using `localStorage`.
+The app is designed to feel like a focused digital reading space instead of a plain spreadsheet-style tracker.
 
 ---
 
-## Core Features
+## Features
 
 ### Book Search
 
-LibriQ uses both **Open Library** and **Google Books** to search for books.
+LibriQ uses both **Open Library** and **Google Books** to search for book data.
 
 Search features include:
 
 * Search modal
 * `Ctrl / Cmd + K` shortcut
 * Results from multiple book APIs
-* Merged and deduplicated results
+* Merged and deduplicated search results
 * Book covers, authors, page counts, genres, and descriptions when available
 * Add-to-library action from search results
-
-If one source does not provide complete information, LibriQ can still use available data from the other source when possible.
+* Fallback handling when one source has limited data
 
 ---
 
@@ -52,8 +51,9 @@ If one source does not provide complete information, LibriQ can still use availa
 
 The Library page displays saved books in a cover-forward layout.
 
-Books can be organized by status:
+Books can be filtered by:
 
+* All
 * Reading
 * Want to Read
 * Finished
@@ -76,7 +76,7 @@ Each saved book can include:
 
 ### Book Details
 
-Each book has a detailed view for managing reading progress and metadata.
+Each saved book has a detailed view for managing reading progress and metadata.
 
 The Book Details view includes:
 
@@ -92,17 +92,17 @@ The Book Details view includes:
 * “About this book” section
 * Refresh metadata action
 
-If a book does not have a synopsis from the available APIs, LibriQ shows:
+If a book does not have a synopsis from the available sources, LibriQ shows:
 
 > No description available yet.
 
-The metadata refresh action can attempt to fill missing details such as synopsis, publisher, page count, cover, language, and genres without overwriting personal reading data like progress, status, favorite state, or rating.
+The metadata refresh action can attempt to fill missing details such as synopsis, publisher, page count, cover, language, and genres without overwriting personal reading data like progress, status, rating, or favorite state.
 
 ---
 
 ### Dashboard
 
-The Dashboard gives a quick overview of the current reading state.
+The Dashboard gives a quick overview of the user’s current reading activity.
 
 It includes:
 
@@ -110,10 +110,10 @@ It includes:
 * Currently reading count
 * Finished books
 * Reading streak
-* Currently reading list
+* Currently reading section
 * Reading goal progress
 * Recent activity
-* Quick access to updating progress and book details
+* Quick access to book details and progress updates
 
 ---
 
@@ -123,6 +123,7 @@ The Statistics page summarizes reading activity and saved library data.
 
 Current statistics include:
 
+* Total books
 * Books finished
 * Pages read
 * Average rating
@@ -143,7 +144,7 @@ LibriQ includes reading goal tracking to help users monitor progress toward a ye
 
 The reading goal view can show:
 
-* Current goal
+* Current reading goal
 * Books completed
 * Books remaining
 * Completion percentage
@@ -151,9 +152,23 @@ The reading goal view can show:
 
 ---
 
+### Theme and Responsive Design
+
+LibriQ supports both dark and light themes, while the main visual direction is optimized around a warm dark interface.
+
+The app is responsive across:
+
+* Desktop
+* Tablet
+* Mobile screens
+
+The interface includes mobile-friendly spacing, touch targets, cards, modals, and layouts.
+
+---
+
 ## Design Direction
 
-LibriQ v2 uses a calm, reading-first visual direction.
+LibriQ uses a calm, reading-first visual direction.
 
 The design focuses on:
 
@@ -164,14 +179,8 @@ The design focuses on:
 * Cover-forward book cards
 * Soft borders and subtle shadows
 * Clear reading progress visuals
-* Mobile-friendly spacing and touch targets
-* Better contrast and accessibility states
-
-The goal of the interface is to feel less like a spreadsheet and more like a focused digital reading space.
-
-Full design system and implementation notes:
-
-**[LibriQ v2 Design System](./LibriQ-v2-Design-System.md)**
+* Mobile-friendly spacing
+* Improved contrast and focus states
 
 ---
 
@@ -182,7 +191,7 @@ LibriQ is a frontend-only web app.
 It uses:
 
 * **HTML** for structure
-* **CSS** for layout, themes, and responsive design
+* **CSS** for layout, styling, themes, and responsive design
 * **Vanilla JavaScript** for app logic and interactions
 * **Open Library API** for book search data
 * **Google Books API** for additional book metadata
@@ -229,7 +238,6 @@ LibriQ/
 │   ├── js/
 │   └── index.html
 ├── README.md
-├── LibriQ-v2-Design-System.md
 ├── LICENSE
 └── TESTING.md
 ```
@@ -238,22 +246,9 @@ LibriQ/
 
 ## Current Status
 
-LibriQ v2 currently includes:
+LibriQ is still in active development.
 
-* Design system foundation
-* Shared component polish
-* Dashboard redesign
-* Library redesign
-* Search modal redesign
-* Book Details redesign
-* Statistics redesign
-* Mobile responsive polish
-* Rating system
-* About this book section
-* Rating-based statistics
-* Metadata refresh action
-
-The app is still being improved through focused feature and design passes.
+The current version focuses on improving the core reading tracker experience, including library management, book search, reading progress, book details, ratings, metadata, statistics, and responsive design.
 
 ---
 
@@ -261,20 +256,21 @@ The app is still being improved through focused feature and design passes.
 
 Future improvements may include:
 
-* Favicon and app icon polish
-* Better metadata matching for older saved books
-* Import/export library data
-* More advanced sorting and filtering
+* Import and export library data
+* Saved library search and sorting
+* Better metadata matching
+* Personal notes or reviews
 * Reading activity history
 * Activity heatmap
-* Personal notes or reviews
-* Better mobile navigation patterns
-* Optional cloud sync or account support
+* Better mobile navigation
+* PWA support
+* Optional backend and cloud sync
+* User profiles and social reading features
 
 ---
 
 ## Notes
 
-Some books may not show a full description because not all book APIs provide synopsis data for every result. When a description is unavailable, LibriQ displays a safe fallback instead of generating or inventing one.
+Some books may not show a full description because not all book data sources provide synopsis data for every result. When a description is unavailable, LibriQ displays a safe fallback instead of generating or inventing one.
 
 Some external cover images may also fail to load if blocked by browser extensions or if the source does not provide a valid image.
