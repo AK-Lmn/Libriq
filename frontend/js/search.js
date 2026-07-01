@@ -43,6 +43,11 @@ const Search = (() => {
     document.body.style.overflow = '';
   }
 
+  function openManualEntry() {
+    close();
+    Library.showAddModal({}, { manual: true });
+  }
+
   // Remove all dynamic result nodes while keeping #searchEmptyState intact.
   // Never use resultsArea.innerHTML = '' — that destroys the static empty-state
   // element and causes appendChild(null) on the next close() call.
@@ -128,6 +133,12 @@ const Search = (() => {
       emptyState.innerHTML = `
         <i class="ph ph-magnifying-glass"></i>
         <p>No results found for "<strong>${Utils.sanitize(currentQuery)}</strong>"</p>`;
+      emptyState.insertAdjacentHTML('beforeend', `
+        <button class="btn btn-primary btn-sm search-manual-btn" type="button" data-manual-entry>
+          <i class="ph ph-pencil"></i>
+          Add Manually
+        </button>`);
+      emptyState.querySelector('[data-manual-entry]')?.addEventListener('click', openManualEntry);
       Utils.show(emptyState);
       return;
     }
@@ -295,7 +306,9 @@ const Search = (() => {
     document.getElementById('searchModal')?.addEventListener('click', (e) => {
       if (e.target === e.currentTarget) close();
     });
+
+    document.getElementById('searchManualEntry')?.addEventListener('click', openManualEntry);
   }
 
-  return { init, open, close };
+  return { init, open, close, openManualEntry };
 })();

@@ -279,6 +279,27 @@ The current version focuses on improving the core local-first reading tracker ex
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
 
+### v2.2.0 — Manual Book Entry
+
+**Added**
+
+* Manual book entry flow for books that cannot be found through Open Library or Google Books
+* Manual Entry action in the search modal and no-results state
+* Manual Book Entry form with required title and author fields
+* Optional cover URL, page count, genre/category, description, published year, publisher, language, and reading status fields
+* Reliable local-only IDs for manually created books
+* `source: "manual"` metadata for manually entered books
+
+**Changed**
+
+* Manual books now use the same local storage model and support the same Book Details, rating, progress, favorite, remove, notes, and statistics features as API books
+* Search modal now provides a more direct fallback when no API results are available
+
+**Notes**
+
+* Manual books remain local-first and are stored only in the browser using `localStorage`
+* Existing Open Library and Google Books add flows are unchanged
+
 ### v2.1.0 — Private Notes
 
 **Added**
