@@ -110,7 +110,7 @@ const MergeBooks = (() => {
         : gbBook.genres,
 
       // ── GB fills missing fields ────────────
-      description:   olBook.description  || gbBook.description,
+      description:   _pickBestDescription(olBook.description, gbBook.description),
       publisher:     olBook.publisher    || gbBook.publisher,
       language:      olBook.language     || gbBook.language,
       rating:        olBook.rating       ?? gbBook.rating,
@@ -123,6 +123,23 @@ const MergeBooks = (() => {
 
       source: 'merged',
     };
+  }
+
+  function _pickBestDescription(primary, secondary) {
+    const a = _cleanDescription(primary);
+    const b = _cleanDescription(secondary);
+
+    if (a && b) return b.length > a.length ? b : a;
+    return a || b || null;
+  }
+
+  function _cleanDescription(value) {
+    if (!value || typeof value !== 'string') return null;
+    const cleaned = value
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return cleaned || null;
   }
 
   return { merge, mergeOne };

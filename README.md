@@ -300,6 +300,22 @@ This section tracks notable LibriQ updates. New version logs can be added here a
 * Manual books remain local-first and are stored only in the browser using `localStorage`
 * Existing Open Library and Google Books add flows are unchanged
 
+### v2.3.0 — Search Result Descriptions
+
+**Added**
+
+* Short description previews in book search results when synopsis data is available
+* A safe fallback message for results without a description
+
+**Changed**
+
+* Search results now surface merged description data from Open Library and Google Books before adding a book
+* Book additions continue to persist the full description into the saved local book object
+
+**Notes**
+
+* Descriptions are displayed as short previews only and remain part of the existing local-first data model
+
 ### v2.1.0 — Private Notes
 
 **Added**
