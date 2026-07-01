@@ -353,6 +353,25 @@ This section tracks notable LibriQ updates. New version logs can be added here a
 * This feature is for product guidance only and does not add accounts, sync, or backend services
 * Existing library data, notes, import/export behavior, and sorting logic are unchanged
 
+### v2.7.0 — Advanced Search Filters
+
+**Added**
+
+* Compact advanced filters inside the existing search modal
+* Filter controls for author, published year, genre/subject, source, has description, and has cover
+* Clear/reset filters action
+* Small active-filter indicator in the search UI
+
+**Changed**
+
+* Online search results can now be refined before adding a book to the library
+* Filters work on the merged search result data already returned by Open Library and Google Books
+
+**Notes**
+
+* Search filters only affect online search results and do not change saved library search or sorting
+* Manual entry, book details, notes, backups, and Help remain unchanged
+
 ### v2.1.0 — Private Notes
 
 **Added**
