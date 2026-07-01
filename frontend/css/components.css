@@ -610,8 +610,112 @@
     gap: var(--space-2);
   }
 
-  .help-next-step-actions .btn {
+.help-next-step-actions .btn {
     width: 100%;
+  }
+}
+
+/* ── Recommendations ───────────────────────── */
+#recommendationsPage {
+  max-width: 1180px;
+}
+
+.recommendations-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.recommendation-group .stats-section-meta {
+  color: var(--text-secondary);
+}
+
+.recommendation-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.recommendation-card {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+  padding: var(--space-3);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  text-align: left;
+  transition: border-color var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out);
+}
+
+.recommendation-card:hover {
+  border-color: var(--gold-18);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.recommendation-card:disabled {
+  cursor: default;
+  opacity: 0.92;
+}
+
+.recommendation-card .book-cover {
+  width: 52px;
+  height: 76px;
+}
+
+.recommendation-card-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.recommendation-card-reason {
+  font-size: var(--text-xs);
+  color: var(--gold);
+  font-weight: var(--weight-medium);
+}
+
+.recommendation-card-title {
+  font-family: var(--font-serif);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semi);
+  color: var(--text-primary);
+  line-height: var(--leading-snug);
+}
+
+.recommendation-card-author {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.recommendation-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.recommendations-empty-state {
+  margin-top: var(--space-6);
+}
+
+@media (max-width: 900px) {
+  .recommendation-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .recommendation-card {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  .recommendation-card .book-cover {
+    width: 44px;
+    height: 64px;
   }
 }
 

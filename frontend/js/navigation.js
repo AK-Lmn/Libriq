@@ -17,6 +17,7 @@ const Navigation = (() => {
     favorites: () => renderFavoritesPage(),
     stats:     () => renderStatsPage(),
     goals:     () => renderGoalsPage(),
+    recommendations: () => renderRecommendationsPage(),
     help:      () => renderHelpPage(),
     profile:   () => renderProfilePage(),
     settings:  () => renderSettingsPage(),
@@ -751,6 +752,236 @@ function renderHelpPage() {
         </section>
       </div>
     </div>`;
+}
+
+// ── Recommendations Page ──────────────────────
+
+function renderRecommendationsPage() {
+  const main = document.getElementById('mainContent');
+  const books = Storage.getBooks();
+  const recState = _buildRecommendationState(books);
+
+  main.innerHTML = `
+    <div class="page" id="recommendationsPage">
+      <div class="page-header recommendations-header">
+        <div class="recommendations-heading">
+          <span class="library-eyebrow">Local suggestions</span>
+          <h1 class="page-title">Recommendations</h1>
+          <p class="page-subtitle">Suggestions built only from your saved library</p>
+        </div>
+      </div>
+
+      ${recState.hasSignal ? `
+        <div class="recommendations-groups stagger">
+          ${recState.groups.map(group => buildRecommendationGroup(group)).join('')}
+        </div>
+      ` : `
+        <div class="empty-state recommendations-empty-state">
+          <div class="empty-state-icon"><i class="ph ph-sparkle"></i></div>
+          <div class="empty-state-title">Add and rate more books to get better recommendations.</div>
+          <div class="empty-state-body">Once you save a few books, LibriQ will surface nearby reads using your own library signals.</div>
+          <button class="btn btn-primary" onclick="Search.open()">
+            <i class="ph ph-magnifying-glass"></i> Search Books
+          </button>
+        </div>
+      `}
+    </div>`;
+}
+
+function _buildRecommendationState(books) {
+  const safeBooks = Array.isArray(books) ? books.filter(Boolean) : [];
+  if (safeBooks.length === 0) return { hasSignal: false, groups: [] };
+
+  const ratedBooks = safeBooks.filter(book => typeof book.rating === 'number' && book.rating > 0);
+  const highRatedBooks = ratedBooks.filter(book => book.rating >= 4);
+  const favoriteBooks = safeBooks.filter(book => book.isFavorite);
+  const readingBooks = safeBooks.filter(book => book.status === LIBRIQ.STATUS.READING);
+  const wishlistBooks = safeBooks.filter(book => book.status === LIBRIQ.STATUS.WISHLIST);
+  const finishedBooks = safeBooks.filter(book => book.status === LIBRIQ.STATUS.FINISHED);
+
+  const genreScores = new Map();
+  const authorScores = new Map();
+
+  safeBooks.forEach(book => {
+    const genreWeight = _recommendationWeight(book);
+    _bookGenres(book).forEach(genre => {
+      genreScores.set(genre, (genreScores.get(genre) || 0) + genreWeight);
+    });
+
+    const author = _cleanBookAuthor(book.author);
+    if (author && _isRecognizedAuthor(book)) {
+      authorScores.set(author, (authorScores.get(author) || 0) + _recommendationWeight(book, 1));
+    }
+  });
+
+  const topGenre = [...genreScores.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+  const topAuthor = [...authorScores.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+  const moodGenre = _mostCommonGenre(readingBooks);
+
+  const groups = [];
+
+  if (topGenre) {
+    const booksForGenre = safeBooks
+      .filter(book => _bookGenres(book).some(g => _normalizeText(g) === _normalizeText(topGenre)))
+      .filter(book => book.status !== LIBRIQ.STATUS.FINISHED)
+      .sort((a, b) => _recommendationScore(b) - _recommendationScore(a))
+      .slice(0, 4);
+    if (booksForGenre.length) {
+      groups.push({ title: 'Because you like this genre', label: topGenre, books: booksForGenre });
+    }
+  }
+
+  if (topAuthor) {
+    const booksByAuthor = safeBooks
+      .filter(book => _cleanBookAuthor(book.author) === topAuthor)
+      .sort((a, b) => _recommendationScore(b) - _recommendationScore(a))
+      .slice(0, 4);
+    if (booksByAuthor.length) {
+      groups.push({ title: 'More from authors you enjoy', label: topAuthor, books: booksByAuthor });
+    }
+  }
+
+  if (highRatedBooks.length) {
+    groups.push({
+      title: 'Highly rated in your library',
+      label: `${highRatedBooks.length} rated book${highRatedBooks.length !== 1 ? 's' : ''}`,
+      books: [...highRatedBooks]
+        .sort((a, b) => (b.rating || 0) - (a.rating || 0) || _dateValue(b.dateAdded) - _dateValue(a.dateAdded))
+        .slice(0, 4),
+    });
+  }
+
+  if (moodGenre) {
+    const moodBooks = safeBooks
+      .filter(book => book.status !== LIBRIQ.STATUS.FINISHED)
+      .filter(book => _bookGenres(book).some(g => _normalizeText(g) === _normalizeText(moodGenre)))
+      .sort((a, b) => _recommendationScore(b) - _recommendationScore(a))
+      .slice(0, 4);
+    if (moodBooks.length) {
+      groups.push({ title: 'Continue your reading mood', label: moodGenre, books: moodBooks });
+    }
+  }
+
+  if (wishlistBooks.length) {
+    groups.push({
+      title: 'From your Want to Read shelf',
+      label: `${wishlistBooks.length} book${wishlistBooks.length !== 1 ? 's' : ''}`,
+      books: [...wishlistBooks]
+        .sort((a, b) => _recommendationScore(b) - _recommendationScore(a))
+        .slice(0, 4),
+    });
+  }
+
+  if (!groups.length && safeBooks.length >= 3) {
+    const fallback = [...safeBooks]
+      .sort((a, b) => _recommendationScore(b) - _recommendationScore(a))
+      .slice(0, 4);
+    if (fallback.length) {
+      groups.push({
+        title: 'Suggested from your library',
+        label: 'Recently added and lightly scored',
+        books: fallback,
+      });
+    }
+  }
+
+  return {
+    hasSignal: groups.length > 0,
+    groups,
+  };
+}
+
+function buildRecommendationGroup(group) {
+  const cards = group.books.map(book => buildRecommendationCard(book, group.label)).join('');
+  return `
+    <section class="goal-widget recommendation-group">
+      <div class="goal-header">
+        <div>
+          <div class="goal-title">${Utils.sanitize(group.title)}</div>
+          <div class="stats-section-meta">${Utils.sanitize(group.label)}</div>
+        </div>
+      </div>
+      <div class="recommendation-card-grid">
+        ${cards}
+      </div>
+    </section>`;
+}
+
+function buildRecommendationCard(book, reasonLabel) {
+  const isSaved = !!Storage.getBookById(book.id);
+  const statusLabel = isSaved ? Utils.statusLabel(book.status) : '';
+  const statusClass = isSaved ? `badge ${Utils.statusBadgeClass(book.status)}` : '';
+  return `
+    <button type="button" class="recommendation-card" ${isSaved ? `onclick="Library.showDetailsModal('${book.id}')"` : 'aria-disabled="true"'}
+      ${isSaved ? '' : 'disabled'}>
+      ${Utils.buildCover(book, 'cover-sm')}
+      <div class="recommendation-card-body">
+        <div class="recommendation-card-reason">${Utils.sanitize(reasonLabel)}</div>
+        <div class="recommendation-card-title">${Utils.sanitize(book.title)}</div>
+        <div class="recommendation-card-author">${Utils.sanitize(book.author)}</div>
+        <div class="recommendation-card-meta">
+          ${isSaved ? `<span class="${statusClass}">${statusLabel}</span>` : ''}
+        </div>
+      </div>
+    </button>`;
+}
+
+function _recommendationScore(book) {
+  let score = 0;
+  if (book.isFavorite) score += 60;
+  if (typeof book.rating === 'number') score += book.rating * 18;
+  if (book.rating >= 4) score += 25;
+  if (book.status === LIBRIQ.STATUS.READING) score += 14;
+  if (book.status === LIBRIQ.STATUS.WISHLIST) score += 10;
+  if (book.status !== LIBRIQ.STATUS.FINISHED) score += 8;
+  score += _bookGenres(book).length * 5;
+  score += _isRecognizedAuthor(book) ? 10 : 0;
+  score += _dateValue(book.dateAdded) ? Math.max(0, 12 - Math.floor((Date.now() - _dateValue(book.dateAdded)) / 86400000)) : 0;
+  return score;
+}
+
+function _recommendationWeight(book, multiplier = 1) {
+  let weight = 1;
+  if (book.isFavorite) weight += 4;
+  if (typeof book.rating === 'number') weight += book.rating;
+  if (book.rating >= 4) weight += 2;
+  if (book.status === LIBRIQ.STATUS.READING) weight += 1.5;
+  if (book.status === LIBRIQ.STATUS.FINISHED) weight += 1;
+  return weight * multiplier;
+}
+
+function _bookGenres(book) {
+  const genres = Array.isArray(book?.genres) ? book.genres : [];
+  return genres.filter(Boolean).map(g => String(g).trim()).filter(Boolean);
+}
+
+function _cleanBookAuthor(author) {
+  const value = String(author || '').trim();
+  return value && value !== 'Unknown Author' ? value : '';
+}
+
+function _isRecognizedAuthor(book) {
+  const author = _cleanBookAuthor(book.author);
+  return Boolean(author) && (book.isFavorite || (typeof book.rating === 'number' && book.rating >= 4) || book.status === LIBRIQ.STATUS.FINISHED);
+}
+
+function _mostCommonGenre(books) {
+  const counts = new Map();
+  books.forEach(book => {
+    _bookGenres(book).forEach(genre => {
+      counts.set(genre, (counts.get(genre) || 0) + 1);
+    });
+  });
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+}
+
+function _normalizeText(value) {
+  return String(value || '').toLowerCase().trim();
+}
+
+function _dateValue(value) {
+  const ts = value ? new Date(value).getTime() : 0;
+  return Number.isFinite(ts) ? ts : 0;
 }
 
 // ── Profile Page ──────────────────────────────
