@@ -223,6 +223,7 @@ async function seedContext(context) {
     for (const [key, value] of Object.entries(payload)) {
       localStorage.setItem(key, JSON.stringify(value));
     }
+    localStorage.setItem('libriq_seen_version', '2.9.0');
   }, seed);
 }
 
