@@ -270,6 +270,14 @@ async function captureDesktop(browser, baseUrl) {
     await page.screenshot({ path: path.join(screenshotsDir, 'book-details-desktop.png'), fullPage: true });
     await page.locator('#bookDetailsModal .modal-close').click();
 
+    await page.evaluate(() => Navigation.goTo('help'));
+    await page.waitForFunction(() => {
+      const title = document.querySelector('#helpPage .page-title');
+      const intro = document.querySelector('#helpPage .help-intro-card');
+      return title?.textContent?.trim() === 'Help & Guide Center' && !!intro;
+    });
+    await page.screenshot({ path: path.join(screenshotsDir, 'help-guide-desktop.png'), fullPage: true });
+
     await page.evaluate(() => Navigation.goTo('settings'));
     await page.waitForFunction(() => {
       const titles = Array.from(document.querySelectorAll('#mainContent .page-title'));
@@ -302,6 +310,20 @@ async function captureMobile(browser, baseUrl) {
     await page.waitForSelector('#libraryPage .page-title');
     await page.waitForSelector('#libraryGrid .book-card');
     await page.screenshot({ path: path.join(screenshotsDir, 'library-mobile.png'), fullPage: true });
+
+    await page.evaluate(() => Navigation.goTo('help'));
+    await page.waitForFunction(() => {
+      const title = document.querySelector('#helpPage .page-title');
+      const intro = document.querySelector('#helpPage .help-intro-card');
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      return title?.textContent?.trim() === 'Help & Guide Center'
+        && !!intro
+        && !sidebar?.classList.contains('open')
+        && !overlay?.classList.contains('visible');
+    });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({ path: path.join(screenshotsDir, 'help-guide-mobile.png') });
   } finally {
     await context.close();
   }
