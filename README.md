@@ -334,6 +334,25 @@ This section tracks notable LibriQ updates. New version logs can be added here a
 * Backups stay on the user’s device and are never uploaded anywhere
 * Merge mode deduplicates by existing book ID and replace mode clearly warns before overwriting current local data
 
+### v2.6.0 — Help & Guide Center
+
+**Added**
+
+* Beginner-friendly Help & Guide Center in the app navigation
+* Card-based walkthrough sections for getting started, search, manual entry, library management, progress tracking, private notes, backups, and local-first storage
+* FAQ / troubleshooting section for common local-first questions
+* Quick action buttons to jump back into search or the library from the guide
+
+**Changed**
+
+* Help content is fully local and static, matching LibriQ’s frontend-only model
+* The new guide uses the same calm card-based visual language as the rest of the app
+
+**Notes**
+
+* This feature is for product guidance only and does not add accounts, sync, or backend services
+* Existing library data, notes, import/export behavior, and sorting logic are unchanged
+
 ### v2.1.0 — Private Notes
 
 **Added**

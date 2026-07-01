@@ -17,6 +17,7 @@ const Navigation = (() => {
     favorites: () => renderFavoritesPage(),
     stats:     () => renderStatsPage(),
     goals:     () => renderGoalsPage(),
+    help:      () => renderHelpPage(),
     profile:   () => renderProfilePage(),
     settings:  () => renderSettingsPage(),
   };
@@ -630,6 +631,128 @@ function renderGoalsPage() {
   });
 }
 
+// ── Help Page ────────────────────────────────
+
+function renderHelpPage() {
+  const main = document.getElementById('mainContent');
+
+  const guideSections = [
+    {
+      icon: 'ph-seal-check',
+      title: 'Getting Started',
+      body: 'Start by searching for a book, then add it to your library. From there you can mark reading status, track progress, rate it, and come back to it anytime.',
+    },
+    {
+      icon: 'ph-magnifying-glass',
+      title: 'Searching for Books',
+      body: 'Use the search bar or press Cmd/Ctrl + K. LibriQ checks Open Library and Google Books, then merges the best match into one result list.',
+    },
+    {
+      icon: 'ph-pencil-simple',
+      title: 'Adding Books Manually',
+      body: 'If a title is missing from the search results, choose Manual Entry and fill in the details yourself. Manual books work like any other saved book.',
+    },
+    {
+      icon: 'ph-books',
+      title: 'Managing the Library',
+      body: 'Use My Library to filter by status or favorites, sort the shelf, open book details, and keep your collection organized as it grows.',
+    },
+    {
+      icon: 'ph-chart-line-up',
+      title: 'Tracking Reading Progress',
+      body: 'Open Book Details to update your current page. LibriQ turns that into progress so you can see how far along you are in each book.',
+    },
+    {
+      icon: 'ph-notebook',
+      title: 'Using Private Notes',
+      body: 'Private Notes are saved only in your browser. They are perfect for thoughts, quotes, reflections, and reading journal entries you want to keep to yourself.',
+    },
+    {
+      icon: 'ph-arrow-down',
+      title: 'Importing and Exporting Backups',
+      body: 'Use Settings to export a JSON backup or import one later. This helps protect your local library if you switch browsers or want a safety copy.',
+    },
+    {
+      icon: 'ph-hard-drives',
+      title: 'Understanding Local-First Storage',
+      body: 'LibriQ stores your data in localStorage on this device only. Nothing is tied to an account, and nothing is uploaded to a cloud service.',
+    },
+  ];
+
+  const faqItems = [
+    ['Why did my books disappear?', 'They may be stored in a different browser or device. Local-first storage stays with the browser profile that saved it.'],
+    ['Can I use LibriQ offline?', 'Yes, after the app loads. Search needs the book APIs online, but your saved library remains available locally.'],
+    ['Will notes sync across devices?', 'No. Notes are private and local-only for now. Exporting a backup is the best way to move them.'],
+    ['What if search returns no results?', 'Try a different title spelling, search by author, or use Manual Entry to add the book by hand.'],
+  ];
+
+  main.innerHTML = `
+    <div class="page" id="helpPage">
+      <div class="page-header help-header">
+        <div class="help-heading">
+          <span class="library-eyebrow">Beginner guide</span>
+          <h1 class="page-title">Help & Guide Center</h1>
+          <p class="page-subtitle">A friendly walkthrough for using LibriQ with confidence</p>
+        </div>
+      </div>
+
+      <div class="help-intro-card">
+        <div class="help-intro-icon"><i class="ph ph-book-open-text"></i></div>
+        <div class="help-intro-copy">
+          <h2 class="help-intro-title">A calm place to learn the app</h2>
+          <p class="text-secondary" style="line-height: var(--leading-loose); margin: 0;">
+            LibriQ is designed to stay simple and local-first. This guide covers the core features so you can start building your reading space without needing a tutorial or account.
+          </p>
+        </div>
+      </div>
+
+      <div class="help-grid stagger">
+        ${guideSections.map(section => `
+          <article class="help-card">
+            <div class="help-card-icon"><i class="ph ${section.icon}"></i></div>
+            <h3 class="help-card-title">${section.title}</h3>
+            <p class="help-card-body">${section.body}</p>
+          </article>
+        `).join('')}
+      </div>
+
+      <div class="help-grid help-grid-wide">
+        <section class="goal-widget help-faq-card">
+          <div class="goal-header">
+            <div class="goal-title">FAQ / Troubleshooting</div>
+          </div>
+          <div class="help-faq-list">
+            ${faqItems.map(([question, answer]) => `
+              <div class="help-faq-item">
+                <div class="help-faq-question">${question}</div>
+                <div class="help-faq-answer">${answer}</div>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+
+        <section class="goal-widget help-next-step-card">
+          <div class="goal-header">
+            <div class="goal-title">A quick first step</div>
+          </div>
+          <div class="help-next-step">
+            <p class="help-next-step-text">
+              Search for your first book, add it to the library, and open the details panel to try progress tracking and private notes.
+            </p>
+            <div class="help-next-step-actions">
+              <button class="btn btn-primary" onclick="Search.open()">
+                <i class="ph ph-magnifying-glass"></i> Search Books
+              </button>
+              <button class="btn btn-secondary" onclick="Navigation.goTo('library')">
+                <i class="ph ph-books"></i> Open Library
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>`;
+}
+
 // ── Profile Page ──────────────────────────────
 
 function renderProfilePage() {
@@ -749,7 +872,7 @@ function renderSettingsPage() {
       <div class="goal-widget">
         <div class="goal-header"><div class="goal-title">About</div></div>
         <p class="text-sm text-secondary" style="line-height: var(--leading-loose);">
-          <strong style="color: var(--text-primary);">LibriQ</strong> v2.4.0<br>
+          <strong style="color: var(--text-primary);">LibriQ</strong> v2.6.0<br>
           Your reading life, beautifully organized.<br>
           Book data from <a href="https://openlibrary.org" target="_blank" style="color: var(--text-accent);">Open Library</a> and <a href="https://books.google.com" target="_blank" style="color: var(--text-accent);">Google Books</a>.
         </p>
