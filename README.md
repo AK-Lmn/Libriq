@@ -390,6 +390,24 @@ This section tracks notable LibriQ updates. New version logs can be added here a
 * No backend, analytics, cloud sync, or generated book data were added
 * Import/export, manual entry, search, Help, and existing library behavior remain unchanged
 
+### v2.9.0 — What’s New Modal
+
+**Added**
+
+* Local-only What’s New modal that appears after updating to a newer LibriQ version
+* Dismissed-version tracking in `libriq_seen_version`
+* Friendly release notes summary for the latest local-first improvements
+
+**Changed**
+
+* The app now shows a simple release notes popup only when the current version has not been dismissed yet
+* The modal can be closed with the button or Escape without affecting saved library data
+
+**Notes**
+
+* This feature stays fully local and does not send any data anywhere
+* Existing book data, import/export, search, Help, and recommendations are unchanged
+
 ### v2.1.0 — Private Notes
 
 **Added**

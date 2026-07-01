@@ -280,6 +280,49 @@
     </div>
   </div>
 
+  <!-- What's New Modal -->
+  <div class="modal-overlay" id="whatsNewModal" role="dialog" aria-modal="true" aria-label="What's new in LibriQ" hidden>
+    <div class="modal whats-new-modal">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">What’s New in LibriQ v2.9.0</h2>
+          <p class="whats-new-subtitle">A quick look at the latest local-first improvements.</p>
+        </div>
+        <button class="modal-close" id="closeWhatsNew" aria-label="Close release notes">
+          <i class="ph ph-x"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="whatsNewBody">
+        <div class="whats-new-list">
+          <section class="whats-new-item">
+            <div class="whats-new-item-title">Local Recommendations</div>
+            <p>Discover suggested reads based on your saved library, ratings, favorites, genres, and reading status.</p>
+          </section>
+          <section class="whats-new-item">
+            <div class="whats-new-item-title">Advanced Search Filters</div>
+            <p>Refine online book search results by author, year, source, cover availability, and description availability.</p>
+          </section>
+          <section class="whats-new-item">
+            <div class="whats-new-item-title">Help &amp; Guide Center</div>
+            <p>Learn how to search, add books manually, use private notes, back up your library, and understand local-first storage.</p>
+          </section>
+          <section class="whats-new-item">
+            <div class="whats-new-item-title">Library Search &amp; Sorting</div>
+            <p>Quickly find and organize saved books by title, author, genre, rating, progress, and recently added.</p>
+          </section>
+        </div>
+        <div class="whats-new-note">
+          Your library stays local on your device. No accounts or cloud sync have been added.
+        </div>
+      </div>
+      <div class="modal-footer whats-new-footer">
+        <button class="btn btn-primary" id="whatsNewContinue" type="button">
+          <i class="ph ph-check"></i> Got it
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notifications -->
   <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
