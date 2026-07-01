@@ -1103,7 +1103,7 @@ function renderSettingsPage() {
       <div class="goal-widget">
         <div class="goal-header"><div class="goal-title">About</div></div>
         <p class="text-sm text-secondary" style="line-height: var(--leading-loose);">
-          <strong style="color: var(--text-primary);">LibriQ</strong> v2.6.0<br>
+          <strong style="color: var(--text-primary);">LibriQ</strong> v2.9.0<br>
           Your reading life, beautifully organized.<br>
           Book data from <a href="https://openlibrary.org" target="_blank" style="color: var(--text-accent);">Open Library</a> and <a href="https://books.google.com" target="_blank" style="color: var(--text-accent);">Google Books</a>.
         </p>
