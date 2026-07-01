@@ -45,6 +45,18 @@ const Utils = {
     force ? Utils.show(el) : Utils.hide(el);
   },
 
+  /** Detect Apple platforms for shortcut labels and key handling */
+  isApplePlatform() {
+    const platform = navigator.userAgentData?.platform || navigator.platform || '';
+    const ua = navigator.userAgent || '';
+    return /Mac|iPhone|iPad|iPod/.test(platform) || /iPhone|iPad|iPod/.test(ua);
+  },
+
+  /** Return the visible search shortcut label */
+  getSearchShortcutLabel() {
+    return Utils.isApplePlatform() ? '⌘K' : 'Ctrl K';
+  },
+
   // ── Formatting ───────────────────────────
 
   /** Format page count */

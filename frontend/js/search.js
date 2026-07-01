@@ -56,6 +56,11 @@ const Search = (() => {
     document.body.style.overflow = 'hidden';
   }
 
+  function updateShortcutLabel() {
+    const badge = document.getElementById('searchShortcutBadge');
+    if (badge) badge.textContent = Utils.getSearchShortcutLabel();
+  }
+
   function close() {
     const { modal, input, resultsArea } = getEls();
     Utils.hide(modal);
@@ -428,6 +433,8 @@ const Search = (() => {
       searchDebounced(e.target.value.trim());
     });
 
+    updateShortcutLabel();
+
     // Open triggers
     document.getElementById('openSearch')?.addEventListener('click', open);
     document.getElementById('mobileSearchBtn')?.addEventListener('click', open);
@@ -435,7 +442,9 @@ const Search = (() => {
 
     // Keyboard shortcut ⌘K / Ctrl+K
     document.addEventListener('keydown', (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      const isApple = Utils.isApplePlatform();
+      const matchesShortcut = isApple ? e.metaKey : e.ctrlKey;
+      if (matchesShortcut && e.key === 'k') {
         e.preventDefault();
         const { modal } = getEls();
         modal.hasAttribute('hidden') ? open() : close();
@@ -460,6 +469,6 @@ const Search = (() => {
     });
   }
 
-  return { init, open, close, openManualEntry };
+  return { init, open, close, openManualEntry, updateShortcutLabel };
 })();
 
