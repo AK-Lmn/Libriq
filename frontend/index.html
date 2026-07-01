@@ -184,6 +184,48 @@
           <kbd>ESC</kbd>
         </button>
       </div>
+      <div class="search-advanced-toggle-row">
+        <button class="search-advanced-toggle" id="searchAdvancedToggle" type="button" aria-expanded="false" aria-controls="searchAdvancedFilters">
+          <i class="ph ph-funnel"></i>
+          <span>Filters</span>
+          <span class="search-filter-count" id="searchFilterCount">0</span>
+        </button>
+        <button class="search-advanced-reset" id="searchAdvancedReset" type="button">
+          Reset
+        </button>
+      </div>
+      <div class="search-advanced-filters" id="searchAdvancedFilters" hidden>
+        <div class="search-filter-grid">
+          <label class="search-filter-field">
+            <span>Author</span>
+            <input id="searchFilterAuthor" type="text" class="form-input search-filter-input" placeholder="Any author" autocomplete="off" />
+          </label>
+          <label class="search-filter-field">
+            <span>Published year</span>
+            <input id="searchFilterYear" type="number" class="form-input search-filter-input" placeholder="Any year" min="0" max="3000" />
+          </label>
+          <label class="search-filter-field">
+            <span>Genre / subject</span>
+            <input id="searchFilterGenre" type="text" class="form-input search-filter-input" placeholder="Any genre" autocomplete="off" />
+          </label>
+          <label class="search-filter-field">
+            <span>Source</span>
+            <select id="searchFilterSource" class="form-select search-filter-select">
+              <option value="all">All sources</option>
+              <option value="openlibrary">Open Library</option>
+              <option value="google">Google Books</option>
+            </select>
+          </label>
+          <label class="search-filter-check">
+            <input id="searchFilterDescription" type="checkbox" />
+            <span>Has description</span>
+          </label>
+          <label class="search-filter-check">
+            <input id="searchFilterCover" type="checkbox" />
+            <span>Has cover</span>
+          </label>
+        </div>
+      </div>
       <div class="search-results" id="searchResults">
         <div class="search-empty-state" id="searchEmptyState">
           <i class="ph ph-books"></i>

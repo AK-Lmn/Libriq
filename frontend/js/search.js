@@ -11,6 +11,8 @@ const Search = (() => {
   let focusedIndex = -1;
   let results = [];
   let searchDebounced;
+  let filtersOpen = false;
+  let activeFilters = _defaultFilters();
 
   // ── Elements ─────────────────────────────
 
@@ -20,6 +22,27 @@ const Search = (() => {
       input:       document.getElementById('searchInput'),
       resultsArea: document.getElementById('searchResults'),
       emptyState:  document.getElementById('searchEmptyState'),
+      advancedToggle: document.getElementById('searchAdvancedToggle'),
+      advancedReset:  document.getElementById('searchAdvancedReset'),
+      advancedPanel:  document.getElementById('searchAdvancedFilters'),
+      filterCount:    document.getElementById('searchFilterCount'),
+      filterAuthor:   document.getElementById('searchFilterAuthor'),
+      filterYear:     document.getElementById('searchFilterYear'),
+      filterGenre:    document.getElementById('searchFilterGenre'),
+      filterSource:   document.getElementById('searchFilterSource'),
+      filterDesc:     document.getElementById('searchFilterDescription'),
+      filterCover:    document.getElementById('searchFilterCover'),
+    };
+  }
+
+  function _defaultFilters() {
+    return {
+      author: '',
+      year: '',
+      genre: '',
+      source: 'all',
+      hasDescription: false,
+      hasCover: false,
     };
   }
 
@@ -28,6 +51,7 @@ const Search = (() => {
   function open() {
     const { modal, input } = getEls();
     Utils.show(modal);
+    _syncFiltersUI();
     requestAnimationFrame(() => input.focus());
     document.body.style.overflow = 'hidden';
   }
@@ -39,6 +63,9 @@ const Search = (() => {
     currentQuery = '';
     results = [];
     focusedIndex = -1;
+    activeFilters = _defaultFilters();
+    filtersOpen = false;
+    _syncFiltersUI();
     _clearResults();  // safe clear that never destroys #searchEmptyState
     document.body.style.overflow = '';
   }
@@ -156,13 +183,17 @@ const Search = (() => {
     }
 
     // API results
-    if (apiResults.length > 0) {
+    const filteredApiResults = _applyAdvancedFilters(apiResults);
+
+    if (filteredApiResults.length > 0) {
       resultsArea.insertAdjacentHTML('beforeend',
-        `<div class="search-section-label">From the web</div>`);
-      apiResults.forEach(book => {
+        `<div class="search-section-label">From the web${_filtersActive() ? ' <span class="search-section-filtered">filtered</span>' : ''}</div>`);
+      filteredApiResults.forEach(book => {
         resultsArea.appendChild(buildApiResultItem(book));
       });
     }
+
+    _updateFilterCount();
   }
 
   function buildLocalResultItem(book) {
@@ -278,6 +309,110 @@ const Search = (() => {
     Library.showAddModal(bookData);
   }
 
+  function readFiltersFromUI() {
+    const els = getEls();
+    return {
+      author: (els.filterAuthor?.value || '').trim(),
+      year: (els.filterYear?.value || '').trim(),
+      genre: (els.filterGenre?.value || '').trim(),
+      source: els.filterSource?.value || 'all',
+      hasDescription: !!els.filterDesc?.checked,
+      hasCover: !!els.filterCover?.checked,
+    };
+  }
+
+  function _filtersActive() {
+    return Boolean(
+      activeFilters.author ||
+      activeFilters.year ||
+      activeFilters.genre ||
+      activeFilters.source !== 'all' ||
+      activeFilters.hasDescription ||
+      activeFilters.hasCover
+    );
+  }
+
+  function _updateFilterCount() {
+    const { filterCount } = getEls();
+    if (!filterCount) return;
+    const count = [
+      activeFilters.author,
+      activeFilters.year,
+      activeFilters.genre,
+      activeFilters.source !== 'all',
+      activeFilters.hasDescription,
+      activeFilters.hasCover,
+    ].filter(Boolean).length;
+    filterCount.textContent = String(count);
+    filterCount.style.display = count > 0 ? 'inline-flex' : 'none';
+  }
+
+  function toggleAdvancedFilters(force) {
+    const { advancedPanel, advancedToggle } = getEls();
+    filtersOpen = typeof force === 'boolean' ? force : !filtersOpen;
+    if (advancedPanel) Utils.toggle(advancedPanel, filtersOpen);
+    advancedToggle?.setAttribute('aria-expanded', filtersOpen ? 'true' : 'false');
+  }
+
+  function _syncFiltersUI() {
+    const els = getEls();
+    if (els.filterAuthor) els.filterAuthor.value = activeFilters.author;
+    if (els.filterYear) els.filterYear.value = activeFilters.year;
+    if (els.filterGenre) els.filterGenre.value = activeFilters.genre;
+    if (els.filterSource) els.filterSource.value = activeFilters.source;
+    if (els.filterDesc) els.filterDesc.checked = activeFilters.hasDescription;
+    if (els.filterCover) els.filterCover.checked = activeFilters.hasCover;
+    toggleAdvancedFilters(filtersOpen);
+    _updateFilterCount();
+  }
+
+  function _applyAdvancedFilters(apiResults) {
+    return apiResults.filter(book => {
+      if (activeFilters.source !== 'all') {
+        const source = String(book.source || '').toLowerCase();
+        if (source !== activeFilters.source) return false;
+      }
+
+      if (activeFilters.author) {
+        const author = String(book.author || '').toLowerCase();
+        if (!author.includes(activeFilters.author.toLowerCase())) return false;
+      }
+
+      if (activeFilters.year) {
+        const year = Number.parseInt(activeFilters.year, 10);
+        if (!Number.isNaN(year) && Number(book.publishYear || 0) !== year) return false;
+      }
+
+      if (activeFilters.genre) {
+        const genres = Array.isArray(book.genres) ? book.genres : [];
+        const haystack = genres.join(' ').toLowerCase();
+        if (!haystack.includes(activeFilters.genre.toLowerCase())) return false;
+      }
+
+      if (activeFilters.hasDescription && !String(book.description || '').trim()) return false;
+      if (activeFilters.hasCover && !book.coverUrl) return false;
+
+      return true;
+    });
+  }
+
+  function applyFiltersFromUI() {
+    activeFilters = readFiltersFromUI();
+    if (currentQuery) {
+      renderResults(
+        results.filter(r => r._source === 'local'),
+        results.filter(r => r._source === 'api')
+      );
+    }
+  }
+
+  function resetFilters() {
+    activeFilters = _defaultFilters();
+    filtersOpen = false;
+    _syncFiltersUI();
+    if (currentQuery) executeSearch(currentQuery);
+  }
+
   // ── Init ─────────────────────────────────
 
   function init() {
@@ -314,6 +449,15 @@ const Search = (() => {
     });
 
     document.getElementById('searchManualEntry')?.addEventListener('click', openManualEntry);
+    document.getElementById('searchAdvancedToggle')?.addEventListener('click', () => toggleAdvancedFilters());
+    document.getElementById('searchAdvancedReset')?.addEventListener('click', resetFilters);
+
+    ['searchFilterAuthor', 'searchFilterYear', 'searchFilterGenre', 'searchFilterSource', 'searchFilterDescription', 'searchFilterCover'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const eventName = (el.type === 'checkbox' || el.tagName === 'SELECT') ? 'change' : 'input';
+      el.addEventListener(eventName, applyFiltersFromUI);
+    });
   }
 
   return { init, open, close, openManualEntry };
