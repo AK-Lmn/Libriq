@@ -316,6 +316,24 @@ This section tracks notable LibriQ updates. New version logs can be added here a
 
 * Descriptions are displayed as short previews only and remain part of the existing local-first data model
 
+### v2.4.0 — Import / Export Backup
+
+**Added**
+
+* Local JSON export for the full LibriQ library backup
+* Local JSON import with validation before any data is applied
+* Replace or merge import flow for restoring backups safely
+
+**Changed**
+
+* Exported backups now include books plus relevant local data such as profile, goals, and streak state
+* Import handling preserves the local-first model and keeps API books, manual books, ratings, progress, favorites, notes, and metadata intact
+
+**Notes**
+
+* Backups stay on the user’s device and are never uploaded anywhere
+* Merge mode deduplicates by existing book ID and replace mode clearly warns before overwriting current local data
+
 ### v2.1.0 — Private Notes
 
 **Added**

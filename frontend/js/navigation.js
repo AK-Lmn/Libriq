@@ -139,6 +139,11 @@ const Navigation = (() => {
   };
 })();
 
+Navigation.exportData = exportData;
+Navigation.promptImportData = promptImportData;
+Navigation.importDataFromFile = importDataFromFile;
+Navigation.clearAllData = clearAllData;
+
 /* ============================================
    PAGE RENDERERS
    Inline here for now — can be split into
@@ -583,8 +588,17 @@ function renderSettingsPage() {
             <div class="activity-title">Export library</div>
             <div class="activity-subtitle">Download your data as JSON</div>
           </div>
-          <button class="btn btn-secondary btn-sm" onclick="exportData()">
+          <button class="btn btn-secondary btn-sm" onclick="Navigation.exportData()">
             <i class="ph ph-download-simple"></i> Export
+          </button>
+        </div>
+        <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+          <div class="activity-text">
+            <div class="activity-title">Import library</div>
+            <div class="activity-subtitle">Restore a LibriQ backup from JSON</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="Navigation.promptImportData()">
+            <i class="ph ph-upload-simple"></i> Import
           </button>
         </div>
         <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
@@ -592,16 +606,17 @@ function renderSettingsPage() {
             <div class="activity-title">Clear all data</div>
             <div class="activity-subtitle">Remove all books and settings</div>
           </div>
-          <button class="btn btn-danger btn-sm" onclick="clearAllData()">
+          <button class="btn btn-danger btn-sm" onclick="Navigation.clearAllData()">
             <i class="ph ph-trash"></i> Clear
           </button>
         </div>
+        <input id="importLibraryInput" type="file" accept="application/json,.json" hidden onchange="Navigation.importDataFromFile(this.files?.[0])" />
       </div>
 
       <div class="goal-widget">
         <div class="goal-header"><div class="goal-title">About</div></div>
         <p class="text-sm text-secondary" style="line-height: var(--leading-loose);">
-          <strong style="color: var(--text-primary);">LibriQ</strong> v2.0.0<br>
+          <strong style="color: var(--text-primary);">LibriQ</strong> v2.4.0<br>
           Your reading life, beautifully organized.<br>
           Book data from <a href="https://openlibrary.org" target="_blank" style="color: var(--text-accent);">Open Library</a> and <a href="https://books.google.com" target="_blank" style="color: var(--text-accent);">Google Books</a>.
         </p>
@@ -609,21 +624,77 @@ function renderSettingsPage() {
     </div>`;
 }
 
-function exportData() {
+async function exportData() {
   const data = {
-    exported: new Date().toISOString(),
+    app: 'LibriQ',
     version: LIBRIQ.VERSION,
-    books: Storage.getBooks(),
-    profile: Storage.getProfile(),
-    goals: Storage.getGoals(),
+    exportedAt: new Date().toISOString(),
+    data: {
+      books: Storage.getBooks(),
+      profile: Storage.getProfile(),
+      goals: Storage.getGoals(),
+      streak: Storage.getStreak(),
+    },
   };
+
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = 'libriq-export.json';
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `libriq-backup-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
   Utils.toast('Library exported', 'success');
+}
+
+function promptImportData() {
+  document.getElementById('importLibraryInput')?.click();
+}
+
+async function importDataFromFile(file) {
+  if (!file) return;
+
+  let parsed;
+  try {
+    parsed = JSON.parse(await file.text());
+  } catch (err) {
+    Utils.toast('That file is not valid JSON.', 'error');
+    return;
+  }
+
+  if (!parsed || parsed.app !== 'LibriQ' || !parsed.data || !Array.isArray(parsed.data.books)) {
+    Utils.toast('That file is not a valid LibriQ backup.', 'error');
+    return;
+  }
+
+  const replaceMode = confirm('OK replaces your current local library. Cancel merges the backup into your current library.');
+  const importedBooks = parsed.data.books.map(book => createBook(book));
+  const mergedBooks = replaceMode
+    ? importedBooks
+    : _mergeBooksById(Storage.getBooks(), importedBooks);
+
+  Storage.saveBooks(mergedBooks);
+
+  if (parsed.data.profile && typeof parsed.data.profile === 'object') {
+    Storage.saveProfile(parsed.data.profile);
+  }
+  if (parsed.data.goals && typeof parsed.data.goals === 'object') {
+    Storage.saveGoals(parsed.data.goals);
+  }
+  if (parsed.data.streak && typeof parsed.data.streak === 'object') {
+    localStorage.setItem('libriq_streak', JSON.stringify(parsed.data.streak));
+  }
+
+  Utils.toast(replaceMode ? 'Library replaced from backup' : 'Library merged from backup', 'success');
+  updateBadges();
+  renderCurrentPage();
+}
+
+function _mergeBooksById(currentBooks, importedBooks) {
+  const byId = new Map();
+  currentBooks.forEach(book => byId.set(book.id, book));
+  importedBooks.forEach(book => byId.set(book.id, book));
+  return Array.from(byId.values());
 }
 
 function clearAllData() {
