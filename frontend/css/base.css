@@ -211,10 +211,21 @@ kbd {
   }
 
   .mobile-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
     font-family: var(--font-display);
     font-weight: var(--weight-semi);
     font-size: var(--text-lg);
     color: var(--text-primary);
+  }
+
+  .mobile-logo-icon {
+    width: 22px;
+    height: 22px;
+    display: block;
+    object-fit: contain;
+    flex-shrink: 0;
   }
 
   .page {
