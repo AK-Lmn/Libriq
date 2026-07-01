@@ -1,10 +1,10 @@
 # LibriQ
 
-**LibriQ** is a personal book-tracking web app designed to help readers organize their library, track reading progress, rate books, save favorites, refresh book metadata, and view reading statistics in one calm and focused workspace.
+**LibriQ** is a personal book-tracking web app designed to help readers organize their library, track reading progress, rate books, save favorites, write private notes, refresh book metadata, and view reading statistics in one calm and focused workspace.
 
 The app is built with **HTML, CSS, and Vanilla JavaScript**, with book data powered by **Open Library** and **Google Books**.
 
-LibriQ is currently focused on being a polished local-first reading tracker. Saved library data is stored in the browser using `localStorage`.
+LibriQ is currently focused on being a polished local-first reading tracker. Saved library data, reading progress, ratings, favorites, and private notes are stored in the browser using `localStorage`.
 
 ---
 
@@ -21,6 +21,7 @@ With LibriQ, users can:
 * Mark books as finished
 * Favorite and unfavorite books
 * Rate books
+* Write private notes for each saved book
 * View detailed book information
 * Refresh missing book metadata
 * View reading statistics and progress summaries
@@ -70,13 +71,14 @@ Each saved book can include:
 * Progress percentage
 * Favorite state
 * Rating
+* Private notes
 * Description or synopsis when available
 
 ---
 
 ### Book Details
 
-Each saved book has a detailed view for managing reading progress and metadata.
+Each saved book has a detailed view for managing reading progress, personal notes, and metadata.
 
 The Book Details view includes:
 
@@ -87,6 +89,9 @@ The Book Details view includes:
 * Reading progress section
 * Current page tracking
 * Mark finished action
+* Private Notes section
+* Save and clear note actions
+* Last updated timestamp for notes
 * Favorite/unfavorite action
 * Remove book action
 * “About this book” section
@@ -96,7 +101,23 @@ If a book does not have a synopsis from the available sources, LibriQ shows:
 
 > No description available yet.
 
-The metadata refresh action can attempt to fill missing details such as synopsis, publisher, page count, cover, language, and genres without overwriting personal reading data like progress, status, rating, or favorite state.
+The metadata refresh action can attempt to fill missing details such as synopsis, publisher, page count, cover, language, and genres without overwriting personal reading data like progress, status, rating, favorite state, or private notes.
+
+---
+
+### Private Notes
+
+LibriQ includes local-only private notes for saved books.
+
+Users can:
+
+* Write personal thoughts for each book
+* Save notes from the Book Details modal
+* Edit existing notes
+* Clear saved notes
+* See when a note was last updated
+
+Private notes are stored locally in the browser using `localStorage`. They are not public, not synced to an account, and not sent to a backend.
 
 ---
 
@@ -197,7 +218,7 @@ It uses:
 * **Google Books API** for additional book metadata
 * **localStorage** for saving the user’s personal library
 
-Because the app stores data locally, saved books and progress are tied to the browser being used.
+Because the app stores data locally, saved books, notes, ratings, and progress are tied to the browser being used.
 
 ---
 
@@ -214,6 +235,8 @@ LibriQ can save the following information for each book:
 * Reading status
 * Favorite state
 * Rating
+* Private notes
+* Notes last updated date
 * Description
 * Genres
 * Publisher
@@ -223,7 +246,7 @@ LibriQ can save the following information for each book:
 * Date started
 * Date finished
 
-This allows the app to preserve reading progress and personal book state between sessions.
+This allows the app to preserve reading progress, ratings, private notes, and personal book state between sessions.
 
 ---
 
@@ -248,7 +271,52 @@ LibriQ/
 
 LibriQ is still in active development.
 
-The current version focuses on improving the core reading tracker experience, including library management, book search, reading progress, book details, ratings, metadata, statistics, and responsive design.
+The current version focuses on improving the core local-first reading tracker experience, including library management, book search, reading progress, book details, ratings, private notes, metadata, statistics, and responsive design.
+
+---
+
+## Patch Notes
+
+This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
+
+### v2.1.0 — Private Notes
+
+**Added**
+
+* Private, local-only notes for each saved book
+* Notes textarea inside the Book Details modal
+* Save Note and Clear Note actions
+* Last updated timestamp for saved notes
+* `notes` and `notesUpdatedAt` fields in saved book data
+
+**Changed**
+
+* Book Details now supports personal reading thoughts without requiring a backend or account system
+* Metadata refresh preserves private notes together with existing personal reading data
+
+**Notes**
+
+* Notes are stored through `localStorage` and remain private to the current browser/device
+* This update moves LibriQ closer to a personal reading journal while keeping the app local-first
+
+### v2.0.0 — Core Reading Tracker Update
+
+**Added / Improved**
+
+* Updated LibriQ branding
+* Book search using Open Library and Google Books
+* Merged and deduplicated search results
+* Personal library with status filters
+* Book Details modal with rating, progress, favorite, remove, and metadata refresh actions
+* Statistics page with reading summaries
+* Responsive desktop and mobile design
+* Light and dark theme support
+* Deployment cleanup for Vercel
+* README rewritten as a project overview and guide
+
+**Notes**
+
+* This version established LibriQ as a stable local-first personal book tracker and the foundation for future product updates
 
 ---
 
@@ -256,16 +324,21 @@ The current version focuses on improving the core reading tracker experience, in
 
 Future improvements may include:
 
+* Manual book entry for books not found in external APIs
+* Short descriptions in search results
 * Import and export library data
 * Saved library search and sorting
+* Advanced search and filtering
 * Better metadata matching
-* Personal notes or reviews
 * Reading activity history
 * Activity heatmap
 * Better mobile navigation
+* Local recommendations based on saved library data
 * PWA support
 * Optional backend and cloud sync
 * User profiles and social reading features
+
+Backend, accounts, cloud sync, and social features are intentionally treated as later-stage improvements because they require more careful planning around authentication, privacy, data storage, and user security.
 
 ---
 
@@ -274,3 +347,5 @@ Future improvements may include:
 Some books may not show a full description because not all book data sources provide synopsis data for every result. When a description is unavailable, LibriQ displays a safe fallback instead of generating or inventing one.
 
 Some external cover images may also fail to load if blocked by browser extensions or if the source does not provide a valid image.
+
+Since LibriQ currently stores data locally, clearing browser data or using a different browser/device may remove or hide saved library data. Future import/export or cloud sync features may help with backups later.
