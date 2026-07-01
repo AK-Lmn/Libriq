@@ -7,31 +7,45 @@ const Library = (() => {
 
   // ── Add Book Modal ────────────────────────
 
-  function showAddModal(bookData) {
+  function showAddModal(bookData, options = {}) {
+    const isManual = options.manual === true;
     const modal    = document.getElementById('addBookModal');
     const body     = document.getElementById('addBookBody');
     const closeBtn = document.getElementById('closeAddBook');
     const header   = modal.querySelector('.modal-title');
 
     // Always reset — showProgressModal changes this to 'Update Progress'
-    if (header) header.textContent = 'Add to Library';
+    if (header) header.textContent = isManual ? 'Manual Entry' : 'Add to Library';
 
-    body.innerHTML = buildAddForm(bookData);
+    body.innerHTML = isManual ? buildManualForm(bookData) : buildAddForm(bookData);
     Utils.show(modal);
 
     // Status selection
-    body.querySelectorAll('.status-option').forEach(btn => {
-      btn.addEventListener('click', () => {
-        body.querySelectorAll('.status-option').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        btn.querySelector('input').checked = true;
+    if (isManual) {
+      const statusSelect = body.querySelector('#manualStatusInput');
+      const currentPageGroup = body.querySelector('#manualCurrentPageGroup');
+      const ratingGroup = body.querySelector('#manualRatingGroup');
+      const syncManualFields = () => {
+        const status = statusSelect?.value;
+        if (currentPageGroup) currentPageGroup.style.display = status === LIBRIQ.STATUS.READING ? 'flex' : 'none';
+        if (ratingGroup) ratingGroup.style.display = status === LIBRIQ.STATUS.FINISHED ? 'flex' : 'none';
+      };
+      statusSelect?.addEventListener('change', syncManualFields);
+      syncManualFields();
+    } else {
+      body.querySelectorAll('.status-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          body.querySelectorAll('.status-option').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          btn.querySelector('input').checked = true;
+        });
       });
-    });
+    }
 
     // Form submit
     body.querySelector('#addBookForm').addEventListener('submit', (e) => {
       e.preventDefault();
-      submitAddBook(e.target, bookData);
+      isManual ? submitManualBook(e.target) : submitAddBook(e.target, bookData);
     });
 
     closeBtn.onclick = closeAddModal;
@@ -138,6 +152,13 @@ const Library = (() => {
     });
   }
 
+  function _setManualFormRating(value) {
+    document.getElementById('manualRatingInput').value = value;
+    document.querySelectorAll('#manualBookStars .star').forEach((star, i) => {
+      star.classList.toggle('filled', i < value);
+    });
+  }
+
   function submitAddBook(form, bookData) {
     const formData = new FormData(form);
     const status   = formData.get('status');
@@ -227,6 +248,99 @@ const Library = (() => {
     }
   }
 
+  function buildManualForm(book = {}) {
+    const selectedStatus = book.status || LIBRIQ.STATUS.WISHLIST;
+    const selectedGenres = Array.isArray(book.genres) ? book.genres.join(', ') : '';
+
+    return `
+      <div class="book-details-notes">
+        <h3 class="book-details-section-title">Manual Entry</h3>
+        <p class="text-sm text-tertiary" style="margin: 0;">
+          Add a book by hand when it is missing from Open Library or Google Books.
+        </p>
+      </div>
+
+      <form id="addBookForm" class="add-book-form">
+        <div class="form-group">
+          <label class="form-label" for="manualTitleInput">Title <span style="color: var(--color-danger);">*</span></label>
+          <input type="text" id="manualTitleInput" name="title" class="form-input" value="${Utils.sanitize(book.title || '')}" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="manualAuthorInput">Author <span style="color: var(--color-danger);">*</span></label>
+          <input type="text" id="manualAuthorInput" name="author" class="form-input" value="${Utils.sanitize(book.author || '')}" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="manualCoverInput">Cover image URL <span class="text-tertiary">(optional)</span></label>
+          <input type="url" id="manualCoverInput" name="coverUrl" class="form-input" value="${Utils.sanitize(book.coverUrl || '')}" placeholder="https://..." />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="manualPageCountInput">Page count <span class="text-tertiary">(optional)</span></label>
+          <input type="number" id="manualPageCountInput" name="pageCount" class="form-input" value="${book.pageCount || ''}" min="1" step="1" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="manualGenreInput">Genre/category <span class="text-tertiary">(optional)</span></label>
+          <input type="text" id="manualGenreInput" name="genres" class="form-input" value="${Utils.sanitize(selectedGenres)}" placeholder="e.g. Fantasy, Memoir" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="manualDescriptionInput">Description/synopsis <span class="text-tertiary">(optional)</span></label>
+          <textarea id="manualDescriptionInput" name="description" class="form-input" rows="4" placeholder="Short description or synopsis...">${Utils.sanitize(book.description || '')}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="manualYearInput">Published year <span class="text-tertiary">(optional)</span></label>
+          <input type="number" id="manualYearInput" name="publishYear" class="form-input" value="${book.publishYear || ''}" min="0" step="1" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="manualPublisherInput">Publisher <span class="text-tertiary">(optional)</span></label>
+          <input type="text" id="manualPublisherInput" name="publisher" class="form-input" value="${Utils.sanitize(book.publisher || '')}" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="manualLanguageInput">Language <span class="text-tertiary">(optional)</span></label>
+          <input type="text" id="manualLanguageInput" name="language" class="form-input" value="${Utils.sanitize(book.language || '')}" placeholder="English" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="manualStatusInput">Reading status</label>
+          <select id="manualStatusInput" name="status" class="form-input">
+            <option value="${LIBRIQ.STATUS.WISHLIST}" ${selectedStatus === LIBRIQ.STATUS.WISHLIST ? 'selected' : ''}>Want to Read</option>
+            <option value="${LIBRIQ.STATUS.READING}" ${selectedStatus === LIBRIQ.STATUS.READING ? 'selected' : ''}>Reading</option>
+            <option value="${LIBRIQ.STATUS.FINISHED}" ${selectedStatus === LIBRIQ.STATUS.FINISHED ? 'selected' : ''}>Finished</option>
+            <option value="${LIBRIQ.STATUS.DNF}" ${selectedStatus === LIBRIQ.STATUS.DNF ? 'selected' : ''}>Did Not Finish</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="manualCurrentPageGroup" style="display:${selectedStatus === LIBRIQ.STATUS.READING ? 'flex' : 'none'}">
+          <label class="form-label" for="manualCurrentPageInput">Current page <span class="text-tertiary">(optional)</span></label>
+          <input type="number" id="manualCurrentPageInput" name="currentPage" class="form-input" value="${book.currentPage || 0}" min="0" step="1" />
+        </div>
+
+        <div class="form-group" id="manualRatingGroup" style="display:${selectedStatus === LIBRIQ.STATUS.FINISHED ? 'flex' : 'none'}">
+          <label class="form-label">Your rating</label>
+          <div class="star-rating star-lg" id="manualBookStars">
+            ${[1,2,3,4,5].map(n =>
+              `<span class="star" data-value="${n}" onclick="Library._setManualFormRating(${n})">★</span>`
+            ).join('')}
+          </div>
+          <input type="hidden" name="rating" id="manualRatingInput" value="${book.rating || ''}">
+        </div>
+
+        <div class="modal-footer" style="padding: 0; border: none; margin-top: var(--space-2);">
+          <button type="button" class="btn btn-ghost" onclick="Library.closeAddModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="ph ph-plus"></i>
+            Save Manual Book
+          </button>
+        </div>
+      </form>`;
+  }
+
   // ── Favorite ──────────────────────────────
 
   function toggleFavorite(bookId) {
@@ -242,6 +356,71 @@ const Library = (() => {
     if (!confirm(`Remove "${title}" from your library?`)) return;
     Storage.removeBook(bookId);
     Utils.toast(`"${title}" removed`, 'info');
+    Navigation.updateBadges();
+    Navigation.renderCurrentPage();
+  }
+
+  function submitManualBook(form) {
+    const formData = new FormData(form);
+    const title = (formData.get('title') || '').trim();
+    const author = (formData.get('author') || '').trim();
+    if (!title || !author) {
+      Utils.toast('Title and author are required', 'error');
+      return;
+    }
+
+    const rawPageCount = (formData.get('pageCount') || '').toString().trim();
+    const rawCurrentPage = (formData.get('currentPage') || '').toString().trim();
+    const pageCount = rawPageCount ? parseInt(rawPageCount, 10) : 0;
+    const currentPage = rawCurrentPage ? parseInt(rawCurrentPage, 10) : 0;
+    if (rawPageCount && (!Number.isInteger(pageCount) || pageCount < 1)) {
+      Utils.toast('Page count must be a positive number', 'error');
+      return;
+    }
+    if (rawCurrentPage && (!Number.isInteger(currentPage) || currentPage < 0)) {
+      Utils.toast('Current page must be zero or greater', 'error');
+      return;
+    }
+    if (pageCount && currentPage > pageCount) {
+      Utils.toast('Current page cannot exceed page count', 'error');
+      return;
+    }
+
+    const genres = (formData.get('genres') || '')
+      .split(',')
+      .map(g => g.trim())
+      .filter(Boolean);
+    const status = formData.get('status') || LIBRIQ.STATUS.WISHLIST;
+    const ratingValue = parseInt(formData.get('rating'), 10);
+    const rating = Number.isInteger(ratingValue) && ratingValue > 0 ? ratingValue : null;
+    const dateAdded = new Date().toISOString();
+
+    const book = Storage.addBook({
+      id: `manual_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      source: 'manual',
+      title,
+      author,
+      coverUrl: (formData.get('coverUrl') || '').trim() || null,
+      pageCount,
+      publishYear: parseInt(formData.get('publishYear'), 10) || null,
+      publisher: (formData.get('publisher') || '').trim() || null,
+      description: (formData.get('description') || '').trim() || null,
+      genres,
+      language: (formData.get('language') || '').trim() || 'English',
+      status,
+      currentPage: status === LIBRIQ.STATUS.READING ? currentPage : 0,
+      rating: status === LIBRIQ.STATUS.FINISHED ? rating : null,
+      isFavorite: false,
+      notes: '',
+      notesUpdatedAt: null,
+      dateAdded,
+      dateStarted: status !== LIBRIQ.STATUS.WISHLIST ? dateAdded : null,
+      dateFinished: status === LIBRIQ.STATUS.FINISHED ? dateAdded : null,
+      tags: [],
+    });
+
+    closeAddModal();
+    Utils.toast(`"${book.title}" added to your library`, 'success');
     Navigation.updateBadges();
     Navigation.renderCurrentPage();
   }
@@ -755,6 +934,6 @@ const Library = (() => {
     toggleFavorite, removeBook,
     renderBookCard, showProgressModal,
     showDetailsModal, closeDetailsModal, refreshMetadata,
-    _setFormRating,
+    _setFormRating, _setManualFormRating,
   };
 })();

@@ -233,6 +233,7 @@
   padding: var(--space-3) var(--space-5);
   border-top: 1px solid var(--border-subtle);
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .search-footer span {
@@ -241,6 +242,21 @@
   gap: var(--space-1);
   font-size: var(--text-xs);
   color: var(--text-tertiary);
+}
+
+.search-footer-action {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gold-10);
+  background: var(--gold-06);
+  color: var(--gold-strong);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semi);
 }
 
 /* ── Add Book Modal ───────────────────────── */
@@ -353,6 +369,12 @@
   .modal-overlay.search-overlay {
     align-items: flex-start;
     padding-top: var(--space-4);
+  }
+
+  .search-footer-action {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
   }
 }
 
