@@ -6,6 +6,8 @@ The app is built with **HTML, CSS, and Vanilla JavaScript**, with book data powe
 
 LibriQ is currently focused on being a polished local-first reading tracker. Saved library data, reading progress, ratings, favorites, and private notes are stored in the browser using `localStorage`.
 
+LibriQ also uses basic Google Analytics page-view tracking for anonymous traffic measurement only.
+
 ---
 
 ## Overview
