@@ -450,6 +450,23 @@ The current version focuses on improving the core local-first reading tracker ex
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
 
+### v2.13.0 - Metadata Cleanup Tools
+
+**Added**
+
+* Needs Metadata view for spotting books with incomplete metadata
+* Lightweight metadata quality indicators on saved books
+* Easier access to the existing Refresh Metadata action for cleanup
+
+**Changed**
+
+* Metadata gaps are now easier to review without changing saved reading data
+
+**Notes**
+
+* Refresh remains user-triggered and does not mass-update the library
+* Manual books and API-added books both remain supported
+
 ### v2.12.0 - Project Showcase & Screenshots
 
 **Added**
