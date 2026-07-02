@@ -9,6 +9,7 @@ const OpenLibraryAPI = (() => {
   const BASE_SEARCH = 'https://openlibrary.org/search.json';
   const BASE_ISBN   = 'https://openlibrary.org/isbn';
   const TIMEOUT_MS  = 8000;
+  let _lastFetchFailed = false;
 
   // Fields requested from the search endpoint.
   // Kept explicit to avoid OL's 2025 default-field restrictions.
@@ -30,6 +31,7 @@ const OpenLibraryAPI = (() => {
    */
   async function search(query) {
     if (!query || query.trim().length < 3) return [];
+    _lastFetchFailed = false;
 
     const params = new URLSearchParams({
       q:      query.trim(),
@@ -46,6 +48,7 @@ const OpenLibraryAPI = (() => {
         .filter(Boolean); // remove nulls (docs with no title)
     } catch (err) {
       console.warn('[Libriq/OL] Search failed:', err.message);
+      _lastFetchFailed = _isNetworkFailure(err);
       return [];
     }
   }
@@ -84,6 +87,7 @@ const OpenLibraryAPI = (() => {
       return NormalizeBook.fromOpenLibrary(doc);
     } catch (err) {
       console.warn('[Libriq/OL] ISBN lookup failed:', err.message);
+      _lastFetchFailed = _isNetworkFailure(err);
       return null;
     }
   }
@@ -114,6 +118,19 @@ const OpenLibraryAPI = (() => {
     return requestUrl.toString();
   }
 
-  return { search, lookupISBN };
+  function _isNetworkFailure(err) {
+    const message = String(err?.message || '').toLowerCase();
+    return err?.name === 'AbortError'
+      || err?.name === 'TypeError'
+      || message.includes('failed to fetch')
+      || message.includes('networkerror')
+      || message.includes('network error');
+  }
+
+  return {
+    search,
+    lookupISBN,
+    hadNetworkFailure: () => _lastFetchFailed,
+  };
 
 })();
