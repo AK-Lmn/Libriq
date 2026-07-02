@@ -347,14 +347,21 @@
   <script src="js/utils.js"></script>
   <!-- Optional local/deploy-time config. Safe to leave absent in the repo. -->
   <script>
-    (async () => {
-      try {
-        const res = await fetch('js/config.local.js', { cache: 'no-store' });
-        if (!res.ok) return;
-        const code = await res.text();
+    (() => {
+      const request = new XMLHttpRequest();
+      request.open('GET', 'js/config.local.js', true);
+      request.onreadystatechange = () => {
+        if (request.readyState !== 4) return;
+        if (request.status !== 200 || !request.responseText) return;
         const script = document.createElement('script');
-        script.textContent = code;
+        script.text = request.responseText;
         document.head.appendChild(script);
+      };
+      request.onerror = () => {
+        // Missing config is expected; Google Books falls back gracefully.
+      };
+      try {
+        request.send();
       } catch (err) {
         // Missing config is expected; Google Books falls back gracefully.
       }

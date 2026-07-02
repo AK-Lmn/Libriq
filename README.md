@@ -448,9 +448,9 @@ The current version focuses on improving the core local-first reading tracker ex
 
 ## Local Setup Notes
 
-LibriQ can use Google Books without an API key, but you can provide one locally if you want keyed quota.
+LibriQ searches public book sources like Open Library and Google Books. Normal users do not need to configure anything.
 
-To configure a key without committing it:
+If a deployment owner or developer wants to add a restricted Google Books key for their own hosted build:
 
 * Copy `frontend/js/config.local.example.js` to `frontend/js/config.local.js`
 * Set `window.LibriqConfig.googleBooksApiKey` in that local file
@@ -465,6 +465,23 @@ If no key is provided, Google Books search still runs with the public endpoint a
 ## Patch Notes
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
+
+### v2.14.0 - Search & Privacy Transparency
+
+**Added**
+
+* Search source status in Settings for Open Library and Google Books
+* Google Books key status in Settings showing only configured or not configured
+* Privacy and local data notes in Settings
+
+**Changed**
+
+* Settings now makes it clear that normal users do not need to configure anything
+
+**Notes**
+
+* This update does not change search behavior, storage behavior, or local data handling
+* The app still falls back to Open Library when Google Books is rate-limited or unavailable
 
 ### v2.13.0 - Metadata Cleanup Tools
 
