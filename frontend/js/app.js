@@ -10,13 +10,13 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: 'What’s New in LibriQ v2.14.0',
+      title: 'What’s New in LibriQ v2.15.0',
       subtitle: 'A quick look at the latest local-first improvements.',
       sections: [
-        ['Search & Privacy Transparency', 'Settings now shows where public search sources come from and how local data stays on-device.'],
-        ['No Setup Needed', 'Normal users do not need to configure a key or change anything to keep using search.'],
-        ['Config Status', 'The app only shows whether a Google Books key is configured, never the key itself.'],
-        ['No Data Changes', 'This update does not change user data or localStorage behavior.'],
+        ['Empty New-User Library', 'New users now start with a real empty library instead of seeded sample books.'],
+        ['Gentler First Run', 'Empty states now guide people toward search, manual entry, and backup import.'],
+        ['Cache Refresh', 'The service worker cache version was updated for the current release.'],
+        ['Privacy Unchanged', 'Analytics remain basic page-view only, and private data handling is unchanged.'],
       ],
       note: 'Your library stays local on your device. No accounts or cloud sync have been added.',
     },
@@ -96,6 +96,8 @@
     if (_booted) return;
     _booted = true;
 
+    // Privacy guard: never send book titles, authors, ISBNs, notes, search terms,
+    // reading progress, or private library data to analytics.
     Storage.bootstrap();
 
     resetShellUI();

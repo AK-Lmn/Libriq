@@ -344,7 +344,7 @@ function buildLibraryEmpty(filter = 'all', query = '') {
   };
   const hasQuery = !!query;
   const [title, body] = hasQuery
-    ? ['No books match your search.', 'Try a different keyword or clear the search to see everything again.']
+    ? ['No books match your search.', 'Try a different keyword, add a book manually, or clear the search to see everything again.']
     : (messages[filter] || messages.all);
   return `
     <div class="empty-state" style="grid-column: 1/-1;">
@@ -354,7 +354,14 @@ function buildLibraryEmpty(filter = 'all', query = '') {
       ${hasQuery ? `<button class="btn btn-secondary" onclick="Navigation.clearLibrarySearch()"><i class="ph ph-x"></i> Clear Search</button>` : `
         <button class="btn btn-primary" onclick="Search.open()">
           <i class="ph ph-magnifying-glass"></i> Search Books
-        </button>`}
+        </button>
+        <button class="btn btn-secondary" onclick="Search.openManualEntry()">
+          <i class="ph ph-pencil"></i> Add Manually
+        </button>
+        <button class="btn btn-secondary" onclick="Navigation.promptImportData()">
+          <i class="ph ph-upload-simple"></i> Import Backup
+        </button>
+      `}
     </div>`;
 }
 

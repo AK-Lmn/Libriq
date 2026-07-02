@@ -484,6 +484,24 @@ Suggested Vercel settings:
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
 
+### v2.15.0 - Empty-First Setup Polish
+
+**Added**
+
+* Empty first-run library experience for new users instead of auto-seeded sample books
+* Clearer empty-state guidance for search, manual entry, and backup import
+* Updated service worker cache version for the current release
+
+**Changed**
+
+* New users now begin with a real empty local library while existing users keep all stored data
+* Dashboard and library empty states now better guide first-run setup without adding accounts or cloud sync
+
+**Notes**
+
+* Analytics behavior is unchanged and remains basic page-view tracking only
+* Private data handling remains local-first and unchanged
+
 ### v2.14.0 - Search & Privacy Transparency
 
 **Added**
