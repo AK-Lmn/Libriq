@@ -4,6 +4,7 @@
   "version": "2.14.0",
   "type": "module",
   "scripts": {
+    "build": "node scripts/generate-config.mjs",
     "screenshots": "node scripts/screenshots.mjs"
   },
   "devDependencies": {

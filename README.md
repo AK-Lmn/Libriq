@@ -452,13 +452,29 @@ LibriQ searches public book sources like Open Library and Google Books. Normal u
 
 If a deployment owner or developer wants to add a restricted Google Books key for their own hosted build:
 
+* `frontend/js/config.js` is the committed safe baseline
 * Copy `frontend/js/config.local.example.js` to `frontend/js/config.local.js`
 * Set `window.LibriqConfig.googleBooksApiKey` in that local file
 * Or inject the same config object at deploy time as `window.LibriqConfig`
 
 The committed repo keeps only the safe example file, and `frontend/js/config.local.js` is ignored by git.
 
+If you prefer to test with a local override during development, you can manually add a `config.local.js` script tag in your local copy of `frontend/index.html`. The committed app does not request it automatically.
+
 If no key is provided, Google Books search still runs with the public endpoint and the app falls back to Open Library results when needed.
+
+### Vercel Deployment
+
+For Vercel deployments, set `GOOGLE_BOOKS_API_KEY` in Project Settings > Environment Variables with a restricted Google Books API key.
+
+LibriQ's build step generates `frontend/js/config.js` from that environment variable during deployment.
+
+After adding or updating the variable, redeploy the project so the generated config is refreshed.
+
+Suggested Vercel settings:
+
+* Build Command: `npm run build`
+* Output Directory: `frontend`
 
 ---
 
