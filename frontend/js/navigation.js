@@ -6,8 +6,6 @@
 const Navigation = (() => {
   let _currentPage = 'dashboard';
 
-  // ── Page registry ─────────────────────────
-  // Each page must export a render() function
   const pages = {
     dashboard: () => Dashboard.render(),
     library:   () => renderLibraryPage(),
@@ -24,33 +22,25 @@ const Navigation = (() => {
     settings:  () => renderSettingsPage(),
   };
 
-  // ── Go to page ────────────────────────────
-
   function goTo(page) {
     if (!pages[page]) return;
     _currentPage = page;
 
-    // Update nav active state
     Utils.$$('.nav-item').forEach(el => {
       el.classList.toggle('active', el.dataset.page === page);
       el.setAttribute('aria-current', el.dataset.page === page ? 'page' : 'false');
     });
 
-    // Close mobile sidebar
     closeMobileSidebar();
 
-    // Render the page
     pages[page]();
 
-    // Scroll to top
     document.getElementById('mainContent').scrollTop = 0;
   }
 
   function renderCurrentPage() {
     if (pages[_currentPage]) pages[_currentPage]();
   }
-
-  // ── Sidebar ───────────────────────────────
 
   function openMobileSidebar() {
     const sidebar  = document.getElementById('sidebar');
@@ -68,8 +58,6 @@ const Navigation = (() => {
     document.body.style.overflow = '';
   }
 
-  // ── Badges ────────────────────────────────
-
   function updateBadges() {
     const stats = Storage.getStats();
     const map = {
@@ -83,18 +71,11 @@ const Navigation = (() => {
       if (el) el.textContent = count;
     });
 
-    // Streak
     const streak = Storage.getStreak();
     const streakEl = document.getElementById('streakCount');
     if (streakEl) streakEl.textContent = streak.current;
   }
 
-  // ── Theme ─────────────────────────────────
-
-  // applyTheme() is the single function that reads
-  // the saved theme and updates the DOM. Called on
-  // init AND after a data reset so the toggle always
-  // reflects the current profile state.
   function applyTheme() {
     const profile  = Storage.getProfile();
     const theme    = (profile && profile.theme) ? profile.theme : 'dark';
@@ -117,19 +98,14 @@ const Navigation = (() => {
     if (label) label.textContent = theme === 'dark' ? 'Dark mode' : 'Light mode';
   }
 
-  // ── Init ─────────────────────────────────
-
   function init() {
-    // Nav item clicks
     Utils.$$('.nav-item').forEach(btn => {
       btn.addEventListener('click', () => goTo(btn.dataset.page));
     });
 
-    // Mobile sidebar
     document.getElementById('mobileMenuBtn')?.addEventListener('click', openMobileSidebar);
     document.getElementById('sidebarOverlay')?.addEventListener('click', closeMobileSidebar);
 
-    // Theme toggle
     document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
 
     applyTheme();
@@ -147,14 +123,6 @@ Navigation.exportData = exportData;
 Navigation.promptImportData = promptImportData;
 Navigation.importDataFromFile = importDataFromFile;
 Navigation.clearAllData = clearAllData;
-
-/* ============================================
-   PAGE RENDERERS
-   Inline here for now — can be split into
-   separate page files as the app grows
-   ============================================ */
-
-// ── Library Page (all books) ─────────────────
 
 function renderLibraryPage() {
   const main  = document.getElementById('mainContent');
@@ -212,7 +180,6 @@ function renderLibraryPage() {
         </div>
       </div>
 
-      <!-- Filters -->
       <div class="chip-group library-filters" id="libraryFilters">
         <button class="chip active" data-filter="all">All <span>${counts.all}</span></button>
         <button class="chip" data-filter="reading">Reading <span>${counts.reading}</span></button>
@@ -391,8 +358,6 @@ function buildLibraryEmpty(filter = 'all', query = '') {
     </div>`;
 }
 
-// ── Status Pages ─────────────────────────────
-
 function renderStatusPage(status, title, iconClass) {
   const main  = document.getElementById('mainContent');
   const books = Storage.getBooksByStatus(status);
@@ -419,8 +384,6 @@ function renderStatusPage(status, title, iconClass) {
   }
 }
 
-// ── Favorites ─────────────────────────────────
-
 function renderFavoritesPage() {
   const main  = document.getElementById('mainContent');
   const books = Storage.getBooks().filter(b => b.isFavorite);
@@ -446,8 +409,6 @@ function renderFavoritesPage() {
     books.forEach(b => grid.appendChild(Library.renderBookCard(b)));
   }
 }
-
-// ── Stats Page ────────────────────────────────
 
 function renderStatsPage() {
   const main  = document.getElementById('mainContent');
@@ -1279,11 +1240,6 @@ function _mergeActivityById(currentEvents, importedEvents) {
 function clearAllData() {
   if (!confirm('This will delete all your books and settings. Are you sure?')) return;
 
-  // Storage.resetAll() removes all Libriq keys then immediately
-  // re-runs bootstrap() so every key exists with valid defaults.
-  // The libriq:reset event (dispatched inside resetAll) is caught
-  // in app.js, which re-applies the theme and navigates to dashboard.
-  // No page reload needed — the app returns to a fully valid state.
   Storage.resetAll();
   Utils.toast('Library cleared. Starting fresh.', 'info');
 }

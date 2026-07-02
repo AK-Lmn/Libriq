@@ -5,18 +5,10 @@
    ============================================ */
 
 const Storage = (() => {
-  // ── Key registry ─────────────────────────
-  //
-  // Two distinct tiers:
-  //
   // INSTALL_KEY  — written once on first launch, never cleared.
-  //                Survives resetAll(). Proves the app has been
-  //                installed before, so we know not to re-seed.
-  //
   // DATA_KEYS    — everything the user can clear. resetAll()
   //                removes only these keys, then re-runs
   //                _writeDefaults() to restore valid empty state.
-  //
   const INSTALL_KEY = 'libriq_installed';
 
   const DATA_KEYS = {
@@ -27,10 +19,6 @@ const Storage = (() => {
     ACTIVITY:'libriq_activity',
   };
 
-  // ── Default values ───────────────────────
-  // Single source of truth. Used by bootstrap()
-  // and every individual getter as a fallback.
-
   const DEFAULTS = {
     profile: () => createProfile({ name: 'Reader', theme: 'dark' }),
     goals:   () => ({ yearly: 12, year: new Date().getFullYear() }),
@@ -38,8 +26,6 @@ const Storage = (() => {
     books:   () => [],
     activity: () => [],
   };
-
-  // ── Internal helpers ─────────────────────
 
   function _read(key) {
     try {
@@ -61,34 +47,24 @@ const Storage = (() => {
     }
   }
 
-  // ── Write defaults ────────────────────────
-  // Ensures every data key holds a valid value.
-  // Called by both bootstrap() and resetAll().
-  // Never touches INSTALL_KEY.
-
   function _writeDefaults() {
-    // Profile — merge so existing fields survive a partial corruption
     const rawProfile = _read(DATA_KEYS.PROFILE);
     if (!rawProfile || typeof rawProfile !== 'object' || !rawProfile.name) {
       _write(DATA_KEYS.PROFILE, DEFAULTS.profile());
     } else {
-      // Forward-compat: fill in any new fields added in future versions
       _write(DATA_KEYS.PROFILE, { ...DEFAULTS.profile(), ...rawProfile });
     }
 
-    // Goals
     const rawGoals = _read(DATA_KEYS.GOALS);
     if (!rawGoals || typeof rawGoals.yearly !== 'number') {
       _write(DATA_KEYS.GOALS, DEFAULTS.goals());
     }
 
-    // Streak
     const rawStreak = _read(DATA_KEYS.STREAK);
     if (!rawStreak || typeof rawStreak.current !== 'number') {
       _write(DATA_KEYS.STREAK, DEFAULTS.streak());
     }
 
-    // Books — must always be a valid array
     const rawBooks = _read(DATA_KEYS.BOOKS);
     if (!Array.isArray(rawBooks)) {
       _write(DATA_KEYS.BOOKS, DEFAULTS.books());
@@ -100,10 +76,6 @@ const Storage = (() => {
     }
   }
 
-  // ── Bootstrap ────────────────────────────
-  // Runs on every app start (called from app.js
-  // before any renderer touches storage).
-  //
   // Decision tree:
   //   INSTALL_KEY absent  → first launch ever → seed sample data, mark installed
   //   INSTALL_KEY present → returning user or post-reset → restore defaults only,
@@ -113,14 +85,10 @@ const Storage = (() => {
     const isFirstLaunch = !localStorage.getItem(INSTALL_KEY);
 
     if (isFirstLaunch) {
-      // Mark installed first — if anything below throws, we won't
-      // re-seed on the next load and show a broken half-seeded state.
       localStorage.setItem(INSTALL_KEY, new Date().toISOString());
       _writeDefaults();
       _seedSampleData();
     } else {
-      // Returning user or post-reset: only heal missing/corrupted keys.
-      // Books are intentionally left untouched (empty after Clear Data).
       _writeDefaults();
     }
   }
@@ -128,7 +96,6 @@ const Storage = (() => {
   function _seedSampleData() {
     const books = SEED_BOOKS.map(b => createBook(b));
     _write(DATA_KEYS.BOOKS, books);
-    // Warm streak so the widget isn't zero on the very first load
     _write(DATA_KEYS.STREAK, { current: 5, longest: 14, lastRead: new Date().toISOString() });
   }
 
@@ -136,7 +103,6 @@ const Storage = (() => {
 
   function getBooks() {
     const data = _read(DATA_KEYS.BOOKS);
-    // Defensive: if somehow corrupted, heal it
     if (!Array.isArray(data)) {
       _write(DATA_KEYS.BOOKS, []);
       return [];
@@ -250,15 +216,9 @@ const Storage = (() => {
     return saveActivityLog(events.slice(-500));
   }
 
-  // ── Profile ──────────────────────────────
-  // Always reads from storage (guaranteed
-  // valid after bootstrap) — never falls back
-  // to an in-memory object that won't persist.
-
   function getProfile() {
     const data = _read(DATA_KEYS.PROFILE);
     if (!data || typeof data !== 'object' || !data.name) {
-      // Heal on the fly if somehow missing
       const fresh = DEFAULTS.profile();
       _write(DATA_KEYS.PROFILE, fresh);
       return fresh;
@@ -272,8 +232,6 @@ const Storage = (() => {
     _write(DATA_KEYS.PROFILE, updated);
     return updated;
   }
-
-  // ── Goals ────────────────────────────────
 
   function getGoals() {
     const data = _read(DATA_KEYS.GOALS);
@@ -289,8 +247,6 @@ const Storage = (() => {
     if (!goals || typeof goals.yearly !== 'number' || goals.yearly < 1) return false;
     return _write(DATA_KEYS.GOALS, goals);
   }
-
-  // ── Streak ───────────────────────────────
 
   function getStreak() {
     const data = _read(DATA_KEYS.STREAK);
@@ -308,7 +264,7 @@ const Storage = (() => {
     const lastRead  = streak.lastRead ? new Date(streak.lastRead).toDateString() : null;
     const yesterday = new Date(Date.now() - 86400000).toDateString();
 
-    if (lastRead === today) return streak; // already logged today
+    if (lastRead === today) return streak;
 
     streak.current  = lastRead === yesterday ? streak.current + 1 : 1;
     streak.longest  = Math.max(streak.longest, streak.current);
@@ -317,15 +273,9 @@ const Storage = (() => {
     return streak;
   }
 
-  // ── Reset (used by Settings > Clear Data) ─
-  // Wipes all Libriq keys cleanly, re-runs
-  // bootstrap so the app is immediately valid,
-  // then navigates back to dashboard — no reload
-  // needed, no broken state possible.
-
   function resetAll() {
     Object.values(DATA_KEYS).forEach(k => localStorage.removeItem(k));
-    bootstrap(); // re-establish all defaults immediately
+    bootstrap();
     _dispatchChange('reset', {});
   }
 

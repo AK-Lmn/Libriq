@@ -5,8 +5,6 @@
 
 const Library = (() => {
 
-  // ── Add Book Modal ────────────────────────
-
   function showAddModal(bookData, options = {}) {
     const isManual = options.manual === true;
     const modal    = document.getElementById('addBookModal');
@@ -14,13 +12,11 @@ const Library = (() => {
     const closeBtn = document.getElementById('closeAddBook');
     const header   = modal.querySelector('.modal-title');
 
-    // Always reset — showProgressModal changes this to 'Update Progress'
     if (header) header.textContent = isManual ? 'Manual Entry' : 'Add to Library';
 
     body.innerHTML = isManual ? buildManualForm(bookData) : buildAddForm(bookData);
     Utils.show(modal);
 
-    // Status selection
     if (isManual) {
       const statusSelect = body.querySelector('#manualStatusInput');
       const currentPageGroup = body.querySelector('#manualCurrentPageGroup');
@@ -42,7 +38,6 @@ const Library = (() => {
       });
     }
 
-    // Form submit
     body.querySelector('#addBookForm').addEventListener('submit', (e) => {
       e.preventDefault();
       isManual ? submitManualBook(e.target) : submitAddBook(e.target, bookData);
@@ -135,7 +130,6 @@ const Library = (() => {
       </form>`;
   }
 
-  // Toggle page/rating fields based on status
   document.addEventListener('change', (e) => {
     if (!e.target.matches('input[name="status"]')) return;
     const pageGroup   = document.getElementById('pageProgressGroup');
@@ -223,7 +217,6 @@ const Library = (() => {
 
     const updates = { currentPage };
 
-    // Auto-finish if last page reached
     if (book.pageCount && currentPage >= book.pageCount) {
       updates.status = LIBRIQ.STATUS.FINISHED;
       updates.dateFinished = new Date().toISOString();
@@ -272,7 +265,6 @@ const Library = (() => {
   function setRating(bookId, rating) {
     const current = Storage.getBookById(bookId);
     if (!current) return;
-    // Click same star → clear rating
     const newRating = current.rating === rating ? null : rating;
     Storage.updateBook(bookId, { rating: newRating });
     _logActivity('rating_updated', Storage.getBookById(bookId), { rating: newRating }, current.source || 'system');
@@ -282,7 +274,6 @@ const Library = (() => {
       Library.showDetailsModal(bookId);
       return;
     }
-    // Re-render if we're on the library page
     if (Navigation.currentPage === 'library' || Navigation.currentPage === 'finished') {
       Navigation.renderCurrentPage();
     }
@@ -484,11 +475,6 @@ const Library = (() => {
     return { status: 'updated' };
   }
 
-  // ── Book Details Modal ────────────────────
-  // Opens when user clicks any book card in the library.
-  // Reuses the existing #addBookModal element under a new title
-  // so we don't need a second modal in the HTML.
-
   function showDetailsModal(bookId) {
     const book   = Storage.getBookById(bookId);
     if (!book) return;
@@ -501,7 +487,6 @@ const Library = (() => {
     const isReading = book.status === LIBRIQ.STATUS.READING;
     const hasPages  = book.pageCount > 0;
 
-    // Strip any HTML from stored descriptions (GB descriptions can contain tags)
     const description = book.description
       ? book.description.replace(/<[^>]*>/g, '')
       : null;
@@ -608,8 +593,6 @@ const Library = (() => {
     Utils.show(modal);
     document.body.style.overflow = 'hidden';
 
-    // Build action buttons with real event listeners — avoids all string-escaping
-    // issues and correctly reads live state (e.g. isFavorite after toggling).
     const actions = body.querySelector('#bookDetailsActions');
     const notesTextarea = body.querySelector('#bookNotesTextarea');
     const notesMeta = body.querySelector('#bookNotesMeta');
@@ -727,8 +710,6 @@ const Library = (() => {
     removeBtn.className = 'btn btn-ghost';
     removeBtn.innerHTML = '<i class="ph ph-trash"></i> Remove';
     removeBtn.addEventListener('click', () => {
-      // Close first only if the user confirms — removeBook calls confirm() internally.
-      // We do the confirm here so we can control modal state.
       if (!confirm(`Remove "${book.title}" from your library?`)) return;
       closeDetailsModal();
       Storage.removeBook(book.id);
@@ -803,8 +784,6 @@ const Library = (() => {
     return updates;
   }
 
-  // ── Render a full book card ───────────────
-
   function renderBookCard(book) {
     const pct     = Utils.readingProgress(book.currentPage, book.pageCount);
     const isReading = book.status === LIBRIQ.STATUS.READING;
@@ -813,7 +792,6 @@ const Library = (() => {
     card.className = 'book-card';
     card.dataset.bookId = book.id;
 
-    // Genre badges — first 2 only to keep cards compact
     const genreBadges = (book.genres || []).slice(0, 2)
       .map(g => `<span class="badge badge-genre">${Utils.sanitize(g)}</span>`)
       .join('');
@@ -847,8 +825,6 @@ const Library = (() => {
         <div class="book-card-actions"></div>
       </div>`;
 
-    // Build action buttons with addEventListener — avoids inline onclick string escaping
-    // and keeps title-with-apostrophe handling safe.
     const actions = card.querySelector('.book-card-actions');
 
     if (isReading) {
@@ -899,7 +875,6 @@ const Library = (() => {
     });
     actions.appendChild(removeBtn);
 
-    // Click the card body (not action buttons) → open details modal
     card.addEventListener('click', (e) => {
       if (!e.target.closest('.book-card-actions')) {
         Library.showDetailsModal(book.id);
@@ -908,8 +883,6 @@ const Library = (() => {
 
     return card;
   }
-
-  // ── Progress Modal ────────────────────────
 
   function showProgressModal(bookId) {
     const book = Storage.getBookById(bookId);

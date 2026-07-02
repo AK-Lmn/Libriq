@@ -26,25 +26,9 @@ const BookAPI = (() => {
     networkFailure: false,
   };
 
-  /**
-   * Search for books by any query string.
-   * Flow:
-   *   1. Check session cache
-   *   2. Query Open Library (primary)
-   *   3. Query Google Books in parallel (enrichment)
-   *   4. Merge & deduplicate
-   *   5. Cache and return
-   *
-   * If OL fails -> GB-only results returned.
-   * If GB fails -> OL-only results returned.
-   * If both fail -> empty array returned.
-   *
-   * @param {string} query
-   * @returns {Promise<Object[]>}
-   */
   async function searchBooks(query) {
     const q = (query || '').trim();
-    if (q.length < 3) return [] ;
+    if (q.length < 3) return [];
 
     _lastSearchMeta = {
       query: q,
@@ -95,13 +79,6 @@ const BookAPI = (() => {
     return results;
   }
 
-  /**
-   * Look up a single book by ISBN.
-   * Tries OL first, then GB, merges if both succeed.
-   *
-   * @param {string} isbn
-   * @returns {Promise<Object|null>}
-   */
   async function lookupISBN(isbn) {
     if (!isbn) return null;
 
@@ -124,22 +101,10 @@ const BookAPI = (() => {
     return result;
   }
 
-  /**
-   * Search Open Library only (bypass GB and merge).
-   * Exposed for testing or advanced use cases.
-   * @param {string} query
-   * @returns {Promise<Object[]>}
-   */
   async function searchOpenLibrary(query) {
     return OpenLibraryAPI.search(query);
   }
 
-  /**
-   * Search Google Books only (bypass OL and merge).
-   * Exposed for testing or advanced use cases.
-   * @param {string} query
-   * @returns {Promise<Object[]>}
-   */
   async function searchGoogleBooks(query) {
     return GoogleBooksAPI.search(query);
   }

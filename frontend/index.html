@@ -12,15 +12,12 @@
   <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png" />
   <link rel="manifest" href="./manifest.json" />
 
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-  <!-- Phosphor Icons (lightweight, beautiful) -->
   <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js" defer></script>
 
-  <!-- CSS -->
   <link rel="stylesheet" href="css/tokens.css" />
   <link rel="stylesheet" href="css/reset.css" />
   <link rel="stylesheet" href="css/base.css" />
@@ -31,12 +28,8 @@
   <link rel="stylesheet" href="css/animations.css" />
 </head>
 <body>
-  <!-- App Shell -->
   <div id="app" class="app-shell">
-
-    <!-- Sidebar Navigation -->
     <aside id="sidebar" class="sidebar" role="navigation" aria-label="Main navigation">
-      <!-- Logo -->
       <div class="sidebar-logo">
         <div class="logo-mark">
           <img class="logo-icon" src="./assets/icons/icon.svg" alt="" aria-hidden="true" />
@@ -44,14 +37,12 @@
         <span class="logo-text">LibriQ</span>
       </div>
 
-      <!-- Search trigger -->
       <button class="sidebar-search-btn" id="openSearch" aria-label="Search books">
         <i class="ph ph-magnifying-glass"></i>
         <span>Search books…</span>
         <kbd id="searchShortcutBadge">⌘K</kbd>
       </button>
 
-      <!-- Primary Nav -->
       <nav class="sidebar-nav">
         <span class="nav-section-label">Library</span>
         <ul class="nav-list" role="list">
@@ -148,7 +139,6 @@
         </ul>
       </nav>
 
-      <!-- Streak Widget -->
       <div class="sidebar-streak" id="streakWidget">
         <div class="streak-flame">🔥</div>
         <div class="streak-info">
@@ -157,14 +147,12 @@
         </div>
       </div>
 
-      <!-- Theme Toggle -->
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
         <i class="ph ph-moon" id="themeIcon"></i>
         <span id="themeLabel">Dark mode</span>
       </button>
     </aside>
 
-    <!-- Mobile Top Bar -->
     <header class="mobile-topbar">
       <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
         <i class="ph ph-list"></i>
@@ -178,17 +166,13 @@
       </button>
     </header>
 
-    <!-- Sidebar Overlay (mobile) -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <!-- Main Content Area -->
     <main id="mainContent" class="main-content" role="main">
-      <!-- Pages injected here by JS -->
     </main>
 
   </div>
 
-  <!-- Search Modal -->
   <div class="modal-overlay" id="searchModal" role="dialog" aria-modal="true" aria-label="Search books" hidden>
     <div class="modal search-modal">
       <div class="search-input-wrap">
@@ -265,7 +249,6 @@
     </div>
   </div>
 
-  <!-- Add Book Modal -->
   <div class="modal-overlay" id="addBookModal" role="dialog" aria-modal="true" aria-label="Add book to library" hidden>
     <div class="modal add-book-modal">
       <div class="modal-header">
@@ -275,12 +258,10 @@
         </button>
       </div>
       <div class="modal-body" id="addBookBody">
-        <!-- Populated by JS -->
       </div>
     </div>
   </div>
 
-  <!-- Book Details Modal -->
   <div class="modal-overlay" id="bookDetailsModal" role="dialog" aria-modal="true" aria-label="Book details" hidden>
     <div class="modal book-details-modal">
       <div class="modal-header">
@@ -290,12 +271,10 @@
         </button>
       </div>
       <div class="modal-body" id="bookDetailsBody">
-        <!-- Populated by JS -->
       </div>
     </div>
   </div>
 
-  <!-- What's New Modal -->
   <div class="modal-overlay" id="whatsNewModal" role="dialog" aria-modal="true" aria-label="What's new in LibriQ" hidden>
     <div class="modal whats-new-modal">
       <div class="modal-header">
@@ -338,22 +317,18 @@
     </div>
   </div>
 
-  <!-- Toast Notifications -->
   <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
-  <!-- JavaScript -->
   <script src="js/data.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/config.js"></script>
-  <!-- API layer — must load before search.js -->
   <script src="js/api/normalizeBook.js"></script>
   <script src="js/api/openLibrary.js"></script>
   <script src="js/api/googleBooks.js"></script>
   <script src="js/api/mergeBooks.js"></script>
   <script src="js/api/cache.js"></script>
   <script src="js/api/index.js"></script>
-  <!-- App modules -->
   <script src="js/search.js"></script>
   <script src="js/library.js"></script>
   <script src="js/dashboard.js"></script>
