@@ -10,7 +10,6 @@
 const GoogleBooksAPI = (() => {
 
   const BASE = 'https://www.googleapis.com/books/v1/volumes';
-  const API_KEY = 'AIzaSyBo6ZJ5Uz9JHJI4SWwH4FcYVENwGxBq5WE'; // optional, not required for basic search
   const TIMEOUT_MS = 8000;
   let _lastFetchFailed = false;
 
@@ -31,9 +30,12 @@ const GoogleBooksAPI = (() => {
       q:          query.trim(),
       maxResults: '12',
       printType:  'books',
-      key:        'AIzaSyBo6ZJ5Uz9JHJI4SWwH4FcYVENwGxBq5WE',
       fields:     'items(id,volumeInfo(title,authors,description,publisher,publishedDate,pageCount,categories,language,imageLinks,averageRating,ratingsCount,previewLink,industryIdentifiers))',
     });
+    const apiKey = _getApiKey();
+    if (apiKey) {
+      params.set('key', apiKey);
+    }
 
     try {
       const data = await _fetch(`${BASE}?${params}`);
@@ -64,8 +66,11 @@ const GoogleBooksAPI = (() => {
         q:          `isbn:${clean}`,
         maxResults: '1',
         printType:  'books',
-        key:        'AIzaSyBo6ZJ5Uz9JHJI4SWwH4FcYVENwGxBq5WE',
       });
+      const apiKey = _getApiKey();
+      if (apiKey) {
+        params.set('key', apiKey);
+      }
       const data = await _fetch(`${BASE}?${params}`);
       const item = data?.items?.[0];
       return item ? NormalizeBook.fromGoogleBooks(item) : null;
@@ -100,6 +105,12 @@ const GoogleBooksAPI = (() => {
     const requestUrl = new URL(url);
     requestUrl.searchParams.set('_ts', Date.now().toString());
     return requestUrl.toString();
+  }
+
+  function _getApiKey() {
+    const config = window.LibriqConfig || window.__LIBRIQ_CONFIG__ || {};
+    const candidate = config.googleBooksApiKey || config.googleBooksKey || config.GOOGLE_BOOKS_API_KEY || '';
+    return String(candidate).trim();
   }
 
   function _isNetworkFailure(err) {

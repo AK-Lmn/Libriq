@@ -446,6 +446,22 @@ The current version focuses on improving the core local-first reading tracker ex
 
 ---
 
+## Local Setup Notes
+
+LibriQ can use Google Books without an API key, but you can provide one locally if you want keyed quota.
+
+To configure a key without committing it:
+
+* Copy `frontend/js/config.local.example.js` to `frontend/js/config.local.js`
+* Set `window.LibriqConfig.googleBooksApiKey` in that local file
+* Or inject the same config object at deploy time as `window.LibriqConfig`
+
+The committed repo keeps only the safe example file, and `frontend/js/config.local.js` is ignored by git.
+
+If no key is provided, Google Books search still runs with the public endpoint and the app falls back to Open Library results when needed.
+
+---
+
 ## Patch Notes
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
