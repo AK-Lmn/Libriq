@@ -10,7 +10,7 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: 'What’s New in LibriQ v2.9.0',
+      title: 'What’s New in LibriQ v2.10.1',
       subtitle: 'A quick look at the latest local-first improvements.',
       sections: [
         ['Local Recommendations', 'Discover suggested reads based on your saved library, ratings, favorites, genres, and reading status.'],
@@ -130,6 +130,18 @@
         dismissWhatsNew();
       }
     });
+
+    registerServiceWorker();
+  }
+
+  function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    if (location.protocol === 'file:') return;
+
+    navigator.serviceWorker.register('./service-worker.js')
+      .catch((err) => {
+        console.warn('[LibriQ] Service worker registration failed:', err);
+      });
   }
 
   // app.js is the last synchronous <script> in index.html; the shell and
