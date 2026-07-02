@@ -12,6 +12,7 @@ const GoogleBooksAPI = (() => {
   const BASE = 'https://www.googleapis.com/books/v1/volumes';
   const API_KEY = 'AIzaSyBo6ZJ5Uz9JHJI4SWwH4FcYVENwGxBq5WE'; // optional, not required for basic search
   const TIMEOUT_MS = 8000;
+  let _lastFetchFailed = false;
 
   // ── Search ────────────────────────────────
 
@@ -24,6 +25,7 @@ const GoogleBooksAPI = (() => {
    */
   async function search(query) {
     if (!query || query.trim().length < 3) return [];
+    _lastFetchFailed = false;
 
     const params = new URLSearchParams({
       q:          query.trim(),
@@ -42,6 +44,7 @@ const GoogleBooksAPI = (() => {
         .filter(Boolean);
     } catch (err) {
       console.warn('[Libriq/GB] Search failed:', err.message);
+      _lastFetchFailed = _isNetworkFailure(err);
       return [];
     }
   }
@@ -68,6 +71,7 @@ const GoogleBooksAPI = (() => {
       return item ? NormalizeBook.fromGoogleBooks(item) : null;
     } catch (err) {
       console.warn('[Libriq/GB] ISBN lookup failed:', err.message);
+      _lastFetchFailed = _isNetworkFailure(err);
       return null;
     }
   }
@@ -98,6 +102,19 @@ const GoogleBooksAPI = (() => {
     return requestUrl.toString();
   }
 
-  return { search, lookupISBN };
+  function _isNetworkFailure(err) {
+    const message = String(err?.message || '').toLowerCase();
+    return err?.name === 'AbortError'
+      || err?.name === 'TypeError'
+      || message.includes('failed to fetch')
+      || message.includes('networkerror')
+      || message.includes('network error');
+  }
+
+  return {
+    search,
+    lookupISBN,
+    hadNetworkFailure: () => _lastFetchFailed,
+  };
 
 })();

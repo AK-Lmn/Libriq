@@ -1,5 +1,5 @@
 /* ============================================
-   LIBRIQ — api/index.js
+   LIBRIQ - api/index.js
    Public BookAPI facade.
 
    The ONLY file that search.js (or any UI code)
@@ -7,8 +7,8 @@
    encapsulated in the modules below.
 
    Public API:
-     BookAPI.searchBooks(query)  → Object[]
-     BookAPI.lookupISBN(isbn)    → Object|null
+     BookAPI.searchBooks(query)  -> Object[]
+     BookAPI.lookupISBN(isbn)    -> Object|null
 
    Adding a future provider (e.g. ISBNdb):
      1. Create js/api/isbndb.js
@@ -23,6 +23,7 @@ const BookAPI = (() => {
     fromCache: false,
     offline: false,
     blockedOffline: false,
+    networkFailure: false,
   };
 
   /**
@@ -34,25 +35,25 @@ const BookAPI = (() => {
    *   4. Merge & deduplicate
    *   5. Cache and return
    *
-   * If OL fails → GB-only results returned.
-   * If GB fails → OL-only results returned.
-   * If both fail → empty array returned.
+   * If OL fails -> GB-only results returned.
+   * If GB fails -> OL-only results returned.
+   * If both fail -> empty array returned.
    *
    * @param {string} query
    * @returns {Promise<Object[]>}
    */
   async function searchBooks(query) {
     const q = (query || '').trim();
-    if (q.length < 3) return [];
+    if (q.length < 3) return [] ;
 
     _lastSearchMeta = {
       query: q,
       fromCache: false,
       offline: !navigator.onLine,
       blockedOffline: false,
+      networkFailure: false,
     };
 
-    // ── Cache hit ─────────────────────────
     if (BookCache.has(q)) {
       _lastSearchMeta.fromCache = true;
       return BookCache.get(q);
@@ -63,29 +64,30 @@ const BookAPI = (() => {
       return [];
     }
 
-    // ── Fetch from both providers ─────────
-    // Run in parallel — OL and GB are independent.
-    // Each provider returns [] on failure (never throws).
     const [olBooks, gbBooks] = await Promise.all([
       OpenLibraryAPI.search(q),
       GoogleBooksAPI.search(q),
     ]);
 
-    // ── Merge ─────────────────────────────
+    const hadNetworkFailure = Boolean(
+      OpenLibraryAPI.hadNetworkFailure?.() || GoogleBooksAPI.hadNetworkFailure?.()
+    );
+
     let results;
 
     if (olBooks.length > 0) {
-      // OL succeeded: use as anchor, enrich with GB
       results = MergeBooks.merge(olBooks, gbBooks);
     } else if (gbBooks.length > 0) {
-      // OL failed but GB returned results: use GB only
       results = gbBooks;
     } else {
-      // Both failed
       results = [];
     }
 
-    // ── Cache only successful results ─────
+    if (results.length === 0 && hadNetworkFailure) {
+      _lastSearchMeta.offline = true;
+      _lastSearchMeta.networkFailure = true;
+    }
+
     if (results.length > 0) {
       BookCache.set(q, results);
     }
