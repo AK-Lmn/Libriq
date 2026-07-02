@@ -75,6 +75,13 @@ const Search = (() => {
     document.body.style.overflow = '';
   }
 
+  function _setDefaultEmptyState(message = 'Search for any book to add it to your library') {
+    const { emptyState } = getEls();
+    emptyState.innerHTML = `
+      <i class="ph ph-books"></i>
+      <p>${Utils.sanitize(message)}</p>`;
+  }
+
   function openManualEntry() {
     close();
     Library.showAddModal({}, { manual: true });
@@ -99,12 +106,16 @@ const Search = (() => {
 
     // OL's FastAPI layer returns HTTP 422 for queries shorter than 3 characters.
     if (!query || query.length < 3) {
+      _setDefaultEmptyState();
       _clearResults();
       return;
     }
 
     // Hide empty state, show loading spinner
     Utils.hide(emptyState);
+    emptyState.innerHTML = `
+      <i class="ph ph-books"></i>
+      <p>Search for any book to add it to your library</p>`;
     // Remove any previous result nodes (keep emptyState hidden in place)
     Array.from(resultsArea.childNodes).forEach(node => {
       if (node !== emptyState) resultsArea.removeChild(node);
@@ -153,6 +164,9 @@ const Search = (() => {
 
   function renderResults(localResults, apiResults) {
     const { resultsArea, emptyState } = getEls();
+    const searchMeta = typeof BookAPI.getLastSearchMeta === 'function'
+      ? BookAPI.getLastSearchMeta()
+      : { offline: false, fromCache: false, blockedOffline: false };
 
     // Remove the spinner and any previous result rows, keeping emptyState in place
     Array.from(resultsArea.childNodes).forEach(node => {
@@ -162,7 +176,12 @@ const Search = (() => {
 
     if (localResults.length === 0 && apiResults.length === 0) {
       // Show the persistent empty-state node with a custom message
-      emptyState.innerHTML = `
+      const offlineMessage = 'You’re offline. Saved library features still work, but online book search needs internet.';
+      emptyState.innerHTML = searchMeta.blockedOffline || searchMeta.offline
+        ? `
+        <i class="ph ph-wifi-slash"></i>
+        <p>${offlineMessage}</p>`
+        : `
         <i class="ph ph-magnifying-glass"></i>
         <p>No results found for "<strong>${Utils.sanitize(currentQuery)}</strong>"</p>`;
       emptyState.insertAdjacentHTML('beforeend', `
@@ -177,6 +196,7 @@ const Search = (() => {
 
     // Keep emptyState hidden while results are showing
     Utils.hide(emptyState);
+    _setDefaultEmptyState();
 
     // In-library results
     if (localResults.length > 0) {
@@ -192,7 +212,7 @@ const Search = (() => {
 
     if (filteredApiResults.length > 0) {
       resultsArea.insertAdjacentHTML('beforeend',
-        `<div class="search-section-label">From the web${_filtersActive() ? ' <span class="search-section-filtered">filtered</span>' : ''}</div>`);
+        `<div class="search-section-label">From the web${searchMeta.fromCache && searchMeta.offline ? ' <span class="search-section-filtered">cached, offline</span>' : _filtersActive() ? ' <span class="search-section-filtered">filtered</span>' : ''}</div>`);
       filteredApiResults.forEach(book => {
         resultsArea.appendChild(buildApiResultItem(book));
       });

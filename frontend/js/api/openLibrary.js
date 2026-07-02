@@ -93,14 +93,25 @@ const OpenLibraryAPI = (() => {
   async function _fetch(url) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    const requestUrl = _cacheBust(url);
 
     try {
-      const res = await fetch(url, { signal: controller.signal });
+      const res = await fetch(requestUrl, {
+        signal: controller.signal,
+        cache: 'no-store',
+        credentials: 'omit',
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } finally {
       clearTimeout(timer);
     }
+  }
+
+  function _cacheBust(url) {
+    const requestUrl = new URL(url);
+    requestUrl.searchParams.set('_ts', Date.now().toString());
+    return requestUrl.toString();
   }
 
   return { search, lookupISBN };

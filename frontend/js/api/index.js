@@ -18,6 +18,12 @@
    ============================================ */
 
 const BookAPI = (() => {
+  let _lastSearchMeta = {
+    query: '',
+    fromCache: false,
+    offline: false,
+    blockedOffline: false,
+  };
 
   /**
    * Search for books by any query string.
@@ -39,9 +45,22 @@ const BookAPI = (() => {
     const q = (query || '').trim();
     if (q.length < 3) return [];
 
+    _lastSearchMeta = {
+      query: q,
+      fromCache: false,
+      offline: !navigator.onLine,
+      blockedOffline: false,
+    };
+
     // ── Cache hit ─────────────────────────
     if (BookCache.has(q)) {
+      _lastSearchMeta.fromCache = true;
       return BookCache.get(q);
+    }
+
+    if (!navigator.onLine) {
+      _lastSearchMeta.blockedOffline = true;
+      return [];
     }
 
     // ── Fetch from both providers ─────────
@@ -123,6 +142,12 @@ const BookAPI = (() => {
     return GoogleBooksAPI.search(query);
   }
 
-  return { searchBooks, lookupISBN, searchOpenLibrary, searchGoogleBooks };
+  return {
+    searchBooks,
+    lookupISBN,
+    searchOpenLibrary,
+    searchGoogleBooks,
+    getLastSearchMeta: () => ({ ..._lastSearchMeta }),
+  };
 
 })();
