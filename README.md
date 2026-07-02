@@ -16,6 +16,8 @@ With LibriQ, users can:
 
 * Search for books online
 * Add books to a personal library
+* Enter books manually when a search match is not available
+* Search and sort the saved library
 * Organize books by reading status
 * Track reading progress by page
 * Mark books as finished
@@ -25,6 +27,12 @@ With LibriQ, users can:
 * View detailed book information
 * Refresh missing book metadata
 * View reading statistics and progress summaries
+* Export and import local library backups
+* Open the Help & Guide Center for app walkthroughs
+* Refine online searches with advanced filters
+* Discover local recommendations from saved library data
+* Read update highlights in the What's New modal
+* Use the PWA shell and app icons for offline-friendly access
 
 The app is designed to feel like a focused digital reading space instead of a plain spreadsheet-style tracker.
 
@@ -45,6 +53,115 @@ Search features include:
 * Book covers, authors, page counts, genres, and descriptions when available
 * Add-to-library action from search results
 * Fallback handling when one source has limited data
+
+### Manual Book Entry
+
+LibriQ includes a manual entry flow for books that are not found through the online APIs.
+
+Manual entry supports:
+
+* Required title and author fields
+* Optional cover, page count, genre, description, year, publisher, language, and reading status fields
+* Local-only saving with the same library actions as API-added books
+
+---
+
+### Library Search & Sorting
+
+The saved library includes its own search and sorting tools.
+
+Library search and sorting includes:
+
+* Search by title, author, genre, status, and other saved metadata
+* Sorting by multiple saved-library fields
+* Fast filtering that stays fully local and works offline
+
+---
+
+### Import / Export Backup
+
+LibriQ includes local JSON import and export for backups.
+
+Backup features include:
+
+* Exporting the full local library backup
+* Importing a JSON backup with validation
+* Replace or merge import flow
+* Backups that stay on the user's device
+
+---
+
+### Help & Guide Center
+
+LibriQ includes a built-in Help & Guide Center for onboarding and support.
+
+The guide includes:
+
+* Getting started help
+* Search guidance
+* Manual entry guidance
+* Library management tips
+* Progress and notes walkthroughs
+* Backup guidance
+* Local-first storage explanations
+
+---
+
+### Advanced Search Filters
+
+The search modal includes optional filters for refining online results.
+
+Filters include:
+
+* Author
+* Published year
+* Genre or subject
+* Source
+* Has description
+* Has cover
+
+---
+
+### Local Recommendations
+
+LibriQ includes recommendations based on the user's saved library.
+
+Recommendations are derived locally from:
+
+* Favorites
+* Genres
+* Ratings
+* Reading status
+* Saved reading patterns
+
+---
+
+### What's New Modal
+
+LibriQ includes a local What's New modal for version highlights.
+
+It shows:
+
+* Recent feature summaries
+* Dismissed-version tracking
+* A lightweight release-notes experience that stays fully local
+
+---
+
+### PWA and Icons
+
+LibriQ includes PWA-ready icon and manifest support.
+
+This includes:
+
+* Browser favicon assets
+* App icon assets
+* Apple touch icon support
+* Maskable icon support
+* Installed app shortcut icon sizes
+* A service-worker-backed offline shell for the app interface
+
+The offline shell is intended to keep the app usable locally while still requiring internet access for live Open Library and Google Books search.
 
 ---
 
@@ -94,7 +211,7 @@ The Book Details view includes:
 * Last updated timestamp for notes
 * Favorite/unfavorite action
 * Remove book action
-* “About this book” section
+* "About this book" section
 * Refresh metadata action
 
 If a book does not have a synopsis from the available sources, LibriQ shows:
@@ -123,7 +240,7 @@ Private notes are stored locally in the browser using `localStorage`. They are n
 
 ### Dashboard
 
-The Dashboard gives a quick overview of the user’s current reading activity.
+The Dashboard gives a quick overview of the user's current reading activity.
 
 It includes:
 
@@ -155,7 +272,7 @@ Current statistics include:
 * Highest-rated books
 * All-time reading summary
 
-Statistics are generated from the books saved in the user’s local library.
+Statistics are generated from the books saved in the user's local library.
 
 ---
 
@@ -205,6 +322,26 @@ The design focuses on:
 
 ---
 
+## Branding & Icon System
+
+LibriQ uses a custom bookmark-inspired "Q" icon designed in Figma. The mark connects the app name with reading, saving books, and keeping a personal library.
+
+The icon system includes:
+
+* Browser favicon assets
+* App icon assets
+* Apple touch icon
+* PWA-ready icon sizes
+* Maskable icon support for installable app shortcuts
+
+The visual direction uses:
+
+* A warm gold mark
+* A deep brown / black background
+* A look that stays consistent with LibriQ's calm reading-first interface
+
+---
+
 ## How LibriQ Works
 
 LibriQ is a frontend-only web app.
@@ -216,7 +353,8 @@ It uses:
 * **Vanilla JavaScript** for app logic and interactions
 * **Open Library API** for book search data
 * **Google Books API** for additional book metadata
-* **localStorage** for saving the user’s personal library
+* **localStorage** for saving the user's personal library
+* **Custom Figma-designed icon assets** for the favicon, app icon, and PWA manifest
 
 Because the app stores data locally, saved books, notes, ratings, and progress are tied to the browser being used.
 
@@ -254,15 +392,20 @@ This allows the app to preserve reading progress, ratings, private notes, and pe
 
 ```text
 LibriQ/
-├── backend/
-├── frontend/
-│   ├── assets/
-│   ├── css/
-│   ├── js/
-│   └── index.html
-├── README.md
-├── LICENSE
-└── TESTING.md
+|-- frontend/
+|   |-- assets/
+|   |   `-- icons/
+|   |-- css/
+|   |-- js/
+|   |-- index.html
+|   `-- manifest.json
+|-- docs/
+|   `-- screenshots/
+|-- scripts/
+|-- package.json
+|-- package-lock.json
+|-- README.md
+`-- LICENSE
 ```
 
 ---
@@ -271,7 +414,7 @@ LibriQ/
 
 LibriQ is still in active development.
 
-The current version focuses on improving the core local-first reading tracker experience, including library management, book search, reading progress, book details, ratings, private notes, metadata, statistics, and responsive design.
+The current version focuses on improving the core local-first reading tracker experience, including library management, book search, reading progress, book details, ratings, private notes, metadata, statistics, responsive design, search filtering, local recommendations, backups, help content, and the PWA offline shell.
 
 ---
 
@@ -279,7 +422,172 @@ The current version focuses on improving the core local-first reading tracker ex
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
 
-### v2.2.0 — Manual Book Entry
+### v2.10.1 - Offline Search State Polish
+
+**Added**
+
+* Clearer offline search messaging when the app is offline
+* Search UI state handling that avoids stale offline banners
+* Clear labeling for cached offline web results
+
+**Changed**
+
+* Online web search is now blocked while `navigator.onLine` reports offline status
+* Fresh online results now restore the normal `From the web` label
+* Offline search no longer implies a fresh fetch when the browser is disconnected
+
+**Notes**
+
+* Saved library features remain fully usable offline
+* Online Open Library and Google Books search still requires internet access
+
+### v2.10.0 - PWA Offline Shell
+
+**Added**
+
+* PWA-friendly offline app shell support
+* Finalized LibriQ favicon and app icon assets
+* Manifest support for installable app behavior
+* App shell caching for local access to the interface
+* Offline access to the saved local library
+
+**Changed**
+
+* The app shell is designed to stay available even when network access is unavailable
+* Live Open Library and Google Books search remains network-dependent
+
+**Notes**
+
+* The offline shell is intended for local app access, not offline web search
+* Saved books, notes, ratings, progress, and local search continue to work without internet
+
+### v2.9.0 - What's New Modal
+
+**Added**
+
+* Local-only What's New modal that appears after updating to a newer LibriQ version
+* Dismissed-version tracking in `libriq_seen_version`
+* Friendly release notes summary for the latest local-first improvements
+
+**Changed**
+
+* The app now shows a simple release notes popup only when the current version has not been dismissed yet
+* The modal can be closed with the button or Escape without affecting saved library data
+
+**Notes**
+
+* This feature stays fully local and does not send any data anywhere
+* Existing book data, import/export, search, Help, and recommendations are unchanged
+
+### v2.8.0 - Local Recommendations
+
+**Added**
+
+* Recommendations page in the app navigation
+* Local suggestion groups based on saved library signals like favorite genres, authors, ratings, favorites, currently reading mood, and Want to Read shelf
+* Recommendation cards with cover, title, author, reason label, and saved status
+
+**Changed**
+
+* Recommendations are generated fully from the user's local library data
+* Saved recommendation cards open the existing Book Details modal
+
+**Notes**
+
+* No backend, analytics, cloud sync, or generated book data were added
+* Import/export, manual entry, search, Help, and existing library behavior remain unchanged
+
+### v2.7.0 - Advanced Search Filters
+
+**Added**
+
+* Compact advanced filters inside the existing search modal
+* Filter controls for author, published year, genre/subject, source, has description, and has cover
+* Clear/reset filters action
+* Small active-filter indicator in the search UI
+
+**Changed**
+
+* Online search results can now be refined before adding a book to the library
+* Filters work on the merged search result data already returned by Open Library and Google Books
+
+**Notes**
+
+* Search filters only affect online search results and do not change saved library search or sorting
+* Manual entry, book details, notes, backups, and Help remain unchanged
+
+### v2.6.0 - Help & Guide Center
+
+**Added**
+
+* Beginner-friendly Help & Guide Center in the app navigation
+* Card-based walkthrough sections for getting started, search, manual entry, library management, progress tracking, private notes, backups, and local-first storage
+* FAQ / troubleshooting section for common local-first questions
+* Quick action buttons to jump back into search or the library from the guide
+
+**Changed**
+
+* Help content is fully local and static, matching LibriQ's frontend-only model
+* The new guide uses the same calm card-based visual language as the rest of the app
+
+**Notes**
+
+* This feature is for product guidance only and does not add accounts, sync, or backend services
+* Existing library data, notes, import/export behavior, and sorting logic are unchanged
+
+### v2.5.0 - Library Search & Sorting
+
+**Added**
+
+* Saved-library search for quickly finding books in the local collection
+* Sorting controls for organizing saved books by common library fields
+* Local-only search and sort behavior that works without internet access
+
+**Changed**
+
+* Library browsing is faster for larger collections because search and sorting happen on saved local data
+* Saved books can be organized without affecting online search or manual entry flows
+
+**Notes**
+
+* This feature does not change online book search behavior
+* Library search and sorting remain fully local and independent of the Open Library and Google Books APIs
+
+### v2.4.0 - Import / Export Backup
+
+**Added**
+
+* Local JSON export for the full LibriQ library backup
+* Local JSON import with validation before any data is applied
+* Replace or merge import flow for restoring backups safely
+
+**Changed**
+
+* Exported backups now include books plus relevant local data such as profile, goals, and streak state
+* Import handling preserves the local-first model and keeps API books, manual books, ratings, progress, favorites, notes, and metadata intact
+
+**Notes**
+
+* Backups stay on the user's device and are never uploaded anywhere
+* Merge mode deduplicates by existing book ID and replace mode clearly warns before overwriting current local data
+
+### v2.3.0 - Search Result Descriptions
+
+**Added**
+
+* Short description previews in book search results when synopsis data is available
+* A safe fallback message for results without a description
+
+**Changed**
+
+* Search results now surface merged description data from Open Library and Google Books before adding a book
+* Book additions continue to persist the full description into the saved local book object
+
+**Notes**
+
+* Descriptions are displayed as short previews only and remain part of the existing local-first data model
+
+### v2.2.0 - Manual Book Entry
 
 **Added**
 
@@ -300,115 +608,7 @@ This section tracks notable LibriQ updates. New version logs can be added here a
 * Manual books remain local-first and are stored only in the browser using `localStorage`
 * Existing Open Library and Google Books add flows are unchanged
 
-### v2.3.0 — Search Result Descriptions
-
-**Added**
-
-* Short description previews in book search results when synopsis data is available
-* A safe fallback message for results without a description
-
-**Changed**
-
-* Search results now surface merged description data from Open Library and Google Books before adding a book
-* Book additions continue to persist the full description into the saved local book object
-
-**Notes**
-
-* Descriptions are displayed as short previews only and remain part of the existing local-first data model
-
-### v2.4.0 — Import / Export Backup
-
-**Added**
-
-* Local JSON export for the full LibriQ library backup
-* Local JSON import with validation before any data is applied
-* Replace or merge import flow for restoring backups safely
-
-**Changed**
-
-* Exported backups now include books plus relevant local data such as profile, goals, and streak state
-* Import handling preserves the local-first model and keeps API books, manual books, ratings, progress, favorites, notes, and metadata intact
-
-**Notes**
-
-* Backups stay on the user’s device and are never uploaded anywhere
-* Merge mode deduplicates by existing book ID and replace mode clearly warns before overwriting current local data
-
-### v2.6.0 — Help & Guide Center
-
-**Added**
-
-* Beginner-friendly Help & Guide Center in the app navigation
-* Card-based walkthrough sections for getting started, search, manual entry, library management, progress tracking, private notes, backups, and local-first storage
-* FAQ / troubleshooting section for common local-first questions
-* Quick action buttons to jump back into search or the library from the guide
-
-**Changed**
-
-* Help content is fully local and static, matching LibriQ’s frontend-only model
-* The new guide uses the same calm card-based visual language as the rest of the app
-
-**Notes**
-
-* This feature is for product guidance only and does not add accounts, sync, or backend services
-* Existing library data, notes, import/export behavior, and sorting logic are unchanged
-
-### v2.7.0 — Advanced Search Filters
-
-**Added**
-
-* Compact advanced filters inside the existing search modal
-* Filter controls for author, published year, genre/subject, source, has description, and has cover
-* Clear/reset filters action
-* Small active-filter indicator in the search UI
-
-**Changed**
-
-* Online search results can now be refined before adding a book to the library
-* Filters work on the merged search result data already returned by Open Library and Google Books
-
-**Notes**
-
-* Search filters only affect online search results and do not change saved library search or sorting
-* Manual entry, book details, notes, backups, and Help remain unchanged
-
-### v2.8.0 — Local Recommendations
-
-**Added**
-
-* Recommendations page in the app navigation
-* Local suggestion groups based on saved library signals like favorite genres, authors, ratings, favorites, currently reading mood, and Want to Read shelf
-* Recommendation cards with cover, title, author, reason label, and saved status
-
-**Changed**
-
-* Recommendations are generated fully from the user’s local library data
-* Saved recommendation cards open the existing Book Details modal
-
-**Notes**
-
-* No backend, analytics, cloud sync, or generated book data were added
-* Import/export, manual entry, search, Help, and existing library behavior remain unchanged
-
-### v2.9.0 — What’s New Modal
-
-**Added**
-
-* Local-only What’s New modal that appears after updating to a newer LibriQ version
-* Dismissed-version tracking in `libriq_seen_version`
-* Friendly release notes summary for the latest local-first improvements
-
-**Changed**
-
-* The app now shows a simple release notes popup only when the current version has not been dismissed yet
-* The modal can be closed with the button or Escape without affecting saved library data
-
-**Notes**
-
-* This feature stays fully local and does not send any data anywhere
-* Existing book data, import/export, search, Help, and recommendations are unchanged
-
-### v2.1.0 — Private Notes
+### v2.1.0 - Private Notes
 
 **Added**
 
@@ -428,7 +628,7 @@ This section tracks notable LibriQ updates. New version logs can be added here a
 * Notes are stored through `localStorage` and remain private to the current browser/device
 * This update moves LibriQ closer to a personal reading journal while keeping the app local-first
 
-### v2.0.0 — Core Reading Tracker Update
+### v2.0.0 - Core Reading Tracker Update
 
 **Added / Improved**
 
@@ -453,18 +653,11 @@ This section tracks notable LibriQ updates. New version logs can be added here a
 
 Future improvements may include:
 
-* Manual book entry for books not found in external APIs
-* Short descriptions in search results
-* Import and export library data
-* Saved library search and sorting
-* Advanced search and filtering
 * Better metadata matching
 * Reading activity history
 * Activity heatmap
-* Help & Guide Center
 * Better mobile navigation
-* Local recommendations based on saved library data
-* PWA support
+* PWA and offline enhancements if full offline behavior still needs polish
 * Optional backend and cloud sync
 * User profiles and social reading features
 
@@ -478,4 +671,4 @@ Some books may not show a full description because not all book data sources pro
 
 Some external cover images may also fail to load if blocked by browser extensions or if the source does not provide a valid image.
 
-Since LibriQ currently stores data locally, clearing browser data or using a different browser/device may remove or hide saved library data. Future import/export or cloud sync features may help with backups later.
+Since LibriQ currently stores data locally, clearing browser data or using a different browser/device may remove or hide saved library data. Import/export is already implemented for local backups, and cloud sync remains a future possibility if you want cross-device access later.
