@@ -457,6 +457,9 @@ function renderStatsPage() {
   const stats = Storage.getStats();
   const goals = Storage.getGoals();
   const streak = Storage.getStreak();
+  const recapYears = _getRecapYears();
+  const selectedYear = _getRecapYear(recapYears);
+  const recap = _buildYearlyRecap(selectedYear);
   const ratedBooks = Storage.getBooks()
     .filter(book => typeof book.rating === 'number' && book.rating > 0)
     .map((book, index) => ({ book, index }))
@@ -500,6 +503,126 @@ function renderStatsPage() {
           <div class="stat-card-label">Avg rating</div>
           <div class="stat-card-footnote">${stats.ratedCount ? `${stats.ratedCount} rated book${stats.ratedCount !== 1 ? 's' : ''}` : 'No rated books yet'}</div>
         </div>
+      </div>
+
+      <div class="goal-widget" style="margin-bottom: var(--space-8);">
+        <div class="goal-header" style="gap: var(--space-3); align-items: center; justify-content: space-between; flex-wrap: wrap;">
+          <div>
+            <div class="goal-title">Yearly Recap</div>
+            <div class="stats-section-meta">Private summary from your local library</div>
+          </div>
+          <label class="library-sort-label" for="recapYearSelect" style="margin: 0;">Year</label>
+          <select id="recapYearSelect" class="library-sort-select" style="max-width: 140px;">
+            ${recapYears.length ? recapYears.map(year => `<option value="${year}" ${year === selectedYear ? 'selected' : ''}>${year}</option>`).join('') : `<option value="${selectedYear}" selected>${selectedYear}</option>`}
+          </select>
+        </div>
+
+        ${recap.finishedCount === 0 ? `
+          <div class="empty-state stats-empty-state" style="margin-top: var(--space-4);">
+            <div class="empty-state-icon"><i class="ph ph-book-open"></i></div>
+            <div class="empty-state-title">No finished books for this year yet.</div>
+            <div class="empty-state-body">Search or open your library to keep reading.</div>
+            <div style="display:flex; gap: var(--space-2); flex-wrap: wrap; justify-content: center;">
+              <button class="btn btn-primary btn-sm" onclick="Search.open()">
+                <i class="ph ph-magnifying-glass"></i> Search Books
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="Navigation.goTo('library')">
+                <i class="ph ph-books"></i> Library
+              </button>
+            </div>
+          </div>
+        ` : `
+          <div class="stats-row stagger" style="margin-top: var(--space-4);">
+            <div class="stat-card">
+              <div class="stat-card-icon amber"><i class="ph ph-check-circle"></i></div>
+              <div class="stat-card-value">${recap.finishedCount}</div>
+              <div class="stat-card-label">Books finished</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-icon blue"><i class="ph ph-file-text"></i></div>
+              <div class="stat-card-value">${Utils.formatNumber(recap.pagesRead)}</div>
+              <div class="stat-card-label">Pages read</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-icon gold"><i class="ph ph-star"></i></div>
+              <div class="stat-card-value">${recap.avgRating || '–'}</div>
+              <div class="stat-card-label">Average rating</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-icon green"><i class="ph ph-calendar"></i></div>
+              <div class="stat-card-value">${recap.activeMonthLabel}</div>
+              <div class="stat-card-label">Most active month</div>
+            </div>
+          </div>
+
+          <div class="stats-chart-grid" style="margin-top: var(--space-4);">
+            <div class="goal-widget stats-chart-card">
+              <div class="goal-header">
+                <div class="goal-title">Most Read Genre / Shelf</div>
+                <div class="stats-section-meta">Based on finished books this year</div>
+              </div>
+              ${recap.topBucket ? `
+                <div class="activity-list" style="margin-top: var(--space-3);">
+                  <div class="activity-item" style="cursor: default;">
+                    <div class="activity-text">
+                      <div class="activity-subtitle">${Utils.sanitize(recap.topBucket.type === 'shelf' ? 'Shelf' : 'Genre')}</div>
+                      <div class="activity-title">${Utils.sanitize(recap.topBucket.name)}</div>
+                    </div>
+                    <div class="activity-time">${recap.topBucket.count} book${recap.topBucket.count !== 1 ? 's' : ''}</div>
+                  </div>
+                </div>
+              ` : `
+                <div class="empty-state stats-empty-state" style="margin-top: var(--space-3);">
+                  <div class="empty-state-icon"><i class="ph ph-tag"></i></div>
+                  <div class="empty-state-title">No genres or shelves yet</div>
+                  <div class="empty-state-body">Add a few shelf labels or books with genres to see this summary.</div>
+                </div>
+              `}
+            </div>
+
+            <div class="goal-widget stats-chart-card">
+              <div class="goal-header">
+                <div class="goal-title">Longest Book Finished</div>
+                <div class="stats-section-meta">By page count</div>
+              </div>
+              ${recap.longestBook ? `
+                <div class="activity-list" style="margin-top: var(--space-3);">
+                  <div class="activity-item" style="cursor: default;">
+                    <div class="activity-text">
+                      <div class="activity-title">${Utils.sanitize(recap.longestBook.title)}</div>
+                      <div class="activity-subtitle">${Utils.sanitize(recap.longestBook.author)}</div>
+                    </div>
+                    <div class="activity-time">${Utils.formatNumber(recap.longestBook.pageCount || 0)} pages</div>
+                  </div>
+                </div>
+              ` : `
+                <div class="empty-state stats-empty-state" style="margin-top: var(--space-3);">
+                  <div class="empty-state-icon"><i class="ph ph-book"></i></div>
+                  <div class="empty-state-title">No page counts yet</div>
+                  <div class="empty-state-body">Books without page counts are skipped here.</div>
+                </div>
+              `}
+            </div>
+          </div>
+
+          <div class="goal-widget" style="margin-top: var(--space-4);">
+            <div class="goal-header">
+              <div class="goal-title">Highest Rated</div>
+              <div class="stats-section-meta">${recap.highestRatedBooks.length ? `${recap.highestRatedBooks.length} book${recap.highestRatedBooks.length !== 1 ? 's' : ''}` : 'No rated books this year'}</div>
+            </div>
+            ${recap.highestRatedBooks.length ? `
+              <div class="rated-book-list">
+                ${recap.highestRatedBooks.map((book, index) => buildRatedBookRow(book, index + 1)).join('')}
+              </div>
+            ` : `
+              <div class="empty-state stats-empty-state">
+                <div class="empty-state-icon"><i class="ph ph-star"></i></div>
+                <div class="empty-state-title">No ratings yet</div>
+                <div class="empty-state-body">Rate books in Book Details to include them in the recap.</div>
+              </div>
+            `}
+          </div>
+        `}
       </div>
 
       <div class="dashboard-grid stats-layout">
@@ -638,6 +761,109 @@ function renderGoalsPage() {
     Utils.toast(`Goal set: ${yearly} books in ${new Date().getFullYear()}`, 'success');
     renderGoalsPage();
   });
+
+  document.getElementById('recapYearSelect')?.addEventListener('change', () => {
+    renderStatsPage();
+  });
+}
+
+function _getRecapYears() {
+  const years = new Set();
+  const currentYear = new Date().getFullYear();
+  years.add(currentYear);
+
+  Storage.getBooks().forEach(book => {
+    const year = Number.parseInt(String(book?.dateFinished || '').slice(0, 4), 10);
+    if (!Number.isNaN(year)) years.add(year);
+  });
+
+  return Array.from(years).sort((a, b) => b - a);
+}
+
+function _getRecapYear(years) {
+  const currentYear = new Date().getFullYear();
+  return (Array.isArray(years) && years.includes(currentYear)) ? currentYear : (years?.[0] || currentYear);
+}
+
+function _buildYearlyRecap(year) {
+  const books = Storage.getBooks().filter(book => {
+    const finishedYear = Number.parseInt(String(book?.dateFinished || '').slice(0, 4), 10);
+    return Number.isInteger(finishedYear) && finishedYear === year;
+  });
+
+  const finishedBooks = books.filter(book => book.dateFinished);
+  const finishedCount = finishedBooks.length;
+  const pagesRead = finishedBooks.reduce((sum, book) => sum + (Number(book.pageCount) > 0 ? Number(book.pageCount) : 0), 0);
+  const ratedBooks = finishedBooks.filter(book => typeof book.rating === 'number' && book.rating > 0);
+  const avgRating = ratedBooks.length
+    ? (ratedBooks.reduce((sum, book) => sum + book.rating, 0) / ratedBooks.length).toFixed(1)
+    : null;
+
+  const monthCounts = Array(12).fill(0);
+  const monthLabels = LIBRIQ.MONTHS;
+  finishedBooks.forEach(book => {
+    const month = new Date(book.dateFinished).getMonth();
+    if (!Number.isNaN(month)) monthCounts[month]++;
+  });
+  const activeMonthIndex = monthCounts.indexOf(Math.max(...monthCounts));
+  const activeMonthLabel = activeMonthIndex >= 0 ? monthLabels[activeMonthIndex] : '–';
+
+  const longestBook = finishedBooks
+    .filter(book => Number(book.pageCount) > 0)
+    .slice()
+    .sort((a, b) => (Number(b.pageCount) || 0) - (Number(a.pageCount) || 0))[0] || null;
+
+  const highestRatedBooks = ratedBooks
+    .slice()
+    .sort((a, b) => (b.rating || 0) - (a.rating || 0) || new Date(b.dateFinished || 0) - new Date(a.dateFinished || 0))
+    .filter(book => book.rating === (ratedBooks[0]?.rating || null))
+    .slice(0, 5);
+
+  const genreCounts = new Map();
+  const shelfCounts = new Map();
+  finishedBooks.forEach(book => {
+    (Array.isArray(book.genres) ? book.genres : []).forEach(genre => {
+      const clean = String(genre || '').trim();
+      if (!clean) return;
+      genreCounts.set(clean, (genreCounts.get(clean) || 0) + 1);
+    });
+    (Array.isArray(book.tags) ? book.tags : []).forEach(tag => {
+      const clean = String(tag || '').trim();
+      if (!clean) return;
+      shelfCounts.set(clean, (shelfCounts.get(clean) || 0) + 1);
+    });
+  });
+
+  const topGenre = _topCountEntry(genreCounts);
+  const topShelf = _topCountEntry(shelfCounts);
+  let topBucket = null;
+  if (topGenre && topShelf) {
+    topBucket = topShelf.count >= topGenre.count
+      ? { ...topShelf, type: 'shelf' }
+      : { ...topGenre, type: 'genre' };
+  } else if (topShelf) {
+    topBucket = { ...topShelf, type: 'shelf' };
+  } else if (topGenre) {
+    topBucket = { ...topGenre, type: 'genre' };
+  }
+
+  return {
+    finishedCount,
+    pagesRead,
+    avgRating,
+    activeMonthLabel,
+    longestBook,
+    highestRatedBooks,
+    topBucket,
+  };
+}
+
+function _topCountEntry(map) {
+  const entries = Array.from(map.entries());
+  if (!entries.length) return null;
+  entries.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const [name, count] = entries[0];
+  return { name, count };
 }
 
 // ── Help Page ────────────────────────────────

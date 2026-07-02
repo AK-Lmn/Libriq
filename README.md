@@ -484,26 +484,24 @@ Suggested Vercel settings:
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
 
-### v2.16.0 - Custom Shelves and Empty-First Setup
+### v2.17.0 - Yearly Reading Recap
 
 **Added**
 
-* Lightweight Custom Shelves stored locally on each book
-* Library filtering by shelf
-* Empty first-run library experience for new users instead of auto-seeded sample books
-* Clearer empty-state guidance for search, manual entry, and backup import
-* Updated service worker cache version for the current release
+* Local Yearly Reading Recap in Statistics
+* Year selector for reviewing a selected year of finished books
+* Fun summary stats based on local library data
 
 **Changed**
 
-* New users now begin with a real empty local library while existing users keep all stored data
-* Dashboard and library empty states now better guide first-run setup without adding accounts or cloud sync
-* Shelves are stored locally with each book and included automatically in export/import backups
+* The recap is generated from the user’s saved local library data
+* Private notes are not used in recap calculations
+* No sharing, backend, cloud sync, or analytics behavior was added or changed
 
 **Notes**
 
-* Analytics behavior is unchanged and remains basic page-view tracking only
-* Private data handling remains local-first and unchanged
+* This update stays read-only and local-first
+* Existing storage data and backup compatibility are unchanged
 
 ### v2.14.0 - Search & Privacy Transparency
 

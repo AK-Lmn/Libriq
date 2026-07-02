@@ -10,12 +10,12 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: 'What’s New in LibriQ v2.16.0',
+      title: 'What’s New in LibriQ v2.17.0',
       subtitle: 'A quick look at the latest local-first improvements.',
       sections: [
-        ['Custom Shelves', 'Books can now be grouped with lightweight local shelves and filtered by shelf in the library.'],
+        ['Yearly Reading Recap', 'Statistics now includes a private yearly recap from your local library data.'],
+        ['Local-Only Summary', 'The recap is generated on-device and does not use private notes or send data anywhere.'],
         ['Empty First Run', 'New users start with a real empty library instead of seeded sample books.'],
-        ['Gentler Empty States', 'Empty states now guide people toward search, manual entry, and backup import.'],
         ['Privacy Unchanged', 'Analytics remain basic page-view only, and private data handling is unchanged.'],
       ],
       note: 'Your library stays local on your device. No accounts or cloud sync have been added.',
