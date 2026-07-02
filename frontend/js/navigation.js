@@ -1100,6 +1100,7 @@ function renderSettingsPage() {
         <div class="activity-list">
           ${[
             ['Local library storage', 'LibriQ stores your library locally in your browser.'],
+            ['Basic traffic analytics', 'LibriQ uses anonymous Google Analytics page views to understand general traffic.'],
             ['No accounts', 'There is no account system.'],
             ['No cloud sync', 'Your data stays on this device unless you export it yourself.'],
             ['Manual backups', 'Backups are exported and imported manually.'],
