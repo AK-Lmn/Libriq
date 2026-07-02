@@ -128,6 +128,7 @@ function renderLibraryPage() {
   const main  = document.getElementById('mainContent');
   const books = Storage.getBooks();
   const state = _getLibraryState();
+  const shelves = _getLibraryShelves(books);
   const counts = {
     all: books.length,
     reading: books.filter(b => b.status === LIBRIQ.STATUS.READING).length,
@@ -178,6 +179,15 @@ function renderLibraryPage() {
             <option value="recently-updated" ${state.sort === 'recently-updated' ? 'selected' : ''}>Recently updated</option>
           </select>
         </div>
+
+        ${shelves.length ? `
+        <div class="library-sort-wrap">
+          <label class="library-sort-label" for="libraryShelfSelect">Shelf</label>
+          <select id="libraryShelfSelect" class="library-sort-select">
+            <option value="all" ${state.shelf === 'all' ? 'selected' : ''}>All shelves</option>
+            ${shelves.map(shelf => `<option value="${Utils.sanitize(shelf)}" ${state.shelf === shelf ? 'selected' : ''}>${Utils.sanitize(shelf)}</option>`).join('')}
+          </select>
+        </div>` : ''}
       </div>
 
       <div class="chip-group library-filters" id="libraryFilters">
@@ -207,6 +217,7 @@ function _getLibraryState() {
     filter: sessionStorage.getItem('libriq_library_filter') || 'all',
     query: sessionStorage.getItem('libriq_library_query') || '',
     sort: sessionStorage.getItem('libriq_library_sort') || 'recently-added',
+    shelf: sessionStorage.getItem('libriq_library_shelf') || 'all',
   };
 }
 
@@ -214,6 +225,16 @@ function _setLibraryState(updates) {
   if ('filter' in updates) sessionStorage.setItem('libriq_library_filter', updates.filter);
   if ('query' in updates) sessionStorage.setItem('libriq_library_query', updates.query);
   if ('sort' in updates) sessionStorage.setItem('libriq_library_sort', updates.sort);
+  if ('shelf' in updates) sessionStorage.setItem('libriq_library_shelf', updates.shelf);
+}
+
+function _getLibraryShelves(books) {
+  return Array.from(new Set(
+    (books || [])
+      .flatMap(book => Array.isArray(book.tags) ? book.tags : [])
+      .map(tag => String(tag || '').trim())
+      .filter(Boolean)
+  )).sort((a, b) => a.localeCompare(b));
 }
 
 function renderLibraryGrid(books) {
@@ -254,6 +275,7 @@ function initLibraryFilters() {
 function initLibraryTools() {
   const searchInput = document.getElementById('librarySearchInput');
   const sortSelect = document.getElementById('librarySortSelect');
+  const shelfSelect = document.getElementById('libraryShelfSelect');
   const clearBtn = document.getElementById('clearLibrarySearch');
   const books = Storage.getBooks();
   const state = _getLibraryState();
@@ -267,6 +289,11 @@ function initLibraryTools() {
 
   sortSelect?.addEventListener('change', (e) => {
     _setLibraryState({ sort: e.target.value });
+    renderLibraryGrid(books);
+  });
+
+  shelfSelect?.addEventListener('change', (e) => {
+    _setLibraryState({ shelf: e.target.value });
     renderLibraryGrid(books);
   });
 
@@ -288,6 +315,10 @@ function clearLibrarySearch() {
 function _filterAndSortLibraryBooks(books, state) {
   const q = (state.query || '').toLowerCase();
   let filtered = books.slice();
+
+  if (state.shelf && state.shelf !== 'all') {
+    filtered = filtered.filter(book => Array.isArray(book.tags) && book.tags.includes(state.shelf));
+  }
 
   if (state.filter === 'favorites') filtered = filtered.filter(b => b.isFavorite);
   else if (state.filter === 'needs-metadata') filtered = filtered.filter(b => _bookNeedsMetadata(b).length > 0);
@@ -342,10 +373,14 @@ function buildLibraryEmpty(filter = 'all', query = '') {
     favorites: ['No favorites yet', 'Heart a book to save it here.'],
     'needs-metadata': ['No metadata issues found', 'Your saved books already look complete.'],
   };
+  const state = _getLibraryState();
+  const selectedShelf = state.shelf && state.shelf !== 'all' ? state.shelf : '';
   const hasQuery = !!query;
   const [title, body] = hasQuery
     ? ['No books match your search.', 'Try a different keyword, add a book manually, or clear the search to see everything again.']
-    : (messages[filter] || messages.all);
+    : selectedShelf
+      ? [`No books on "${selectedShelf}"`, 'Try another shelf or add this book to a shelf.']
+      : (messages[filter] || messages.all);
   return `
     <div class="empty-state" style="grid-column: 1/-1;">
       <div class="empty-state-icon"><i class="ph ph-books"></i></div>

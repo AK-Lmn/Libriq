@@ -484,10 +484,12 @@ Suggested Vercel settings:
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
 
-### v2.15.0 - Empty-First Setup Polish
+### v2.16.0 - Custom Shelves and Empty-First Setup
 
 **Added**
 
+* Lightweight Custom Shelves stored locally on each book
+* Library filtering by shelf
 * Empty first-run library experience for new users instead of auto-seeded sample books
 * Clearer empty-state guidance for search, manual entry, and backup import
 * Updated service worker cache version for the current release
@@ -496,6 +498,7 @@ This section tracks notable LibriQ updates. New version logs can be added here a
 
 * New users now begin with a real empty local library while existing users keep all stored data
 * Dashboard and library empty states now better guide first-run setup without adding accounts or cloud sync
+* Shelves are stored locally with each book and included automatically in export/import backups
 
 **Notes**
 
