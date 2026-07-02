@@ -325,6 +325,15 @@ function buildPagesChart(monthlyPages) {
 }
 
 function buildRecentActivity(books) {
+  const activityLog = Storage.getActivityLog?.() || [];
+  if (activityLog.length > 0) {
+    return activityLog
+      .slice()
+      .reverse()
+      .slice(0, 5)
+      .map(buildActivityFromEvent);
+  }
+
   const activities = [];
 
   books.forEach(b => {
@@ -376,10 +385,46 @@ function buildActivityItem(activity) {
       </div>
       <div class="activity-text">
         <div class="activity-title">${Utils.sanitize(activity.title)}</div>
-        <div class="activity-subtitle">${labels[activity.type] || ''}</div>
+        <div class="activity-subtitle">${Utils.sanitize(activity.label || labels[activity.type] || activity.subtitle || '')}${activity.payloadText ? ` · ${Utils.sanitize(activity.payloadText)}` : ''}</div>
       </div>
       <div class="activity-time">${Utils.timeAgo(activity.date)}</div>
     </div>`;
+}
+
+function buildActivityFromEvent(event) {
+  const map = {
+    book_added: ['Added book', 'ph-bookmark', 'var(--accent-dim)', 'var(--accent)'],
+    manual_book_added: ['Added manually', 'ph-pencil', 'var(--accent-dim)', 'var(--accent)'],
+    status_changed: ['Status changed', 'ph-arrows-left-right', 'var(--color-info-dim)', 'var(--color-info)'],
+    progress_updated: ['Progress updated', 'ph-book-open', 'var(--color-info-dim)', 'var(--color-info)'],
+    book_finished: ['Finished book', 'ph-check-circle', 'var(--color-success-dim)', 'var(--color-success)'],
+    rating_updated: ['Rating updated', 'ph-star', 'var(--color-warning-dim)', 'var(--color-warning)'],
+    favorite_added: ['Added to favorites', 'ph-heart', 'var(--color-danger-dim)', 'var(--color-danger)'],
+    favorite_removed: ['Removed from favorites', 'ph-heart', 'var(--color-danger-dim)', 'var(--color-danger)'],
+    note_saved: ['Note saved', 'ph-notebook', 'var(--color-info-dim)', 'var(--color-info)'],
+    note_cleared: ['Note cleared', 'ph-eraser', 'var(--color-neutral-dim)', 'var(--text-tertiary)'],
+    metadata_refreshed: ['Metadata refreshed', 'ph-arrow-clockwise', 'var(--color-info-dim)', 'var(--color-info)'],
+    backup_exported: ['Backup exported', 'ph-download-simple', 'var(--accent-dim)', 'var(--accent)'],
+    backup_imported: ['Backup imported', 'ph-upload-simple', 'var(--accent-dim)', 'var(--accent)'],
+  };
+  const entry = map[event.type] || ['Activity', 'ph-bell', 'var(--color-neutral-dim)', 'var(--text-tertiary)'];
+  const payloadBits = [];
+  if (event.payload?.rating !== undefined && event.payload?.rating !== null) payloadBits.push(`${event.payload.rating}/5`);
+  if (event.payload?.currentPage !== undefined) payloadBits.push(`p.${event.payload.currentPage}`);
+  if (event.payload?.status) payloadBits.push(String(event.payload.status));
+
+  return {
+    type: event.type,
+    title: event.bookTitle || 'Unknown title',
+    subtitle: event.bookAuthor || '',
+    date: event.timestamp,
+    icon: entry[1],
+    iconBg: entry[2],
+    iconColor: entry[3],
+    label: entry[0],
+    source: event.source || '',
+    payloadText: payloadBits.join(' • '),
+  };
 }
 
 function buildGenreRow(genre, count, total) {

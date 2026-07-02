@@ -159,6 +159,11 @@ const Library = (() => {
     });
   }
 
+  function _logActivity(type, book, payload = {}, source = null) {
+    const event = Storage.buildActivityEvent(type, book, payload, source);
+    if (event) Storage.addActivityEvent(event);
+  }
+
   function submitAddBook(form, bookData) {
     const formData = new FormData(form);
     const status   = formData.get('status');
@@ -175,6 +180,8 @@ const Library = (() => {
       dateFinished: status === 'finished' ? new Date().toISOString() : null,
       tags,
     });
+
+    _logActivity('book_added', book, { status }, book.source || 'api');
 
     closeAddModal();
     Utils.toast(`"${book.title}" added to your library`, 'success');
@@ -204,8 +211,15 @@ const Library = (() => {
 
     Storage.updateBook(bookId, updates);
     Storage.updateStreak();
+    const updated = Storage.getBookById(bookId);
+    _logActivity(
+      updates.status === LIBRIQ.STATUS.FINISHED ? 'book_finished' : 'progress_updated',
+      updated,
+      { currentPage, pageCount: updated?.pageCount || 0 },
+      updated?.source || 'system'
+    );
     Navigation.updateBadges();
-    return Storage.getBookById(bookId);
+    return updated;
   }
 
   // ── Quick Status Change ───────────────────
@@ -223,6 +237,10 @@ const Library = (() => {
     }
 
     const book = Storage.updateBook(bookId, updates);
+    _logActivity('status_changed', book, { status: newStatus }, book?.source || 'system');
+    if (newStatus === LIBRIQ.STATUS.FINISHED) {
+      _logActivity('book_finished', book, { status: newStatus }, book?.source || 'system');
+    }
     Utils.toast(`Moved to "${Utils.statusLabel(newStatus)}"`, 'success');
     Navigation.updateBadges();
     return book;
@@ -236,6 +254,7 @@ const Library = (() => {
     // Click same star → clear rating
     const newRating = current.rating === rating ? null : rating;
     Storage.updateBook(bookId, { rating: newRating });
+    _logActivity('rating_updated', Storage.getBookById(bookId), { rating: newRating }, current.source || 'system');
     Utils.toast(newRating ? `Rated ${newRating} ★` : 'Rating cleared', 'info');
     const detailsModal = document.getElementById('bookDetailsModal');
     if (detailsModal && !detailsModal.hasAttribute('hidden')) {
@@ -346,6 +365,7 @@ const Library = (() => {
   function toggleFavorite(bookId) {
     const book = Storage.toggleFavorite(bookId);
     const msg = book?.isFavorite ? 'Added to favorites ❤️' : 'Removed from favorites';
+    _logActivity(book?.isFavorite ? 'favorite_added' : 'favorite_removed', book, {}, book?.source || 'system');
     Utils.toast(msg, book?.isFavorite ? 'success' : 'info');
     return book;
   }
@@ -418,6 +438,8 @@ const Library = (() => {
       dateFinished: status === LIBRIQ.STATUS.FINISHED ? dateAdded : null,
       tags: [],
     });
+
+    _logActivity('manual_book_added', book, { status, rating: book.rating || null }, 'manual');
 
     closeAddModal();
     Utils.toast(`"${book.title}" added to your library`, 'success');
@@ -587,6 +609,7 @@ const Library = (() => {
         notesUpdatedAt: updatedAt,
       });
       syncNotesMeta(updated?.notesUpdatedAt || updatedAt);
+      _logActivity(nextNotes ? 'note_saved' : 'note_cleared', updated, nextNotes ? { length: nextNotes.length } : {}, updated?.source || 'system');
       return updated;
     }
 
@@ -637,6 +660,7 @@ const Library = (() => {
         const result = await Library.refreshMetadata(book.id);
         if (result.status === 'updated') {
           Utils.toast('Metadata updated', 'success');
+          _logActivity('metadata_refreshed', Storage.getBookById(book.id), { status: 'updated' }, Storage.getBookById(book.id)?.source || 'system');
           Navigation.updateBadges();
           Navigation.renderCurrentPage();
           if (!document.getElementById('bookDetailsModal')?.hasAttribute('hidden')) {

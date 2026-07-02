@@ -24,6 +24,7 @@ const Storage = (() => {
     PROFILE: 'libriq_profile',
     STREAK:  'libriq_streak',
     GOALS:   'libriq_goals',
+    ACTIVITY:'libriq_activity',
   };
 
   // ── Default values ───────────────────────
@@ -35,6 +36,7 @@ const Storage = (() => {
     goals:   () => ({ yearly: 12, year: new Date().getFullYear() }),
     streak:  () => ({ current: 0, longest: 0, lastRead: null }),
     books:   () => [],
+    activity: () => [],
   };
 
   // ── Internal helpers ─────────────────────
@@ -90,6 +92,11 @@ const Storage = (() => {
     const rawBooks = _read(DATA_KEYS.BOOKS);
     if (!Array.isArray(rawBooks)) {
       _write(DATA_KEYS.BOOKS, DEFAULTS.books());
+    }
+
+    const rawActivity = _read(DATA_KEYS.ACTIVITY);
+    if (!Array.isArray(rawActivity)) {
+      _write(DATA_KEYS.ACTIVITY, DEFAULTS.activity());
     }
   }
 
@@ -180,6 +187,67 @@ const Storage = (() => {
     const book = getBookById(id);
     if (!book) return null;
     return updateBook(id, { isFavorite: !book.isFavorite });
+  }
+
+  function getActivityLog() {
+    const data = _read(DATA_KEYS.ACTIVITY);
+    if (!Array.isArray(data)) {
+      _write(DATA_KEYS.ACTIVITY, DEFAULTS.activity());
+      return [];
+    }
+    return data.filter(Boolean).slice(-500);
+  }
+
+  function saveActivityLog(events) {
+    if (!Array.isArray(events)) return false;
+    return _write(DATA_KEYS.ACTIVITY, events.slice(-500));
+  }
+
+  function clearActivityLog() {
+    return saveActivityLog([]);
+  }
+
+  function buildActivityEvent(type, book, payload = {}, source = null) {
+    if (!type) return null;
+    const timestamp = new Date().toISOString();
+    return {
+      id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      type,
+      timestamp,
+      bookId: book?.id || null,
+      bookTitle: book?.title || null,
+      bookAuthor: book?.author || null,
+      payload: payload && typeof payload === 'object' ? payload : {},
+      source: source || book?.source || 'system',
+    };
+  }
+
+  function addActivityEvent(event) {
+    if (!event || typeof event !== 'object') return null;
+    const current = getActivityLog();
+    const normalized = {
+      id: event.id || `act_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      type: String(event.type || 'unknown'),
+      timestamp: event.timestamp || new Date().toISOString(),
+      bookId: event.bookId || null,
+      bookTitle: event.bookTitle || null,
+      bookAuthor: event.bookAuthor || null,
+      payload: event.payload && typeof event.payload === 'object' ? event.payload : {},
+      source: ['api', 'manual', 'import', 'system'].includes(event.source) ? event.source : 'system',
+    };
+    current.push(normalized);
+    saveActivityLog(current);
+    return normalized;
+  }
+
+  function setActivityLog(events) {
+    if (!Array.isArray(events)) return false;
+    return saveActivityLog(events.slice(-500));
+  }
+
+  function replaceActivityLog(events) {
+    if (!Array.isArray(events)) return false;
+    return saveActivityLog(events.slice(-500));
   }
 
   // ── Profile ──────────────────────────────
@@ -336,6 +404,7 @@ const Storage = (() => {
     getProfile, saveProfile,
     getGoals, saveGoals,
     getStreak, updateStreak,
+    getActivityLog, addActivityEvent, clearActivityLog, buildActivityEvent, setActivityLog, replaceActivityLog,
     getStats,
   };
 })();

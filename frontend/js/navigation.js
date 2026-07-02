@@ -16,6 +16,7 @@ const Navigation = (() => {
     finished:  () => renderStatusPage(LIBRIQ.STATUS.FINISHED, 'Finished Books',    'ph-check-circle'),
     favorites: () => renderFavoritesPage(),
     stats:     () => renderStatsPage(),
+    activity:  () => renderActivityPage(),
     goals:     () => renderGoalsPage(),
     recommendations: () => renderRecommendationsPage(),
     help:      () => renderHelpPage(),
@@ -1103,7 +1104,7 @@ function renderSettingsPage() {
       <div class="goal-widget">
         <div class="goal-header"><div class="goal-title">About</div></div>
         <p class="text-sm text-secondary" style="line-height: var(--leading-loose);">
-          <strong style="color: var(--text-primary);">LibriQ</strong> v2.9.0<br>
+          <strong style="color: var(--text-primary);">LibriQ</strong> v${LIBRIQ.VERSION}<br>
           Your reading life, beautifully organized.<br>
           Book data from <a href="https://openlibrary.org" target="_blank" style="color: var(--text-accent);">Open Library</a> and <a href="https://books.google.com" target="_blank" style="color: var(--text-accent);">Google Books</a>.
         </p>
@@ -1112,6 +1113,7 @@ function renderSettingsPage() {
 }
 
 async function exportData() {
+  const activity = Storage.getActivityLog?.() || [];
   const data = {
     app: 'LibriQ',
     version: LIBRIQ.VERSION,
@@ -1121,6 +1123,7 @@ async function exportData() {
       profile: Storage.getProfile(),
       goals: Storage.getGoals(),
       streak: Storage.getStreak(),
+      activity,
     },
   };
 
@@ -1131,6 +1134,7 @@ async function exportData() {
   a.download = `libriq-backup-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
+  Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_exported', null, { itemCount: data.data.books.length, activityCount: activity.length }, 'export'));
   Utils.toast('Library exported', 'success');
 }
 
@@ -1159,6 +1163,10 @@ async function importDataFromFile(file) {
   const mergedBooks = replaceMode
     ? importedBooks
     : _mergeBooksById(Storage.getBooks(), importedBooks);
+  const importedActivity = Array.isArray(parsed.data.activity) ? parsed.data.activity.filter(Boolean) : [];
+  const mergedActivity = replaceMode
+    ? importedActivity
+    : _mergeActivityById(Storage.getActivityLog?.() || [], importedActivity);
 
   Storage.saveBooks(mergedBooks);
 
@@ -1171,6 +1179,8 @@ async function importDataFromFile(file) {
   if (parsed.data.streak && typeof parsed.data.streak === 'object') {
     localStorage.setItem('libriq_streak', JSON.stringify(parsed.data.streak));
   }
+  Storage.replaceActivityLog?.(mergedActivity);
+  Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_imported', null, { itemCount: mergedBooks.length, activityCount: mergedActivity.length, mode: replaceMode ? 'replace' : 'merge' }, 'import'));
 
   Utils.toast(replaceMode ? 'Library replaced from backup' : 'Library merged from backup', 'success');
   updateBadges();
@@ -1184,6 +1194,17 @@ function _mergeBooksById(currentBooks, importedBooks) {
   return Array.from(byId.values());
 }
 
+function _mergeActivityById(currentEvents, importedEvents) {
+  const byId = new Map();
+  (currentEvents || []).forEach(event => {
+    if (event?.id) byId.set(event.id, event);
+  });
+  (importedEvents || []).forEach(event => {
+    if (event?.id) byId.set(event.id, event);
+  });
+  return Array.from(byId.values()).sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+}
+
 function clearAllData() {
   if (!confirm('This will delete all your books and settings. Are you sure?')) return;
 
@@ -1194,6 +1215,154 @@ function clearAllData() {
   // No page reload needed — the app returns to a fully valid state.
   Storage.resetAll();
   Utils.toast('Library cleared. Starting fresh.', 'info');
+}
+
+function renderActivityPage() {
+  const main = document.getElementById('mainContent');
+  const events = Storage.getActivityLog?.() || [];
+  const state = _getActivityState();
+  const filtered = _filterActivityEvents(events, state.filter);
+  const grouped = _groupActivityByDate(filtered);
+
+  main.innerHTML = `
+    <div class="page" id="activityPage">
+      <div class="page-header library-header" style="margin-bottom: var(--space-6);">
+        <div class="library-heading">
+          <span class="library-eyebrow">Reading history</span>
+          <h1 class="page-title">Activity</h1>
+          <p class="page-subtitle">${filtered.length} event${filtered.length !== 1 ? 's' : ''}</p>
+        </div>
+      </div>
+
+      <div class="chip-group library-filters" id="activityFilters">
+        ${_buildActivityFilterChip('all', 'All', events.length, state.filter)}
+        ${_buildActivityFilterChip('books', 'Books', _countActivityEvents(events, ['book_added','manual_book_added','status_changed','progress_updated','book_finished','rating_updated','favorite_added','favorite_removed']), state.filter)}
+        ${_buildActivityFilterChip('progress', 'Progress', _countActivityEvents(events, ['status_changed','progress_updated','book_finished']), state.filter)}
+        ${_buildActivityFilterChip('notes', 'Notes', _countActivityEvents(events, ['note_saved','note_cleared']), state.filter)}
+        ${_buildActivityFilterChip('backups', 'Backups', _countActivityEvents(events, ['backup_exported','backup_imported']), state.filter)}
+        ${_buildActivityFilterChip('metadata', 'Metadata', _countActivityEvents(events, ['metadata_refreshed']), state.filter)}
+      </div>
+
+      <div class="activity-history">
+        ${grouped.length ? grouped.map(group => `
+          <section class="activity-day-group">
+            <div class="activity-day-label">${Utils.sanitize(group.label)}</div>
+            <div class="activity-list">
+              ${group.items.map(buildActivityItem).join('')}
+            </div>
+          </section>
+        `).join('') : buildActivityEmptyState(state.filter)}
+      </div>
+    </div>`;
+
+  document.getElementById('activityFilters')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.chip');
+    if (!btn) return;
+    _setActivityState({ filter: btn.dataset.filter });
+    renderActivityPage();
+  });
+}
+
+function _getActivityState() {
+  return {
+    filter: sessionStorage.getItem('libriq_activity_filter') || 'all',
+  };
+}
+
+function _setActivityState(updates) {
+  if ('filter' in updates) sessionStorage.setItem('libriq_activity_filter', updates.filter);
+}
+
+function _buildActivityFilterChip(key, label, count, active) {
+  return `<button class="chip ${active === key ? 'active' : ''}" data-filter="${key}">${label} <span>${count}</span></button>`;
+}
+
+function _filterActivityEvents(events, filter) {
+  const map = {
+    books: ['book_added','manual_book_added','status_changed','progress_updated','book_finished','rating_updated','favorite_added','favorite_removed'],
+    progress: ['status_changed','progress_updated','book_finished'],
+    notes: ['note_saved','note_cleared'],
+    backups: ['backup_exported','backup_imported'],
+    metadata: ['metadata_refreshed'],
+  };
+  const list = Array.isArray(events) ? events.slice() : [];
+  if (!map[filter]) return list.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+  return list.filter(event => map[filter].includes(event.type)).sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+}
+
+function _countActivityEvents(events, types) {
+  return (events || []).filter(event => types.includes(event.type)).length;
+}
+
+function _groupActivityByDate(events) {
+  const groups = new Map();
+  const today = new Date().toDateString();
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+  (events || []).forEach(event => {
+    const key = new Date(event.timestamp || Date.now()).toDateString();
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(event);
+  });
+
+  return Array.from(groups.entries()).map(([key, items]) => ({
+    label: key === today ? 'Today' : key === yesterday ? 'Yesterday' : key,
+    items: items.map(_normalizeActivityForView),
+  }));
+}
+
+function _normalizeActivityForView(event) {
+  const iconMap = {
+    book_added: ['Added book', 'ph-bookmark', 'var(--accent-dim)', 'var(--accent)'],
+    manual_book_added: ['Added manually', 'ph-pencil', 'var(--accent-dim)', 'var(--accent)'],
+    status_changed: ['Status changed', 'ph-arrows-left-right', 'var(--color-info-dim)', 'var(--color-info)'],
+    progress_updated: ['Progress updated', 'ph-book-open', 'var(--color-info-dim)', 'var(--color-info)'],
+    book_finished: ['Finished book', 'ph-check-circle', 'var(--color-success-dim)', 'var(--color-success)'],
+    rating_updated: ['Rating updated', 'ph-star', 'var(--color-warning-dim)', 'var(--color-warning)'],
+    favorite_added: ['Added to favorites', 'ph-heart', 'var(--color-danger-dim)', 'var(--color-danger)'],
+    favorite_removed: ['Removed from favorites', 'ph-heart', 'var(--color-danger-dim)', 'var(--color-danger)'],
+    note_saved: ['Note saved', 'ph-notebook', 'var(--color-info-dim)', 'var(--color-info)'],
+    note_cleared: ['Note cleared', 'ph-eraser', 'var(--color-neutral-dim)', 'var(--text-tertiary)'],
+    metadata_refreshed: ['Metadata refreshed', 'ph-arrow-clockwise', 'var(--color-info-dim)', 'var(--color-info)'],
+    backup_exported: ['Backup exported', 'ph-download-simple', 'var(--accent-dim)', 'var(--accent)'],
+    backup_imported: ['Backup imported', 'ph-upload-simple', 'var(--accent-dim)', 'var(--accent)'],
+  };
+  const entry = iconMap[event.type] || ['Activity', 'ph-bell', 'var(--color-neutral-dim)', 'var(--text-tertiary)'];
+  const payloadBits = [];
+  if (event.payload?.status) payloadBits.push(String(event.payload.status));
+  if (event.payload?.rating !== undefined && event.payload?.rating !== null) payloadBits.push(`${event.payload.rating}/5`);
+  if (event.payload?.currentPage !== undefined) payloadBits.push(`p.${event.payload.currentPage}`);
+  if (event.source) payloadBits.push(event.source);
+
+  return {
+    ...event,
+    title: event.bookTitle || 'Unknown title',
+    subtitle: event.bookAuthor || '',
+    label: entry[0],
+    icon: entry[1],
+    iconBg: entry[2],
+    iconColor: entry[3],
+    payloadText: payloadBits.join(' • '),
+    date: event.timestamp,
+  };
+}
+
+function buildActivityEmptyState(filter) {
+  const messages = {
+    all: ['No activity yet', 'Book changes, notes, progress updates, and backups will appear here once you start using the library.'],
+    books: ['No book activity yet', 'Add or update a book to see it here.'],
+    progress: ['No progress updates yet', 'Track a reading session or finish a book to populate this view.'],
+    notes: ['No notes activity yet', 'Save or clear a note to see it here.'],
+    backups: ['No backup activity yet', 'Export or import a backup to track it here.'],
+    metadata: ['No metadata refreshes yet', 'Refresh a book’s metadata to record it here.'],
+  };
+  const [title, body] = messages[filter] || messages.all;
+  return `
+    <div class="empty-state" style="grid-column: 1 / -1;">
+      <div class="empty-state-icon"><i class="ph ph-clock-counter-clockwise"></i></div>
+      <div class="empty-state-title">${title}</div>
+      <div class="empty-state-body">${body}</div>
+    </div>`;
 }
 
 function buildRatedBookRow(book, rank) {
