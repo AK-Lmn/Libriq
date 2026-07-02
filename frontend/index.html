@@ -346,7 +346,20 @@
   <script src="js/storage.js"></script>
   <script src="js/utils.js"></script>
   <!-- Optional local/deploy-time config. Safe to leave absent in the repo. -->
-  <script src="js/config.local.js"></script>
+  <script>
+    (async () => {
+      try {
+        const res = await fetch('js/config.local.js', { cache: 'no-store' });
+        if (!res.ok) return;
+        const code = await res.text();
+        const script = document.createElement('script');
+        script.textContent = code;
+        document.head.appendChild(script);
+      } catch (err) {
+        // Missing config is expected; Google Books falls back gracefully.
+      }
+    })();
+  </script>
   <!-- API layer — must load before search.js -->
   <script src="js/api/normalizeBook.js"></script>
   <script src="js/api/openLibrary.js"></script>
