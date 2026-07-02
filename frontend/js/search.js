@@ -4,17 +4,12 @@
    ============================================ */
 
 const Search = (() => {
-  // API communication is fully handled by BookAPI (js/api/index.js).
-  // This module is responsible only for UI, rendering, and user interaction.
-
   let currentQuery = '';
   let focusedIndex = -1;
   let results = [];
   let searchDebounced;
   let filtersOpen = false;
   let activeFilters = _defaultFilters();
-
-  // ── Elements ─────────────────────────────
 
   function getEls() {
     return {
@@ -46,8 +41,6 @@ const Search = (() => {
     };
   }
 
-  // ── Open / Close ─────────────────────────
-
   function open() {
     const { modal, input } = getEls();
     Utils.show(modal);
@@ -71,7 +64,7 @@ const Search = (() => {
     activeFilters = _defaultFilters();
     filtersOpen = false;
     _syncFiltersUI();
-    _clearResults();  // safe clear that never destroys #searchEmptyState
+    _clearResults();
     document.body.style.overflow = '';
   }
 
@@ -87,36 +80,27 @@ const Search = (() => {
     Library.showAddModal({}, { manual: true });
   }
 
-  // Remove all dynamic result nodes while keeping #searchEmptyState intact.
-  // Never use resultsArea.innerHTML = '' — that destroys the static empty-state
-  // element and causes appendChild(null) on the next close() call.
   function _clearResults() {
     const { resultsArea, emptyState } = getEls();
-    // Remove every child except the empty-state element
     Array.from(resultsArea.childNodes).forEach(node => {
       if (node !== emptyState) resultsArea.removeChild(node);
     });
     Utils.show(emptyState);
   }
 
-  // ── Search execution ─────────────────────
-
   async function executeSearch(query) {
     const { resultsArea, emptyState } = getEls();
 
-    // OL's FastAPI layer returns HTTP 422 for queries shorter than 3 characters.
     if (!query || query.length < 3) {
       _setDefaultEmptyState();
       _clearResults();
       return;
     }
 
-    // Hide empty state, show loading spinner
     Utils.hide(emptyState);
     emptyState.innerHTML = `
       <i class="ph ph-books"></i>
       <p>Search for any book to add it to your library</p>`;
-    // Remove any previous result nodes (keep emptyState hidden in place)
     Array.from(resultsArea.childNodes).forEach(node => {
       if (node !== emptyState) resultsArea.removeChild(node);
     });
@@ -129,7 +113,7 @@ const Search = (() => {
     try {
       const [localResults, apiResults] = await Promise.all([
         searchLocal(query),
-        BookAPI.searchBooks(query),   // delegates to OL + GB merge via api/index.js
+        BookAPI.searchBooks(query),
       ]);
 
       results = [...localResults.map(r => ({ ...r, _source: 'local' })),
@@ -160,22 +144,18 @@ const Search = (() => {
     );
   }
 
-  // ── Render results ────────────────────────
-
   function renderResults(localResults, apiResults) {
     const { resultsArea, emptyState } = getEls();
     const searchMeta = typeof BookAPI.getLastSearchMeta === 'function'
       ? BookAPI.getLastSearchMeta()
       : { offline: false, fromCache: false, blockedOffline: false };
 
-    // Remove the spinner and any previous result rows, keeping emptyState in place
     Array.from(resultsArea.childNodes).forEach(node => {
       if (node !== emptyState) resultsArea.removeChild(node);
     });
     focusedIndex = -1;
 
     if (localResults.length === 0 && apiResults.length === 0) {
-      // Show the persistent empty-state node with a custom message
       const offlineMessage = 'You’re offline. Saved library features still work, but online book search needs internet.';
       emptyState.innerHTML = searchMeta.blockedOffline || searchMeta.offline
         ? `
@@ -194,11 +174,9 @@ const Search = (() => {
       return;
     }
 
-    // Keep emptyState hidden while results are showing
     Utils.hide(emptyState);
     _setDefaultEmptyState();
 
-    // In-library results
     if (localResults.length > 0) {
       resultsArea.insertAdjacentHTML('beforeend',
         `<div class="search-section-label">In Your Library</div>`);
@@ -207,7 +185,6 @@ const Search = (() => {
       });
     }
 
-    // API results
     const filteredApiResults = _applyAdvancedFilters(apiResults);
 
     if (filteredApiResults.length > 0) {
@@ -280,7 +257,6 @@ const Search = (() => {
     desc.textContent = book.description || 'No description available.';
     el.querySelector('.search-result-info')?.appendChild(desc);
 
-    // Add to library button
     const addBtn = el.querySelector('[data-add-book]');
     if (addBtn) {
       addBtn.addEventListener('click', (e) => {
@@ -291,8 +267,6 @@ const Search = (() => {
 
     return el;
   }
-
-  // ── Keyboard nav ─────────────────────────
 
   function handleKeydown(e) {
     const { modal } = getEls();
@@ -326,8 +300,6 @@ const Search = (() => {
     items.forEach((el, i) => el.classList.toggle('focused', i === focusedIndex));
     items[focusedIndex]?.scrollIntoView({ block: 'nearest' });
   }
-
-  // ── Add modal trigger ─────────────────────
 
   function openAddModal(bookData) {
     close();
@@ -438,8 +410,6 @@ const Search = (() => {
     if (currentQuery) executeSearch(currentQuery);
   }
 
-  // ── Init ─────────────────────────────────
-
   function init() {
     const { input } = getEls();
 
@@ -448,19 +418,16 @@ const Search = (() => {
       executeSearch(q);
     }, 350);
 
-    // Input handler
     input.addEventListener('input', (e) => {
       searchDebounced(e.target.value.trim());
     });
 
     updateShortcutLabel();
 
-    // Open triggers
     document.getElementById('openSearch')?.addEventListener('click', open);
     document.getElementById('mobileSearchBtn')?.addEventListener('click', open);
     document.getElementById('closeSearch')?.addEventListener('click', close);
 
-    // Keyboard shortcut ⌘K / Ctrl+K
     document.addEventListener('keydown', (e) => {
       const isApple = Utils.isApplePlatform();
       const matchesShortcut = isApple ? e.metaKey : e.ctrlKey;
@@ -472,7 +439,6 @@ const Search = (() => {
       handleKeydown(e);
     });
 
-    // Click overlay to close
     document.getElementById('searchModal')?.addEventListener('click', (e) => {
       if (e.target === e.currentTarget) close();
     });
