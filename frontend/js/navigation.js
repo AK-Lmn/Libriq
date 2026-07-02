@@ -166,6 +166,7 @@ function renderLibraryPage() {
     wishlist: books.filter(b => b.status === LIBRIQ.STATUS.WISHLIST).length,
     finished: books.filter(b => b.status === LIBRIQ.STATUS.FINISHED).length,
     favorites: books.filter(b => b.isFavorite).length,
+    needsMetadata: books.filter(b => _bookNeedsMetadata(b).length > 0).length,
   };
 
   main.innerHTML = `
@@ -218,6 +219,7 @@ function renderLibraryPage() {
         <button class="chip" data-filter="wishlist">Want to Read <span>${counts.wishlist}</span></button>
         <button class="chip" data-filter="finished">Finished <span>${counts.finished}</span></button>
         <button class="chip" data-filter="favorites">Favorites <span>${counts.favorites}</span></button>
+        <button class="chip" data-filter="needs-metadata">Needs Metadata <span>${counts.needsMetadata}</span></button>
       </div>
 
       <div class="books-grid" id="libraryGrid">
@@ -321,6 +323,7 @@ function _filterAndSortLibraryBooks(books, state) {
   let filtered = books.slice();
 
   if (state.filter === 'favorites') filtered = filtered.filter(b => b.isFavorite);
+  else if (state.filter === 'needs-metadata') filtered = filtered.filter(b => _bookNeedsMetadata(b).length > 0);
   else if (state.filter !== 'all') filtered = filtered.filter(b => b.status === state.filter);
 
   if (q) {
@@ -370,6 +373,7 @@ function buildLibraryEmpty(filter = 'all', query = '') {
     wishlist:  ['Queue is clear', 'Add books you want to read next.'],
     finished:  ['No finished books yet', 'Keep reading — you\'re getting there.'],
     favorites: ['No favorites yet', 'Heart a book to save it here.'],
+    'needs-metadata': ['No metadata issues found', 'Your saved books already look complete.'],
   };
   const hasQuery = !!query;
   const [title, body] = hasQuery
@@ -1110,6 +1114,19 @@ function renderSettingsPage() {
         </p>
       </div>
     </div>`;
+}
+
+function _bookNeedsMetadata(book) {
+  if (!book) return [];
+  const gaps = [];
+  if (!book.coverUrl) gaps.push('cover');
+  if (!book.description) gaps.push('description');
+  if (!book.pageCount) gaps.push('pageCount');
+  if (!Array.isArray(book.genres) || book.genres.length === 0) gaps.push('genres');
+  if (!book.publishYear) gaps.push('publishYear');
+  if (!book.publisher) gaps.push('publisher');
+  if (!book.language) gaps.push('language');
+  return gaps;
 }
 
 async function exportData() {

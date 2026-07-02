@@ -10,12 +10,12 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: 'What’s New in LibriQ v2.12.0',
+      title: 'What’s New in LibriQ v2.13.0',
       subtitle: 'A quick look at the latest local-first improvements.',
       sections: [
-        ['Project Showcase & Screenshots', 'README now includes a visual screenshot showcase for the project.'],
-        ['Easier to Browse', 'The documentation is easier to scan with a concise set of labeled screenshots.'],
-        ['Key Areas', 'Screenshots highlight Dashboard, Library, Book Details, Search, Help, and mobile views.'],
+        ['Metadata Cleanup Tools', 'Find saved books with incomplete metadata and refresh missing details more easily.'],
+        ['Needs Metadata View', 'A new library view helps surface books missing covers, descriptions, page counts, or other details.'],
+        ['Quality Indicators', 'Book cards now show lightweight metadata quality cues so gaps are easier to spot.'],
         ['No Data Changes', 'This update does not change user data or localStorage behavior.'],
       ],
       note: 'Your library stays local on your device. No accounts or cloud sync have been added.',

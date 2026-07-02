@@ -164,6 +164,27 @@ const Library = (() => {
     if (event) Storage.addActivityEvent(event);
   }
 
+  function _getMetadataGaps(book) {
+    if (!book) return [];
+    const gaps = [];
+    if (!book.coverUrl) gaps.push('cover');
+    if (!book.description) gaps.push('description');
+    if (!book.pageCount) gaps.push('pageCount');
+    if (!Array.isArray(book.genres) || book.genres.length === 0) gaps.push('genres');
+    if (!book.publishYear) gaps.push('publishYear');
+    if (!book.publisher) gaps.push('publisher');
+    if (!book.language) gaps.push('language');
+    return gaps;
+  }
+
+  function _getMetadataQuality(book) {
+    const gaps = _getMetadataGaps(book);
+    if (gaps.length === 0) return { label: 'Complete', className: 'complete' };
+    if (gaps.includes('cover')) return { label: 'Missing cover', className: 'missing-cover' };
+    if (gaps.includes('description')) return { label: 'Missing description', className: 'missing-description' };
+    return { label: 'Missing details', className: 'missing-details' };
+  }
+
   function submitAddBook(form, bookData) {
     const formData = new FormData(form);
     const status   = formData.get('status');
@@ -458,6 +479,8 @@ const Library = (() => {
     if (Object.keys(updates).length === 0) return { status: 'no-new' };
 
     Storage.updateBook(bookId, updates);
+    const updated = Storage.getBookById(bookId);
+    _logActivity('metadata_refreshed', updated, { status: 'updated' }, updated?.source || 'system');
     return { status: 'updated' };
   }
 
@@ -491,6 +514,7 @@ const Library = (() => {
     const genreBadges = (book.genres || []).slice(0, 3)
       .map(g => `<span class="badge badge-genre">${Utils.sanitize(g)}</span>`)
       .join('');
+    const metadataQuality = _getMetadataQuality(book);
 
     body.innerHTML = `
       <div class="book-details-hero">
@@ -503,6 +527,7 @@ const Library = (() => {
             <span class="badge ${Utils.statusBadgeClass(book.status)}">
               ${Utils.statusLabel(book.status)}
             </span>
+            <span class="badge badge-metadata badge-metadata-${metadataQuality.className}">${metadataQuality.label}</span>
             ${genreBadges}
           </div>
 
@@ -660,7 +685,6 @@ const Library = (() => {
         const result = await Library.refreshMetadata(book.id);
         if (result.status === 'updated') {
           Utils.toast('Metadata updated', 'success');
-          _logActivity('metadata_refreshed', Storage.getBookById(book.id), { status: 'updated' }, Storage.getBookById(book.id)?.source || 'system');
           Navigation.updateBadges();
           Navigation.renderCurrentPage();
           if (!document.getElementById('bookDetailsModal')?.hasAttribute('hidden')) {
@@ -793,6 +817,7 @@ const Library = (() => {
     const genreBadges = (book.genres || []).slice(0, 2)
       .map(g => `<span class="badge badge-genre">${Utils.sanitize(g)}</span>`)
       .join('');
+    const metadataQuality = _getMetadataQuality(book);
 
     card.innerHTML = `
       ${Utils.buildCover(book, 'cover-md')}
@@ -803,6 +828,7 @@ const Library = (() => {
           <span class="badge ${Utils.statusBadgeClass(book.status)}">
             ${Utils.statusLabel(book.status)}
           </span>
+          <span class="badge badge-metadata badge-metadata-${metadataQuality.className}">${metadataQuality.label}</span>
           ${book.rating ? Utils.buildStars(book.rating) : ''}
           ${genreBadges}
         </div>
