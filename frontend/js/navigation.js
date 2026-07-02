@@ -1105,6 +1105,54 @@ function renderSettingsPage() {
         <input id="importLibraryInput" type="file" accept="application/json,.json" hidden onchange="Navigation.importDataFromFile(this.files?.[0])" />
       </div>
 
+      <div class="goal-widget" style="margin-bottom: var(--space-4);">
+        <div class="goal-header">
+          <div class="goal-title">Search &amp; Privacy</div>
+        </div>
+        <p class="text-sm text-secondary" style="line-height: var(--leading-loose); margin-top: 0;">
+          LibriQ searches public book sources like Open Library and Google Books. Some providers may rate-limit requests during heavy usage, but Open Library fallback remains available. Normal users do not need to configure anything.
+        </p>
+        <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+          <div class="activity-text">
+            <div class="activity-title">Open Library</div>
+            <div class="activity-subtitle">Available</div>
+          </div>
+        </div>
+        <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+          <div class="activity-text">
+            <div class="activity-title">Google Books</div>
+            <div class="activity-subtitle">Available</div>
+          </div>
+        </div>
+        <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+          <div class="activity-text">
+            <div class="activity-title">Google Books key</div>
+            <div class="activity-subtitle">${_hasGoogleBooksKey() ? 'Configured' : 'Not configured'}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="goal-widget" style="margin-bottom: var(--space-4);">
+        <div class="goal-header">
+          <div class="goal-title">Privacy &amp; Local Data</div>
+        </div>
+        <div class="activity-list">
+          ${[
+            ['Local library storage', 'LibriQ stores your library locally in your browser.'],
+            ['No accounts', 'There is no account system.'],
+            ['No cloud sync', 'Your data stays on this device unless you export it yourself.'],
+            ['Manual backups', 'Backups are exported and imported manually.'],
+            ['Private notes', 'Private notes stay local unless you include them in an exported backup.'],
+          ].map(([title, subtitle]) => `
+            <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+              <div class="activity-text">
+                <div class="activity-title">${title}</div>
+                <div class="activity-subtitle">${subtitle}</div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+
       <div class="goal-widget">
         <div class="goal-header"><div class="goal-title">About</div></div>
         <p class="text-sm text-secondary" style="line-height: var(--leading-loose);">
@@ -1127,6 +1175,12 @@ function _bookNeedsMetadata(book) {
   if (!book.publisher) gaps.push('publisher');
   if (!book.language) gaps.push('language');
   return gaps;
+}
+
+function _hasGoogleBooksKey() {
+  const config = window.LibriqConfig || window.__LIBRIQ_CONFIG__ || {};
+  const candidate = config.googleBooksApiKey || config.googleBooksKey || config.GOOGLE_BOOKS_API_KEY || '';
+  return Boolean(String(candidate).trim());
 }
 
 async function exportData() {

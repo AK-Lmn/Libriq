@@ -10,12 +10,12 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: 'What’s New in LibriQ v2.13.0',
+      title: 'What’s New in LibriQ v2.14.0',
       subtitle: 'A quick look at the latest local-first improvements.',
       sections: [
-        ['Metadata Cleanup Tools', 'Find saved books with incomplete metadata and refresh missing details more easily.'],
-        ['Needs Metadata View', 'A new library view helps surface books missing covers, descriptions, page counts, or other details.'],
-        ['Quality Indicators', 'Book cards now show lightweight metadata quality cues so gaps are easier to spot.'],
+        ['Search & Privacy Transparency', 'Settings now shows where public search sources come from and how local data stays on-device.'],
+        ['No Setup Needed', 'Normal users do not need to configure a key or change anything to keep using search.'],
+        ['Config Status', 'The app only shows whether a Google Books key is configured, never the key itself.'],
         ['No Data Changes', 'This update does not change user data or localStorage behavior.'],
       ],
       note: 'Your library stays local on your device. No accounts or cloud sync have been added.',
