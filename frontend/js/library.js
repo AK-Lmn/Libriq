@@ -110,13 +110,13 @@ const Library = (() => {
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="tagsInput">Tags <span class="text-tertiary">(optional)</span></label>
+          <label class="form-label" for="tagsInput">Shelves <span class="text-tertiary">(optional)</span></label>
           <input
             type="text"
             id="tagsInput"
             name="tags"
             class="form-input"
-            placeholder="e.g. favorites, summer-reading"
+            placeholder="e.g. Classics, Philosophy, Books to reread"
           />
         </div>
 
@@ -158,6 +158,15 @@ const Library = (() => {
     if (event) Storage.addActivityEvent(event);
   }
 
+  function _parseShelfInput(value) {
+    return Array.from(new Set(
+      String(value || '')
+        .split(',')
+        .map(item => item.trim())
+        .filter(Boolean)
+    ));
+  }
+
   function _getMetadataGaps(book) {
     if (!book) return [];
     const gaps = [];
@@ -182,9 +191,7 @@ const Library = (() => {
   function submitAddBook(form, bookData) {
     const formData = new FormData(form);
     const status   = formData.get('status');
-    const tags = formData.get('tags')
-      ? formData.get('tags').split(',').map(t => t.trim()).filter(Boolean)
-      : [];
+    const tags = _parseShelfInput(formData.get('tags'));
 
     const book = Storage.addBook({
       ...bookData,
@@ -282,6 +289,7 @@ const Library = (() => {
   function buildManualForm(book = {}) {
     const selectedStatus = book.status || LIBRIQ.STATUS.WISHLIST;
     const selectedGenres = Array.isArray(book.genres) ? book.genres.join(', ') : '';
+    const selectedShelves = Array.isArray(book.tags) ? book.tags.join(', ') : '';
 
     return `
       <div class="book-details-notes">
@@ -335,6 +343,11 @@ const Library = (() => {
         <div class="form-group">
           <label class="form-label" for="manualLanguageInput">Language <span class="text-tertiary">(optional)</span></label>
           <input type="text" id="manualLanguageInput" name="language" class="form-input" value="${Utils.sanitize(book.language || '')}" placeholder="English" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="manualTagsInput">Shelves <span class="text-tertiary">(optional)</span></label>
+          <input type="text" id="manualTagsInput" name="tags" class="form-input" value="${Utils.sanitize(selectedShelves)}" placeholder="e.g. Classics, Philosophy, Books to reread" />
         </div>
 
         <div class="form-group">
@@ -448,7 +461,7 @@ const Library = (() => {
       dateAdded,
       dateStarted: status !== LIBRIQ.STATUS.WISHLIST ? dateAdded : null,
       dateFinished: status === LIBRIQ.STATUS.FINISHED ? dateAdded : null,
-      tags: [],
+      tags: _parseShelfInput(formData.get('tags')),
     });
 
     _logActivity('manual_book_added', book, { status, rating: book.rating || null }, 'manual');
@@ -499,6 +512,9 @@ const Library = (() => {
     const genreBadges = (book.genres || []).slice(0, 3)
       .map(g => `<span class="badge badge-genre">${Utils.sanitize(g)}</span>`)
       .join('');
+    const shelfBadges = Array.isArray(book.tags) && book.tags.length
+      ? book.tags.map(tag => `<span class="badge badge-accent">${Utils.sanitize(tag)}</span>`).join('')
+      : '';
     const metadataQuality = _getMetadataQuality(book);
 
     body.innerHTML = `
@@ -515,6 +531,12 @@ const Library = (() => {
             <span class="badge badge-metadata badge-metadata-${metadataQuality.className}">${metadataQuality.label}</span>
             ${genreBadges}
           </div>
+
+          ${shelfBadges ? `
+          <div class="book-details-shelves">
+            <div class="book-details-section-title">Shelves</div>
+            <div class="book-details-shelf-list">${shelfBadges}</div>
+          </div>` : ''}
 
           <div class="book-details-rating-panel">
             <h3 class="book-details-section-title">Your rating</h3>
@@ -566,6 +588,24 @@ const Library = (() => {
         <p class="book-details-desc-text">${Utils.sanitize(synopsis)}</p>
       </div>
 
+      <div class="book-details-notes" id="bookShelvesSection">
+        <h3 class="book-details-section-title">Shelves</h3>
+        <label class="book-details-notes-label" for="bookShelvesInput">Organize this book</label>
+        <input
+          id="bookShelvesInput"
+          class="form-input"
+          type="text"
+          value="${Utils.sanitize(Array.isArray(book.tags) ? book.tags.join(', ') : '')}"
+          placeholder="e.g. Classics, Philosophy, Books to reread"
+        />
+        <div class="book-details-notes-actions">
+          <button type="button" class="btn btn-primary" id="saveBookShelvesBtn">
+            <i class="ph ph-floppy-disk"></i>
+            Save Shelves
+          </button>
+        </div>
+      </div>
+
       <div class="book-details-notes" data-book-id="${book.id}">
         <h3 class="book-details-section-title">Private Notes</h3>
         <label class="book-details-notes-label" for="bookNotesTextarea">My Thoughts</label>
@@ -598,6 +638,8 @@ const Library = (() => {
     const notesMeta = body.querySelector('#bookNotesMeta');
     const saveNoteBtn = body.querySelector('#saveBookNoteBtn');
     const clearNoteBtn = body.querySelector('#clearBookNoteBtn');
+    const shelvesInput = body.querySelector('#bookShelvesInput');
+    const saveShelvesBtn = body.querySelector('#saveBookShelvesBtn');
 
     function syncNotesMeta(updatedAt) {
       if (!notesMeta) return;
@@ -621,6 +663,14 @@ const Library = (() => {
       return updated;
     }
 
+    function saveShelves(nextShelves) {
+      const updated = Storage.updateBook(book.id, { tags: _parseShelfInput(nextShelves) });
+      const refreshed = updated || Storage.getBookById(book.id);
+      if (document.getElementById('bookDetailsModal')?.hasAttribute('hidden')) return refreshed;
+      Library.showDetailsModal(book.id);
+      return refreshed;
+    }
+
     if (saveNoteBtn && notesTextarea) {
       saveNoteBtn.addEventListener('click', () => {
         saveNotes(notesTextarea.value.trimEnd());
@@ -633,6 +683,13 @@ const Library = (() => {
         notesTextarea.value = '';
         saveNotes('');
         Utils.toast('Note cleared', 'info');
+      });
+    }
+
+    if (saveShelvesBtn && shelvesInput) {
+      saveShelvesBtn.addEventListener('click', () => {
+        saveShelves(shelvesInput.value);
+        Utils.toast('Shelves saved', 'success');
       });
     }
 
