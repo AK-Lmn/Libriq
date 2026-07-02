@@ -10,13 +10,13 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: 'What’s New in LibriQ v2.11.0',
+      title: 'What’s New in LibriQ v2.12.0',
       subtitle: 'A quick look at the latest local-first improvements.',
       sections: [
-        ['Reading Activity History', 'See recent book changes, progress updates, notes, ratings, metadata refreshes, and backup events in one place.'],
-        ['Dashboard Activity Feed', 'The dashboard now prefers the saved activity log for recent activity, with a local fallback when the log is empty.'],
-        ['Backup Activity Support', 'Backups now include activity history, and imports can replace or merge that history safely.'],
-        ['Version Refresh', 'LibriQ is now labeled as v2.11.0 across the app.'],
+        ['Project Showcase & Screenshots', 'README now includes a visual screenshot showcase for the project.'],
+        ['Easier to Browse', 'The documentation is easier to scan with a concise set of labeled screenshots.'],
+        ['Key Areas', 'Screenshots highlight Dashboard, Library, Book Details, Search, Help, and mobile views.'],
+        ['No Data Changes', 'This update does not change user data or localStorage behavior.'],
       ],
       note: 'Your library stays local on your device. No accounts or cloud sync have been added.',
     },

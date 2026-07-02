@@ -38,6 +38,34 @@ The app is designed to feel like a focused digital reading space instead of a pl
 
 ---
 
+## Screenshots
+
+### Dashboard
+![Dashboard](docs/screenshots/dashboard-desktop.png)
+An at-a-glance home view with reading progress, goal tracking, and recent activity.
+
+### Library
+![Library](docs/screenshots/library-desktop.png)
+A cover-forward shelf for browsing saved books, filters, and library search.
+
+### Book Details
+![Book Details](docs/screenshots/book-details-desktop.png)
+The book detail modal for progress, rating, notes, favorites, and metadata.
+
+### Search
+![Search](docs/screenshots/search-modal-desktop.png)
+The search experience for finding books online before adding them locally.
+
+### Help & Guide
+![Help & Guide](docs/screenshots/help-guide-desktop.png)
+A built-in guide for getting started, using backups, and learning key features.
+
+### Mobile View
+![Mobile View](docs/screenshots/dashboard-mobile.png)
+A compact mobile layout that keeps the dashboard easy to scan on smaller screens.
+
+---
+
 ## Features
 
 ### Book Search
@@ -421,6 +449,22 @@ The current version focuses on improving the core local-first reading tracker ex
 ## Patch Notes
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
+
+### v2.12.0 - Project Showcase & Screenshots
+
+**Added**
+
+* README screenshot showcase for the project
+* Labeled screenshots for Dashboard, Library, Book Details, Search, Help, and mobile viewing
+
+**Changed**
+
+* Documentation is easier to browse thanks to a concise visual section
+
+**Notes**
+
+* This update does not change user data or localStorage behavior
+* Screenshot automation remains unchanged
 
 ### v2.11.0 - Reading Activity History
 
