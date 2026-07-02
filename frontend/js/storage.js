@@ -77,7 +77,7 @@ const Storage = (() => {
   }
 
   // Decision tree:
-  //   INSTALL_KEY absent  → first launch ever → seed sample data, mark installed
+  //   INSTALL_KEY absent  → first launch ever → mark installed, create empty defaults
   //   INSTALL_KEY present → returning user or post-reset → restore defaults only,
   //                         leave books array as-is (empty after reset, intact otherwise)
 
@@ -87,12 +87,12 @@ const Storage = (() => {
     if (isFirstLaunch) {
       localStorage.setItem(INSTALL_KEY, new Date().toISOString());
       _writeDefaults();
-      _seedSampleData();
     } else {
       _writeDefaults();
     }
   }
 
+  // Kept for future opt-in demos / screenshots without affecting real first runs.
   function _seedSampleData() {
     const books = SEED_BOOKS.map(b => createBook(b));
     _write(DATA_KEYS.BOOKS, books);

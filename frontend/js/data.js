@@ -4,7 +4,7 @@
    ============================================ */
 
 const LIBRIQ = {
-  VERSION: '2.14.0',
+  VERSION: '2.15.0',
 
   // Reading status constants
   STATUS: {
@@ -87,7 +87,7 @@ function createProfile(data = {}) {
 }
 
 /**
- * Seed data — gives new users a populated experience
+ * Seed data — kept for demos, screenshots, and opt-in testing
  */
 const SEED_BOOKS = [
   {

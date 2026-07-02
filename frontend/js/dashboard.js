@@ -249,9 +249,15 @@ function buildReadingEmptyState() {
     <div class="empty-state" style="padding: var(--space-8);">
       <div class="empty-state-icon"><i class="ph ph-book-open"></i></div>
       <div class="empty-state-title">No books in progress</div>
-      <div class="empty-state-body">Search for a book and start reading.</div>
+      <div class="empty-state-body">Search for a book, add one manually, or import a backup to get started.</div>
       <button class="btn btn-primary" onclick="Search.open()">
-        <i class="ph ph-magnifying-glass"></i> Find a book
+        <i class="ph ph-magnifying-glass"></i> Search Books
+      </button>
+      <button class="btn btn-secondary" onclick="Search.openManualEntry()">
+        <i class="ph ph-pencil"></i> Add Manually
+      </button>
+      <button class="btn btn-secondary" onclick="Navigation.promptImportData()">
+        <i class="ph ph-upload-simple"></i> Import Backup
       </button>
     </div>`;
 }
