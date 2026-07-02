@@ -422,6 +422,25 @@ The current version focuses on improving the core local-first reading tracker ex
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
 
+### v2.11.0 - Reading Activity History
+
+**Added**
+
+* Local reading activity history stored in `libriq_activity`
+* Activity page with date grouping and filters for books, progress, notes, backups, and metadata
+* Recent Activity dashboard feed powered by the activity log
+* Activity history included in local JSON backups
+
+**Changed**
+
+* Recent dashboard activity now prefers the saved activity log and falls back to derived book dates when the log is empty
+* Backup import now restores activity history on replace and safely merges activity on merge imports
+
+**Notes**
+
+* Activity data stays local in the browser and is capped to the latest 500 events
+* Older backups without activity still import normally
+
 ### v2.10.1 - Offline Search State Polish
 
 **Added**

@@ -10,13 +10,13 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: 'What’s New in LibriQ v2.10.1',
+      title: 'What’s New in LibriQ v2.11.0',
       subtitle: 'A quick look at the latest local-first improvements.',
       sections: [
-        ['Local Recommendations', 'Discover suggested reads based on your saved library, ratings, favorites, genres, and reading status.'],
-        ['Advanced Search Filters', 'Refine online book search results by author, year, source, cover availability, and description availability.'],
-        ['Help & Guide Center', 'Learn how to search, add books manually, use private notes, back up your library, and understand local-first storage.'],
-        ['Library Search & Sorting', 'Quickly find and organize saved books by title, author, genre, rating, progress, and recently added.'],
+        ['Reading Activity History', 'See recent book changes, progress updates, notes, ratings, metadata refreshes, and backup events in one place.'],
+        ['Dashboard Activity Feed', 'The dashboard now prefers the saved activity log for recent activity, with a local fallback when the log is empty.'],
+        ['Backup Activity Support', 'Backups now include activity history, and imports can replace or merge that history safely.'],
+        ['Version Refresh', 'LibriQ is now labeled as v2.11.0 across the app.'],
       ],
       note: 'Your library stays local on your device. No accounts or cloud sync have been added.',
     },
