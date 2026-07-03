@@ -83,12 +83,25 @@ const Navigation = (() => {
     _updateThemeToggleUI(theme);
   }
 
+  function _withThemeSwitchLock(fn) {
+    const root = document.documentElement;
+    root.classList.add('theme-switching');
+    fn();
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        root.classList.remove('theme-switching');
+      });
+    });
+  }
+
   function toggleTheme() {
     const current = document.documentElement.getAttribute('data-theme') || 'dark';
     const next    = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
+    _withThemeSwitchLock(() => {
+      document.documentElement.setAttribute('data-theme', next);
+      _updateThemeToggleUI(next);
+    });
     Storage.saveProfile({ theme: next });
-    _updateThemeToggleUI(next);
   }
 
   function _updateThemeToggleUI(theme) {
