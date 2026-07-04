@@ -114,6 +114,30 @@ const Utils = {
     return div.innerHTML;
   },
 
+  /** Turn an account handle into a friendly display name */
+  formatDisplayName(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    return raw
+      .replace(/[._-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .split(' ')
+      .filter(Boolean)
+      .map(part => part[0].toUpperCase() + part.slice(1).toLowerCase())
+      .join(' ');
+  },
+
+  /** Extract a safe fallback name from an email prefix */
+  formatEmailPrefixName(email) {
+    const prefix = String(email || '').split('@')[0].trim();
+    if (!prefix) return '';
+    const cleaned = prefix.replace(/[^a-zA-Z0-9._-]/g, '');
+    if (!cleaned) return '';
+    const firstToken = cleaned.split(/[._-]/).find(Boolean) || cleaned;
+    const fallback = firstToken.match(/[A-Za-z]+/)?.[0] || firstToken;
+    return Utils.formatDisplayName(fallback);
+  },
+
   // ── Book helpers ─────────────────────────
 
   /** Get status label */
@@ -153,11 +177,11 @@ const Utils = {
   buildCover(book, sizeClass = 'cover-md') {
     if (book.coverUrl) {
       return `
-        <div class="book-cover ${sizeClass}">
+        <div class="book-cover ${sizeClass}" data-cover-fallback="true">
           <img src="${Utils.sanitize(book.coverUrl)}"
                alt="Cover of ${Utils.sanitize(book.title)}"
                loading="lazy"
-               onerror="this.onerror=null;this.removeAttribute('src');this.parentElement.innerHTML=Utils.buildCoverPlaceholder('${Utils.sanitize(book.title)}')">
+               onerror="if(this.dataset.fallbackTriggered==='1') return; this.dataset.fallbackTriggered='1'; this.removeAttribute('src'); this.parentElement.innerHTML=Utils.buildCoverPlaceholder('${Utils.sanitize(book.title)}')">
         </div>`;
     }
     return `

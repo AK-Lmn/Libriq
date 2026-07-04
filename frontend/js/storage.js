@@ -235,12 +235,12 @@ const Storage = (() => {
 
   function getProfile() {
     const data = _read(DATA_KEYS.PROFILE);
-    if (!data || typeof data !== 'object' || !data.name) {
+    if (!data || typeof data !== 'object') {
       const fresh = DEFAULTS.profile();
       _write(DATA_KEYS.PROFILE, fresh);
       return fresh;
     }
-    return data;
+    return { ...DEFAULTS.profile(), ...data };
   }
 
   function getBackupMeta() {

@@ -463,7 +463,7 @@ function renderSessionChoicePage() {
   const firebase = window.LibriqFirebase?.getState?.() || { available: false, initialized: false, ready: false, user: null };
   const sessionContext = window.LibriqFirebase?.getSessionContext?.() || { isInAppBrowser: false, hints: [] };
   const hasUser = Boolean(firebase.user);
-  const accountName = firebase.user?.displayName || firebase.user?.email || 'Reader';
+  const accountName = getDisplayNameForAccount(firebase.user);
   const loading = firebase.available && !firebase.ready;
   const inAppBrowser = Boolean(sessionContext.isInAppBrowser);
   const signInButtonLabel = hasUser ? `Continue as ${Utils.sanitize(accountName)}` : 'Sign in with Google';
@@ -891,7 +891,7 @@ function buildLibraryEmpty(filter = 'all', query = '') {
     reading:   ['Nothing in progress', 'Pick a book and start reading.'],
     wishlist:  ['Queue is clear', 'Add books you want to read next.'],
     finished:  ['No finished books yet', 'Keep reading — you\'re getting there.'],
-    favorites: ['No favorites yet', 'Heart a book to save it here.'],
+    favorites: ['No favorites yet', 'Save the books you love most here.'],
     'needs-metadata': ['No metadata issues found', 'Your saved books already look complete.'],
   };
   const state = _getLibraryState();
@@ -1399,6 +1399,16 @@ function _topCountEntry(map) {
   return { name, count };
 }
 
+function getDisplayNameForAccount(user) {
+  const profileName = String(Storage.getProfile()?.name || '').trim();
+  if (profileName && profileName.toLowerCase() !== 'reader') return profileName;
+
+  const displayName = Utils.formatDisplayName(user?.displayName);
+  if (displayName) return displayName;
+
+  return Utils.formatEmailPrefixName(user?.email) || 'Reader';
+}
+
 // ── Help Page ────────────────────────────────
 
 function renderHelpPage() {
@@ -1450,7 +1460,7 @@ function renderHelpPage() {
   const faqItems = [
     ['Why did my books disappear?', 'They may be stored in a different browser or device. Local-first storage stays with the browser profile that saved it.'],
     ['Can I use LibriQ offline?', 'Yes, after the app loads. Search needs the book APIs online, but your saved library remains available locally.'],
-    ['Will notes sync across devices?', 'No. Notes are private and local-only for now. Exporting a backup is the best way to move them.'],
+    ['Will notes sync across devices?', 'No. Notes stay local unless you export or restore a backup.'],
     ['What if search returns no results?', 'Try a different title spelling, search by author, or use Manual Entry to add the book by hand.'],
   ];
 
@@ -1469,7 +1479,7 @@ function renderHelpPage() {
         <div class="help-intro-copy">
           <h2 class="help-intro-title">A calm place to learn the app</h2>
           <p class="text-secondary" style="line-height: var(--leading-loose); margin: 0;">
-            LibriQ is designed to stay simple and local-first. This guide covers the core features so you can start building your reading space without needing a tutorial or account.
+            LibriQ is designed to stay simple and local-first. This guide covers the core features, backups, and account behavior so you can start building your reading space without needing a tutorial or account.
           </p>
         </div>
       </div>
@@ -1771,6 +1781,7 @@ function renderProfilePage() {
             <input type="text" id="profileName" name="name"
               class="form-input" value="${Utils.sanitize(profile.name)}"
               placeholder="Your name" maxlength="40" />
+            <div class="text-xs text-tertiary" style="margin-top: var(--space-2);">Use any name you want LibriQ to call you.</div>
           </div>
           <div class="form-group">
             <label class="form-label" for="profileBio">Bio <span class="text-tertiary">(optional)</span></label>
@@ -1954,8 +1965,8 @@ function renderSettingsPage() {
             ['Local library storage', 'LibriQ stores your library locally on this device.'],
             ['Basic traffic analytics', 'LibriQ uses anonymous Google Analytics page views to understand general traffic.'],
             ['Accounts are optional', 'Sign in only if you want cloud backup.'],
-            ['Cloud backup is automatic', 'Signing in enables debounced cloud backups after local changes.'],
-            ['No realtime sync', 'Automatic sync is not a realtime merge system in v3.2.0.'],
+            ['Automatic cloud backup', 'Signing in enables debounced cloud backups after local changes.'],
+            ['Why realtime sync is not enabled yet', 'Automatic cloud backup keeps a safe copy of this device\'s library in your account. Realtime multi-device sync is not enabled yet because LibriQ needs careful conflict handling first, so older devices do not accidentally overwrite newer progress, notes, or deleted books.'],
             ['Optional JSON export', 'Export a JSON copy anytime for an extra manual safety copy.'],
             ['Private notes and quotes', 'Private notes and quotes stay local unless included in an exported backup.'],
             ['Continue offline', 'Continue offline remains available.'],
@@ -2025,7 +2036,7 @@ function _buildAccountSection(firebase) {
   const hasFirestore = Boolean(window.LibriqFirebase?.hasFirestore?.());
   const offlineMode = Navigation.getSessionPreference?.() === 'offline';
   const cloudLabel = cloudState.status === 'paused' || offlineMode
-    ? 'Cloud backup is paused in offline mode.'
+    ? 'Cloud backup is paused while you’re using offline mode.'
     : hasFirestore
       ? 'Cloud backup is active for this account.'
       : 'You\'re signed in, but cloud backup is unavailable right now.';
@@ -2038,7 +2049,7 @@ function _buildAccountSection(firebase) {
       <div class="activity-text" style="display:flex; flex-direction:row; align-items:center; gap: var(--space-3);">
         ${avatar}
         <div>
-          <div class="activity-title">${Utils.sanitize(user.displayName || 'Signed in')}</div>
+          <div class="activity-title">${Utils.sanitize(getDisplayNameForAccount(user) || 'Signed in')}</div>
           <div class="activity-subtitle">${Utils.sanitize(user.email || '')}</div>
           <div class="activity-subtitle" id="settingsAccountCloudCopy">${Utils.sanitize(cloudLabel)}</div>
           ${cloudState.lastSavedAt ? `<div class="activity-subtitle" id="settingsAccountCloudBackupCopy">${Utils.sanitize(backupLabel)}</div>` : ''}
@@ -2850,7 +2861,7 @@ function _normalizeActivityForView(event) {
 
 function buildActivityEmptyState(filter) {
   const messages = {
-    all: ['No activity yet', 'Book changes, notes, progress updates, and backups will appear here once you start using the library.'],
+    all: ['Nothing here yet', 'Add a book to start building your library.'],
     books: ['No book activity yet', 'Add or update a book to see it here.'],
     progress: ['No progress updates yet', 'Track a reading session or finish a book to populate this view.'],
     notes: ['No notes activity yet', 'Save or clear a note to see it here.'],
