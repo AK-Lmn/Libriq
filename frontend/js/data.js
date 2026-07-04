@@ -4,7 +4,7 @@
    ============================================ */
 
 const LIBRIQ = {
-  VERSION: '3.3.0',
+  VERSION: '3.4.0',
 
   // Reading status constants
   STATUS: {
@@ -79,6 +79,16 @@ function createBook(data) {
     source: data.source || 'api',
     googleBooksId: data.googleBooksId || null,
     openLibraryId: data.openLibraryId || null,
+  };
+}
+
+function createBookPatch(data = {}) {
+  const now = new Date().toISOString();
+  return {
+    ...data,
+    createdAt: data.createdAt || now,
+    updatedAt: data.updatedAt || now,
+    deletedAt: data.deletedAt ?? null,
   };
 }
 

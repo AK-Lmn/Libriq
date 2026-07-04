@@ -30,7 +30,7 @@ const Storage = (() => {
     books:   () => [],
     activity: () => [],
     backup: () => ({ lastExportedAt: null }),
-    cloudBackup: () => ({ lastCloudBackupAt: null, bookCount: null, activityCount: null, deviceId: null, backupVersion: null, appVersion: null }),
+    cloudBackup: () => ({ lastCloudBackupAt: null, bookCount: null, activityCount: null, deviceId: null, backupVersion: null, appVersion: null, schemaVersion: null, createdAt: null, updatedAt: null, notesCount: null, quotesCount: null, lastLocalUpdatedAt: null, syncReady: false }),
   };
 
   function _read(key) {
@@ -116,6 +116,26 @@ const Storage = (() => {
       localStorage.setItem(DATA_KEYS.DEVICE_ID, deviceId);
     }
     return deviceId;
+  }
+
+  function getSyncReadiness() {
+    const books = getBooks();
+    const activity = getActivityLog();
+    const hasDeviceId = Boolean(getDeviceId());
+    const hasUpdatedAtCoverage = books.length === 0 || books.every(book => Boolean(book && (book.updatedAt || book.createdAt)));
+    const hasDeletedAtSupport = books.every(book => book.deletedAt === undefined || book.deletedAt === null || typeof book.deletedAt === 'string');
+    const cloudMeta = getCloudBackupMeta();
+    const hasBackupMetadata = Boolean(cloudMeta && (cloudMeta.backupVersion !== null || cloudMeta.appVersion !== null || cloudMeta.createdAt !== null || cloudMeta.updatedAt !== null));
+    return {
+      hasDeviceId,
+      hasUpdatedAtCoverage,
+      hasDeletedAtSupport,
+      hasBackupMetadata,
+      syncReady: false,
+      notesCount: books.reduce((sum, book) => sum + (book?.notes ? 1 : 0), 0),
+      quotesCount: books.reduce((sum, book) => sum + (Array.isArray(book?.quotes) ? book.quotes.length : 0), 0),
+      activityCount: activity.length,
+    };
   }
 
   // Kept for future opt-in demos / screenshots without affecting real first runs.
@@ -421,6 +441,7 @@ const Storage = (() => {
     getBackupMeta, saveBackupMeta,
     getCloudBackupMeta, saveCloudBackupMeta,
     getDeviceId,
+    getSyncReadiness,
     getGoals, saveGoals,
     getStreak, updateStreak,
     getActivityLog, addActivityEvent, clearActivityLog, buildActivityEvent, setActivityLog, replaceActivityLog,

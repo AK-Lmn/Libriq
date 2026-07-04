@@ -12,14 +12,14 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: "What's New in LibriQ v3.3.0",
-      subtitle: 'LibriQ v3.3.0 adds a safer cloud restore preview, new-device detection, and backup metadata groundwork.',
+      title: "What's New in LibriQ v3.4.0",
+      subtitle: 'LibriQ v3.4.0 adds sync foundation metadata for safer future multi-device syncing without enabling realtime sync yet.',
       sections: [
-        ['Restore Preview', 'Cloud restore now shows local and cloud summaries before anything is replaced.'],
-        ['New Device Prompt', 'Empty devices can gently detect an existing cloud backup without auto-restoring.'],
-        ['Metadata Groundwork', 'Backups now carry richer metadata for future safe sync and merge work.'],
+        ['Device ID', 'A stable local device ID now travels with cloud backup metadata.'],
+        ['Metadata Foundation', 'Books, quotes, and backups now carry clearer timestamps and sync-ready fields.'],
+        ['Help & Guide', 'The Help page explains that LibriQ uses automatic cloud backup, not realtime sync.'],
       ],
-      note: 'Automatic cloud backup still writes to the same current backup path, and restore remains manual.',
+      note: 'Realtime sync is still not enabled. This release only prepares the data model for future sync safety.',
     },
   };
 

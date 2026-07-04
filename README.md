@@ -4,7 +4,7 @@
 
 The app is built with **HTML, CSS, and Vanilla JavaScript**, with book data powered by **Open Library** and **Google Books**.
 
-LibriQ is currently focused on being a polished local-first reading tracker. Saved library data, reading progress, ratings, favorites, and private notes are stored in the browser using `localStorage`, with automatic cloud backup for signed-in users, safer manual cloud restore previews, and optional JSON export/import for manual safety copies.
+LibriQ is currently focused on being a polished local-first reading tracker. Saved library data, reading progress, ratings, favorites, and private notes are stored in the browser using `localStorage`, with automatic cloud backup for signed-in users, safer manual cloud restore previews, sync-foundation metadata for future multi-device safety, and optional JSON export/import for manual safety copies.
 
 LibriQ also uses basic Google Analytics page-view tracking for anonymous traffic measurement only.
 
@@ -42,13 +42,13 @@ The app is designed to feel like a focused digital reading space instead of a pl
 
 ---
 
-## What's New in v3.3.0
+## What's New in v3.4.0
 
-* Safer cloud restore preview now shows local vs cloud summaries before replacement
-* New-device cloud detection gently offers restore when an empty signed-in device finds an existing backup
-* Backup metadata now includes device and version groundwork for future sync
-* Restore remains manual, with clearer overwrite warnings and export-first safety
-* Automatic cloud backup still writes to `users/{uid}/backups/current`
+* Sync foundation metadata now travels with automatic cloud backups
+* Stable local device IDs help future multi-device safety without enabling realtime sync yet
+* Books, quotes, and backups carry clearer timestamp coverage for safer future merges
+* Help & Guide now explains the difference between automatic cloud backup and realtime sync
+* Restore remains manual, and the backup path still stays `users/{uid}/backups/current`
 
 ---
 
@@ -202,7 +202,7 @@ It shows:
 
 In v3.0.2, the modal is delayed until after normal app entry so it no longer pops over the session picker or auth-loading state.
 
-In v3.3.0, the modal highlights safer cloud restore previews, new-device detection, and backup metadata groundwork while keeping local export/import intact.
+In v3.4.0, the modal highlights sync foundation metadata, stable device IDs, and future sync safety while keeping local export/import intact.
 
 ---
 
