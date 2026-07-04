@@ -24,6 +24,46 @@ let app = null;
 let auth = null;
 let authListener = null;
 
+function detectInAppBrowser(ua = navigator.userAgent || '', platform = navigator.platform || '') {
+  const value = `${ua} ${platform}`.toLowerCase();
+  const has = (needle) => value.includes(needle);
+
+  const isWebView = (
+    has('wv') ||
+    has('; wv') ||
+    has('webview') ||
+    has('instagram') ||
+    has('fbav') ||
+    has('fban') ||
+    has('fbios') ||
+    has('messenger') ||
+    has('line/') ||
+    has('tiktok') ||
+    has('trill') ||
+    has('bytedance') ||
+    has('micromessenger') ||
+    (has('android') && has('version/') && !has('chrome/')) ||
+    (has('android') && has('safari') && !has('chrome/') && !has('crios')) ||
+    (has('iphone') && has('applewebkit') && !has('safari')) ||
+    (has('ipad') && has('applewebkit') && !has('safari'))
+  );
+
+  const hints = [];
+  if (has('tiktok') || has('trill') || has('bytedance')) hints.push('tiktok');
+  if (has('instagram')) hints.push('instagram');
+  if (has('fbav') || has('fban') || has('fbios')) hints.push('facebook');
+  if (has('messenger')) hints.push('messenger');
+  if (has('line/')) hints.push('line');
+  if (has('micromessenger')) hints.push('wechat');
+  if (isWebView && !hints.length) hints.push('webview');
+
+  return {
+    isInAppBrowser: isWebView,
+    hints,
+    userAgent: ua,
+  };
+}
+
 function emit() {
   listeners.forEach(fn => {
     try {
@@ -77,6 +117,14 @@ async function signInWithGoogle() {
     throw new Error('Firebase is unavailable.');
   }
 
+  const sessionContext = detectInAppBrowser();
+  if (sessionContext.isInAppBrowser) {
+    const error = new Error('Google sign-in may not work inside this app browser.');
+    error.code = 'auth/disallowed-useragent';
+    error.details = sessionContext;
+    throw error;
+  }
+
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
   return signInWithPopup(auth, provider);
@@ -104,4 +152,5 @@ window.LibriqFirebase = {
   signInWithGoogle,
   signOut: signOutUser,
   isAvailable: () => state.available,
+  getSessionContext: () => detectInAppBrowser(),
 };

@@ -2226,6 +2226,41 @@
   border-color: var(--border-subtle);
 }
 
+.session-card-disabled {
+  opacity: 0.9;
+}
+
+.session-help-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+}
+
+.session-help-copy {
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
+}
+
+.session-help-link {
+  flex: 0 0 auto;
+  color: var(--text-accent);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+
+.session-point-warning {
+  color: var(--text-primary);
+}
+
+.session-point-warning i {
+  color: var(--color-warning);
+}
+
 .session-card-icon {
   width: 48px;
   height: 48px;
@@ -2422,6 +2457,11 @@ body.session-choice-active .toast-container {
 
   .session-subtitle {
     font-size: var(--text-base);
+  }
+
+  .session-help-callout {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
