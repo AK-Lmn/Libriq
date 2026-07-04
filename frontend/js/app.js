@@ -12,14 +12,14 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: 'What’s New in LibriQ v3.2.2',
-      subtitle: 'LibriQ v3.2.2 tightens the mobile shell, PWA basics, and touch comfort without changing backup behavior.',
+      title: "What's New in LibriQ v3.3.0",
+      subtitle: 'LibriQ v3.3.0 adds a safer cloud restore preview, new-device detection, and backup metadata groundwork.',
       sections: [
-        ['Mobile Polish', 'The sidebar, search modal, and content cards fit small screens more cleanly.'],
-        ['Touch Targets', 'Buttons and controls are easier to tap on mobile and in the PWA shell.'],
-        ['Offline & Install', 'Manifest and service worker details stay aligned with the 3.2.2 release.'],
+        ['Restore Preview', 'Cloud restore now shows local and cloud summaries before anything is replaced.'],
+        ['New Device Prompt', 'Empty devices can gently detect an existing cloud backup without auto-restoring.'],
+        ['Metadata Groundwork', 'Backups now carry richer metadata for future safe sync and merge work.'],
       ],
-      note: 'Automatic cloud backup, manual restore, and JSON export/import all stay the same in v3.2.2.',
+      note: 'Automatic cloud backup still writes to the same current backup path, and restore remains manual.',
     },
   };
 
@@ -183,4 +183,7 @@
     boot();
   }
 })();
+
+
+
 

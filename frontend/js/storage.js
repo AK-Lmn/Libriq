@@ -17,6 +17,7 @@ const Storage = (() => {
     STREAK:  'libriq_streak',
     GOALS:   'libriq_goals',
     ACTIVITY:'libriq_activity',
+    DEVICE_ID: 'libriq_device_id',
     // Local backup metadata used only for Settings/Data copy and import preview.
     BACKUP:  'libriq_backup_meta',
     CLOUD_BACKUP: 'libriq_cloud_backup_meta',
@@ -29,7 +30,7 @@ const Storage = (() => {
     books:   () => [],
     activity: () => [],
     backup: () => ({ lastExportedAt: null }),
-    cloudBackup: () => ({ lastCloudBackupAt: null, bookCount: null, activityCount: null }),
+    cloudBackup: () => ({ lastCloudBackupAt: null, bookCount: null, activityCount: null, deviceId: null, backupVersion: null, appVersion: null }),
   };
 
   function _read(key) {
@@ -105,6 +106,16 @@ const Storage = (() => {
     } else {
       _writeDefaults();
     }
+    getDeviceId();
+  }
+
+  function getDeviceId() {
+    let deviceId = localStorage.getItem(DATA_KEYS.DEVICE_ID);
+    if (!deviceId) {
+      deviceId = crypto.randomUUID();
+      localStorage.setItem(DATA_KEYS.DEVICE_ID, deviceId);
+    }
+    return deviceId;
   }
 
   // Kept for future opt-in demos / screenshots without affecting real first runs.
@@ -142,7 +153,7 @@ const Storage = (() => {
     const books = getBooks();
     const idx   = books.findIndex(b => b.id === id);
     if (idx === -1) return null;
-    books[idx] = { ...books[idx], ...updates };
+    books[idx] = { ...books[idx], ...updates, updatedAt: new Date().toISOString() };
     saveBooks(books);
     _dispatchChange('book:updated', books[idx]);
     return books[idx];
@@ -409,6 +420,7 @@ const Storage = (() => {
     getProfile, saveProfile,
     getBackupMeta, saveBackupMeta,
     getCloudBackupMeta, saveCloudBackupMeta,
+    getDeviceId,
     getGoals, saveGoals,
     getStreak, updateStreak,
     getActivityLog, addActivityEvent, clearActivityLog, buildActivityEvent, setActivityLog, replaceActivityLog,

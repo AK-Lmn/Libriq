@@ -4,7 +4,7 @@
    ============================================ */
 
 const LIBRIQ = {
-  VERSION: '3.2.2',
+  VERSION: '3.3.0',
 
   // Reading status constants
   STATUS: {
@@ -31,6 +31,7 @@ const LIBRIQ = {
  * Designing it with optional fields so it's easy to add later.
  */
 function createBook(data) {
+  const now = new Date().toISOString();
   return {
     id:           data.id           || crypto.randomUUID(),
     title:        data.title        || 'Unknown Title',
@@ -46,9 +47,12 @@ function createBook(data) {
 
     // Library state
     status:       data.status       || LIBRIQ.STATUS.WISHLIST,
-    dateAdded:    data.dateAdded    || new Date().toISOString(),
+    dateAdded:    data.dateAdded    || now,
     dateStarted:  data.dateStarted  || null,
     dateFinished: data.dateFinished || null,
+    createdAt:    data.createdAt    || data.dateAdded || now,
+    updatedAt:    data.updatedAt    || data.dateFinished || data.dateStarted || data.dateAdded || now,
+    deletedAt:    data.deletedAt    ?? null,
 
     // Progress
     currentPage:  data.currentPage  || 0,
@@ -67,8 +71,8 @@ function createBook(data) {
       text: String(q.text || ''),
       page: q.page ?? null,
       note: q.note ?? '',
-      createdAt: q.createdAt || new Date().toISOString(),
-      updatedAt: q.updatedAt || q.createdAt || new Date().toISOString(),
+      createdAt: q.createdAt || now,
+      updatedAt: q.updatedAt || q.createdAt || now,
     })) : [],
 
     // Source metadata (from API search)
