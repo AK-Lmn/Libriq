@@ -465,14 +465,14 @@ function renderFavoritesPage() {
   }
 }
 
-function renderStatsPage() {
-  const main  = document.getElementById('mainContent');
-  const stats = Storage.getStats();
-  const goals = Storage.getGoals();
-  const streak = Storage.getStreak();
-  const recapYears = _getRecapYears();
-  const selectedYear = _getRecapYear(recapYears);
-  const recap = _buildYearlyRecap(selectedYear);
+  function renderStatsPage() {
+    const main  = document.getElementById('mainContent');
+    const stats = Storage.getStats();
+    const goals = Storage.getGoals();
+    const streak = Storage.getStreak();
+    const recapYears = _getRecapYears();
+    const selectedYear = _getRecapYear(recapYears);
+    const recap = _buildYearlyRecap(selectedYear);
   const ratedBooks = Storage.getBooks()
     .filter(book => typeof book.rating === 'number' && book.rating > 0)
     .map((book, index) => ({ book, index }))
@@ -775,7 +775,8 @@ function renderGoalsPage() {
     renderGoalsPage();
   });
 
-  document.getElementById('recapYearSelect')?.addEventListener('change', () => {
+  document.getElementById('recapYearSelect')?.addEventListener('change', (e) => {
+    _setRecapYear(e.target.value);
     renderStatsPage();
   });
 }
@@ -794,8 +795,19 @@ function _getRecapYears() {
 }
 
 function _getRecapYear(years) {
+  const storedYear = Number.parseInt(sessionStorage.getItem('libriq_stats_recap_year') || '', 10);
+  if (Number.isInteger(storedYear) && Array.isArray(years) && years.includes(storedYear)) {
+    return storedYear;
+  }
   const currentYear = new Date().getFullYear();
   return (Array.isArray(years) && years.includes(currentYear)) ? currentYear : (years?.[0] || currentYear);
+}
+
+function _setRecapYear(year) {
+  const selectedYear = Number.parseInt(String(year || ''), 10);
+  if (Number.isInteger(selectedYear)) {
+    sessionStorage.setItem('libriq_stats_recap_year', String(selectedYear));
+  }
 }
 
 function _buildYearlyRecap(year) {
