@@ -171,6 +171,8 @@ const CloudBackup = (() => {
   let lastError = null;
   let paused = false;
   let suppressScheduling = false;
+  let manualSaving = false;
+  let autoBackupInProgress = false;
   const DEBUG_AUTO_BACKUP = Boolean(window.localStorage?.getItem('libriq_debug_auto_backup'));
 
   function logDebug(message, details = null) {
@@ -230,7 +232,8 @@ const CloudBackup = (() => {
   }
 
   function getVisibleStatus() {
-    if (lastStatus === STATUS.SAVING) return 'Saving...';
+    if (lastStatus === STATUS.SAVING && manualSaving) return 'Saving...';
+    if (lastStatus === STATUS.SAVING && autoBackupInProgress) return lastMessage || 'Cloud backup active';
     if (lastStatus === STATUS.BACKED_UP) return lastMessage || 'Backed up just now';
     if (lastStatus === STATUS.FAILED) return lastMessage || 'Backup failed. Your local data is still safe.';
     if (lastStatus === STATUS.PAUSED) return lastMessage || 'Cloud backup paused';
@@ -260,7 +263,13 @@ const CloudBackup = (() => {
     };
 
     logDebug('backup started', { reason, automatic, uid, path: ['users', uid, 'backups', 'current'] });
-    setStatus(STATUS.SAVING, automatic ? 'Saving...' : 'Saving...');
+    manualSaving = !automatic;
+    autoBackupInProgress = automatic;
+    if (automatic) {
+      setStatus(lastStatus === STATUS.BACKED_UP ? STATUS.BACKED_UP : STATUS.IDLE, lastMessage || 'Cloud backup active');
+    } else {
+      setStatus(STATUS.SAVING, 'Saving...');
+    }
 
     try {
       await window.LibriqFirebase.writeBackupDoc(['users', uid, 'backups', 'current'], docData);
@@ -300,6 +309,9 @@ const CloudBackup = (() => {
       }
       setStatus(STATUS.FAILED, 'Backup failed. Your local data is still safe.', err);
       return false;
+    } finally {
+      manualSaving = false;
+      autoBackupInProgress = false;
     }
   }
 
@@ -371,6 +383,8 @@ const CloudBackup = (() => {
       lastSavedAt,
       error: lastError,
       pending: Boolean(debounceTimer || backupInFlight),
+      manualSaving,
+      autoBackupInProgress,
     };
   }
 
