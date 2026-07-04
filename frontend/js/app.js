@@ -12,14 +12,14 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: 'What’s New in LibriQ v3.1.0',
-      subtitle: 'Manual cloud backup arrives without changing LibriQ’s local-first core.',
+      title: 'What’s New in LibriQ v3.2.0',
+      subtitle: 'Automatic cloud backup now keeps signed-in libraries current without changing LibriQ’s local-first core.',
       sections: [
-        ['Manual Cloud Backup', 'Signed-in users can back up private library data to Firestore only when they click Back up to cloud.'],
+        ['Automatic Cloud Backup', 'Signed-in users now back up local library changes to Firestore automatically after a short debounce.'],
         ['Manual Restore', 'Restore from the saved cloud backup with a clear confirmation step before replacing local data.'],
-        ['Still Offline-Friendly', 'Continue offline still works, signing in does not upload anything automatically, and auto-sync is not enabled yet.'],
+        ['Still Offline-Friendly', 'Continue offline still works, JSON export remains available, and there is still no realtime sync or merge system.'],
       ],
-      note: 'Cloud backup is opt-in and manual only. Local JSON export/import still works.',
+      note: 'Cloud backup now saves local changes for signed-in users, while JSON export/import stays available as an optional safety path.',
     },
   };
 
@@ -107,10 +107,18 @@
     window.addEventListener('libriq:book:added',   () => Navigation.updateBadges());
     window.addEventListener('libriq:book:updated', () => Navigation.updateBadges());
     window.addEventListener('libriq:book:removed', () => Navigation.updateBadges());
+    window.addEventListener('libriq:book:added',   () => window.LibriqCloudBackup?.schedule?.('book-added'));
+    window.addEventListener('libriq:book:updated', () => window.LibriqCloudBackup?.schedule?.('book-updated'));
+    window.addEventListener('libriq:book:removed', () => window.LibriqCloudBackup?.schedule?.('book-removed'));
+    window.addEventListener('libriq:profile:updated', () => window.LibriqCloudBackup?.schedule?.('profile-updated'));
+    window.addEventListener('libriq:goals:updated', () => window.LibriqCloudBackup?.schedule?.('goals-updated'));
+    window.addEventListener('libriq:streak:updated', () => window.LibriqCloudBackup?.schedule?.('streak-updated'));
+    window.addEventListener('libriq:activity:updated', () => window.LibriqCloudBackup?.schedule?.('activity-updated'));
     window.addEventListener('libriq:page-changed', (event) => {
       if (event?.detail?.page === 'session') {
         cancelScheduledWhatsNew();
         closeWhatsNew();
+        window.LibriqCloudBackup?.pause?.('session');
         return;
       }
       if (event?.detail?.page) {
@@ -123,6 +131,7 @@
       Navigation.applyTheme();
       Navigation.updateBadges();
       Navigation.goTo('dashboard');
+      window.LibriqCloudBackup?.schedule?.('reset');
     });
   }
 

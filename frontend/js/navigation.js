@@ -6,6 +6,7 @@
 const Navigation = (() => {
   let _currentPage = 'dashboard';
   const SESSION_PREF_KEY = 'libriq_session_pref';
+  const CLOUD_BACKUP_DEBOUNCE_MS = 2200;
 
   const pages = {
     session:   () => renderSessionChoicePage(),
@@ -37,6 +38,7 @@ const Navigation = (() => {
     closeMobileSidebar();
 
     pages[page]();
+    if (page !== 'session') window.LibriqCloudBackup?.refresh?.();
 
     document.getElementById('mainContent').scrollTop = 0;
     window.dispatchEvent(new CustomEvent('libriq:page-changed', { detail: { page } }));
@@ -45,6 +47,10 @@ const Navigation = (() => {
   function renderCurrentPage() {
     document.body.classList.toggle('session-choice-active', _currentPage === 'session');
     if (pages[_currentPage]) pages[_currentPage]();
+  }
+
+  function getSessionPreference() {
+    return localStorage.getItem(SESSION_PREF_KEY) || 'prompt';
   }
 
   function setSessionPreference(value) {
@@ -135,16 +141,164 @@ const Navigation = (() => {
     window.addEventListener('libriq:auth-changed', () => {
       if (_currentPage === 'settings') renderSettingsPage();
       if (_currentPage === 'session') renderSessionChoicePage();
+      window.LibriqCloudBackup?.refresh?.();
     });
   }
 
   return {
     init, goTo, renderCurrentPage, updateBadges, toggleTheme, applyTheme,
     setSessionPreference,
+    getSessionPreference,
     clearLibrarySearch,
     get currentPage() { return _currentPage; },
   };
 })();
+
+const CloudBackup = (() => {
+  let debounceTimer = null;
+  let backupInFlight = null;
+  let pendingReason = null;
+  let lastStatus = 'idle';
+  let lastMessage = '';
+  let lastSavedAt = null;
+  let lastError = null;
+  let paused = false;
+
+  function getFirebaseState() {
+    return window.LibriqFirebase?.getState?.() || { available: false, initialized: false, ready: false, user: null };
+  }
+
+  function isEligible() {
+    const firebase = getFirebaseState();
+    if (!firebase.available || !firebase.ready || !firebase.user) return false;
+    if (!window.LibriqFirebase?.hasFirestore?.()) return false;
+    if (Navigation.getSessionPreference?.() === 'offline') return false;
+    if (Navigation.currentPage === 'session' || document.body.classList.contains('session-choice-active')) return false;
+    if (paused) return false;
+    return true;
+  }
+
+  function setStatus(status, message = '', error = null) {
+    lastStatus = status;
+    lastMessage = message;
+    lastError = error;
+    if (status === 'saved') lastSavedAt = new Date().toISOString();
+    if (Navigation.currentPage === 'settings') renderSettingsPage();
+  }
+
+  async function runBackup(reason = 'manual', automatic = false) {
+    if (!isEligible()) {
+      setStatus('paused', 'Cloud backup paused');
+      return false;
+    }
+    if (backupInFlight) {
+      pendingReason = reason;
+      return backupInFlight;
+    }
+
+    const firebase = getFirebaseState();
+    const uid = firebase.user.uid;
+    const payload = _buildManualBackupPayload();
+    const docData = {
+      app: payload.app,
+      version: payload.version,
+      backupVersion: payload.backupVersion,
+      bookCount: payload.data.books.length,
+      activityCount: payload.data.activity.length,
+      data: payload.data,
+      updatedAt: new Date().toISOString(),
+      backupMode: automatic ? 'automatic' : 'manual',
+    };
+
+    setStatus('saving', automatic ? 'Saving automatically...' : 'Saving...');
+    backupInFlight = window.LibriqFirebase.writeBackupDoc(['users', uid, 'backups', 'current'], docData)
+      .then(() => {
+        const savedAt = new Date().toISOString();
+        Storage.saveCloudBackupMeta?.({
+          lastCloudBackupAt: savedAt,
+          bookCount: docData.bookCount,
+          activityCount: docData.activityCount,
+        });
+        if (!automatic) {
+          Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_cloud_saved', null, { itemCount: docData.bookCount, activityCount: docData.activityCount }, 'manual'));
+          Utils.toast('Cloud backup saved', 'success');
+        }
+        setStatus('saved', 'Backed up just now');
+        return true;
+      })
+      .catch((err) => {
+        const code = String(err?.code || err?.message || '').toLowerCase();
+        lastError = err;
+        if (!automatic) {
+          if (code.includes('permission-denied')) {
+            Utils.toast('You do not have permission to save this cloud backup.', 'error');
+          } else if (code.includes('unauthenticated') || code.includes('authentication-required')) {
+            Utils.toast('Please sign in again before saving your cloud backup.', 'error');
+          } else if (code.includes('unavailable') || code.includes('network')) {
+            Utils.toast('Network error while saving cloud backup.', 'error');
+          } else {
+            Utils.toast('Could not save cloud backup right now.', 'error');
+          }
+        }
+        setStatus('failed', 'Backup failed. Your local data is still safe.', err);
+        return false;
+      })
+      .finally(() => {
+        backupInFlight = null;
+        const followUp = pendingReason;
+        pendingReason = null;
+        if (followUp && isEligible()) schedule(followUp);
+        else if (Navigation.currentPage === 'settings') renderSettingsPage();
+      });
+    return backupInFlight;
+  }
+
+  function schedule(reason = 'local-change') {
+    if (!isEligible()) {
+      setStatus('paused', Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Cloud backup paused');
+      return;
+    }
+    if (debounceTimer) clearTimeout(debounceTimer);
+    pendingReason = reason;
+    debounceTimer = window.setTimeout(() => {
+      debounceTimer = null;
+      runBackup(reason, true);
+    }, CLOUD_BACKUP_DEBOUNCE_MS);
+    setStatus('active', 'Cloud backup active');
+  }
+
+  function pause(reason = 'paused') {
+    paused = true;
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+      debounceTimer = null;
+    }
+    setStatus('paused', reason === 'session' ? 'Cloud backup paused' : 'Offline mode: cloud backup paused');
+  }
+
+  function refresh() {
+    paused = false;
+    if (isEligible()) {
+      setStatus('active', 'Cloud backup active');
+    } else {
+      setStatus('paused', Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Sign in to enable cloud backup');
+    }
+  }
+
+  function getState() {
+    return {
+      status: lastStatus,
+      message: lastMessage,
+      lastSavedAt,
+      error: lastError,
+      pending: Boolean(debounceTimer || backupInFlight),
+    };
+  }
+
+  return { schedule, pause, refresh, getState, runBackup };
+})();
+
+window.LibriqCloudBackup = CloudBackup;
 
 function renderSessionChoicePage() {
   const main = document.getElementById('mainContent');
@@ -1639,9 +1793,9 @@ function renderSettingsPage() {
             ['Local library storage', 'LibriQ stores your library locally on this device.'],
             ['Basic traffic analytics', 'LibriQ uses anonymous Google Analytics page views to understand general traffic.'],
             ['Accounts are optional', 'Sign in only if you want cloud backup.'],
-            ['Cloud backup is manual', 'Signing in alone does not upload your library.'],
-            ['No automatic sync', 'Automatic sync is not enabled in v3.1.0.'],
-            ['Manual backups', 'Click Back up to cloud only when you want to upload private library data to your Firebase account.'],
+            ['Cloud backup is automatic', 'Signing in enables debounced cloud backups after local changes.'],
+            ['No realtime sync', 'Automatic sync is not a realtime merge system in v3.2.0.'],
+            ['Optional JSON export', 'Export a JSON copy anytime for an extra manual safety copy.'],
             ['Private notes and quotes', 'Private notes and quotes stay local unless included in an exported backup.'],
             ['Continue offline', 'Continue offline remains available.'],
           ].map(([title, subtitle]) => `
@@ -1749,14 +1903,15 @@ function _buildCloudBackupSection(firebase, cloudBackupMeta) {
       <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
         <div class="activity-text">
           <div class="activity-title">Cloud backup</div>
-          <div class="activity-subtitle">Cloud backup requires optional sign-in. Local JSON export/import still works.</div>
+          <div class="activity-subtitle">Sign in to enable cloud backup.</div>
         </div>
       </div>`;
   }
 
-  const status = cloudBackupMeta.lastCloudBackupAt
-    ? 'Cloud backup available'
-    : 'No cloud backup found yet';
+  const cloudState = window.LibriqCloudBackup?.getState?.() || {};
+  const status = cloudState.message || (cloudBackupMeta.lastCloudBackupAt ? 'Cloud backup active' : 'Sign in to enable cloud backup');
+  const lastSaved = cloudState.lastSavedAt || cloudBackupMeta.lastCloudBackupAt;
+  const lastSavedText = lastSaved ? `Last backed up: ${Utils.formatDate(lastSaved)}` : 'No cloud backup yet.';
 
   return `
     <div class="activity-list">
@@ -1764,16 +1919,15 @@ function _buildCloudBackupSection(firebase, cloudBackupMeta) {
         <div class="activity-text">
           <div class="activity-title">Cloud backup status</div>
           <div class="activity-subtitle">${status}</div>
-          <div class="activity-subtitle">Cloud backup is manual. LibriQ will not upload changes automatically.</div>
-          <div class="activity-subtitle">Your local library stays on this device unless you choose to back it up.</div>
-          <div class="activity-subtitle">Last backup: ${cloudBackupMeta.lastCloudBackupAt ? Utils.formatDate(cloudBackupMeta.lastCloudBackupAt) : 'No cloud backup yet.'}</div>
+          <div class="activity-subtitle">${cloudState.pending ? 'Saving…' : 'Cloud backup saves this device\'s library to your account. Restore from cloud is manual.'}</div>
+          <div class="activity-subtitle">${lastSavedText}</div>
           <div class="activity-subtitle">Book count: ${typeof cloudBackupMeta.bookCount === 'number' ? cloudBackupMeta.bookCount : 'Unknown'}</div>
         </div>
       </div>
       <div class="settings-cloud-actions" style="display:flex; gap: var(--space-2); flex-wrap: wrap;">
         <button class="btn btn-primary btn-sm" type="button" id="cloudBackupSaveBtn">
           <i class="ph ph-cloud-arrow-up"></i>
-          Back up to cloud
+          Back up now
         </button>
         <button class="btn btn-secondary btn-sm" type="button" id="cloudBackupRestoreBtn">
           <i class="ph ph-cloud-arrow-down"></i>
@@ -1917,48 +2071,12 @@ async function backupToCloud() {
     Utils.toast('Cloud backup is unavailable right now.', 'error');
     return;
   }
-
-  try {
-    const payload = _buildManualBackupPayload();
-    const uid = firebase.user.uid;
-    await window.LibriqFirebase.writeBackupDoc(['users', uid, 'backups', 'current'], {
-      app: payload.app,
-      version: payload.version,
-      backupVersion: payload.backupVersion,
-      bookCount: payload.data.books.length,
-      activityCount: payload.data.activity.length,
-      data: payload.data,
-      updatedAt: new Date().toISOString(),
-    });
-    try {
-      Storage.saveCloudBackupMeta?.({
-        lastCloudBackupAt: new Date().toISOString(),
-        bookCount: payload.data.books.length,
-        activityCount: payload.data.activity.length,
-      });
-      Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_cloud_saved', null, { itemCount: payload.data.books.length, activityCount: payload.data.activity.length }, 'manual'));
-    } catch (postSaveErr) {
-      console.warn('[Libriq] Cloud backup post-save update failed:', postSaveErr);
-    }
-    Utils.toast('Cloud backup saved', 'success');
+  const ok = await window.LibriqCloudBackup?.runBackup?.('manual', false);
+  if (ok) {
     try {
       Navigation.renderCurrentPage?.();
     } catch (uiErr) {
-      console.warn('[Libriq] Cloud backup UI refresh failed:', uiErr);
-    }
-  } catch (err) {
-    console.error('[Libriq] Cloud backup failed:', err);
-    const code = String(err?.code || err?.message || '').toLowerCase();
-    if (code.includes('permission-denied')) {
-      Utils.toast('You do not have permission to save this cloud backup.', 'error');
-    } else if (code.includes('unauthenticated') || code.includes('authentication-required')) {
-      Utils.toast('Please sign in again before saving your cloud backup.', 'error');
-    } else if (code.includes('unavailable') || code.includes('network')) {
-      Utils.toast('Network error while saving cloud backup.', 'error');
-    } else if (code.includes('invalid') || code.includes('backup data')) {
-      Utils.toast('The cloud backup data could not be saved.', 'error');
-    } else {
-      Utils.toast('Could not save cloud backup right now.', 'error');
+      console.warn('[LibriQ] Cloud backup UI refresh failed:', uiErr);
     }
   }
 }
