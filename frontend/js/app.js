@@ -107,13 +107,13 @@
     window.addEventListener('libriq:book:added',   () => Navigation.updateBadges());
     window.addEventListener('libriq:book:updated', () => Navigation.updateBadges());
     window.addEventListener('libriq:book:removed', () => Navigation.updateBadges());
-    window.addEventListener('libriq:book:added',   () => window.LibriqCloudBackup?.schedule?.('book-added'));
-    window.addEventListener('libriq:book:updated', () => window.LibriqCloudBackup?.schedule?.('book-updated'));
-    window.addEventListener('libriq:book:removed', () => window.LibriqCloudBackup?.schedule?.('book-removed'));
-    window.addEventListener('libriq:profile:updated', () => window.LibriqCloudBackup?.schedule?.('profile-updated'));
-    window.addEventListener('libriq:goals:updated', () => window.LibriqCloudBackup?.schedule?.('goals-updated'));
-    window.addEventListener('libriq:streak:updated', () => window.LibriqCloudBackup?.schedule?.('streak-updated'));
-    window.addEventListener('libriq:activity:updated', () => window.LibriqCloudBackup?.schedule?.('activity-updated'));
+    window.addEventListener('libriq:book:added',   () => window.LibriqCloudBackup?.scheduleIfAllowed?.('book-added'));
+    window.addEventListener('libriq:book:updated', () => window.LibriqCloudBackup?.scheduleIfAllowed?.('book-updated'));
+    window.addEventListener('libriq:book:removed', () => window.LibriqCloudBackup?.scheduleIfAllowed?.('book-removed'));
+    window.addEventListener('libriq:profile:updated', () => window.LibriqCloudBackup?.scheduleIfAllowed?.('profile-updated'));
+    window.addEventListener('libriq:goals:updated', () => window.LibriqCloudBackup?.scheduleIfAllowed?.('goals-updated'));
+    window.addEventListener('libriq:streak:updated', () => window.LibriqCloudBackup?.scheduleIfAllowed?.('streak-updated'));
+    window.addEventListener('libriq:activity:updated', () => window.LibriqCloudBackup?.scheduleIfAllowed?.('activity-updated'));
     window.addEventListener('libriq:page-changed', (event) => {
       if (event?.detail?.page === 'session') {
         cancelScheduledWhatsNew();
@@ -131,7 +131,7 @@
       Navigation.applyTheme();
       Navigation.updateBadges();
       Navigation.goTo('dashboard');
-      window.LibriqCloudBackup?.schedule?.('reset');
+      window.LibriqCloudBackup?.scheduleIfAllowed?.('reset');
     });
   }
 

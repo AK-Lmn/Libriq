@@ -162,6 +162,7 @@ const CloudBackup = (() => {
   let lastSavedAt = null;
   let lastError = null;
   let paused = false;
+  let suppressScheduling = false;
   const DEBUG_AUTO_BACKUP = Boolean(window.localStorage?.getItem('libriq_debug_auto_backup'));
 
   function logDebug(message, details = null) {
@@ -208,7 +209,16 @@ const CloudBackup = (() => {
     lastMessage = message;
     lastError = error;
     if (status === 'saved') lastSavedAt = new Date().toISOString();
+    logDebug('status set', { status, message });
     if (Navigation.currentPage === 'settings') renderSettingsPage();
+  }
+
+  function scheduleIfAllowed(reason) {
+    if (suppressScheduling) {
+      logDebug('auto backup skipped with reason', { reason: 'suppressed', requestedReason: reason });
+      return;
+    }
+    schedule(reason);
   }
 
   async function performCloudBackup(reason = 'manual', automatic = false) {
@@ -232,23 +242,29 @@ const CloudBackup = (() => {
       backupMode: automatic ? 'automatic' : 'manual',
     };
 
-    logDebug('auto backup started', { reason, automatic, uid, path: ['users', uid, 'backups', 'current'] });
+    logDebug('backup started', { reason, automatic, uid, path: ['users', uid, 'backups', 'current'] });
     setStatus('saving', automatic ? 'Saving...' : 'Saving...');
 
     try {
       await window.LibriqFirebase.writeBackupDoc(['users', uid, 'backups', 'current'], docData);
       const savedAt = new Date().toISOString();
-      Storage.saveCloudBackupMeta?.({
-        lastCloudBackupAt: savedAt,
-        bookCount: docData.bookCount,
-        activityCount: docData.activityCount,
-      });
-      if (!automatic) {
-        Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_cloud_saved', null, { itemCount: docData.bookCount, activityCount: docData.activityCount }, 'manual'));
-        Utils.toast('Cloud backup saved', 'success');
+      suppressScheduling = true;
+      try {
+        Storage.saveCloudBackupMeta?.({
+          lastCloudBackupAt: savedAt,
+          bookCount: docData.bookCount,
+          activityCount: docData.activityCount,
+        });
+        if (!automatic) {
+          Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_cloud_saved', null, { itemCount: docData.bookCount, activityCount: docData.activityCount }, 'manual'));
+          Utils.toast('Cloud backup saved', 'success');
+        }
+      } finally {
+        suppressScheduling = false;
       }
       setStatus('saved', 'Backed up just now');
-      logDebug('auto backup write succeeded', { reason, automatic, savedAt });
+      logDebug('backup write succeeded', { reason, automatic, savedAt });
+      logDebug('status set to backed up', { savedAt, bookCount: docData.bookCount, activityCount: docData.activityCount });
       return true;
     } catch (err) {
       const code = String(err?.code || err?.message || '').toLowerCase();
@@ -273,7 +289,7 @@ const CloudBackup = (() => {
   async function runBackup(reason = 'manual', automatic = false) {
     if (backupInFlight) {
       pendingReason = reason;
-      logDebug('queued follow-up', { reason, automatic });
+      logDebug('any follow-up backup queued', { reason, automatic });
       return backupInFlight;
     }
 
@@ -296,7 +312,7 @@ const CloudBackup = (() => {
     if (!isEligible()) {
       const pausedMessage = Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Cloud backup paused';
       setStatus('paused', pausedMessage);
-      logDebug('schedule skipped', { reason, pausedMessage });
+      logDebug('auto backup skipped with reason', { reason, pausedMessage });
       return;
     }
     const debounceMs = 2200;
@@ -305,7 +321,7 @@ const CloudBackup = (() => {
     pendingReason = reason;
     debounceTimer = window.setTimeout(() => {
       debounceTimer = null;
-      logDebug('debounce timer fired', { reason });
+      logDebug('debounce fired', { reason });
       runBackup(reason, true);
     }, debounceMs);
     setStatus('active', 'Cloud backup active');
@@ -341,7 +357,7 @@ const CloudBackup = (() => {
     };
   }
 
-  return { schedule, pause, refresh, getState, runBackup };
+  return { schedule, scheduleIfAllowed, pause, refresh, getState, runBackup };
 })();
 
 window.LibriqCloudBackup = CloudBackup;
