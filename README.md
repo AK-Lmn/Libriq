@@ -176,6 +176,8 @@ It shows:
 * Dismissed-version tracking
 * A lightweight release-notes experience that stays fully local
 
+In v3.0.2, the modal is delayed until after normal app entry so it no longer pops over the session picker or auth-loading state.
+
 ---
 
 ### PWA and Icons
@@ -483,6 +485,25 @@ Suggested Vercel settings:
 ## Patch Notes
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
+
+### v3.0.2 - Sign-in Environment Guard
+
+**Added**
+
+* Conservative detection for likely in-app browsers and webviews such as TikTok, Instagram, Facebook, Messenger, and LINE
+* Helpful guidance when Google sign-in is likely to fail inside an app browser
+* A simple `Open in browser` link so users can jump to Chrome or Safari when needed
+
+**Changed**
+
+* Google sign-in now shows friendlier popup, unauthorized-domain, and disallowed-useragent guidance
+* Continue offline stays available as the primary fallback in every session flow
+* The What's New modal now waits until the app has entered cleanly instead of interrupting the session picker
+
+**Notes**
+
+* LibriQ remains local-first and privacy-first
+* No Firestore, cloud backup, cloud sync, or private library upload was added
 
 ### v2.20.0 - Final Local-First Polish
 
