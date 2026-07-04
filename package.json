@@ -1,7 +1,7 @@
 {
   "name": "libriq",
   "private": true,
-  "version": "2.19.0",
+  "version": "2.20.0",
   "type": "module",
   "scripts": {
     "build": "node scripts/generate-config.mjs",

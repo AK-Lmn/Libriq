@@ -484,6 +484,19 @@ Suggested Vercel settings:
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
 
+### v2.20.0 - Final Local-First Polish
+
+**Changed**
+
+* Settings, Help, backups, and empty states now use calmer local-first wording
+* Private notes and quotes are described as staying local unless included in an exported backup
+* Optional account backup is mentioned subtly as a future possibility
+
+**Notes**
+
+* No backend, accounts, cloud sync, or new analytics behavior was added
+* The local-first experience remains the same, just clearer and more polished
+
 ### v2.19.0 - Private Quotes
 
 **Added**
