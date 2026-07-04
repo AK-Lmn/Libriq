@@ -12,14 +12,14 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: 'What’s New in LibriQ v3.2.0',
-      subtitle: 'Automatic cloud backup now keeps signed-in libraries current without changing LibriQ’s local-first core.',
+      title: 'What’s New in LibriQ v3.2.1',
+      subtitle: 'Automatic cloud backup stays simple, calm, and local-first while the account and cover experience gets a polish pass.',
       sections: [
-        ['Automatic Cloud Backup', 'Signed-in users now back up local library changes to Firestore automatically after a short debounce.'],
+        ['Automatic Cloud Backup', 'Signed-in users still back up local library changes to Firestore automatically after a short debounce.'],
         ['Manual Restore', 'Restore from the saved cloud backup with a clear confirmation step before replacing local data.'],
-        ['Still Offline-Friendly', 'Continue offline still works, JSON export remains available, and there is still no realtime sync or merge system.'],
+        ['Account-Aware Greeting', 'Dashboard and profile screens now prefer your custom name, then your account name, then a friendly fallback.'],
       ],
-      note: 'Cloud backup now saves local changes for signed-in users, while JSON export/import stays available as an optional safety path.',
+      note: 'Cloud backup remains automatic for signed-in users, while JSON export/import stays available as an optional safety path.',
     },
   };
 

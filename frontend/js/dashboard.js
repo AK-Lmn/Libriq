@@ -24,6 +24,7 @@ const Dashboard = {
 
     const recentActivity = buildRecentActivity(books);
     const topGenres      = stats.topGenres;
+    const accountName    = getDashboardAccountName();
 
     main.innerHTML = `
       <div class="page" id="dashboardPage">
@@ -33,7 +34,7 @@ const Dashboard = {
           <div class="dashboard-greeting">
             <span class="greeting-label">${greeting} ✦</span>
             <h1 class="greeting-title">
-              Welcome back, <span>${Utils.sanitize(profile.name)}</span>
+              Welcome back, <span>${Utils.sanitize(accountName)}</span>
             </h1>
           </div>
           <div class="dashboard-actions">
@@ -207,6 +208,21 @@ const Dashboard = {
     });
   },
 };
+
+function getDashboardAccountName() {
+  const profile = Storage.getProfile();
+  const profileName = String(profile?.name || '').trim();
+  if (profileName && profileName.toLowerCase() !== 'reader') return profileName;
+
+  const firebase = window.LibriqFirebase?.getState?.() || {};
+  const displayName = Utils.formatDisplayName(firebase.user?.displayName);
+  if (displayName) return displayName;
+
+  const emailName = Utils.formatEmailPrefixName(firebase.user?.email);
+  if (emailName) return emailName;
+
+  return profileName || 'Reader';
+}
 
 // ── Dashboard helpers ─────────────────────────
 
