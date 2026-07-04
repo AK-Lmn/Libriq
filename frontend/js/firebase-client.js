@@ -6,6 +6,12 @@ import {
   signInWithPopup,
   signOut,
 } from '../vendor/firebase-auth.js';
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+} from '../vendor/firebase-firestore.js';
 
 const state = {
   available: false,
@@ -22,6 +28,7 @@ const hasConfig = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messag
 
 let app = null;
 let auth = null;
+let firestore = null;
 let authListener = null;
 
 function detectInAppBrowser(ua = navigator.userAgent || '', platform = navigator.platform || '') {
@@ -89,6 +96,12 @@ function init() {
   try {
     app = getApps().length ? getApp() : initializeApp(config);
     auth = getAuth(app);
+    try {
+      firestore = getFirestore(app);
+    } catch (firestoreErr) {
+      firestore = null;
+      console.warn('[Libriq] Firestore unavailable:', firestoreErr);
+    }
     state.available = true;
     state.initialized = true;
     state.ready = false;
@@ -137,6 +150,26 @@ async function signOutUser() {
   return signOut(auth);
 }
 
+function getFirestoreClient() {
+  return firestore;
+}
+
+function hasFirestore() {
+  return Boolean(state.available && firestore);
+}
+
+async function writeBackupDoc(pathSegments, data) {
+  if (!firestore || !auth?.currentUser) throw new Error('Firestore is unavailable.');
+  const ref = doc(firestore, ...pathSegments);
+  return setDoc(ref, data);
+}
+
+async function readBackupDoc(pathSegments) {
+  if (!firestore || !auth?.currentUser) throw new Error('Firestore is unavailable.');
+  const ref = doc(firestore, ...pathSegments);
+  return getDoc(ref);
+}
+
 function subscribe(fn) {
   if (typeof fn !== 'function') return () => {};
   listeners.add(fn);
@@ -152,5 +185,9 @@ window.LibriqFirebase = {
   signInWithGoogle,
   signOut: signOutUser,
   isAvailable: () => state.available,
+  hasFirestore,
+  getFirestoreClient,
+  writeBackupDoc,
+  readBackupDoc,
   getSessionContext: () => detectInAppBrowser(),
 };

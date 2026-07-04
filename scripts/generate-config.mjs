@@ -25,6 +25,10 @@ await mkdir(vendorDir, { recursive: true });
 await copyFile(path.join(rootDir, 'node_modules', 'firebase', 'firebase-app.js'), path.join(vendorDir, 'firebase-app.js'));
 const authSource = await readFile(path.join(rootDir, 'node_modules', 'firebase', 'firebase-auth.js'), 'utf8');
 await writeFile(path.join(vendorDir, 'firebase-auth.js'), authSource.replace('from"https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js"', 'from"./firebase-app.js"'), 'utf8');
+const firestoreSource = await readFile(path.join(rootDir, 'node_modules', 'firebase', 'firebase-firestore.js'), 'utf8');
+await writeFile(path.join(vendorDir, 'firebase-firestore.js'), firestoreSource
+  .replace('from"https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js"', 'from"./firebase-app.js"')
+  .replace('from"https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js"', 'from"./firebase-auth.js"'), 'utf8');
 
 await writeFile(configPath, contents, 'utf8');
 
