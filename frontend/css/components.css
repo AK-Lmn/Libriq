@@ -254,6 +254,7 @@
   gap: var(--space-2);
   margin-top: auto;
   padding-top: var(--space-3);
+  flex-wrap: wrap;
 }
 
 /* Progress bar within cards */
@@ -335,7 +336,7 @@
 /* ── Grid Layouts ─────────────────────────── */
 .books-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--space-4);
 }
 
@@ -748,6 +749,26 @@
   color: var(--text-secondary);
   max-width: 320px;
   line-height: var(--leading-loose);
+}
+
+@media (max-width: 640px) {
+  .books-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .book-card {
+    padding: var(--space-3);
+  }
+
+  .stat-card {
+    padding: var(--space-4);
+  }
+
+  .book-card-title,
+  .reading-card-title {
+    -webkit-line-clamp: 2;
+  }
 }
 
 /* ── Toast Notifications ──────────────────── */

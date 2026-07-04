@@ -261,6 +261,7 @@
     transform: translateX(-100%);
     z-index: 50;
     box-shadow: var(--shadow-xl);
+    will-change: transform;
   }
 
   .sidebar.open {
@@ -270,6 +271,7 @@
   .sidebar-overlay {
     display: block;
     pointer-events: none;
+    touch-action: none;
   }
 
   .sidebar-overlay.visible {
@@ -334,5 +336,11 @@
 
   .sidebar-streak {
     margin-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+  }
+
+  .nav-item,
+  .sidebar-search-btn,
+  .theme-toggle {
+    min-height: 44px;
   }
 }
