@@ -429,6 +429,13 @@ const CloudBackup = (() => {
           deviceId: docData.deviceId,
           backupVersion: docData.backupVersion,
           appVersion: docData.appVersion,
+          schemaVersion: docData.schemaVersion,
+          createdAt: docData.createdAt,
+          updatedAt: docData.updatedAt,
+          notesCount: docData.notesCount,
+          quotesCount: docData.quotesCount,
+          lastLocalUpdatedAt: docData.lastLocalUpdatedAt,
+          syncReady: false,
         });
         if (!automatic) {
           Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_cloud_saved', null, { itemCount: docData.bookCount, activityCount: docData.activityCount }, 'manual'));
@@ -1495,6 +1502,7 @@ function getDisplayNameForAccount(user) {
 
 function renderHelpPage() {
   const main = document.getElementById('mainContent');
+  const syncReadiness = Storage.getSyncReadiness?.() || { syncReady: false };
 
   const guideSections = [
     {
@@ -1536,6 +1544,11 @@ function renderHelpPage() {
       icon: 'ph-hard-drives',
       title: 'Understanding Local-First Storage',
       body: 'LibriQ stores your data in localStorage on this device only. Nothing is tied to an account, and nothing is uploaded to a cloud service.',
+    },
+    {
+      icon: 'ph-arrows-clockwise',
+      title: 'Sync Foundation',
+      body: 'LibriQ currently uses automatic cloud backup, not realtime sync. Sync foundation metadata helps prepare the app for safer multi-device syncing later, including protection against older devices overwriting newer progress or deleted books.',
     },
   ];
 
@@ -1583,6 +1596,26 @@ function renderHelpPage() {
           </div>
           <div class="help-faq-list">
             ${faqItems.map(([question, answer]) => `
+              <div class="help-faq-item">
+                <div class="help-faq-question">${question}</div>
+                <div class="help-faq-answer">${answer}</div>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+
+        <section class="goal-widget help-faq-card">
+          <div class="goal-header">
+            <div class="goal-title">Sync readiness</div>
+          </div>
+          <div class="help-faq-list">
+            ${[
+              ['Has device ID', syncReadiness.hasDeviceId ? 'Yes' : 'No'],
+              ['UpdatedAt coverage', syncReadiness.hasUpdatedAtCoverage ? 'Good coverage' : 'Partial coverage'],
+              ['DeletedAt support', syncReadiness.hasDeletedAtSupport ? 'Supported' : 'Not yet consistent'],
+              ['Backup metadata', syncReadiness.hasBackupMetadata ? 'Present' : 'Missing'],
+              ['Sync ready', syncReadiness.syncReady ? 'Yes' : 'No, foundation only'],
+            ].map(([question, answer]) => `
               <div class="help-faq-item">
                 <div class="help-faq-question">${question}</div>
                 <div class="help-faq-answer">${answer}</div>
@@ -2418,26 +2451,26 @@ async function exportData() {
 function _buildManualBackupPayload() {
   const activity = Storage.getActivityLog?.() || [];
   const books = Storage.getBooks();
+  const createdAt = new Date().toISOString();
+  const lastLocalUpdatedAt = books.reduce((latest, book) => {
+    const time = new Date(book?.updatedAt || book?.createdAt || book?.dateFinished || book?.dateStarted || book?.dateAdded || 0).getTime();
+    return Number.isFinite(time) && time > latest ? time : latest;
+  }, 0);
   return {
     app: 'LibriQ',
     version: LIBRIQ.VERSION,
-    backupVersion: 2,
+    backupVersion: 3,
     appVersion: LIBRIQ.VERSION,
     schemaVersion: 2,
     deviceId: Storage.getDeviceId?.(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt,
+    updatedAt: createdAt,
     bookCount: books.length,
     notesCount: books.reduce((sum, book) => sum + (book?.notes ? 1 : 0), 0),
     quotesCount: books.reduce((sum, book) => sum + (Array.isArray(book?.quotes) ? book.quotes.length : 0), 0),
     activityCount: activity.length,
-    lastLocalUpdatedAt: books.reduce((latest, book) => {
-      const time = new Date(book?.updatedAt || book?.dateFinished || book?.dateStarted || book?.dateAdded || 0).getTime();
-      return Number.isFinite(time) && time > latest ? time : latest;
-    }, 0) ? new Date(books.reduce((latest, book) => {
-      const time = new Date(book?.updatedAt || book?.dateFinished || book?.dateStarted || book?.dateAdded || 0).getTime();
-      return Number.isFinite(time) && time > latest ? time : latest;
-    }, 0)).toISOString() : null,
+    lastLocalUpdatedAt: lastLocalUpdatedAt ? new Date(lastLocalUpdatedAt).toISOString() : null,
+    syncReady: false,
     data: {
       books,
       profile: Storage.getProfile(),
@@ -2459,6 +2492,7 @@ function _normalizeCloudBackupDoc(docData) {
     app: docData.app || 'LibriQ',
     backupVersion: docData.backupVersion ?? 1,
     appVersion: docData.appVersion || docData.version || LIBRIQ.VERSION,
+    schemaVersion: docData.schemaVersion ?? null,
     createdAt: docData.createdAt || docData.updatedAt || null,
     updatedAt: docData.updatedAt || docData.createdAt || null,
     deviceId: docData.deviceId || null,
@@ -2467,6 +2501,7 @@ function _normalizeCloudBackupDoc(docData) {
     quotesCount: typeof docData.quotesCount === 'number' ? docData.quotesCount : null,
     activityCount: typeof docData.activityCount === 'number' ? docData.activityCount : Array.isArray(data.activity) ? data.activity.length : 0,
     lastLocalUpdatedAt: docData.lastLocalUpdatedAt || null,
+    syncReady: Boolean(docData.syncReady),
     data: {
       books: data.books,
       profile: data.profile && typeof data.profile === 'object' ? data.profile : createProfile(),
