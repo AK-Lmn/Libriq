@@ -1,13 +1,30 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, copyFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const rootDir = process.cwd();
 const configPath = path.join(rootDir, 'frontend', 'js', 'config.js');
+const vendorDir = path.join(rootDir, 'frontend', 'vendor');
 const envKey = String(process.env.GOOGLE_BOOKS_API_KEY || '').trim();
+const firebaseConfig = {
+  apiKey: String(process.env.FIREBASE_API_KEY || '').trim(),
+  authDomain: String(process.env.FIREBASE_AUTH_DOMAIN || '').trim(),
+  projectId: String(process.env.FIREBASE_PROJECT_ID || '').trim(),
+  storageBucket: String(process.env.FIREBASE_STORAGE_BUCKET || '').trim(),
+  messagingSenderId: String(process.env.FIREBASE_MESSAGING_SENDER_ID || '').trim(),
+  appId: String(process.env.FIREBASE_APP_ID || '').trim(),
+};
 
-const contents = envKey
-  ? `window.LibriqConfig = {\n  googleBooksApiKey: ${JSON.stringify(envKey)}\n};\n`
-  : 'window.LibriqConfig = window.LibriqConfig || {};\n';
+const hasFirebaseConfig = Object.values(firebaseConfig).every(Boolean);
+
+const configLines = [];
+if (envKey) configLines.push(`  googleBooksApiKey: ${JSON.stringify(envKey)}`);
+if (hasFirebaseConfig) configLines.push(`  firebase: ${JSON.stringify(firebaseConfig, null, 2).replace(/\n/g, '\n  ')}`);
+const contents = `window.LibriqConfig = {\n${configLines.join(',\n')}${configLines.length ? '\n' : ''}};\n`;
+
+await mkdir(vendorDir, { recursive: true });
+await copyFile(path.join(rootDir, 'node_modules', 'firebase', 'firebase-app.js'), path.join(vendorDir, 'firebase-app.js'));
+const authSource = await readFile(path.join(rootDir, 'node_modules', 'firebase', 'firebase-auth.js'), 'utf8');
+await writeFile(path.join(vendorDir, 'firebase-auth.js'), authSource.replace('from"https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js"', 'from"./firebase-app.js"'), 'utf8');
 
 await writeFile(configPath, contents, 'utf8');
 
