@@ -12,14 +12,14 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: "What's New in LibriQ v3.4.0",
-      subtitle: 'LibriQ v3.4.0 adds sync foundation metadata for safer future multi-device syncing without enabling realtime sync yet.',
+      title: "What's New in LibriQ v3.5.0",
+      subtitle: 'LibriQ v3.5.0 adds a manual cloud merge preview so you can compare local and cloud data without enabling realtime sync yet.',
       sections: [
-        ['Device ID', 'A stable local device ID now travels with cloud backup metadata.'],
-        ['Metadata Foundation', 'Books, quotes, and backups now carry clearer timestamps and sync-ready fields.'],
-        ['Help & Guide', 'The Help page explains that LibriQ uses automatic cloud backup, not realtime sync.'],
+        ['Cloud Merge Preview', 'You can now compare local and cloud library data before merging anything.'],
+        ['Conservative Merge', 'LibriQ keeps local conflicts by default and only adds safe cloud-only items.'],
+        ['Sync Safety', 'Help text explains how merge preview prepares the app for future realtime sync.'],
       ],
-      note: 'Realtime sync is still not enabled. This release only prepares the data model for future sync safety.',
+      note: 'Realtime sync is still not enabled. Merge remains manual and review-first.',
     },
   };
 

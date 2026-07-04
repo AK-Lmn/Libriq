@@ -1550,6 +1550,11 @@ function renderHelpPage() {
       title: 'Sync Foundation',
       body: 'LibriQ currently uses automatic cloud backup, not realtime sync. Sync foundation metadata helps prepare the app for safer multi-device syncing later, including protection against older devices overwriting newer progress or deleted books.',
     },
+    {
+      icon: 'ph-arrows-left-right',
+      title: 'Manual Cloud Merge',
+      body: 'Merge is safer when you have books on both this device and your cloud backup. LibriQ adds cloud-only items and keeps this device\'s version when something looks different.',
+    },
   ];
 
   const faqItems = [
@@ -1610,6 +1615,9 @@ function renderHelpPage() {
           </div>
           <div class="help-faq-list">
             ${[
+              ['Restore behavior', 'Restore replaces this device\'s library after confirmation.'],
+              ['Merge behavior', 'Merge adds safe cloud-only items without replacing local conflicts.'],
+              ['Realtime sync', 'Realtime sync is still not enabled.'],
               ['Has device ID', syncReadiness.hasDeviceId ? 'Yes' : 'No'],
               ['UpdatedAt coverage', syncReadiness.hasUpdatedAtCoverage ? 'Good coverage' : 'Partial coverage'],
               ['DeletedAt support', syncReadiness.hasDeletedAtSupport ? 'Supported' : 'Not yet consistent'],
@@ -2237,6 +2245,10 @@ function _buildCloudBackupSection(firebase, cloudBackupMeta) {
           <i class="ph ph-cloud-arrow-down"></i>
           Restore from cloud
         </button>
+        <button class="btn btn-secondary btn-sm" type="button" id="cloudBackupMergeBtn">
+          <i class="ph ph-arrows-left-right"></i>
+          Merge cloud with this device
+        </button>
       </div>
       <div class="activity-subtitle" id="cloudBackupGroundworkText">Future sync will need safe merge handling for notes, quotes, and deletions.</div>
     </div>`;
@@ -2266,6 +2278,11 @@ function _wireAccountControls() {
   const restoreBtn = document.getElementById('cloudBackupRestoreBtn');
   if (restoreBtn) restoreBtn.onclick = async () => {
     await openCloudRestorePreview();
+  };
+
+  const mergeBtn = document.getElementById('cloudBackupMergeBtn');
+  if (mergeBtn) mergeBtn.onclick = async () => {
+    await openCloudMergePreview();
   };
 }
 
@@ -2385,6 +2402,96 @@ async function openCloudRestorePreview() {
   modal.onclick = (e) => { if (e.target === modal) cleanup(); };
 }
 
+async function openCloudMergePreview() {
+  const firebase = window.LibriqFirebase?.getState?.() || {};
+  if (!firebase.user || !window.LibriqFirebase?.hasFirestore?.()) return;
+
+  const currentBooks = Storage.getBooks();
+  let docData = null;
+  try {
+    const snap = await window.LibriqFirebase.readBackupDoc(['users', firebase.user.uid, 'backups', 'current']);
+    if (!snap?.exists?.()) {
+      Utils.toast('No cloud backup found yet.', 'info');
+      return;
+    }
+    docData = _normalizeCloudBackupDoc(snap.data());
+  } catch (err) {
+    console.error('[Libriq] Cloud merge preview failed:', err);
+    Utils.toast('Could not load the cloud backup preview.', 'error');
+    return;
+  }
+  if (!docData) {
+    Utils.toast('Couldn\'t read this cloud backup. Your local data was not changed.', 'error');
+    return;
+  }
+
+  const currentSummary = _summarizeLibrary(currentBooks, Storage.getActivityLog?.() || []);
+  const cloudSummary = _summarizeLibrary(docData.data.books, docData.data.activity);
+  const plan = _planCloudMerge(currentBooks, docData.data);
+  const modal = document.getElementById('backupImportModal');
+  const body = document.getElementById('backupImportBody');
+  const title = document.getElementById('backupImportTitle');
+  const subtitle = document.getElementById('backupImportSubtitle');
+  const cancel = document.getElementById('backupImportCancel');
+  const merge = document.getElementById('backupImportMerge');
+  const replace = document.getElementById('backupImportReplace');
+  const close = document.getElementById('closeBackupImport');
+  if (!modal || !body || !title || !subtitle || !cancel || !merge || !replace || !close) return;
+
+  title.textContent = 'Review before merging';
+  subtitle.textContent = 'Merge adds safe cloud-only items without replacing local conflicts. Export a JSON copy first if you want a safety copy.';
+  body.innerHTML = `
+    <div class="whats-new-list">
+      ${_buildRestoreSummaryMarkup('Local library', currentSummary)}
+      ${_buildRestoreSummaryMarkup('Cloud backup', cloudSummary, [
+        `Backup version: ${Utils.sanitize(String(docData.backupVersion ?? 'Unknown'))}`,
+        `App version: ${Utils.sanitize(String(docData.appVersion ?? docData.version ?? 'Unknown'))}`,
+        `Schema: ${Utils.sanitize(String(docData.schemaVersion ?? 'Unknown'))}`,
+        `Device ID: ${Utils.sanitize(String(docData.deviceId ?? 'Unknown'))}`,
+      ])}
+      <section class="whats-new-item">
+        <div class="whats-new-item-title">Merge result preview</div>
+        <p>
+          New books to add from cloud: ${plan.newBooksToAdd.length}<br>
+          Local books kept: ${plan.localBooksKept.length}<br>
+          Duplicates skipped: ${plan.duplicatesSkipped.length}<br>
+          Possible conflicts: ${plan.conflicts.length}<br>
+          Notes to add safely: ${plan.notesToAdd}<br>
+          Quotes to add safely: ${plan.quotesToAdd}<br>
+          Items unchanged: ${plan.itemsUnchanged}
+        </p>
+      </section>
+      ${plan.conflicts.length ? `<section class="whats-new-item"><div class="whats-new-item-title">Conflict notice</div><p>Some items looked different on this device and in your cloud backup. LibriQ kept this device's version for now.</p></section>` : ''}
+    </div>
+  `;
+  merge.textContent = 'Merge cloud with this device';
+  replace.textContent = 'Export local JSON first';
+  cancel.textContent = 'Cancel';
+  modal.removeAttribute('hidden');
+  document.body.style.overflow = 'hidden';
+
+  const cleanup = () => {
+    modal.setAttribute('hidden', '');
+    document.body.style.overflow = '';
+    replace.onclick = null;
+    merge.onclick = null;
+    cancel.onclick = null;
+    close.onclick = null;
+    modal.onclick = null;
+  };
+
+  replace.onclick = async () => {
+    await exportData();
+  };
+  merge.onclick = async () => {
+    cleanup();
+    await confirmAndMergeCloud(docData, plan, currentSummary);
+  };
+  cancel.onclick = cleanup;
+  close.onclick = cleanup;
+  modal.onclick = (e) => { if (e.target === modal) cleanup(); };
+}
+
 async function confirmAndRestoreCloud(docData, currentSummary) {
   const proceed = confirm('Restoring will replace this device\'s current library with the cloud backup. Continue?');
   if (!proceed) return;
@@ -2392,6 +2499,15 @@ async function confirmAndRestoreCloud(docData, currentSummary) {
     return;
   }
   await restoreFromCloud(docData);
+}
+
+async function confirmAndMergeCloud(docData, plan, currentSummary) {
+  const proceed = confirm('Merge cloud with this device? LibriQ will add safe cloud-only items and keep this device\'s version for conflicts.');
+  if (!proceed) return;
+  if (currentSummary.bookCount > 0 && !confirm('Export first if you want a safety copy. Apply the merge now?')) {
+    return;
+  }
+  await mergeCloudWithThisDevice(docData, plan);
 }
 
 function _bookNeedsMetadata(book) {
@@ -2459,7 +2575,7 @@ function _buildManualBackupPayload() {
   return {
     app: 'LibriQ',
     version: LIBRIQ.VERSION,
-    backupVersion: 3,
+    backupVersion: 4,
     appVersion: LIBRIQ.VERSION,
     schemaVersion: 2,
     deviceId: Storage.getDeviceId?.(),
@@ -2510,6 +2626,206 @@ function _normalizeCloudBackupDoc(docData) {
       activity: Array.isArray(data.activity) ? data.activity : [],
     },
   };
+}
+
+function _planCloudMerge(localBooks, cloudData) {
+  const local = Array.isArray(localBooks) ? localBooks.map(book => createBook(book)) : [];
+  const cloudBooks = Array.isArray(cloudData?.books) ? cloudData.books.map(book => createBook(book)) : [];
+  const localById = new Map(local.map(book => [book.id, book]));
+  const localByIsbn = new Map();
+  const localByKey = new Map();
+  local.forEach(book => {
+    if (book.isbn) localByIsbn.set(String(book.isbn).trim(), book);
+    localByKey.set(_bookMergeKey(book), book);
+  });
+
+  const result = {
+    newBooksToAdd: [],
+    localBooksKept: local.slice(),
+    duplicatesSkipped: [],
+    conflicts: [],
+    notesToAdd: 0,
+    quotesToAdd: 0,
+    itemsUnchanged: 0,
+  };
+
+  cloudBooks.forEach(cloudBook => {
+    const match = _findBookMergeMatch(cloudBook, localById, localByIsbn, localByKey);
+    if (!match) {
+      result.newBooksToAdd.push(cloudBook);
+      result.itemsUnchanged += 1;
+      result.notesToAdd += cloudBook.notes ? 1 : 0;
+      result.quotesToAdd += Array.isArray(cloudBook.quotes) ? cloudBook.quotes.length : 0;
+      return;
+    }
+
+    const localBook = match;
+    const localTime = new Date(localBook.updatedAt || localBook.createdAt || localBook.dateAdded || 0).getTime();
+    const cloudTime = new Date(cloudBook.updatedAt || cloudBook.createdAt || cloudBook.dateAdded || 0).getTime();
+    const deletedWins = Boolean(localBook.deletedAt || cloudBook.deletedAt);
+    const conflict = deletedWins || (
+      String(localBook.notes || '') !== String(cloudBook.notes || '') ||
+      Number(localBook.currentPage || 0) !== Number(cloudBook.currentPage || 0) ||
+      String(localBook.status || '') !== String(cloudBook.status || '') ||
+      (Number.isFinite(localTime) && Number.isFinite(cloudTime) && localTime !== cloudTime)
+    );
+
+    if (deletedWins || conflict) {
+      result.conflicts.push({ localBook, cloudBook, reason: deletedWins ? 'deleted' : 'changed' });
+      return;
+    }
+
+    result.notesToAdd += !localBook.notes && cloudBook.notes ? 1 : 0;
+    result.quotesToAdd += _countSafeQuoteAdds(localBook.quotes, cloudBook.quotes);
+    result.duplicatesSkipped.push(cloudBook);
+    result.itemsUnchanged += 1;
+  });
+
+  return result;
+}
+
+function _findBookMergeMatch(book, localById, localByIsbn, localByKey) {
+  if (!book) return null;
+  if (book.id && localById.has(book.id)) return localById.get(book.id);
+  const isbnKey = book.isbn ? String(book.isbn).trim() : '';
+  if (isbnKey && localByIsbn.has(isbnKey)) return localByIsbn.get(isbnKey);
+  const titleKey = _bookMergeKey(book);
+  if (titleKey && localByKey.has(titleKey)) return localByKey.get(titleKey);
+  return null;
+}
+
+async function mergeCloudWithThisDevice(docData, plan) {
+  const firebase = window.LibriqFirebase?.getState?.() || {};
+  if (!firebase.user) {
+    Utils.toast('Sign in with Google first to merge from cloud.', 'warning');
+    return;
+  }
+  if (!window.LibriqFirebase?.hasFirestore?.()) {
+    Utils.toast('Cloud backup is unavailable right now.', 'error');
+    return;
+  }
+  if (!docData?.data || !Array.isArray(docData.data.books)) {
+    Utils.toast('Couldn\'t read this cloud backup. Your local data was not changed.', 'error');
+    return;
+  }
+
+  const localBooks = Storage.getBooks();
+  const mergedBooks = localBooks.map(book => createBook(book));
+  const mergedIndexById = new Map(mergedBooks.map((book, index) => [book.id, index]));
+  const mergedIndexByKey = new Map();
+  mergedBooks.forEach((book, index) => {
+    mergedIndexByKey.set(_bookMergeKey(book), index);
+    if (book.isbn) mergedIndexByKey.set(`isbn:${String(book.isbn).trim()}`, index);
+  });
+
+  plan.newBooksToAdd.forEach(book => {
+    mergedBooks.push(createBook(book));
+  });
+
+  const cloudBooks = Array.isArray(docData.data.books) ? docData.data.books.map(book => createBook(book)) : [];
+  cloudBooks.forEach(cloudBook => {
+    const matchIndex = _findCloudMergeIndex(cloudBook, mergedIndexById, mergedIndexByKey, mergedBooks);
+    if (matchIndex === null) return;
+    const localBook = mergedBooks[matchIndex];
+    if (!localBook) return;
+    if (localBook.deletedAt || cloudBook.deletedAt) return;
+    mergedBooks[matchIndex] = _mergeCloudBookSafely(localBook, cloudBook);
+    mergedIndexById.set(mergedBooks[matchIndex].id, matchIndex);
+    mergedIndexByKey.set(_bookMergeKey(mergedBooks[matchIndex]), matchIndex);
+    if (mergedBooks[matchIndex].isbn) mergedIndexByKey.set(`isbn:${String(mergedBooks[matchIndex].isbn).trim()}`, matchIndex);
+  });
+
+  const mergedActivity = _mergeActivityById(Storage.getActivityLog?.() || [], Array.isArray(docData.data.activity) ? docData.data.activity : []);
+
+  Storage.saveBooks(mergedBooks);
+  Storage.replaceActivityLog?.(mergedActivity);
+  Storage.saveCloudBackupMeta?.({
+    lastCloudBackupAt: docData.updatedAt || new Date().toISOString(),
+    bookCount: docData.bookCount ?? docData.data.books.length,
+    activityCount: docData.activityCount ?? mergedActivity.length,
+    backupVersion: docData.backupVersion ?? 1,
+    appVersion: docData.appVersion || docData.version || LIBRIQ.VERSION,
+    schemaVersion: docData.schemaVersion ?? null,
+    deviceId: docData.deviceId || Storage.getDeviceId?.(),
+    notesCount: docData.notesCount ?? null,
+    quotesCount: docData.quotesCount ?? null,
+    lastLocalUpdatedAt: docData.lastLocalUpdatedAt ?? null,
+    syncReady: false,
+  });
+
+  Utils.toast('Cloud merge completed', 'success');
+  try {
+    Navigation.updateBadges?.();
+    Navigation.renderCurrentPage?.();
+  } catch (uiErr) {
+    console.warn('[Libriq] Cloud merge UI refresh failed:', uiErr);
+  }
+}
+
+function _findCloudMergeIndex(book, mergedIndexById, mergedIndexByKey, mergedBooks) {
+  if (!book) return null;
+  if (book.id && mergedIndexById.has(book.id)) return mergedIndexById.get(book.id);
+  const isbnKey = book.isbn ? `isbn:${String(book.isbn).trim()}` : '';
+  if (isbnKey && mergedIndexByKey.has(isbnKey)) return mergedIndexByKey.get(isbnKey);
+  const titleKey = _bookMergeKey(book);
+  if (titleKey && mergedIndexByKey.has(titleKey)) return mergedIndexByKey.get(titleKey);
+  return null;
+}
+
+function _mergeCloudBookSafely(localBook, cloudBook) {
+  const merged = { ...localBook };
+  merged.tags = Array.from(new Set([...(localBook.tags || []), ...(cloudBook.tags || [])].map(tag => String(tag || '').trim()).filter(Boolean)));
+  if (!merged.notes && cloudBook.notes) {
+    merged.notes = cloudBook.notes;
+    merged.notesUpdatedAt = cloudBook.notesUpdatedAt || cloudBook.updatedAt || cloudBook.createdAt || merged.notesUpdatedAt || null;
+  }
+  merged.quotes = _mergeQuotesSafely(localBook.quotes, cloudBook.quotes);
+  if (!merged.createdAt) merged.createdAt = localBook.createdAt || cloudBook.createdAt || localBook.dateAdded || cloudBook.dateAdded || new Date().toISOString();
+  merged.updatedAt = localBook.updatedAt || cloudBook.updatedAt || merged.updatedAt || new Date().toISOString();
+  merged.deletedAt = localBook.deletedAt ?? cloudBook.deletedAt ?? null;
+  return merged;
+}
+
+function _mergeQuotesSafely(localQuotes, cloudQuotes) {
+  const byId = new Map();
+  const localList = Array.isArray(localQuotes) ? localQuotes : [];
+  const cloudList = Array.isArray(cloudQuotes) ? cloudQuotes : [];
+  localList.forEach(quote => {
+    if (!quote?.id) return;
+    byId.set(quote.id, { ...quote });
+  });
+  cloudList.forEach(quote => {
+    const normalized = {
+      id: quote.id || crypto.randomUUID(),
+      text: String(quote.text || ''),
+      page: quote.page ?? null,
+      note: quote.note ?? '',
+      createdAt: quote.createdAt || quote.updatedAt || new Date().toISOString(),
+      updatedAt: quote.updatedAt || quote.createdAt || new Date().toISOString(),
+    };
+    if (normalized.id && byId.has(normalized.id)) return;
+    const duplicate = Array.from(byId.values()).find(existing => String(existing.text || '').trim() === normalized.text.trim() && String(existing.page ?? '') === String(normalized.page ?? ''));
+    if (duplicate) return;
+    byId.set(normalized.id, normalized);
+  });
+  return Array.from(byId.values());
+}
+
+function _countSafeQuoteAdds(localQuotes, cloudQuotes) {
+  const localList = Array.isArray(localQuotes) ? localQuotes : [];
+  const cloudList = Array.isArray(cloudQuotes) ? cloudQuotes : [];
+  let count = 0;
+  cloudList.forEach(quote => {
+    if (!quote) return;
+    const normalized = String(quote.text || '').trim();
+    const page = String(quote.page ?? '');
+    const exists = localList.some(existing => {
+      if (existing?.id && quote.id && existing.id === quote.id) return true;
+      return String(existing?.text || '').trim() === normalized && String(existing?.page ?? '') === page;
+    });
+    if (!exists) count += 1;
+  });
+  return count;
 }
 
 async function backupToCloud() {
