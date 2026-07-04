@@ -4,7 +4,7 @@
 
 The app is built with **HTML, CSS, and Vanilla JavaScript**, with book data powered by **Open Library** and **Google Books**.
 
-LibriQ is currently focused on being a polished local-first reading tracker. Saved library data, reading progress, ratings, favorites, and private notes are stored in the browser using `localStorage`, with automatic cloud backup for signed-in users, safer manual cloud restore previews, sync-foundation metadata for future multi-device safety, and optional JSON export/import for manual safety copies.
+LibriQ is currently focused on being a polished local-first reading tracker. Saved library data, reading progress, ratings, favorites, and private notes are stored in the browser using `localStorage`, with automatic cloud backup for signed-in users, safer manual cloud restore previews, manual cloud merge previews, sync-foundation metadata for future multi-device safety, and optional JSON export/import for manual safety copies.
 
 LibriQ also uses basic Google Analytics page-view tracking for anonymous traffic measurement only.
 
@@ -42,12 +42,12 @@ The app is designed to feel like a focused digital reading space instead of a pl
 
 ---
 
-## What's New in v3.4.0
+## What's New in v3.5.0
 
-* Sync foundation metadata now travels with automatic cloud backups
-* Stable local device IDs help future multi-device safety without enabling realtime sync yet
-* Books, quotes, and backups carry clearer timestamp coverage for safer future merges
-* Help & Guide now explains the difference between automatic cloud backup and realtime sync
+* Manual cloud merge preview now compares local and cloud library data before any merge
+* Conservative merge rules keep local conflicts by default and only add safe cloud-only items
+* Sync foundation metadata continues to support safer future multi-device syncing
+* Help & Guide now explains how merge preview prepares the app for future realtime sync
 * Restore remains manual, and the backup path still stays `users/{uid}/backups/current`
 
 ---
@@ -141,7 +141,7 @@ Cloud backup features include:
 * Manual restore from the saved cloud backup
 * Continued local-only use when no account is signed in
 * JSON export/import still available as an optional manual backup path
-* No realtime sync or merge conflict system yet
+* No realtime sync or automatic merge system yet
 
 ---
 
@@ -157,6 +157,7 @@ The guide includes:
 * Library management tips
 * Progress and notes walkthroughs
 * Backup guidance
+* Manual cloud merge preview guidance
 * Local-first storage explanations
 
 ---
@@ -202,7 +203,7 @@ It shows:
 
 In v3.0.2, the modal is delayed until after normal app entry so it no longer pops over the session picker or auth-loading state.
 
-In v3.4.0, the modal highlights sync foundation metadata, stable device IDs, and future sync safety while keeping local export/import intact.
+In v3.5.0, the modal highlights manual cloud merge preview, conservative merge rules, and future sync safety while keeping local export/import intact.
 
 ---
 
