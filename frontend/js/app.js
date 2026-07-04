@@ -10,12 +10,12 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: 'What’s New in LibriQ v2.17.1',
+      title: 'What’s New in LibriQ v2.18.0',
       subtitle: 'A quick look at the latest local-first improvements.',
       sections: [
-        ['Theme Switching Polish', 'Theme changes now apply immediately, and the toggle label updates synchronously.'],
-        ['Version Consistency', 'The app version and service worker cache now stay aligned at v2.17.1.'],
-        ['Privacy Unchanged', 'No backend, account, sync, or new analytics behavior was added.'],
+        ['Backup Confidence', 'Backups now track the last export time and show a safer import preview before replace or merge.'],
+        ['Merge Safety', 'Duplicate detection now prefers matching id, ISBN, or normalized title and author before merging.'],
+        ['Privacy Unchanged', 'Backups stay manual, private notes are included in exports, and no cloud sync or accounts were added.'],
       ],
       note: 'Your library stays local on your device, and the privacy model remains unchanged.',
     },
@@ -50,6 +50,9 @@
 
     const notes = RELEASE_NOTES[WHATS_NEW_VERSION];
     if (!notes) return;
+
+    modal.querySelector('.modal-title')?.replaceChildren(document.createTextNode(notes.title));
+    modal.querySelector('.whats-new-subtitle')?.replaceChildren(document.createTextNode(notes.subtitle));
 
     body.innerHTML = `
       <div class="whats-new-list">

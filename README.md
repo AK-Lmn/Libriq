@@ -484,6 +484,19 @@ Suggested Vercel settings:
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
 
+### v2.18.0 - Backup Confidence
+
+**Added**
+
+* Last exported timestamp in Settings > Data
+* Safer import preview before replace or merge
+* Export-first warning for Clear All Data
+
+**Changed**
+
+* Merge mode now checks id, ISBN, then normalized title and author
+* Backups remain manual, private notes are included in exports, and no cloud sync or accounts were added
+
 ### v2.17.1 - Maintenance Polish
 
 **Fixed**

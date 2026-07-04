@@ -17,6 +17,8 @@ const Storage = (() => {
     STREAK:  'libriq_streak',
     GOALS:   'libriq_goals',
     ACTIVITY:'libriq_activity',
+    // Local backup metadata used only for Settings/Data copy and import preview.
+    BACKUP:  'libriq_backup_meta',
   };
 
   const DEFAULTS = {
@@ -25,6 +27,7 @@ const Storage = (() => {
     streak:  () => ({ current: 0, longest: 0, lastRead: null }),
     books:   () => [],
     activity: () => [],
+    backup: () => ({ lastExportedAt: null }),
   };
 
   function _read(key) {
@@ -73,6 +76,11 @@ const Storage = (() => {
     const rawActivity = _read(DATA_KEYS.ACTIVITY);
     if (!Array.isArray(rawActivity)) {
       _write(DATA_KEYS.ACTIVITY, DEFAULTS.activity());
+    }
+
+    const rawBackup = _read(DATA_KEYS.BACKUP);
+    if (!rawBackup || typeof rawBackup !== 'object') {
+      _write(DATA_KEYS.BACKUP, DEFAULTS.backup());
     }
   }
 
@@ -226,6 +234,23 @@ const Storage = (() => {
     return data;
   }
 
+  function getBackupMeta() {
+    const data = _read(DATA_KEYS.BACKUP);
+    if (!data || typeof data !== 'object') {
+      const fresh = DEFAULTS.backup();
+      _write(DATA_KEYS.BACKUP, fresh);
+      return fresh;
+    }
+    return { ...DEFAULTS.backup(), ...data };
+  }
+
+  function saveBackupMeta(updates) {
+    const current = getBackupMeta();
+    const updated = { ...current, ...(updates && typeof updates === 'object' ? updates : {}) };
+    _write(DATA_KEYS.BACKUP, updated);
+    return updated;
+  }
+
   function saveProfile(updates) {
     const current = getProfile();
     const updated = { ...current, ...updates };
@@ -352,6 +377,7 @@ const Storage = (() => {
     getBooks, saveBooks, addBook, updateBook, removeBook,
     getBookById, getBooksByStatus, toggleFavorite,
     getProfile, saveProfile,
+    getBackupMeta, saveBackupMeta,
     getGoals, saveGoals,
     getStreak, updateStreak,
     getActivityLog, addActivityEvent, clearActivityLog, buildActivityEvent, setActivityLog, replaceActivityLog,

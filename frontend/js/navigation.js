@@ -1302,6 +1302,11 @@ function renderProfilePage() {
 function renderSettingsPage() {
   const main  = document.getElementById('mainContent');
   const theme = document.documentElement.getAttribute('data-theme');
+  const backupMeta = Storage.getBackupMeta?.() || { lastExportedAt: null };
+  const hasBooks = Storage.getBooks().length > 0;
+  const lastExportedText = backupMeta.lastExportedAt
+    ? Utils.formatDate(backupMeta.lastExportedAt)
+    : 'No backup exported yet.';
 
   main.innerHTML = `
     <div class="page" style="max-width: 560px;">
@@ -1332,7 +1337,7 @@ function renderSettingsPage() {
         <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
           <div class="activity-text">
             <div class="activity-title">Export library</div>
-            <div class="activity-subtitle">Download your data as JSON</div>
+            <div class="activity-subtitle">Download your data as JSON. Private notes are included.</div>
           </div>
           <button class="btn btn-secondary btn-sm" onclick="Navigation.exportData()">
             <i class="ph ph-download-simple"></i> Export
@@ -1341,7 +1346,7 @@ function renderSettingsPage() {
         <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
           <div class="activity-text">
             <div class="activity-title">Import library</div>
-            <div class="activity-subtitle">Restore a LibriQ backup from JSON</div>
+            <div class="activity-subtitle">Review a backup before replacing or merging your library.</div>
           </div>
           <button class="btn btn-secondary btn-sm" onclick="Navigation.promptImportData()">
             <i class="ph ph-upload-simple"></i> Import
@@ -1356,6 +1361,18 @@ function renderSettingsPage() {
             <i class="ph ph-trash"></i> Clear
           </button>
         </div>
+        <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+          <div class="activity-text">
+            <div class="activity-title">Last exported</div>
+            <div class="activity-subtitle">${lastExportedText}</div>
+          </div>
+        </div>
+        ${hasBooks && !backupMeta.lastExportedAt ? `
+          <div class="empty-state" style="margin: 0; padding: var(--space-3); text-align: left;">
+            <div class="empty-state-body" style="margin: 0;">
+              Consider exporting a backup before making larger changes.
+            </div>
+          </div>` : ''}
         <input id="importLibraryInput" type="file" accept="application/json,.json" hidden onchange="Navigation.importDataFromFile(this.files?.[0])" />
       </div>
 
@@ -1396,8 +1413,8 @@ function renderSettingsPage() {
             ['Basic traffic analytics', 'LibriQ uses anonymous Google Analytics page views to understand general traffic.'],
             ['No accounts', 'There is no account system.'],
             ['No cloud sync', 'Your data stays on this device unless you export it yourself.'],
-            ['Manual backups', 'Backups are exported and imported manually.'],
-            ['Private notes', 'Private notes stay local unless you include them in an exported backup.'],
+            ['Manual backups', 'Backups are downloaded manually as JSON files.'],
+            ['Private notes', 'Private notes are included in exported backups.'],
           ].map(([title, subtitle]) => `
             <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
               <div class="activity-text">
@@ -1440,10 +1457,11 @@ function _hasGoogleBooksKey() {
 
 async function exportData() {
   const activity = Storage.getActivityLog?.() || [];
+  const exportedAt = new Date().toISOString();
   const data = {
     app: 'LibriQ',
     version: LIBRIQ.VERSION,
-    exportedAt: new Date().toISOString(),
+    exportedAt,
     data: {
       books: Storage.getBooks(),
       profile: Storage.getProfile(),
@@ -1460,8 +1478,10 @@ async function exportData() {
   a.download = `libriq-backup-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
+  Storage.saveBackupMeta?.({ lastExportedAt: exportedAt });
   Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_exported', null, { itemCount: data.data.books.length, activityCount: activity.length }, 'export'));
   Utils.toast('Library exported', 'success');
+  if (document.getElementById('mainContent')?.querySelector('#importLibraryInput')) renderCurrentPage();
 }
 
 function promptImportData() {
@@ -1484,15 +1504,86 @@ async function importDataFromFile(file) {
     return;
   }
 
-  const replaceMode = confirm('OK replaces your current local library. Cancel merges the backup into your current library.');
-  const importedBooks = parsed.data.books.map(book => createBook(book));
-  const mergedBooks = replaceMode
-    ? importedBooks
-    : _mergeBooksById(Storage.getBooks(), importedBooks);
-  const importedActivity = Array.isArray(parsed.data.activity) ? parsed.data.activity.filter(Boolean) : [];
-  const mergedActivity = replaceMode
-    ? importedActivity
-    : _mergeActivityById(Storage.getActivityLog?.() || [], importedActivity);
+  _openImportPreview(file, parsed);
+}
+
+function _openImportPreview(file, parsed) {
+  const modal = document.getElementById('backupImportModal');
+  const body = document.getElementById('backupImportBody');
+  const title = document.getElementById('backupImportTitle');
+  const subtitle = document.getElementById('backupImportSubtitle');
+  const cancel = document.getElementById('backupImportCancel');
+  const merge = document.getElementById('backupImportMerge');
+  const replace = document.getElementById('backupImportReplace');
+  const close = document.getElementById('closeBackupImport');
+  if (!modal || !body || !title || !subtitle || !cancel || !merge || !replace || !close) return;
+
+  const importedBooks = Array.isArray(parsed?.data?.books) ? parsed.data.books : [];
+  const importedActivity = Array.isArray(parsed?.data?.activity) ? parsed.data.activity.filter(Boolean) : [];
+  const localBooks = Storage.getBooks();
+  const backupVersion = parsed?.version || 'Unknown';
+  const exportedAt = parsed?.exportedAt || null;
+
+  title.textContent = 'Import Backup Preview';
+  subtitle.textContent = 'Choose how to apply this backup to your local library.';
+  body.innerHTML = `
+    <div class="whats-new-list">
+      <section class="whats-new-item">
+        <div class="whats-new-item-title">Backup details</div>
+        <p>Exported: ${exportedAt ? Utils.formatDate(exportedAt) : 'Unknown'}<br>Version: ${Utils.sanitize(backupVersion)}</p>
+      </section>
+      <section class="whats-new-item">
+        <div class="whats-new-item-title">Contents</div>
+        <p>${importedBooks.length} book${importedBooks.length === 1 ? '' : 's'} in backup<br>${localBooks.length} current local book${localBooks.length === 1 ? '' : 's'}<br>${importedActivity.length} backup activity event${importedActivity.length === 1 ? '' : 's'}</p>
+      </section>
+      <section class="whats-new-item">
+        <div class="whats-new-item-title">What happens next</div>
+        <p>Replace swaps your local library with the backup. Merge keeps your current data and combines obvious duplicates safely.</p>
+      </section>
+    </div>
+  `;
+
+  const cleanup = () => {
+    modal.setAttribute('hidden', '');
+    document.body.style.overflow = '';
+    title.textContent = 'Import Backup';
+    subtitle.textContent = 'Review the backup before choosing how to apply it.';
+    replace.textContent = 'Replace local library';
+    merge.textContent = 'Merge with current library';
+    cancel.textContent = 'Cancel';
+    replace.onclick = null;
+    merge.onclick = null;
+    cancel.onclick = null;
+    close.onclick = null;
+    modal.onclick = null;
+    const input = document.getElementById('importLibraryInput');
+    if (input) input.value = '';
+  };
+
+  const runImport = (replaceMode) => {
+    cleanup();
+    _applyImportedBackup(parsed, replaceMode);
+  };
+
+  replace.textContent = 'Replace local library';
+  merge.textContent = 'Merge with current library';
+  cancel.textContent = 'Cancel';
+  modal.removeAttribute('hidden');
+  document.body.style.overflow = 'hidden';
+
+  replace.onclick = () => runImport(true);
+  merge.onclick = () => runImport(false);
+  cancel.onclick = cleanup;
+  close.onclick = cleanup;
+  modal.onclick = (e) => { if (e.target === modal) cleanup(); };
+}
+
+function _applyImportedBackup(parsed, replaceMode) {
+  const importedBooks = Array.isArray(parsed?.data?.books) ? parsed.data.books.map(book => createBook(book)) : [];
+  const importedActivity = Array.isArray(parsed?.data?.activity) ? parsed.data.activity.filter(Boolean) : [];
+  const currentBooks = Storage.getBooks();
+  const mergedBooks = replaceMode ? importedBooks : _mergeBooksForImport(currentBooks, importedBooks);
+  const mergedActivity = replaceMode ? importedActivity : _mergeActivityById(Storage.getActivityLog?.() || [], importedActivity);
 
   Storage.saveBooks(mergedBooks);
 
@@ -1513,11 +1604,130 @@ async function importDataFromFile(file) {
   renderCurrentPage();
 }
 
-function _mergeBooksById(currentBooks, importedBooks) {
-  const byId = new Map();
-  currentBooks.forEach(book => byId.set(book.id, book));
-  importedBooks.forEach(book => byId.set(book.id, book));
-  return Array.from(byId.values());
+function _mergeBooksForImport(currentBooks, importedBooks) {
+  const current = Array.isArray(currentBooks) ? currentBooks : [];
+  const imported = Array.isArray(importedBooks) ? importedBooks : [];
+  const result = current.map(book => ({ ...book }));
+  const indexById = new Map(result.map((book, index) => [book.id, index]));
+  const isbnIndex = new Map();
+  const titleIndex = new Map();
+
+  result.forEach((book, index) => {
+    if (book?.isbn) isbnIndex.set(String(book.isbn).trim(), index);
+    titleIndex.set(_bookMergeKey(book), index);
+  });
+
+  imported.forEach(rawBook => {
+    const book = createBook(rawBook);
+    let matchIndex = null;
+    const isbnKey = book.isbn ? String(book.isbn).trim() : '';
+    if (book.id && indexById.has(book.id)) {
+      matchIndex = indexById.get(book.id);
+    } else if (isbnKey && isbnIndex.has(isbnKey)) {
+      matchIndex = isbnIndex.get(isbnKey);
+    } else if (titleIndex.has(_bookMergeKey(book))) {
+      matchIndex = titleIndex.get(_bookMergeKey(book));
+    }
+
+    if (matchIndex === null || matchIndex === undefined) {
+      const cloned = { ...book };
+      result.push(cloned);
+      indexById.set(cloned.id, result.length - 1);
+      if (cloned.isbn) isbnIndex.set(String(cloned.isbn).trim(), result.length - 1);
+      titleIndex.set(_bookMergeKey(cloned), result.length - 1);
+      return;
+    }
+
+    const currentBook = result[matchIndex];
+    result[matchIndex] = _mergeBookRecords(currentBook, book);
+    indexById.set(result[matchIndex].id, matchIndex);
+    if (result[matchIndex].isbn) isbnIndex.set(String(result[matchIndex].isbn).trim(), matchIndex);
+    titleIndex.set(_bookMergeKey(result[matchIndex]), matchIndex);
+  });
+
+  return result;
+}
+
+function _bookMergeKey(book) {
+  return `${_normalizeMergeText(book?.title)}|${_normalizeMergeText(book?.author)}`;
+}
+
+function _normalizeMergeText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function _getReliableBookTime(book) {
+  const candidates = [book?.notesUpdatedAt, book?.dateFinished, book?.dateStarted, book?.dateAdded];
+  for (const value of candidates) {
+    const time = new Date(value || 0).getTime();
+    if (Number.isFinite(time) && time > 0) return time;
+  }
+  return 0;
+}
+
+function _mergeBookRecords(currentBook, importedBook) {
+  const current = currentBook || {};
+  const incoming = importedBook || {};
+  const currentTime = _getReliableBookTime(current);
+  const incomingTime = _getReliableBookTime(incoming);
+  const preferIncoming = incomingTime > 0 && currentTime > 0 ? incomingTime > currentTime : false;
+  const base = preferIncoming ? { ...current, ...incoming } : { ...incoming, ...current };
+
+  const mergedTags = Array.from(new Set([...(current.tags || []), ...(incoming.tags || [])].map(tag => String(tag || '').trim()).filter(Boolean)));
+  const mergedGenres = Array.from(new Set([...(current.genres || []), ...(incoming.genres || [])].map(genre => String(genre || '').trim()).filter(Boolean)));
+
+  const notes = typeof current.notes === 'string' ? current.notes.trim() : '';
+  const importedNotes = typeof incoming.notes === 'string' ? incoming.notes.trim() : '';
+  const keepNotes = notes || importedNotes;
+
+  const merged = {
+    ...base,
+    id: current.id || incoming.id || crypto.randomUUID(),
+    tags: mergedTags,
+    genres: mergedGenres,
+    notes: notes || importedNotes || '',
+    notesUpdatedAt: notes ? (current.notesUpdatedAt || incoming.notesUpdatedAt || null) : (incoming.notesUpdatedAt || current.notesUpdatedAt || null),
+    status: _preferStatus(current.status, incoming.status),
+    currentPage: _preferNumeric(current.currentPage, incoming.currentPage),
+    rating: _preferRating(current.rating, incoming.rating),
+    dateAdded: current.dateAdded || incoming.dateAdded || new Date().toISOString(),
+    dateStarted: current.dateStarted || incoming.dateStarted || null,
+    dateFinished: current.dateFinished || incoming.dateFinished || null,
+  };
+
+  if (!keepNotes) merged.notes = '';
+  return merged;
+}
+
+function _preferNumeric(currentValue, incomingValue) {
+  const currentNum = Number(currentValue);
+  const incomingNum = Number(incomingValue);
+  if (Number.isFinite(currentNum) && Number.isFinite(incomingNum)) {
+    return Math.max(currentNum, incomingNum);
+  }
+  return Number.isFinite(currentNum) ? currentNum : (Number.isFinite(incomingNum) ? incomingNum : 0);
+}
+
+function _preferRating(currentValue, incomingValue) {
+  const currentNum = Number(currentValue);
+  const incomingNum = Number(incomingValue);
+  if (Number.isFinite(currentNum) && Number.isFinite(incomingNum)) {
+    return Math.max(currentNum, incomingNum);
+  }
+  if (Number.isFinite(currentNum)) return currentNum;
+  if (Number.isFinite(incomingNum)) return incomingNum;
+  return null;
+}
+
+function _preferStatus(currentStatus, incomingStatus) {
+  const current = currentStatus || LIBRIQ.STATUS.WISHLIST;
+  const incoming = incomingStatus || LIBRIQ.STATUS.WISHLIST;
+  const rank = { finished: 3, reading: 2, wishlist: 1, dnf: 0 };
+  return rank[current] >= rank[incoming] ? current : incoming;
 }
 
 function _mergeActivityById(currentEvents, importedEvents) {
@@ -1532,10 +1742,85 @@ function _mergeActivityById(currentEvents, importedEvents) {
 }
 
 function clearAllData() {
-  if (!confirm('This will delete all your books and settings. Are you sure?')) return;
+  const hasBooks = Storage.getBooks().length > 0;
+  if (!hasBooks) {
+    Storage.resetAll();
+    Utils.toast('Library cleared. Starting fresh.', 'info');
+    return;
+  }
 
-  Storage.resetAll();
-  Utils.toast('Library cleared. Starting fresh.', 'info');
+  const modal = document.getElementById('backupImportModal');
+  const body = document.getElementById('backupImportBody');
+  const title = document.getElementById('backupImportTitle');
+  const subtitle = document.getElementById('backupImportSubtitle');
+  const cancel = document.getElementById('backupImportCancel');
+  const merge = document.getElementById('backupImportMerge');
+  const replace = document.getElementById('backupImportReplace');
+  const close = document.getElementById('closeBackupImport');
+  if (!modal || !body) {
+    if (confirm('This will delete all your books and settings. Export a backup first if you want one. Continue?')) {
+      Storage.resetAll();
+      Utils.toast('Library cleared. Starting fresh.', 'info');
+    }
+    return;
+  }
+
+  title.textContent = 'Clear All Data';
+  subtitle.textContent = 'Exporting a backup first is strongly recommended.';
+  body.innerHTML = `
+    <div class="whats-new-list">
+      <section class="whats-new-item">
+        <div class="whats-new-item-title">Before you clear</div>
+        <p>This removes all books, settings, goals, streak data, and local backup metadata from this device.</p>
+      </section>
+      <section class="whats-new-item">
+        <div class="whats-new-item-title">Recommended first step</div>
+        <p>Export a backup first so you can restore your library later if needed.</p>
+      </section>
+    </div>
+  `;
+
+  const cleanup = () => {
+    modal.setAttribute('hidden', '');
+    document.body.style.overflow = '';
+    replace.textContent = 'Replace local library';
+    merge.textContent = 'Merge with current library';
+    title.textContent = 'Import Backup';
+    subtitle.textContent = 'Review the backup before choosing how to apply it.';
+    replace.onclick = null;
+    merge.onclick = null;
+    cancel.onclick = null;
+    close.onclick = null;
+  };
+
+  replace.textContent = 'Clear anyway';
+  merge.textContent = 'Export backup first';
+  cancel.textContent = 'Cancel';
+  modal.removeAttribute('hidden');
+  document.body.style.overflow = 'hidden';
+
+  const exportFirst = async () => {
+    cleanup();
+    await exportData();
+    if (confirm('The backup was exported. Clear all local data now?')) {
+      Storage.resetAll();
+      Utils.toast('Library cleared. Starting fresh.', 'info');
+    }
+  };
+  const clearAnyway = () => {
+    cleanup();
+    Storage.resetAll();
+    Utils.toast('Library cleared. Starting fresh.', 'info');
+  };
+  const cancelClear = () => cleanup();
+
+  replace.onclick = clearAnyway;
+  merge.onclick = exportFirst;
+  cancel.onclick = cancelClear;
+  close.onclick = cancelClear;
+  modal.onclick = (e) => {
+    if (e.target === modal) cancelClear();
+  };
 }
 
 function renderActivityPage() {
