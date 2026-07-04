@@ -59,6 +59,7 @@ const Navigation = (() => {
   function openMobileSidebar() {
     const sidebar  = document.getElementById('sidebar');
     const overlay  = document.getElementById('sidebarOverlay');
+    if (!sidebar || !overlay) return;
     sidebar.classList.add('open');
     overlay.classList.add('visible');
     document.body.style.overflow = 'hidden';
@@ -67,6 +68,7 @@ const Navigation = (() => {
   function closeMobileSidebar() {
     const sidebar  = document.getElementById('sidebar');
     const overlay  = document.getElementById('sidebarOverlay');
+    if (!sidebar || !overlay) return;
     sidebar.classList.remove('open');
     overlay.classList.remove('visible');
     document.body.style.overflow = '';
@@ -132,6 +134,7 @@ const Navigation = (() => {
 
     document.getElementById('mobileMenuBtn')?.addEventListener('click', openMobileSidebar);
     document.getElementById('sidebarOverlay')?.addEventListener('click', closeMobileSidebar);
+    document.getElementById('sidebarOverlay')?.addEventListener('touchstart', closeMobileSidebar, { passive: true });
 
     document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
 
@@ -496,7 +499,7 @@ function renderSessionChoicePage() {
             </div>
             <div class="session-point">
               <i class="ph ph-wifi-slash"></i>
-              <span>Continue offline is always available.</span>
+              <span>Continue offline keeps your local data working and pauses cloud backup for that session.</span>
             </div>
             ${inAppBrowser ? `
             <div class="session-point session-point-warning">
@@ -525,7 +528,7 @@ function renderSessionChoicePage() {
             <div class="session-card-icon"><i class="ph ph-house-simple"></i></div>
             <div class="session-card-content">
               <div class="session-card-title">Continue offline</div>
-              <div class="session-card-body">Use LibriQ locally with your saved library, search tools, and settings.</div>
+              <div class="session-card-body">Use LibriQ locally with your saved library, search tools, and settings. JSON export still works.</div>
             </div>
             <div class="session-card-action"><i class="ph ph-arrow-right"></i></div>
           </button>
@@ -535,7 +538,7 @@ function renderSessionChoicePage() {
               <div class="session-card-icon"><i class="ph ph-user-circle"></i></div>
               <div class="session-card-content">
                 <div class="session-card-title">Continue as ${Utils.sanitize(accountName)}</div>
-                <div class="session-card-body">Enter LibriQ with your current Google account. Your library stays local.</div>
+                <div class="session-card-body">Enter LibriQ with your current Google account. Automatic cloud backup is enabled for this session.</div>
               </div>
               <div class="session-card-action"><i class="ph ph-arrow-right"></i></div>
             </button>
@@ -553,7 +556,7 @@ function renderSessionChoicePage() {
               <div class="session-card-icon"><i class="ph ph-warning-circle"></i></div>
               <div class="session-card-content">
                 <div class="session-card-title">Google sign-in unavailable</div>
-                <div class="session-card-body">Continue offline is available right now.</div>
+                <div class="session-card-body">Continue offline is available right now. Your local data still works.</div>
               </div>
             </div>
           `}
@@ -1934,7 +1937,7 @@ function renderSettingsPage() {
           <div class="goal-title">Search &amp; Privacy</div>
         </div>
         <p class="text-sm text-secondary" style="line-height: var(--leading-loose); margin-top: 0;">
-          LibriQ works without an account. It searches public book sources like Open Library and Google Books, and your library stays local on this device unless you export it manually. Some providers may rate-limit requests during heavy usage, but Open Library fallback remains available.
+          LibriQ works without an account. It searches public book sources like Open Library and Google Books, and your library stays local on this device unless you export it manually. Continue offline pauses cloud backup for that session, and JSON export remains available. Some providers may rate-limit requests during heavy usage, but Open Library fallback remains available.
         </p>
         <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
           <div class="activity-text">
@@ -1969,7 +1972,7 @@ function renderSettingsPage() {
             ['Why realtime sync is not enabled yet', 'Automatic cloud backup keeps a safe copy of this device\'s library in your account. Realtime multi-device sync is not enabled yet because LibriQ needs careful conflict handling first, so older devices do not accidentally overwrite newer progress, notes, or deleted books.'],
             ['Optional JSON export', 'Export a JSON copy anytime for an extra manual safety copy.'],
             ['Private notes and quotes', 'Private notes and quotes stay local unless included in an exported backup.'],
-            ['Continue offline', 'Continue offline remains available.'],
+            ['Continue offline', 'Continue offline keeps local data working while cloud backup is paused for that session.'],
           ].map(([title, subtitle]) => `
             <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
               <div class="activity-text">
@@ -2108,7 +2111,7 @@ function _buildCloudBackupSection(firebase, cloudBackupMeta) {
         <div class="activity-text">
           <div class="activity-title">Cloud backup status</div>
           <div class="activity-subtitle" id="cloudBackupStatusText">${status}</div>
-          <div class="activity-subtitle" id="cloudBackupSecondaryText">${cloudState.pending ? 'Saving…' : 'Cloud backup saves this device\'s library to your account. Restore from cloud is manual.'}</div>
+          <div class="activity-subtitle" id="cloudBackupSecondaryText">${cloudState.pending ? 'Saving…' : 'Your library is quietly backed up to your account. Restore is manual so nothing gets replaced without your permission.'}</div>
           <div class="activity-subtitle" id="cloudBackupLastSavedText">${lastSavedText}</div>
           <div class="activity-subtitle" id="cloudBackupBookCountText">Book count: ${typeof cloudBackupMeta.bookCount === 'number' ? cloudBackupMeta.bookCount : 'Unknown'}</div>
         </div>

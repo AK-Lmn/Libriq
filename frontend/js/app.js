@@ -12,14 +12,14 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: 'What’s New in LibriQ v3.2.1',
-      subtitle: 'Automatic cloud backup stays simple, calm, and local-first while the account and cover experience gets a polish pass.',
+      title: 'What’s New in LibriQ v3.2.2',
+      subtitle: 'LibriQ v3.2.2 tightens the mobile shell, PWA basics, and touch comfort without changing backup behavior.',
       sections: [
-        ['Automatic Cloud Backup', 'Signed-in users still back up local library changes to Firestore automatically after a short debounce.'],
-        ['Manual Restore', 'Restore from the saved cloud backup with a clear confirmation step before replacing local data.'],
-        ['Account-Aware Greeting', 'Dashboard and profile screens now prefer your custom name, then your account name, then a friendly fallback.'],
+        ['Mobile Polish', 'The sidebar, search modal, and content cards fit small screens more cleanly.'],
+        ['Touch Targets', 'Buttons and controls are easier to tap on mobile and in the PWA shell.'],
+        ['Offline & Install', 'Manifest and service worker details stay aligned with the 3.2.2 release.'],
       ],
-      note: 'Cloud backup remains automatic for signed-in users, while JSON export/import stays available as an optional safety path.',
+      note: 'Automatic cloud backup, manual restore, and JSON export/import all stay the same in v3.2.2.',
     },
   };
 
@@ -183,3 +183,4 @@
     boot();
   }
 })();
+

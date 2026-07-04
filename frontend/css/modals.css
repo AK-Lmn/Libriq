@@ -86,6 +86,9 @@
   padding: 0;
   max-width: 640px;
   border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 640px);
 }
 
 .search-input-wrap {
@@ -218,7 +221,7 @@
 
 .search-results {
   overflow-y: auto;
-  max-height: 420px;
+  max-height: min(60dvh, 420px);
   padding: var(--space-2) 0;
 }
 
@@ -374,6 +377,16 @@
   color: var(--gold-strong);
   font-size: var(--text-xs);
   font-weight: var(--weight-semi);
+}
+
+.modal-header,
+.modal-footer {
+  min-height: 44px;
+}
+
+.search-close-btn {
+  min-width: 44px;
+  min-height: 44px;
 }
 
 /* ── What's New Modal ─────────────────────── */
@@ -533,6 +546,8 @@
 
   .search-modal {
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    max-height: 100dvh;
+    width: 100%;
   }
 
   .modal-overlay.search-overlay {
@@ -563,6 +578,10 @@
   .search-result-description {
     -webkit-line-clamp: 2;
     line-clamp: 2;
+  }
+
+  .search-results {
+    max-height: calc(100dvh - 220px);
   }
 }
 

@@ -275,3 +275,60 @@ html, body {
     padding-right: var(--space-4);
   }
 }
+
+@media (max-width: 768px) {
+  .dashboard-header,
+  .section-header,
+  .goal-header,
+  .page-header,
+  .library-tools,
+  .search-advanced-toggle-row,
+  .search-footer,
+  .modal-header,
+  .modal-footer {
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+
+  .dashboard-header,
+  .page-header,
+  .section-header,
+  .goal-header,
+  .library-tools {
+    align-items: flex-start;
+  }
+
+  .dashboard-grid,
+  .stats-row,
+  .recommendation-card-grid,
+  .help-grid,
+  .search-filter-grid,
+  .status-select-group {
+    grid-template-columns: 1fr;
+  }
+
+  .book-card,
+  .reading-card,
+  .goal-widget,
+  .help-card,
+  .book-preview,
+  .stat-card,
+  .search-result-item {
+    width: 100%;
+  }
+
+  .book-card-actions,
+  .reading-card-actions,
+  .help-next-step-actions,
+  .settings-cloud-actions {
+    flex-wrap: wrap;
+  }
+
+  .book-card-actions .btn,
+  .reading-card-actions .btn,
+  .help-next-step-actions .btn,
+  .settings-cloud-actions .btn,
+  .search-footer-action {
+    width: 100%;
+  }
+}

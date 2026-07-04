@@ -42,14 +42,14 @@ The app is designed to feel like a focused digital reading space instead of a pl
 
 ---
 
-## What's New in v3.2.1
+## What's New in v3.2.2
 
 * Added automatic cloud backup for signed-in users
 * Cloud backup still runs after local library changes
 * JSON export remains optional/manual
 * Continue offline still works
-* Account-aware greeting and profile copy were polished
-* Cover fallbacks now avoid broken image icons
+* Mobile layout, sidebar, search modal, and PWA polish landed
+* Touch targets and modal spacing were tightened on small screens
 * Restore from cloud remains a manual, confirmed action
 
 ---
@@ -204,7 +204,7 @@ It shows:
 
 In v3.0.2, the modal is delayed until after normal app entry so it no longer pops over the session picker or auth-loading state.
 
-In v3.2.1, the modal highlights automatic cloud backup, account-aware greetings, and manual restore while keeping local export/import intact.
+In v3.2.2, the modal highlights mobile shell polish, touch comfort, and PWA improvements while keeping local export/import intact.
 
 ---
 
