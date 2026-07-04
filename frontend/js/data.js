@@ -4,7 +4,7 @@
    ============================================ */
 
 const LIBRIQ = {
-  VERSION: '2.19.0',
+  VERSION: '2.20.0',
 
   // Reading status constants
   STATUS: {

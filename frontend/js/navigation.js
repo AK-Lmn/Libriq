@@ -1431,6 +1431,7 @@ function renderSettingsPage() {
           <strong style="color: var(--text-primary);">LibriQ</strong> v${LIBRIQ.VERSION}<br>
           Your reading life, beautifully organized.<br>
           Book data from <a href="https://openlibrary.org" target="_blank" style="color: var(--text-accent);">Open Library</a> and <a href="https://books.google.com" target="_blank" style="color: var(--text-accent);">Google Books</a>.
+          <br>Optional account backup may arrive in a future version.
         </p>
       </div>
     </div>`;

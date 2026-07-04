@@ -10,11 +10,11 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: 'What’s New in LibriQ v2.19.0',
+      title: 'What’s New in LibriQ v2.20.0',
       subtitle: 'A quick look at the latest local-first improvements.',
       sections: [
-        ['Private Quotes', 'You can now save favorite quotes privately on each book with optional page and context.'],
-        ['Backup Safety', 'Quotes travel naturally with exports, imports keep them intact, and the app stays local-first.'],
+        ['Final Local-First Polish', 'Settings, Help, backups, and empty states now read a little clearer and more reassuringly.'],
+        ['Backup Confidence', 'Manual JSON exports, import preview, and replace or merge choices remain in place.'],
         ['Privacy Unchanged', 'No backend, accounts, cloud sync, or quote analytics were added.'],
       ],
       note: 'Your library stays local on your device, and the privacy model remains unchanged.',
