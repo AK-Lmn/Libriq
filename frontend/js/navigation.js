@@ -286,16 +286,27 @@ function renderSessionChoicePage() {
       Navigation.goTo('dashboard');
     } catch (err) {
       const code = String(err?.code || err?.message || '').toLowerCase();
+      console.warn('[Libriq] Google sign-in failed:', {
+        code: err?.code || '',
+        message: err?.message || '',
+        details: err?.details || null,
+      });
       const isUnauthorizedDomain = code.includes('auth/unauthorized-domain') || code.includes('unauthorized-domain');
       const isPopupBlocked = code.includes('auth/popup-blocked') || code.includes('popup-blocked');
       const isPopupClosed = code.includes('auth/popup-closed-by-user') || code.includes('popup-closed-by-user');
+      const isInvalidApiKey = code.includes('auth/invalid-api-key') || code.includes('invalid-api-key');
+      const isConfigNotFound = code.includes('auth/configuration-not-found') || code.includes('configuration-not-found');
       const isDisallowedUserAgent = code.includes('auth/disallowed-useragent') || code.includes('disallowed_useragent') || code.includes('disallowed-useragent');
       if (isDisallowedUserAgent) {
         Utils.toast('Google sign-in may not work inside this app browser. Open LibriQ in Chrome or Safari.', 'warning');
       } else if (isUnauthorizedDomain) {
-        Utils.toast('Google sign-in is not allowed on this domain yet.', 'error');
+        Utils.toast('This domain is not authorized for Google sign-in yet.', 'error');
+      } else if (isInvalidApiKey) {
+        Utils.toast('Google sign-in is not configured correctly for this build.', 'error');
+      } else if (isConfigNotFound) {
+        Utils.toast('Account setup is incomplete for this build.', 'error');
       } else if (isPopupBlocked) {
-        Utils.toast('Please allow pop-ups to sign in with Google.', 'warning');
+        Utils.toast('Your browser blocked the sign-in popup.', 'warning');
       } else if (isPopupClosed) {
         Utils.toast('Sign-in was cancelled.', 'info');
       } else {
@@ -1610,7 +1621,7 @@ function renderSettingsPage() {
             ['Local library storage', 'LibriQ stores your library locally on this device.'],
             ['Basic traffic analytics', 'LibriQ uses anonymous Google Analytics page views to understand general traffic.'],
             ['Accounts are optional', 'Sign in only if you want future backup and sync features.'],
-            ['No cloud backup', 'Cloud backup and sync are not enabled in v3.0.0.'],
+            ['No cloud backup', 'Cloud backup and sync are not enabled in v3.0.2.'],
             ['Manual backups', 'Backups are downloaded manually as JSON files.'],
             ['Private notes and quotes', 'Private notes and quotes stay local unless included in an exported backup.'],
           ].map(([title, subtitle]) => `
