@@ -484,6 +484,19 @@ Suggested Vercel settings:
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
 
+### v2.19.0 - Private Quotes
+
+**Added**
+
+* Private quote saving inside Book Details
+* Optional page number and optional thought/context for each quote
+* Quote data included naturally in local exports and imports
+
+**Changed**
+
+* Private notes and quotes stay local unless included in an exported backup
+* No backend, accounts, cloud sync, or quote analytics were added
+
 ### v2.18.0 - Backup Confidence
 
 **Added**
