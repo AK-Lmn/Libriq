@@ -6,7 +6,6 @@
 const Navigation = (() => {
   let _currentPage = 'dashboard';
   const SESSION_PREF_KEY = 'libriq_session_pref';
-  const CLOUD_BACKUP_DEBOUNCE_MS = 2200;
 
   const pages = {
     session:   () => renderSessionChoicePage(),
@@ -258,12 +257,13 @@ const CloudBackup = (() => {
       setStatus('paused', Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Cloud backup paused');
       return;
     }
+    const debounceMs = 2200;
     if (debounceTimer) clearTimeout(debounceTimer);
     pendingReason = reason;
     debounceTimer = window.setTimeout(() => {
       debounceTimer = null;
       runBackup(reason, true);
-    }, CLOUD_BACKUP_DEBOUNCE_MS);
+    }, debounceMs);
     setStatus('active', 'Cloud backup active');
   }
 
