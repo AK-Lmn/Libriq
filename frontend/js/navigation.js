@@ -162,6 +162,14 @@ const CloudBackup = (() => {
   let lastSavedAt = null;
   let lastError = null;
   let paused = false;
+  const DEBUG_AUTO_BACKUP = Boolean(window.localStorage?.getItem('libriq_debug_auto_backup'));
+
+  function logDebug(message, details = null) {
+    if (!DEBUG_AUTO_BACKUP) return;
+    const prefix = '[LibriQ][AutoBackup]';
+    if (details !== null && details !== undefined) console.debug(prefix, message, details);
+    else console.debug(prefix, message);
+  }
 
   function getFirebaseState() {
     return window.LibriqFirebase?.getState?.() || { available: false, initialized: false, ready: false, user: null };
@@ -169,12 +177,30 @@ const CloudBackup = (() => {
 
   function isEligible() {
     const firebase = getFirebaseState();
-    if (!firebase.available || !firebase.ready || !firebase.user) return false;
-    if (!window.LibriqFirebase?.hasFirestore?.()) return false;
-    if (Navigation.getSessionPreference?.() === 'offline') return false;
-    if (Navigation.currentPage === 'session' || document.body.classList.contains('session-choice-active')) return false;
-    if (paused) return false;
-    return true;
+    const sessionPref = Navigation.getSessionPreference?.();
+    const result = Boolean(
+      firebase.available &&
+      firebase.ready &&
+      firebase.user &&
+      window.LibriqFirebase?.hasFirestore?.() &&
+      sessionPref !== 'offline' &&
+      Navigation.currentPage !== 'session' &&
+      !document.body.classList.contains('session-choice-active') &&
+      !paused
+    );
+    logDebug('eligibility check', {
+      result,
+      firebase: {
+        available: firebase.available,
+        ready: firebase.ready,
+        hasUser: Boolean(firebase.user),
+      },
+      firestore: Boolean(window.LibriqFirebase?.hasFirestore?.()),
+      sessionPref,
+      currentPage: Navigation.currentPage,
+      paused,
+    });
+    return result;
   }
 
   function setStatus(status, message = '', error = null) {
@@ -185,14 +211,11 @@ const CloudBackup = (() => {
     if (Navigation.currentPage === 'settings') renderSettingsPage();
   }
 
-  async function runBackup(reason = 'manual', automatic = false) {
+  async function performCloudBackup(reason = 'manual', automatic = false) {
     if (!isEligible()) {
-      setStatus('paused', 'Cloud backup paused');
+      setStatus('paused', Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Sign in to enable cloud backup');
+      logDebug('skipped', { reason: 'ineligible', requestedReason: reason, automatic });
       return false;
-    }
-    if (backupInFlight) {
-      pendingReason = reason;
-      return backupInFlight;
     }
 
     const firebase = getFirebaseState();
@@ -209,59 +232,80 @@ const CloudBackup = (() => {
       backupMode: automatic ? 'automatic' : 'manual',
     };
 
-    setStatus('saving', automatic ? 'Saving automatically...' : 'Saving...');
-    backupInFlight = window.LibriqFirebase.writeBackupDoc(['users', uid, 'backups', 'current'], docData)
-      .then(() => {
-        const savedAt = new Date().toISOString();
-        Storage.saveCloudBackupMeta?.({
-          lastCloudBackupAt: savedAt,
-          bookCount: docData.bookCount,
-          activityCount: docData.activityCount,
-        });
-        if (!automatic) {
-          Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_cloud_saved', null, { itemCount: docData.bookCount, activityCount: docData.activityCount }, 'manual'));
-          Utils.toast('Cloud backup saved', 'success');
+    logDebug('auto backup started', { reason, automatic, uid, path: ['users', uid, 'backups', 'current'] });
+    setStatus('saving', automatic ? 'Saving...' : 'Saving...');
+
+    try {
+      await window.LibriqFirebase.writeBackupDoc(['users', uid, 'backups', 'current'], docData);
+      const savedAt = new Date().toISOString();
+      Storage.saveCloudBackupMeta?.({
+        lastCloudBackupAt: savedAt,
+        bookCount: docData.bookCount,
+        activityCount: docData.activityCount,
+      });
+      if (!automatic) {
+        Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_cloud_saved', null, { itemCount: docData.bookCount, activityCount: docData.activityCount }, 'manual'));
+        Utils.toast('Cloud backup saved', 'success');
+      }
+      setStatus('saved', 'Backed up just now');
+      logDebug('auto backup write succeeded', { reason, automatic, savedAt });
+      return true;
+    } catch (err) {
+      const code = String(err?.code || err?.message || '').toLowerCase();
+      lastError = err;
+      logDebug('auto backup write failed', { reason, automatic, code, message: err?.message || '' });
+      if (!automatic) {
+        if (code.includes('permission-denied')) {
+          Utils.toast('You do not have permission to save this cloud backup.', 'error');
+        } else if (code.includes('unauthenticated') || code.includes('authentication-required')) {
+          Utils.toast('Please sign in again before saving your cloud backup.', 'error');
+        } else if (code.includes('unavailable') || code.includes('network')) {
+          Utils.toast('Network error while saving cloud backup.', 'error');
+        } else {
+          Utils.toast('Could not save cloud backup right now.', 'error');
         }
-        setStatus('saved', 'Backed up just now');
-        return true;
-      })
-      .catch((err) => {
-        const code = String(err?.code || err?.message || '').toLowerCase();
-        lastError = err;
-        if (!automatic) {
-          if (code.includes('permission-denied')) {
-            Utils.toast('You do not have permission to save this cloud backup.', 'error');
-          } else if (code.includes('unauthenticated') || code.includes('authentication-required')) {
-            Utils.toast('Please sign in again before saving your cloud backup.', 'error');
-          } else if (code.includes('unavailable') || code.includes('network')) {
-            Utils.toast('Network error while saving cloud backup.', 'error');
-          } else {
-            Utils.toast('Could not save cloud backup right now.', 'error');
-          }
-        }
-        setStatus('failed', 'Backup failed. Your local data is still safe.', err);
-        return false;
-      })
+      }
+      setStatus('failed', 'Backup failed. Your local data is still safe.', err);
+      return false;
+    }
+  }
+
+  async function runBackup(reason = 'manual', automatic = false) {
+    if (backupInFlight) {
+      pendingReason = reason;
+      logDebug('queued follow-up', { reason, automatic });
+      return backupInFlight;
+    }
+
+    backupInFlight = performCloudBackup(reason, automatic)
       .finally(() => {
         backupInFlight = null;
         const followUp = pendingReason;
         pendingReason = null;
-        if (followUp && isEligible()) schedule(followUp);
-        else if (Navigation.currentPage === 'settings') renderSettingsPage();
+        if (followUp) {
+          if (isEligible()) schedule(followUp);
+          else setStatus('paused', Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Cloud backup paused');
+        } else if (Navigation.currentPage === 'settings') {
+          renderSettingsPage();
+        }
       });
     return backupInFlight;
   }
 
   function schedule(reason = 'local-change') {
     if (!isEligible()) {
-      setStatus('paused', Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Cloud backup paused');
+      const pausedMessage = Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Cloud backup paused';
+      setStatus('paused', pausedMessage);
+      logDebug('schedule skipped', { reason, pausedMessage });
       return;
     }
     const debounceMs = 2200;
+    logDebug('auto backup scheduled', { reason, debounceMs });
     if (debounceTimer) clearTimeout(debounceTimer);
     pendingReason = reason;
     debounceTimer = window.setTimeout(() => {
       debounceTimer = null;
+      logDebug('debounce timer fired', { reason });
       runBackup(reason, true);
     }, debounceMs);
     setStatus('active', 'Cloud backup active');
@@ -273,7 +317,9 @@ const CloudBackup = (() => {
       clearTimeout(debounceTimer);
       debounceTimer = null;
     }
-    setStatus('paused', reason === 'session' ? 'Cloud backup paused' : 'Offline mode: cloud backup paused');
+    const message = reason === 'session' ? 'Cloud backup paused' : 'Offline mode: cloud backup paused';
+    setStatus('paused', message);
+    logDebug('paused', { reason, message });
   }
 
   function refresh() {
