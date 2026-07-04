@@ -3,7 +3,11 @@ import path from 'node:path';
 
 const rootDir = process.cwd();
 const configPath = path.join(rootDir, 'frontend', 'js', 'config.js');
+const localConfigPath = path.join(rootDir, 'frontend', 'js', 'config.local.js');
 const vendorDir = path.join(rootDir, 'frontend', 'vendor');
+
+await loadLocalEnvFile(path.join(rootDir, '.env'));
+
 const envKey = String(process.env.GOOGLE_BOOKS_API_KEY || '').trim();
 const firebaseConfig = {
   apiKey: String(process.env.FIREBASE_API_KEY || '').trim(),
@@ -15,6 +19,7 @@ const firebaseConfig = {
 };
 
 const hasFirebaseConfig = Object.values(firebaseConfig).every(Boolean);
+const isVercelBuild = Boolean(String(process.env.VERCEL || process.env.VERCEL_ENV || '').trim());
 
 const configLines = [];
 if (envKey) configLines.push(`  googleBooksApiKey: ${JSON.stringify(envKey)}`);
@@ -30,7 +35,14 @@ await writeFile(path.join(vendorDir, 'firebase-firestore.js'), firestoreSource
   .replace('from"https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js"', 'from"./firebase-app.js"')
   .replace('from"https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js"', 'from"./firebase-auth.js"'), 'utf8');
 
-await writeFile(configPath, contents, 'utf8');
+if (isVercelBuild) {
+  await writeFile(configPath, contents, 'utf8');
+} else {
+  await writeFile(localConfigPath, contents, 'utf8');
+  if (!await fileExists(configPath)) {
+    await writeFile(configPath, 'window.LibriqConfig = {};\n', 'utf8');
+  }
+}
 
 try {
   const written = await readFile(configPath, 'utf8');
@@ -43,4 +55,45 @@ try {
   throw err;
 }
 
-console.log(`[Libriq] Wrote ${path.relative(rootDir, configPath)}${envKey ? ' with Google Books key' : ' with empty config'}.`);
+console.log(`[Libriq] Wrote ${isVercelBuild ? path.relative(rootDir, configPath) : path.relative(rootDir, localConfigPath)}${envKey ? ' with Google Books key' : ' with empty config'}.`);
+
+async function loadLocalEnvFile(envPath) {
+  try {
+    const raw = await readFile(envPath, 'utf8');
+    raw.split(/\r?\n/).forEach((line) => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) return;
+
+      const eqIndex = line.indexOf('=');
+      if (eqIndex === -1) return;
+
+      const key = line.slice(0, eqIndex).trim();
+      let value = line.slice(eqIndex + 1).trim();
+      if (!key || Object.prototype.hasOwnProperty.call(process.env, key)) return;
+
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith('\'') && value.endsWith('\''))
+      ) {
+        value = value.slice(1, -1);
+      }
+
+      value = value
+        .replace(/\\n/g, '\n')
+        .replace(/\\r/g, '\r');
+      process.env[key] = value;
+    });
+  } catch (err) {
+    if (err?.code !== 'ENOENT') throw err;
+  }
+}
+
+async function fileExists(filePath) {
+  try {
+    await readFile(filePath, 'utf8');
+    return true;
+  } catch (err) {
+    if (err?.code === 'ENOENT') return false;
+    throw err;
+  }
+}
