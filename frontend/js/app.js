@@ -7,17 +7,18 @@
   let _booted = false;
   const RELEASE_KEY = 'libriq_seen_version';
   const WHATS_NEW_VERSION = LIBRIQ.VERSION;
+  const SESSION_PREF_KEY = 'libriq_session_pref';
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: 'What’s New in LibriQ v2.20.0',
-      subtitle: 'A quick look at the latest local-first improvements.',
+      title: 'What’s New in LibriQ v3.0.1',
+      subtitle: 'A quick look at the new session-choice entry flow.',
       sections: [
-        ['Optional Accounts', 'You can sign in with Google, but LibriQ still works fully without an account.'],
-        ['Local-First Still Intact', 'Signing in does not upload your library, and cloud backup/sync is not enabled yet.'],
-        ['Final v2 Consistency', 'Settings, Help, backups, and empty states now read a little clearer and more reassuringly.'],
+        ['Session Choice Screen', 'LibriQ now starts with a full-screen choice between offline use and Google sign-in.'],
+        ['Offline First', 'Continue offline is always available, and signing in does not upload your library.'],
+        ['Accounts Stay Optional', 'Signed-in users can continue as their account or switch to another Google account.'],
       ],
-      note: 'Your library stays local on your device unless you export it manually, and no backend sync is enabled in this release.',
+      note: 'This release keeps storage local, with no cloud sync, restore, or Firestore-backed library data.',
     },
   };
 
@@ -105,8 +106,7 @@
     resetShellUI();
 
     Navigation.init();
-
-    Navigation.goTo('dashboard');
+    Navigation.goTo('session');
 
     Search.init();
 

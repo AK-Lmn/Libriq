@@ -3,7 +3,7 @@
    App shell caching only. No API response caching.
    ============================================ */
 
-const CACHE_VERSION = 'libriq-v2.20.0';
+const CACHE_VERSION = 'libriq-v3.0.1';
 const CACHE_NAME = `${CACHE_VERSION}-shell`;
 
 const SHELL_ASSETS = [

@@ -2025,3 +2025,408 @@
     min-height: 44px;
   }
 }
+
+/* ============================================
+   SESSION CHOICE SCREEN
+   Cozy onboarding before the main app shell
+   ============================================ */
+
+.session-page {
+  min-height: 100dvh;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  padding: clamp(var(--space-6), 4vw, var(--space-10));
+  background:
+    radial-gradient(circle at top left, rgba(201,168,76,0.16), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(123,157,201,0.12), transparent 26%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), transparent 34%),
+    var(--bg-base);
+}
+
+.session-hero {
+  position: relative;
+  width: min(1120px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(360px, 430px);
+  gap: clamp(var(--space-6), 4vw, var(--space-12));
+  align-items: center;
+  padding: clamp(var(--space-6), 5vw, var(--space-10));
+  border: 1px solid var(--border-subtle);
+  border-radius: clamp(var(--radius-xl), 4vw, 36px);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
+    var(--bg-surface);
+  box-shadow: var(--shadow-frame);
+  overflow: hidden;
+}
+
+.session-hero::after {
+  content: '';
+  position: absolute;
+  inset: auto -12% -28% auto;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201,168,76,0.16), transparent 68%);
+  pointer-events: none;
+}
+
+.session-hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(6px);
+  pointer-events: none;
+}
+
+.session-hero-orb-a {
+  top: -72px;
+  left: -56px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(201,168,76,0.22), transparent 72%);
+}
+
+.session-hero-orb-b {
+  right: 10%;
+  bottom: -96px;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(123,157,201,0.16), transparent 68%);
+}
+
+.session-copy,
+.session-card-stack {
+  position: relative;
+  z-index: 1;
+}
+
+.session-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.session-eyebrow {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 5px var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-default);
+  background: var(--gold-04);
+  color: var(--text-accent);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.session-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(2.35rem, 6vw, 4.6rem);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  color: var(--text-strong);
+  max-width: 11ch;
+}
+
+.session-subtitle {
+  margin: 0;
+  max-width: 42ch;
+  font-size: var(--text-lg);
+  line-height: var(--leading-loose);
+  color: var(--text-secondary);
+}
+
+.session-points {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 44ch;
+}
+
+.session-point {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  color: var(--text-primary);
+  line-height: var(--leading-normal);
+}
+
+.session-point i {
+  color: var(--text-accent);
+  font-size: 1.05rem;
+  margin-top: 2px;
+}
+
+.session-card-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.session-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-4);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-subtle);
+  background: linear-gradient(180deg, var(--bg-elevated), var(--bg-surface));
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out),
+    background var(--duration-base) var(--ease-out);
+}
+
+.session-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-md);
+}
+
+.session-card:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--gold-12), var(--shadow-md);
+}
+
+.session-card:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.session-card-primary {
+  background:
+    linear-gradient(180deg, rgba(201,168,76,0.08), rgba(255,255,255,0.02)),
+    var(--bg-elevated);
+}
+
+.session-card-secondary {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
+    var(--bg-surface);
+}
+
+.session-card-unavailable {
+  cursor: default;
+}
+
+.session-card-unavailable:hover {
+  transform: none;
+  box-shadow: var(--shadow-sm);
+  border-color: var(--border-subtle);
+}
+
+.session-card-icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: var(--gold-12);
+  color: var(--text-accent);
+  font-size: 1.2rem;
+}
+
+.session-card-primary .session-card-icon {
+  background: var(--gold-18);
+}
+
+.session-card-secondary .session-card-icon {
+  background: var(--bg-overlay);
+  color: var(--text-primary);
+}
+
+.session-card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.session-card-title {
+  font-family: var(--font-serif);
+  font-size: var(--text-md);
+  color: var(--text-strong);
+}
+
+.session-card-body {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
+}
+
+.session-card-action {
+  color: var(--text-tertiary);
+  flex: 0 0 auto;
+  font-size: 1.05rem;
+}
+
+.session-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-dim);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.session-divider::before,
+.session-divider::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: var(--border-divider);
+}
+
+.session-fineprint {
+  margin: 0;
+  padding: 0 var(--space-1);
+  color: var(--text-dim);
+  font-size: var(--text-sm);
+  line-height: var(--leading-loose);
+}
+
+.session-loading-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+}
+
+.session-loading-spinner {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  border-radius: 50%;
+  border: 2px solid var(--border-default);
+  border-top-color: var(--text-accent);
+  animation: sessionSpin 1s linear infinite;
+}
+
+.session-loading-card .session-card-title {
+  font-size: var(--text-base);
+}
+
+.session-loading-card .session-card-body {
+  margin-top: 2px;
+}
+
+.session-link-btn {
+  align-self: center;
+  margin-top: calc(var(--space-1) * -1);
+  border: 0;
+  background: transparent;
+  color: var(--text-accent);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.session-link-btn:hover {
+  text-decoration: underline;
+}
+
+@keyframes sessionSpin {
+  to { transform: rotate(360deg); }
+}
+
+body.session-choice-active {
+  overflow: hidden;
+}
+
+body.session-choice-active .app-shell {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  min-height: 100dvh;
+}
+
+body.session-choice-active .sidebar,
+body.session-choice-active .mobile-topbar,
+body.session-choice-active #sidebar,
+body.session-choice-active #sidebarOverlay {
+  display: none !important;
+}
+
+body.session-choice-active #app {
+  min-height: 100dvh;
+}
+
+body.session-choice-active #mainContent {
+  grid-column: 1;
+  min-height: 100dvh;
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+body.session-choice-active .session-page {
+  min-height: 100dvh;
+}
+
+body.session-choice-active .toast-container {
+  bottom: var(--space-4);
+  right: var(--space-4);
+}
+
+@media (max-width: 960px) {
+  .session-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .session-title {
+    max-width: 12ch;
+  }
+}
+
+@media (max-width: 640px) {
+  .session-page {
+    padding: var(--space-4);
+  }
+
+  .session-hero {
+    padding: var(--space-5);
+    border-radius: 28px;
+  }
+
+  .session-card {
+    padding: var(--space-3);
+    gap: var(--space-3);
+  }
+
+  .session-card-icon {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+  }
+
+  .session-title {
+    font-size: clamp(2rem, 12vw, 3rem);
+  }
+
+  .session-subtitle {
+    font-size: var(--text-base);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .session-card {
+    transition-duration: 0.01ms !important;
+  }
+}

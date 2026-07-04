@@ -5,8 +5,10 @@
 
 const Navigation = (() => {
   let _currentPage = 'dashboard';
+  const SESSION_PREF_KEY = 'libriq_session_pref';
 
   const pages = {
+    session:   () => renderSessionChoicePage(),
     dashboard: () => Dashboard.render(),
     library:   () => renderLibraryPage(),
     reading:   () => renderStatusPage(LIBRIQ.STATUS.READING,  'Currently Reading', 'ph-book-open'),
@@ -25,6 +27,7 @@ const Navigation = (() => {
   function goTo(page) {
     if (!pages[page]) return;
     _currentPage = page;
+    document.body.classList.toggle('session-choice-active', page === 'session');
 
     Utils.$$('.nav-item').forEach(el => {
       el.classList.toggle('active', el.dataset.page === page);
@@ -39,7 +42,12 @@ const Navigation = (() => {
   }
 
   function renderCurrentPage() {
+    document.body.classList.toggle('session-choice-active', _currentPage === 'session');
     if (pages[_currentPage]) pages[_currentPage]();
+  }
+
+  function setSessionPreference(value) {
+    localStorage.setItem(SESSION_PREF_KEY, value);
   }
 
   function openMobileSidebar() {
@@ -125,15 +133,149 @@ const Navigation = (() => {
     updateBadges();
     window.addEventListener('libriq:auth-changed', () => {
       if (_currentPage === 'settings') renderSettingsPage();
+      if (_currentPage === 'session') renderSessionChoicePage();
     });
   }
 
   return {
     init, goTo, renderCurrentPage, updateBadges, toggleTheme, applyTheme,
+    setSessionPreference,
     clearLibrarySearch,
     get currentPage() { return _currentPage; },
   };
 })();
+
+  function renderSessionChoicePage() {
+  const main = document.getElementById('mainContent');
+  const firebase = window.LibriqFirebase?.getState?.() || { available: false, initialized: false, ready: false, user: null };
+  const hasUser = Boolean(firebase.user);
+  const accountName = firebase.user?.displayName || firebase.user?.email || 'Reader';
+  const loading = firebase.available && !firebase.ready;
+
+  main.innerHTML = `
+    <div class="session-page">
+      <section class="session-hero">
+        <div class="session-hero-orb session-hero-orb-a"></div>
+        <div class="session-hero-orb session-hero-orb-b"></div>
+
+        <div class="session-copy">
+          <span class="session-eyebrow">Welcome to LibriQ</span>
+          <h1 class="session-title">Choose your session</h1>
+          <p class="session-subtitle">
+            Start locally, or continue with your Google account if you are already signed in.
+            Signing in does not upload your library data.
+          </p>
+
+          <div class="session-points">
+            <div class="session-point">
+              <i class="ph ph-shield-check"></i>
+              <span>Your library stays on this device unless you export it.</span>
+            </div>
+            <div class="session-point">
+              <i class="ph ph-wifi-slash"></i>
+              <span>Continue offline is always available.</span>
+            </div>
+            <div class="session-point">
+              <i class="ph ph-cloud-arrow-up"></i>
+              <span>No cloud backup, sync, or analytics events are added here.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="session-card-stack">
+          ${loading ? `
+            <div class="session-loading-card" aria-live="polite">
+              <div class="session-loading-spinner"></div>
+              <div>
+                <div class="session-card-title">Checking your sign-in status</div>
+                <div class="session-card-body">Just a moment while LibriQ checks whether you are already signed in.</div>
+              </div>
+            </div>
+          ` : ''}
+
+          <button class="session-card session-card-primary" id="continueOfflineBtn" type="button">
+            <div class="session-card-icon"><i class="ph ph-house-simple"></i></div>
+            <div class="session-card-content">
+              <div class="session-card-title">Continue offline</div>
+              <div class="session-card-body">Use LibriQ locally with your saved library, search tools, and settings.</div>
+            </div>
+            <div class="session-card-action"><i class="ph ph-arrow-right"></i></div>
+          </button>
+
+          ${loading ? '' : hasUser ? `
+            <button class="session-card session-card-secondary" id="googleContinueBtn" type="button">
+              <div class="session-card-icon"><i class="ph ph-user-circle"></i></div>
+              <div class="session-card-content">
+                <div class="session-card-title">Continue as ${Utils.sanitize(accountName)}</div>
+                <div class="session-card-body">Enter LibriQ with your current Google account. Your library stays local.</div>
+              </div>
+              <div class="session-card-action"><i class="ph ph-arrow-right"></i></div>
+            </button>
+          ` : firebase.available ? `
+            <button class="session-card session-card-secondary" id="googleSignInBtn" type="button">
+              <div class="session-card-icon"><i class="ph ph-google-logo"></i></div>
+              <div class="session-card-content">
+                <div class="session-card-title">Sign in with Google</div>
+                <div class="session-card-body">Optional account sign-in. This does not upload your library data.</div>
+              </div>
+              <div class="session-card-action"><i class="ph ph-arrow-right"></i></div>
+            </button>
+          ` : `
+            <div class="session-card session-card-unavailable">
+              <div class="session-card-icon"><i class="ph ph-warning-circle"></i></div>
+              <div class="session-card-content">
+                <div class="session-card-title">Google sign-in unavailable</div>
+                <div class="session-card-body">Continue offline is available right now.</div>
+              </div>
+            </div>
+          `}
+
+          ${hasUser ? `
+            <button class="session-link-btn" id="switchAccountBtn" type="button">
+              Use another account
+            </button>
+          ` : ''}
+
+          <p class="session-fineprint">
+            Choosing a session only changes how you enter LibriQ. It does not upload private library data.
+          </p>
+        </div>
+      </section>
+    </div>`;
+
+  document.getElementById('continueOfflineBtn')?.addEventListener('click', () => {
+    Navigation.setSessionPreference('offline');
+    Navigation.goTo('dashboard');
+  });
+
+  document.getElementById('googleContinueBtn')?.addEventListener('click', () => {
+    Navigation.setSessionPreference('google');
+    Navigation.goTo('dashboard');
+  });
+
+  document.getElementById('googleSignInBtn')?.addEventListener('click', async () => {
+    try {
+      await window.LibriqFirebase?.signInWithGoogle?.();
+      Navigation.setSessionPreference('google');
+      Navigation.goTo('dashboard');
+    } catch (err) {
+      const code = String(err?.code || err?.message || '');
+      const cancelled = code.includes('popup-closed-by-user') || code.includes('popup-blocked');
+      Utils.toast(cancelled ? 'Sign-in was cancelled.' : 'Could not sign in right now.', 'error');
+    }
+  });
+
+  document.getElementById('switchAccountBtn')?.addEventListener('click', async () => {
+    try {
+      await window.LibriqFirebase?.signOut?.();
+      Navigation.setSessionPreference('prompt');
+    } catch (err) {
+      const code = String(err?.code || err?.message || '');
+      const cancelled = code.includes('popup-closed-by-user') || code.includes('popup-blocked');
+      Utils.toast(cancelled ? 'Sign-out was cancelled.' : 'Could not switch accounts right now.', 'error');
+    }
+  });
+}
 
 Navigation.exportData = exportData;
 Navigation.promptImportData = promptImportData;
@@ -1341,6 +1483,12 @@ function renderSettingsPage() {
           <div class="goal-title">Account</div>
         </div>
         ${_buildAccountSection(firebase)}
+        <div class="settings-session-actions">
+          <button class="btn btn-secondary btn-sm" type="button" onclick="Navigation.goTo('session')">
+            <i class="ph ph-arrow-counter-clockwise"></i>
+            Choose start mode
+          </button>
+        </div>
       </div>
 
       <div class="goal-widget" style="margin-bottom: var(--space-4);">

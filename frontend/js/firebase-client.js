@@ -10,6 +10,7 @@ import {
 const state = {
   available: false,
   initialized: false,
+  ready: false,
   user: null,
   error: null,
 };
@@ -41,7 +42,7 @@ function setState(next) {
 
 function init() {
   if (!hasConfig) {
-    setState({ available: false, initialized: true, user: null });
+    setState({ available: false, initialized: true, ready: true, user: null });
     return state;
   }
 
@@ -50,11 +51,12 @@ function init() {
     auth = getAuth(app);
     state.available = true;
     state.initialized = true;
+    state.ready = false;
     state.error = null;
 
     if (!authListener) {
       authListener = onAuthStateChanged(auth, (user) => {
-        setState({ user: user ? {
+        setState({ ready: true, user: user ? {
           uid: user.uid,
           displayName: user.displayName || '',
           email: user.email || '',
@@ -64,7 +66,7 @@ function init() {
     }
   } catch (err) {
     console.warn('[Libriq] Firebase init failed:', err);
-    setState({ available: false, initialized: true, user: null, error: err });
+    setState({ available: false, initialized: true, ready: true, user: null, error: err });
   }
 
   return state;
