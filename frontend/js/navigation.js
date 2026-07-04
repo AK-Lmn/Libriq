@@ -145,12 +145,22 @@ const Navigation = (() => {
   };
 })();
 
-  function renderSessionChoicePage() {
+function renderSessionChoicePage() {
   const main = document.getElementById('mainContent');
   const firebase = window.LibriqFirebase?.getState?.() || { available: false, initialized: false, ready: false, user: null };
+  const sessionContext = window.LibriqFirebase?.getSessionContext?.() || { isInAppBrowser: false, hints: [] };
   const hasUser = Boolean(firebase.user);
   const accountName = firebase.user?.displayName || firebase.user?.email || 'Reader';
   const loading = firebase.available && !firebase.ready;
+  const inAppBrowser = Boolean(sessionContext.isInAppBrowser);
+  const signInButtonLabel = hasUser ? `Continue as ${Utils.sanitize(accountName)}` : 'Sign in with Google';
+  const signInButtonHelp = inAppBrowser
+    ? 'Google sign-in may not work inside this app browser.'
+    : 'Optional account sign-in. This does not upload your library data.';
+  const browserHelp = inAppBrowser
+    ? 'Open LibriQ in Chrome or Safari to sign in with Google.'
+    : '';
+  const openInBrowserHref = 'https://libriq.app';
 
   main.innerHTML = `
     <div class="session-page">
@@ -175,6 +185,11 @@ const Navigation = (() => {
               <i class="ph ph-wifi-slash"></i>
               <span>Continue offline is always available.</span>
             </div>
+            ${inAppBrowser ? `
+            <div class="session-point session-point-warning">
+              <i class="ph ph-warning-circle"></i>
+              <span>Google sign-in may not work inside this app browser.</span>
+            </div>` : ''}
             <div class="session-point">
               <i class="ph ph-cloud-arrow-up"></i>
               <span>No cloud backup, sync, or analytics events are added here.</span>
@@ -212,11 +227,11 @@ const Navigation = (() => {
               <div class="session-card-action"><i class="ph ph-arrow-right"></i></div>
             </button>
           ` : firebase.available ? `
-            <button class="session-card session-card-secondary" id="googleSignInBtn" type="button">
+            <button class="session-card session-card-secondary ${inAppBrowser ? 'session-card-disabled' : ''}" id="googleSignInBtn" type="button" ${inAppBrowser ? 'aria-describedby="googleSignInHelp"' : ''}>
               <div class="session-card-icon"><i class="ph ph-google-logo"></i></div>
               <div class="session-card-content">
-                <div class="session-card-title">Sign in with Google</div>
-                <div class="session-card-body">Optional account sign-in. This does not upload your library data.</div>
+                <div class="session-card-title">${signInButtonLabel}</div>
+                <div class="session-card-body" id="googleSignInHelp">${Utils.sanitize(signInButtonHelp)}</div>
               </div>
               <div class="session-card-action"><i class="ph ph-arrow-right"></i></div>
             </button>
@@ -229,6 +244,13 @@ const Navigation = (() => {
               </div>
             </div>
           `}
+
+          ${browserHelp ? `
+            <div class="session-help-callout">
+              <div class="session-help-copy">${Utils.sanitize(browserHelp)}</div>
+              <a class="session-help-link" href="${openInBrowserHref}" target="_blank" rel="noopener noreferrer">Open in browser</a>
+            </div>
+          ` : ''}
 
           ${hasUser ? `
             <button class="session-link-btn" id="switchAccountBtn" type="button">
@@ -254,14 +276,31 @@ const Navigation = (() => {
   });
 
   document.getElementById('googleSignInBtn')?.addEventListener('click', async () => {
+    if (inAppBrowser) {
+      Utils.toast('Google sign-in may not work inside this app browser.', 'warning');
+      return;
+    }
     try {
       await window.LibriqFirebase?.signInWithGoogle?.();
       Navigation.setSessionPreference('google');
       Navigation.goTo('dashboard');
     } catch (err) {
-      const code = String(err?.code || err?.message || '');
-      const cancelled = code.includes('popup-closed-by-user') || code.includes('popup-blocked');
-      Utils.toast(cancelled ? 'Sign-in was cancelled.' : 'Could not sign in right now.', 'error');
+      const code = String(err?.code || err?.message || '').toLowerCase();
+      const isUnauthorizedDomain = code.includes('auth/unauthorized-domain') || code.includes('unauthorized-domain');
+      const isPopupBlocked = code.includes('auth/popup-blocked') || code.includes('popup-blocked');
+      const isPopupClosed = code.includes('auth/popup-closed-by-user') || code.includes('popup-closed-by-user');
+      const isDisallowedUserAgent = code.includes('auth/disallowed-useragent') || code.includes('disallowed_useragent') || code.includes('disallowed-useragent');
+      if (isDisallowedUserAgent) {
+        Utils.toast('Google sign-in may not work inside this app browser. Open LibriQ in Chrome or Safari.', 'warning');
+      } else if (isUnauthorizedDomain) {
+        Utils.toast('Google sign-in is not allowed on this domain yet.', 'error');
+      } else if (isPopupBlocked) {
+        Utils.toast('Please allow pop-ups to sign in with Google.', 'warning');
+      } else if (isPopupClosed) {
+        Utils.toast('Sign-in was cancelled.', 'info');
+      } else {
+        Utils.toast('Could not sign in right now.', 'error');
+      }
     }
   });
 
