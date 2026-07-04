@@ -1935,7 +1935,11 @@ async function backupToCloud() {
       console.warn('[Libriq] Cloud backup post-save update failed:', postSaveErr);
     }
     Utils.toast('Cloud backup saved', 'success');
-    renderCurrentPage();
+    try {
+      Navigation.renderCurrentPage?.();
+    } catch (uiErr) {
+      console.warn('[Libriq] Cloud backup UI refresh failed:', uiErr);
+    }
   } catch (err) {
     console.error('[Libriq] Cloud backup failed:', err);
     const code = String(err?.code || err?.message || '').toLowerCase();
