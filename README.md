@@ -493,7 +493,7 @@ If you want Firebase sign-in to work while testing locally:
    * `FIREBASE_STORAGE_BUCKET`
    * `FIREBASE_MESSAGING_SENDER_ID`
    * `FIREBASE_APP_ID`
-3. Run `npm run build` to generate `frontend/js/config.js`.
+3. Run `npm run build` to generate `frontend/js/config.local.js` for local testing.
 4. Serve the app locally and open `http://localhost:5500/frontend/index.html`.
 5. Add `localhost` to Firebase Auth > Settings > Authorized domains.
 
@@ -501,8 +501,9 @@ Notes:
 
 * Use `localhost`, not `127.0.0.1`, for local Firebase sign-in tests.
 * `.env` is ignored by git, so your secrets stay local.
-* `frontend/js/config.js` is generated from your environment; if the file is empty, the expected env vars were not present when you ran the build.
-* The committed repo also keeps `frontend/js/config.local.js` ignored if you use that older override path.
+* `frontend/js/config.js` stays a committed placeholder.
+* `frontend/js/config.local.js` is generated from your local environment and is ignored by git.
+* If `frontend/js/config.local.js` is empty, the expected env vars were not present when you ran the build.
 
 If no key is provided, Google Books search still runs with the public endpoint and the app falls back to Open Library results when needed.
 
