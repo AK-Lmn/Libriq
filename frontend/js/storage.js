@@ -19,6 +19,7 @@ const Storage = (() => {
     ACTIVITY:'libriq_activity',
     // Local backup metadata used only for Settings/Data copy and import preview.
     BACKUP:  'libriq_backup_meta',
+    CLOUD_BACKUP: 'libriq_cloud_backup_meta',
   };
 
   const DEFAULTS = {
@@ -28,6 +29,7 @@ const Storage = (() => {
     books:   () => [],
     activity: () => [],
     backup: () => ({ lastExportedAt: null }),
+    cloudBackup: () => ({ lastCloudBackupAt: null, bookCount: null, activityCount: null }),
   };
 
   function _read(key) {
@@ -81,6 +83,11 @@ const Storage = (() => {
     const rawBackup = _read(DATA_KEYS.BACKUP);
     if (!rawBackup || typeof rawBackup !== 'object') {
       _write(DATA_KEYS.BACKUP, DEFAULTS.backup());
+    }
+
+    const rawCloudBackup = _read(DATA_KEYS.CLOUD_BACKUP);
+    if (!rawCloudBackup || typeof rawCloudBackup !== 'object') {
+      _write(DATA_KEYS.CLOUD_BACKUP, DEFAULTS.cloudBackup());
     }
   }
 
@@ -244,6 +251,23 @@ const Storage = (() => {
     return { ...DEFAULTS.backup(), ...data };
   }
 
+  function getCloudBackupMeta() {
+    const data = _read(DATA_KEYS.CLOUD_BACKUP);
+    if (!data || typeof data !== 'object') {
+      const fresh = DEFAULTS.cloudBackup();
+      _write(DATA_KEYS.CLOUD_BACKUP, fresh);
+      return fresh;
+    }
+    return { ...DEFAULTS.cloudBackup(), ...data };
+  }
+
+  function saveCloudBackupMeta(updates) {
+    const current = getCloudBackupMeta();
+    const updated = { ...current, ...(updates && typeof updates === 'object' ? updates : {}) };
+    _write(DATA_KEYS.CLOUD_BACKUP, updated);
+    return updated;
+  }
+
   function saveBackupMeta(updates) {
     const current = getBackupMeta();
     const updated = { ...current, ...(updates && typeof updates === 'object' ? updates : {}) };
@@ -378,6 +402,7 @@ const Storage = (() => {
     getBookById, getBooksByStatus, toggleFavorite,
     getProfile, saveProfile,
     getBackupMeta, saveBackupMeta,
+    getCloudBackupMeta, saveCloudBackupMeta,
     getGoals, saveGoals,
     getStreak, updateStreak,
     getActivityLog, addActivityEvent, clearActivityLog, buildActivityEvent, setActivityLog, replaceActivityLog,

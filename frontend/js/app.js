@@ -12,14 +12,14 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: 'What’s New in LibriQ v3.0.2',
-      subtitle: 'A quick look at the sign-in environment guard.',
+      title: 'What’s New in LibriQ v3.1.0',
+      subtitle: 'Manual cloud backup arrives without changing LibriQ’s local-first core.',
       sections: [
-        ['In-App Browser Guard', 'LibriQ now recognizes likely in-app browsers and warns that Google sign-in may not work there.'],
-        ['Offline First', 'Continue offline is always available, and signing in still does not upload your library.'],
-        ['Friendly Auth Errors', 'Popup, domain, and disallowed-useragent failures now show clearer guidance instead of a confusing block.'],
+        ['Manual Cloud Backup', 'Signed-in users can back up private library data to Firestore only when they click Back up to cloud.'],
+        ['Manual Restore', 'Restore from the saved cloud backup with a clear confirmation step before replacing local data.'],
+        ['Still Offline-Friendly', 'Continue offline still works, signing in does not upload anything automatically, and auto-sync is not enabled yet.'],
       ],
-      note: 'This release keeps storage local, with no cloud sync, restore, or Firestore-backed library data.',
+      note: 'Cloud backup is opt-in and manual only. Local JSON export/import still works.',
     },
   };
 

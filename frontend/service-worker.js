@@ -3,7 +3,7 @@
    App shell caching only. No API response caching.
    ============================================ */
 
-const CACHE_VERSION = 'libriq-v3.0.2';
+const CACHE_VERSION = 'libriq-v3.1.0';
 const CACHE_NAME = `${CACHE_VERSION}-shell`;
 
 const SHELL_ASSETS = [
@@ -41,6 +41,7 @@ const SHELL_ASSETS = [
   './js/api/openLibrary.js',
   './vendor/firebase-app.js',
   './vendor/firebase-auth.js',
+  './vendor/firebase-firestore.js',
 ];
 
 self.addEventListener('install', (event) => {
