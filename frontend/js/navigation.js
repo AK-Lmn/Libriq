@@ -39,6 +39,7 @@ const Navigation = (() => {
     pages[page]();
 
     document.getElementById('mainContent').scrollTop = 0;
+    window.dispatchEvent(new CustomEvent('libriq:page-changed', { detail: { page } }));
   }
 
   function renderCurrentPage() {

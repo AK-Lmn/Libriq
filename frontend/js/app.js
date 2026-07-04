@@ -5,6 +5,7 @@
 
 (() => {
   let _booted = false;
+  let _whatsNewTimer = null;
   const RELEASE_KEY = 'libriq_seen_version';
   const WHATS_NEW_VERSION = LIBRIQ.VERSION;
   const SESSION_PREF_KEY = 'libriq_session_pref';
@@ -76,6 +77,26 @@
     document.body.style.overflow = 'hidden';
   }
 
+  function scheduleWhatsNew() {
+    cancelScheduledWhatsNew();
+
+    if (!shouldShowWhatsNew()) return;
+    if (document.body.classList.contains('session-choice-active')) return;
+
+    _whatsNewTimer = window.setTimeout(() => {
+      _whatsNewTimer = null;
+      if (document.body.classList.contains('session-choice-active')) return;
+      openWhatsNew();
+    }, 750);
+  }
+
+  function cancelScheduledWhatsNew() {
+    if (_whatsNewTimer) {
+      window.clearTimeout(_whatsNewTimer);
+      _whatsNewTimer = null;
+    }
+  }
+
   function dismissWhatsNew() {
     localStorage.setItem(RELEASE_KEY, WHATS_NEW_VERSION);
     closeWhatsNew();
@@ -86,6 +107,16 @@
     window.addEventListener('libriq:book:added',   () => Navigation.updateBadges());
     window.addEventListener('libriq:book:updated', () => Navigation.updateBadges());
     window.addEventListener('libriq:book:removed', () => Navigation.updateBadges());
+    window.addEventListener('libriq:page-changed', (event) => {
+      if (event?.detail?.page === 'session') {
+        cancelScheduledWhatsNew();
+        closeWhatsNew();
+        return;
+      }
+      if (event?.detail?.page) {
+        scheduleWhatsNew();
+      }
+    });
 
     window.addEventListener('libriq:reset', () => {
       resetShellUI();
@@ -111,10 +142,7 @@
     Search.init();
 
     wireGlobalEvents();
-
-    if (shouldShowWhatsNew()) {
-      requestAnimationFrame(openWhatsNew);
-    }
+    scheduleWhatsNew();
 
     document.getElementById('whatsNewContinue')?.addEventListener('click', dismissWhatsNew);
     document.getElementById('closeWhatsNew')?.addEventListener('click', dismissWhatsNew);
