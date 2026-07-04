@@ -13,11 +13,11 @@
       title: 'What’s New in LibriQ v2.20.0',
       subtitle: 'A quick look at the latest local-first improvements.',
       sections: [
-        ['Final Local-First Polish', 'Settings, Help, backups, and empty states now read a little clearer and more reassuringly.'],
-        ['Backup Confidence', 'Manual JSON exports, import preview, and replace or merge choices remain in place.'],
-        ['Privacy Unchanged', 'No backend, accounts, cloud sync, or quote analytics were added.'],
+        ['Optional Accounts', 'You can sign in with Google, but LibriQ still works fully without an account.'],
+        ['Local-First Still Intact', 'Signing in does not upload your library, and cloud backup/sync is not enabled yet.'],
+        ['Final v2 Consistency', 'Settings, Help, backups, and empty states now read a little clearer and more reassuringly.'],
       ],
-      note: 'Your library stays local on your device, and the privacy model remains unchanged.',
+      note: 'Your library stays local on your device unless you export it manually, and no backend sync is enabled in this release.',
     },
   };
 

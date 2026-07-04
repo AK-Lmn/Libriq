@@ -9,5 +9,8 @@
   },
   "devDependencies": {
     "playwright": "^1.55.0"
+  },
+  "dependencies": {
+    "firebase": "^12.15.0"
   }
 }

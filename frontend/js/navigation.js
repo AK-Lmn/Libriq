@@ -123,6 +123,9 @@ const Navigation = (() => {
 
     applyTheme();
     updateBadges();
+    window.addEventListener('libriq:auth-changed', () => {
+      if (_currentPage === 'settings') renderSettingsPage();
+    });
   }
 
   return {
@@ -1304,6 +1307,7 @@ function renderSettingsPage() {
   const theme = document.documentElement.getAttribute('data-theme');
   const backupMeta = Storage.getBackupMeta?.() || { lastExportedAt: null };
   const hasBooks = Storage.getBooks().length > 0;
+  const firebase = window.LibriqFirebase?.getState?.() || { available: false, initialized: false, user: null };
   const lastExportedText = backupMeta.lastExportedAt
     ? Utils.formatDate(backupMeta.lastExportedAt)
     : 'No backup exported yet.';
@@ -1330,6 +1334,13 @@ function renderSettingsPage() {
             Switch to ${theme === 'dark' ? 'light' : 'dark'}
           </button>
         </div>
+      </div>
+
+      <div class="goal-widget" style="margin-bottom: var(--space-4);">
+        <div class="goal-header">
+          <div class="goal-title">Account</div>
+        </div>
+        ${_buildAccountSection(firebase)}
       </div>
 
       <div class="goal-widget" style="margin-bottom: var(--space-4);">
@@ -1381,7 +1392,7 @@ function renderSettingsPage() {
           <div class="goal-title">Search &amp; Privacy</div>
         </div>
         <p class="text-sm text-secondary" style="line-height: var(--leading-loose); margin-top: 0;">
-          LibriQ searches public book sources like Open Library and Google Books. Some providers may rate-limit requests during heavy usage, but Open Library fallback remains available. Normal users do not need to configure anything.
+          LibriQ works without an account. It searches public book sources like Open Library and Google Books, and your library stays local on this device unless you export it manually. Some providers may rate-limit requests during heavy usage, but Open Library fallback remains available.
         </p>
         <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
           <div class="activity-text">
@@ -1409,10 +1420,10 @@ function renderSettingsPage() {
         </div>
         <div class="activity-list">
           ${[
-            ['Local library storage', 'LibriQ stores your library locally in your browser.'],
+            ['Local library storage', 'LibriQ stores your library locally on this device.'],
             ['Basic traffic analytics', 'LibriQ uses anonymous Google Analytics page views to understand general traffic.'],
-            ['No accounts', 'There is no account system.'],
-            ['No cloud sync', 'Your data stays on this device unless you export it yourself.'],
+            ['Accounts are optional', 'Sign in only if you want future backup and sync features.'],
+            ['No cloud backup', 'Cloud backup and sync are not enabled in v3.0.0.'],
             ['Manual backups', 'Backups are downloaded manually as JSON files.'],
             ['Private notes and quotes', 'Private notes and quotes stay local unless included in an exported backup.'],
           ].map(([title, subtitle]) => `
@@ -1435,6 +1446,82 @@ function renderSettingsPage() {
         </p>
       </div>
     </div>`;
+
+  _wireAccountControls();
+}
+
+function _buildAccountSection(firebase) {
+  if (!firebase.initialized) {
+    return `
+      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+        <div class="activity-text">
+          <div class="activity-title">Account</div>
+          <div class="activity-subtitle">Loading account status…</div>
+        </div>
+      </div>`;
+  }
+
+  if (!firebase.available) {
+    return `
+      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+        <div class="activity-text">
+          <div class="activity-title">Account</div>
+          <div class="activity-subtitle">Account features are unavailable in this build.</div>
+        </div>
+      </div>`;
+  }
+
+  if (!firebase.user) {
+    return `
+      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0; align-items: center;">
+        <div class="activity-text">
+          <div class="activity-title">Account</div>
+          <div class="activity-subtitle">LibriQ works without an account. Sign in only if you want future backup and sync features.</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="accountActionBtn" type="button" data-account-action="signin">
+          Sign in with Google
+        </button>
+      </div>`;
+  }
+
+  const user = firebase.user;
+  const avatar = user.photoURL
+    ? `<img src="${Utils.sanitize(user.photoURL)}" alt="" aria-hidden="true" style="width:40px;height:40px;border-radius:999px;object-fit:cover;" />`
+    : `<div style="width:40px;height:40px;border-radius:999px;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-weight:700;">${Utils.sanitize((user.displayName || user.email || 'U').slice(0,1).toUpperCase())}</div>`;
+
+  return `
+    <div class="activity-item" style="cursor:default; padding: var(--space-3) 0; align-items: center;">
+      <div class="activity-text" style="display:flex; flex-direction:row; align-items:center; gap: var(--space-3);">
+        ${avatar}
+        <div>
+          <div class="activity-title">${Utils.sanitize(user.displayName || 'Signed in')}</div>
+          <div class="activity-subtitle">${Utils.sanitize(user.email || '')}</div>
+          <div class="activity-subtitle">Cloud backup is not enabled yet. Your library is still stored locally on this device.</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-sm" id="accountActionBtn" type="button" data-account-action="signout">
+        Sign out
+      </button>
+    </div>`;
+}
+
+function _wireAccountControls() {
+  const btn = document.getElementById('accountActionBtn');
+  if (!btn) return;
+  btn.onclick = async () => {
+    const action = btn.dataset.accountAction;
+    try {
+      if (action === 'signin') {
+        await window.LibriqFirebase?.signInWithGoogle?.();
+      } else {
+        await window.LibriqFirebase?.signOut?.();
+      }
+    } catch (err) {
+      const code = String(err?.code || err?.message || '');
+      const cancelled = code.includes('popup-closed-by-user') || code.includes('popup-blocked');
+      Utils.toast(cancelled ? 'Sign-in was cancelled.' : 'Could not update account status right now.', 'error');
+    }
+  };
 }
 
 function _bookNeedsMetadata(book) {

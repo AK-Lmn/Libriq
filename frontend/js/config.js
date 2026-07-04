@@ -1,1 +1,2 @@
-window.LibriqConfig = window.LibriqConfig || {};
+window.LibriqConfig = {
+};

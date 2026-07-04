@@ -39,6 +39,8 @@ const SHELL_ASSETS = [
   './js/api/mergeBooks.js',
   './js/api/normalizeBook.js',
   './js/api/openLibrary.js',
+  './vendor/firebase-app.js',
+  './vendor/firebase-auth.js',
 ];
 
 self.addEventListener('install', (event) => {
