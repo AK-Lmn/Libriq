@@ -241,6 +241,18 @@ const CloudBackup = (() => {
     return lastMessage || 'Cloud backup active';
   }
 
+  function formatLastSavedLabel(value) {
+    if (!value) return 'No cloud backup yet.';
+    const savedAt = new Date(value);
+    if (Number.isNaN(savedAt.getTime())) return 'No cloud backup yet.';
+    const now = new Date();
+    if (savedAt.toDateString() === now.toDateString()) {
+      const time = savedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      return `Last backed up: just now at ${time}`;
+    }
+    return `Last backed up: ${Utils.formatDate(savedAt.toISOString())}`;
+  }
+
   async function performCloudBackup(reason = 'manual', automatic = false) {
     if (!isEligible()) {
       setStatus('paused', Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Sign in to enable cloud backup');
@@ -288,7 +300,7 @@ const CloudBackup = (() => {
       } finally {
         suppressScheduling = false;
       }
-      setStatus(STATUS.BACKED_UP, `Last backed up: ${Utils.formatDate(savedAt)}`);
+      setStatus(STATUS.BACKED_UP, formatLastSavedLabel(savedAt));
       logDebug('backup write succeeded', { reason, automatic, savedAt });
       logDebug('status set to backed up', { savedAt, bookCount: docData.bookCount, activityCount: docData.activityCount });
       return true;
@@ -388,7 +400,7 @@ const CloudBackup = (() => {
     };
   }
 
-  return { schedule, scheduleIfAllowed, pause, refresh, getState, runBackup };
+  return { schedule, scheduleIfAllowed, pause, refresh, getState, runBackup, formatLastSavedLabel };
 })();
 
 window.LibriqCloudBackup = CloudBackup;
@@ -1941,7 +1953,7 @@ function _buildAccountSection(firebase) {
       <div class="activity-item" style="cursor:default; padding: var(--space-3) 0; align-items: center;">
         <div class="activity-text">
           <div class="activity-title">Account</div>
-          <div class="activity-subtitle">LibriQ works without an account. Sign in only if you want future backup and sync features.</div>
+          <div class="activity-subtitle">Sign in to enable cloud backup.</div>
         </div>
         <button class="btn btn-secondary btn-sm" id="accountActionBtn" type="button" data-account-action="signin">
           Sign in with Google
@@ -1953,6 +1965,17 @@ function _buildAccountSection(firebase) {
   const avatar = user.photoURL
     ? `<img src="${Utils.sanitize(user.photoURL)}" alt="" aria-hidden="true" style="width:40px;height:40px;border-radius:999px;object-fit:cover;" />`
     : `<div style="width:40px;height:40px;border-radius:999px;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-weight:700;">${Utils.sanitize((user.displayName || user.email || 'U').slice(0,1).toUpperCase())}</div>`;
+  const cloudState = window.LibriqCloudBackup?.getState?.() || {};
+  const hasFirestore = Boolean(window.LibriqFirebase?.hasFirestore?.());
+  const offlineMode = Navigation.getSessionPreference?.() === 'offline';
+  const cloudLabel = cloudState.status === 'paused' || offlineMode
+    ? 'Cloud backup is paused in offline mode.'
+    : hasFirestore
+      ? 'Cloud backup is active for this account.'
+      : 'You\'re signed in, but cloud backup is unavailable right now.';
+  const backupLabel = cloudState.lastSavedAt
+    ? cloudState.message || window.LibriqCloudBackup?.formatLastSavedLabel?.(cloudState.lastSavedAt) || 'Last backed up: just now'
+    : 'Your library is backed up to your account on this device.';
 
   return `
     <div class="activity-item" style="cursor:default; padding: var(--space-3) 0; align-items: center;">
@@ -1961,7 +1984,8 @@ function _buildAccountSection(firebase) {
         <div>
           <div class="activity-title">${Utils.sanitize(user.displayName || 'Signed in')}</div>
           <div class="activity-subtitle">${Utils.sanitize(user.email || '')}</div>
-          <div class="activity-subtitle">Cloud backup is not enabled yet. Your library is still stored locally on this device.</div>
+          <div class="activity-subtitle">${Utils.sanitize(cloudLabel)}</div>
+          ${cloudState.lastSavedAt ? `<div class="activity-subtitle">${Utils.sanitize(backupLabel)}</div>` : ''}
         </div>
       </div>
       <button class="btn btn-secondary btn-sm" id="accountActionBtn" type="button" data-account-action="signout">
@@ -2007,7 +2031,9 @@ function _buildCloudBackupSection(firebase, cloudBackupMeta) {
   }
   const status = cloudState.message || (cloudBackupMeta.lastCloudBackupAt ? 'Cloud backup active' : 'Sign in to enable cloud backup');
   const lastSaved = cloudState.lastSavedAt || cloudBackupMeta.lastCloudBackupAt;
-  const lastSavedText = lastSaved ? `Last backed up: ${Utils.formatDate(lastSaved)}` : 'No cloud backup yet.';
+  const lastSavedText = lastSaved
+    ? (window.LibriqCloudBackup?.formatLastSavedLabel?.(lastSaved) || `Last backed up: ${Utils.formatDate(lastSaved)}`)
+    : 'No cloud backup yet.';
 
   return `
     <div class="activity-list">
