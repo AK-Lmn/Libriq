@@ -482,16 +482,27 @@ The current version focuses on improving the core local-first reading tracker ex
 
 LibriQ searches public book sources like Open Library and Google Books. Normal users do not need to configure anything.
 
-If a deployment owner or developer wants to add a restricted Google Books key for their own hosted build:
+If you want Firebase sign-in to work while testing locally:
 
-* `frontend/js/config.js` is the committed safe baseline
-* Copy `frontend/js/config.local.example.js` to `frontend/js/config.local.js`
-* Set `window.LibriqConfig.googleBooksApiKey` in that local file
-* Or inject the same config object at deploy time as `window.LibriqConfig`
+1. Create a root-level `.env` file.
+2. Add these variables:
+   * `GOOGLE_BOOKS_API_KEY`
+   * `FIREBASE_API_KEY`
+   * `FIREBASE_AUTH_DOMAIN`
+   * `FIREBASE_PROJECT_ID`
+   * `FIREBASE_STORAGE_BUCKET`
+   * `FIREBASE_MESSAGING_SENDER_ID`
+   * `FIREBASE_APP_ID`
+3. Run `npm run build` to generate `frontend/js/config.js`.
+4. Serve the app locally and open `http://localhost:5500/frontend/index.html`.
+5. Add `localhost` to Firebase Auth > Settings > Authorized domains.
 
-The committed repo keeps only the safe example file, and `frontend/js/config.local.js` is ignored by git.
+Notes:
 
-If you prefer to test with a local override during development, you can manually add a `config.local.js` script tag in your local copy of `frontend/index.html`. The committed app does not request it automatically.
+* Use `localhost`, not `127.0.0.1`, for local Firebase sign-in tests.
+* `.env` is ignored by git, so your secrets stay local.
+* `frontend/js/config.js` is generated from your environment; if the file is empty, the expected env vars were not present when you ran the build.
+* The committed repo also keeps `frontend/js/config.local.js` ignored if you use that older override path.
 
 If no key is provided, Google Books search still runs with the public endpoint and the app falls back to Open Library results when needed.
 
