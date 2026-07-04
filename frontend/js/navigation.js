@@ -2031,8 +2031,8 @@ async function restoreFromCloud() {
   }
 
   Utils.toast('Cloud backup restored', 'success');
-  updateBadges();
   try {
+    Navigation.updateBadges?.();
     Navigation.renderCurrentPage?.();
   } catch (uiErr) {
     console.warn('[Libriq] Cloud restore UI refresh failed:', uiErr);
