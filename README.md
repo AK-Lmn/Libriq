@@ -4,7 +4,7 @@
 
 The app is built with **HTML, CSS, and Vanilla JavaScript**, with book data powered by **Open Library** and **Google Books**.
 
-LibriQ is currently focused on being a polished local-first reading tracker. Saved library data, reading progress, ratings, favorites, and private notes are stored in the browser using `localStorage`, with optional manual cloud backup for signed-in users.
+LibriQ is currently focused on being a polished local-first reading tracker. Saved library data, reading progress, ratings, favorites, and private notes are stored in the browser using `localStorage`, with automatic cloud backup for signed-in users and optional JSON export/import for manual safety copies.
 
 LibriQ also uses basic Google Analytics page-view tracking for anonymous traffic measurement only.
 
@@ -42,14 +42,14 @@ The app is designed to feel like a focused digital reading space instead of a pl
 
 ---
 
-## What's New in v3.1.0
+## What's New in v3.2.0
 
-* Added manual cloud backup for signed-in users
-* Added manual restore from cloud backup
-* Cloud backup is opt-in/manual only
-* No automatic sync yet
+* Added automatic cloud backup for signed-in users
+* Cloud backup runs after local library changes
+* JSON export remains optional/manual
 * Continue offline still works
-* Private library data is uploaded only when the user clicks Back up to cloud
+* No realtime sync or merge conflict system yet
+* Restore from cloud remains a manual, confirmed action
 
 ---
 
@@ -134,15 +134,15 @@ Backup features include:
 
 ### Manual Cloud Backup
 
-LibriQ also includes an optional manual cloud backup path for signed-in users.
+LibriQ also includes a cloud backup path for signed-in users.
 
 Cloud backup features include:
 
-* Opt-in backup to Firestore only when the user clicks Back up to cloud
+* Automatic backup to Firestore after local library changes when signed in
 * Manual restore from the saved cloud backup
 * Continued local-only use when no account is signed in
-* No automatic sync yet
-* Private library data uploaded only on explicit user action
+* JSON export/import still available as an optional manual backup path
+* No realtime sync or merge conflict system yet
 
 ---
 
@@ -203,7 +203,7 @@ It shows:
 
 In v3.0.2, the modal is delayed until after normal app entry so it no longer pops over the session picker or auth-loading state.
 
-In v3.1.0, the modal highlights manual cloud backup and restore while keeping local export/import intact.
+In v3.2.0, the modal highlights automatic cloud backup and manual restore while keeping local export/import intact.
 
 ---
 
@@ -473,7 +473,7 @@ LibriQ/
 
 LibriQ is still in active development.
 
-The current version focuses on improving the core local-first reading tracker experience, including library management, book search, reading progress, book details, ratings, private notes, metadata, statistics, responsive design, search filtering, local recommendations, backups, manual cloud backup, help content, and the PWA offline shell.
+The current version focuses on improving the core local-first reading tracker experience, including library management, book search, reading progress, book details, ratings, private notes, metadata, statistics, responsive design, search filtering, local recommendations, backups, automatic cloud backup, help content, and the PWA offline shell.
 
 ---
 

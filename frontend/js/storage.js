@@ -181,7 +181,9 @@ const Storage = (() => {
 
   function saveActivityLog(events) {
     if (!Array.isArray(events)) return false;
-    return _write(DATA_KEYS.ACTIVITY, events.slice(-500));
+    const result = _write(DATA_KEYS.ACTIVITY, events.slice(-500));
+    if (result) _dispatchChange('activity:updated', { count: Math.min(events.length, 500) });
+    return result;
   }
 
   function clearActivityLog() {
@@ -279,6 +281,7 @@ const Storage = (() => {
     const current = getProfile();
     const updated = { ...current, ...updates };
     _write(DATA_KEYS.PROFILE, updated);
+    _dispatchChange('profile:updated', updated);
     return updated;
   }
 
@@ -294,7 +297,9 @@ const Storage = (() => {
 
   function saveGoals(goals) {
     if (!goals || typeof goals.yearly !== 'number' || goals.yearly < 1) return false;
-    return _write(DATA_KEYS.GOALS, goals);
+    const result = _write(DATA_KEYS.GOALS, goals);
+    if (result) _dispatchChange('goals:updated', goals);
+    return result;
   }
 
   function getStreak() {
@@ -319,6 +324,7 @@ const Storage = (() => {
     streak.longest  = Math.max(streak.longest, streak.current);
     streak.lastRead = new Date().toISOString();
     _write(DATA_KEYS.STREAK, streak);
+    _dispatchChange('streak:updated', streak);
     return streak;
   }
 
