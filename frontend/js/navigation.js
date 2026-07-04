@@ -1801,8 +1801,11 @@ function _wireAccountControls() {
     }
   };
 
-  document.getElementById('cloudBackupSaveBtn')?.addEventListener('click', backupToCloud);
-  document.getElementById('cloudBackupRestoreBtn')?.addEventListener('click', async () => {
+  const saveBtn = document.getElementById('cloudBackupSaveBtn');
+  if (saveBtn) saveBtn.onclick = backupToCloud;
+
+  const restoreBtn = document.getElementById('cloudBackupRestoreBtn');
+  if (restoreBtn) restoreBtn.onclick = async () => {
     const currentBooks = Storage.getBooks();
     if (currentBooks.length > 0) {
       const shouldExport = confirm('Export a local JSON backup first before restoring your cloud backup?');
@@ -1812,7 +1815,7 @@ function _wireAccountControls() {
     }
     const proceed = confirm('This will replace your current local library with your cloud backup. Continue?');
     if (proceed) await restoreFromCloud();
-  });
+  };
 }
 
 function _bookNeedsMetadata(book) {
@@ -1881,10 +1884,21 @@ function _buildManualBackupPayload() {
 
 function _normalizeCloudBackupDoc(docData) {
   if (!docData || typeof docData !== 'object') return null;
+  if (docData.app && docData.app !== 'LibriQ') return null;
   const data = docData.data;
   if (!data || typeof data !== 'object') return null;
-  if (!Array.isArray(data.books) || !data.profile || !data.goals || !data.streak || !Array.isArray(data.activity)) return null;
-  return docData;
+  if (!Array.isArray(data.books)) return null;
+  return {
+    ...docData,
+    app: docData.app || 'LibriQ',
+    data: {
+      books: data.books,
+      profile: data.profile && typeof data.profile === 'object' ? data.profile : createProfile(),
+      goals: data.goals && typeof data.goals === 'object' ? data.goals : Storage.getGoals(),
+      streak: data.streak && typeof data.streak === 'object' ? data.streak : Storage.getStreak(),
+      activity: Array.isArray(data.activity) ? data.activity : [],
+    },
+  };
 }
 
 async function backupToCloud() {
@@ -1910,12 +1924,16 @@ async function backupToCloud() {
       data: payload.data,
       updatedAt: new Date().toISOString(),
     });
-    Storage.saveCloudBackupMeta?.({
-      lastCloudBackupAt: new Date().toISOString(),
-      bookCount: payload.data.books.length,
-      activityCount: payload.data.activity.length,
-    });
-    Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_cloud_saved', null, { itemCount: payload.data.books.length, activityCount: payload.data.activity.length }, 'manual'));
+    try {
+      Storage.saveCloudBackupMeta?.({
+        lastCloudBackupAt: new Date().toISOString(),
+        bookCount: payload.data.books.length,
+        activityCount: payload.data.activity.length,
+      });
+      Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_cloud_saved', null, { itemCount: payload.data.books.length, activityCount: payload.data.activity.length }, 'manual'));
+    } catch (postSaveErr) {
+      console.warn('[Libriq] Cloud backup post-save update failed:', postSaveErr);
+    }
     Utils.toast('Cloud backup saved', 'success');
     renderCurrentPage();
   } catch (err) {
@@ -1923,8 +1941,12 @@ async function backupToCloud() {
     const code = String(err?.code || err?.message || '').toLowerCase();
     if (code.includes('permission-denied')) {
       Utils.toast('You do not have permission to save this cloud backup.', 'error');
+    } else if (code.includes('unauthenticated') || code.includes('authentication-required')) {
+      Utils.toast('Please sign in again before saving your cloud backup.', 'error');
     } else if (code.includes('unavailable') || code.includes('network')) {
       Utils.toast('Network error while saving cloud backup.', 'error');
+    } else if (code.includes('invalid') || code.includes('backup data')) {
+      Utils.toast('The cloud backup data could not be saved.', 'error');
     } else {
       Utils.toast('Could not save cloud backup right now.', 'error');
     }
@@ -1947,22 +1969,46 @@ async function restoreFromCloud() {
     return;
   }
 
+  let docData;
   try {
     const snap = await window.LibriqFirebase.readBackupDoc(['users', firebase.user.uid, 'backups', 'current']);
     if (!snap?.exists?.()) {
       Utils.toast('No cloud backup found yet.', 'info');
       return;
     }
-    const docData = _normalizeCloudBackupDoc(snap.data());
+    docData = _normalizeCloudBackupDoc(snap.data());
     if (!docData) {
       Utils.toast('The cloud backup data is invalid.', 'error');
       return;
     }
-    const data = docData.data;
+  } catch (err) {
+    console.error('[Libriq] Cloud restore failed:', err);
+    const code = String(err?.code || err?.message || '').toLowerCase();
+    if (code.includes('permission-denied')) {
+      Utils.toast('You do not have permission to read this cloud backup.', 'error');
+    } else if (code.includes('unauthenticated') || code.includes('authentication-required')) {
+      Utils.toast('Please sign in again before restoring your cloud backup.', 'error');
+    } else if (code.includes('unavailable') || code.includes('network')) {
+      Utils.toast('Network error while loading cloud backup.', 'error');
+    } else {
+      Utils.toast('Could not restore cloud backup right now.', 'error');
+    }
+    return;
+  }
+
+  const data = docData.data;
+  try {
     Storage.saveBooks((data.books || []).map(book => createBook(book)));
     Storage.saveProfile(data.profile);
     Storage.saveGoals(data.goals);
     localStorage.setItem('libriq_streak', JSON.stringify(data.streak));
+  } catch (err) {
+    console.error('[Libriq] Cloud restore local replacement failed:', err);
+    Utils.toast('Could not restore cloud backup right now.', 'error');
+    return;
+  }
+
+  try {
     Storage.replaceActivityLog?.(Array.isArray(data.activity) ? data.activity.slice(-500) : []);
     Storage.saveCloudBackupMeta?.({
       lastCloudBackupAt: docData.updatedAt || new Date().toISOString(),
@@ -1970,20 +2016,13 @@ async function restoreFromCloud() {
       activityCount: docData.activityCount ?? data.activity.length,
     });
     Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_cloud_restored', null, { itemCount: data.books.length, activityCount: data.activity.length }, 'manual'));
-    Utils.toast('Cloud backup restored', 'success');
-    updateBadges();
-    renderCurrentPage();
   } catch (err) {
-    console.error('[Libriq] Cloud restore failed:', err);
-    const code = String(err?.code || err?.message || '').toLowerCase();
-    if (code.includes('permission-denied')) {
-      Utils.toast('You do not have permission to read this cloud backup.', 'error');
-    } else if (code.includes('unavailable') || code.includes('network')) {
-      Utils.toast('Network error while loading cloud backup.', 'error');
-    } else {
-      Utils.toast('Could not restore cloud backup right now.', 'error');
-    }
+    console.warn('[Libriq] Cloud restore post-update failed:', err);
   }
+
+  Utils.toast('Cloud backup restored', 'success');
+  updateBadges();
+  renderCurrentPage();
 }
 
 function promptImportData() {
