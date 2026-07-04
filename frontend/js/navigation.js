@@ -154,10 +154,18 @@ const Navigation = (() => {
 })();
 
 const CloudBackup = (() => {
+  const STATUS = {
+    IDLE: 'idle',
+    SCHEDULED: 'scheduled',
+    SAVING: 'saving',
+    BACKED_UP: 'backed_up',
+    FAILED: 'failed',
+    PAUSED: 'paused',
+  };
   let debounceTimer = null;
   let backupInFlight = null;
   let pendingReason = null;
-  let lastStatus = 'idle';
+  let lastStatus = STATUS.IDLE;
   let lastMessage = '';
   let lastSavedAt = null;
   let lastError = null;
@@ -208,7 +216,7 @@ const CloudBackup = (() => {
     lastStatus = status;
     lastMessage = message;
     lastError = error;
-    if (status === 'saved') lastSavedAt = new Date().toISOString();
+    if (status === STATUS.BACKED_UP) lastSavedAt = new Date().toISOString();
     logDebug('status set', { status, message });
     if (Navigation.currentPage === 'settings') renderSettingsPage();
   }
@@ -219,6 +227,15 @@ const CloudBackup = (() => {
       return;
     }
     schedule(reason);
+  }
+
+  function getVisibleStatus() {
+    if (lastStatus === STATUS.SAVING) return 'Saving...';
+    if (lastStatus === STATUS.BACKED_UP) return lastMessage || 'Backed up just now';
+    if (lastStatus === STATUS.FAILED) return lastMessage || 'Backup failed. Your local data is still safe.';
+    if (lastStatus === STATUS.PAUSED) return lastMessage || 'Cloud backup paused';
+    if (lastStatus === STATUS.SCHEDULED) return 'Cloud backup active';
+    return lastMessage || 'Cloud backup active';
   }
 
   async function performCloudBackup(reason = 'manual', automatic = false) {
@@ -243,7 +260,7 @@ const CloudBackup = (() => {
     };
 
     logDebug('backup started', { reason, automatic, uid, path: ['users', uid, 'backups', 'current'] });
-    setStatus('saving', automatic ? 'Saving...' : 'Saving...');
+    setStatus(STATUS.SAVING, automatic ? 'Saving...' : 'Saving...');
 
     try {
       await window.LibriqFirebase.writeBackupDoc(['users', uid, 'backups', 'current'], docData);
@@ -262,7 +279,7 @@ const CloudBackup = (() => {
       } finally {
         suppressScheduling = false;
       }
-      setStatus('saved', 'Backed up just now');
+      setStatus(STATUS.BACKED_UP, `Last backed up: ${Utils.formatDate(savedAt)}`);
       logDebug('backup write succeeded', { reason, automatic, savedAt });
       logDebug('status set to backed up', { savedAt, bookCount: docData.bookCount, activityCount: docData.activityCount });
       return true;
@@ -281,7 +298,7 @@ const CloudBackup = (() => {
           Utils.toast('Could not save cloud backup right now.', 'error');
         }
       }
-      setStatus('failed', 'Backup failed. Your local data is still safe.', err);
+      setStatus(STATUS.FAILED, 'Backup failed. Your local data is still safe.', err);
       return false;
     }
   }
@@ -295,15 +312,15 @@ const CloudBackup = (() => {
 
     backupInFlight = performCloudBackup(reason, automatic)
       .finally(() => {
-        backupInFlight = null;
-        const followUp = pendingReason;
-        pendingReason = null;
-        if (followUp) {
-          if (isEligible()) schedule(followUp);
-          else setStatus('paused', Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Cloud backup paused');
-        } else if (Navigation.currentPage === 'settings') {
-          renderSettingsPage();
-        }
+      backupInFlight = null;
+      const followUp = pendingReason;
+      pendingReason = null;
+      if (followUp) {
+        if (isEligible()) schedule(followUp);
+        else setStatus(STATUS.PAUSED, Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Cloud backup paused');
+      } else if (Navigation.currentPage === 'settings') {
+        renderSettingsPage();
+      }
       });
     return backupInFlight;
   }
@@ -311,7 +328,7 @@ const CloudBackup = (() => {
   function schedule(reason = 'local-change') {
     if (!isEligible()) {
       const pausedMessage = Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Cloud backup paused';
-      setStatus('paused', pausedMessage);
+      setStatus(STATUS.PAUSED, pausedMessage);
       logDebug('auto backup skipped with reason', { reason, pausedMessage });
       return;
     }
@@ -319,12 +336,12 @@ const CloudBackup = (() => {
     logDebug('auto backup scheduled', { reason, debounceMs });
     if (debounceTimer) clearTimeout(debounceTimer);
     pendingReason = reason;
+    setStatus(STATUS.SCHEDULED, 'Cloud backup active');
     debounceTimer = window.setTimeout(() => {
       debounceTimer = null;
       logDebug('debounce fired', { reason });
       runBackup(reason, true);
     }, debounceMs);
-    setStatus('active', 'Cloud backup active');
   }
 
   function pause(reason = 'paused') {
@@ -334,23 +351,23 @@ const CloudBackup = (() => {
       debounceTimer = null;
     }
     const message = reason === 'session' ? 'Cloud backup paused' : 'Offline mode: cloud backup paused';
-    setStatus('paused', message);
+    setStatus(STATUS.PAUSED, message);
     logDebug('paused', { reason, message });
   }
 
   function refresh() {
     paused = false;
     if (isEligible()) {
-      setStatus('active', 'Cloud backup active');
+      setStatus(STATUS.IDLE, 'Cloud backup active');
     } else {
-      setStatus('paused', Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Sign in to enable cloud backup');
+      setStatus(STATUS.PAUSED, Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Sign in to enable cloud backup');
     }
   }
 
   function getState() {
     return {
       status: lastStatus,
-      message: lastMessage,
+      message: getVisibleStatus(),
       lastSavedAt,
       error: lastError,
       pending: Boolean(debounceTimer || backupInFlight),
@@ -1971,6 +1988,9 @@ function _buildCloudBackupSection(firebase, cloudBackupMeta) {
   }
 
   const cloudState = window.LibriqCloudBackup?.getState?.() || {};
+  if (window.localStorage?.getItem('libriq_debug_auto_backup')) {
+    console.debug('[LibriQ][AutoBackup] renderCloudBackupSection reads status', cloudState);
+  }
   const status = cloudState.message || (cloudBackupMeta.lastCloudBackupAt ? 'Cloud backup active' : 'Sign in to enable cloud backup');
   const lastSaved = cloudState.lastSavedAt || cloudBackupMeta.lastCloudBackupAt;
   const lastSavedText = lastSaved ? `Last backed up: ${Utils.formatDate(lastSaved)}` : 'No cloud backup yet.';
