@@ -1414,7 +1414,7 @@ function renderSettingsPage() {
             ['No accounts', 'There is no account system.'],
             ['No cloud sync', 'Your data stays on this device unless you export it yourself.'],
             ['Manual backups', 'Backups are downloaded manually as JSON files.'],
-            ['Private notes', 'Private notes are included in exported backups.'],
+            ['Private notes and quotes', 'Private notes and quotes stay local unless included in an exported backup.'],
           ].map(([title, subtitle]) => `
             <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
               <div class="activity-text">
@@ -1679,6 +1679,7 @@ function _mergeBookRecords(currentBook, importedBook) {
 
   const mergedTags = Array.from(new Set([...(current.tags || []), ...(incoming.tags || [])].map(tag => String(tag || '').trim()).filter(Boolean)));
   const mergedGenres = Array.from(new Set([...(current.genres || []), ...(incoming.genres || [])].map(genre => String(genre || '').trim()).filter(Boolean)));
+  const mergedQuotes = _mergeQuotes(current.quotes, incoming.quotes);
 
   const notes = typeof current.notes === 'string' ? current.notes.trim() : '';
   const importedNotes = typeof incoming.notes === 'string' ? incoming.notes.trim() : '';
@@ -1697,10 +1698,46 @@ function _mergeBookRecords(currentBook, importedBook) {
     dateAdded: current.dateAdded || incoming.dateAdded || new Date().toISOString(),
     dateStarted: current.dateStarted || incoming.dateStarted || null,
     dateFinished: current.dateFinished || incoming.dateFinished || null,
+    quotes: mergedQuotes,
   };
 
   if (!keepNotes) merged.notes = '';
   return merged;
+}
+
+function _mergeQuotes(currentQuotes, incomingQuotes) {
+  const byId = new Map();
+  (Array.isArray(currentQuotes) ? currentQuotes : []).forEach(quote => {
+    if (!quote?.id) return;
+    byId.set(quote.id, {
+      id: quote.id,
+      text: String(quote.text || ''),
+      page: quote.page ?? null,
+      note: quote.note ?? '',
+      createdAt: quote.createdAt || new Date().toISOString(),
+      updatedAt: quote.updatedAt || quote.createdAt || new Date().toISOString(),
+    });
+  });
+  (Array.isArray(incomingQuotes) ? incomingQuotes : []).forEach(quote => {
+    if (!quote?.id) return;
+    const normalized = {
+      id: quote.id,
+      text: String(quote.text || ''),
+      page: quote.page ?? null,
+      note: quote.note ?? '',
+      createdAt: quote.createdAt || new Date().toISOString(),
+      updatedAt: quote.updatedAt || quote.createdAt || new Date().toISOString(),
+    };
+    const existing = byId.get(quote.id);
+    if (!existing) {
+      byId.set(quote.id, normalized);
+      return;
+    }
+    const existingTime = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+    const incomingTime = new Date(normalized.updatedAt || normalized.createdAt || 0).getTime();
+    byId.set(quote.id, incomingTime > existingTime ? normalized : existing);
+  });
+  return Array.from(byId.values());
 }
 
 function _preferNumeric(currentValue, incomingValue) {
@@ -1929,6 +1966,9 @@ function _normalizeActivityForView(event) {
     favorite_removed: ['Removed from favorites', 'ph-heart', 'var(--color-danger-dim)', 'var(--color-danger)'],
     note_saved: ['Note saved', 'ph-notebook', 'var(--color-info-dim)', 'var(--color-info)'],
     note_cleared: ['Note cleared', 'ph-eraser', 'var(--color-neutral-dim)', 'var(--text-tertiary)'],
+    quote_saved: ['Quote saved', 'ph-quote', 'var(--color-info-dim)', 'var(--color-info)'],
+    quote_updated: ['Quote updated', 'ph-quote', 'var(--color-warning-dim)', 'var(--color-warning)'],
+    quote_deleted: ['Quote deleted', 'ph-quote', 'var(--color-neutral-dim)', 'var(--text-tertiary)'],
     metadata_refreshed: ['Metadata refreshed', 'ph-arrow-clockwise', 'var(--color-info-dim)', 'var(--color-info)'],
     backup_exported: ['Backup exported', 'ph-download-simple', 'var(--accent-dim)', 'var(--accent)'],
     backup_imported: ['Backup imported', 'ph-upload-simple', 'var(--accent-dim)', 'var(--accent)'],

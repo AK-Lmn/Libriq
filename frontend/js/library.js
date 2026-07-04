@@ -508,6 +508,7 @@ const Library = (() => {
     const notesUpdatedText = book.notesUpdatedAt
       ? `Last updated ${Utils.formatDate(book.notesUpdatedAt)}`
       : '';
+    const quotes = Array.isArray(book.quotes) ? book.quotes : [];
 
     const genreBadges = (book.genres || []).slice(0, 3)
       .map(g => `<span class="badge badge-genre">${Utils.sanitize(g)}</span>`)
@@ -628,6 +629,28 @@ const Library = (() => {
         </div>
       </div>
 
+      <div class="book-details-notes" data-book-id="${book.id}" id="bookQuotesSection">
+        <h3 class="book-details-section-title">Private Quotes</h3>
+        <div class="book-details-notes-label">Save favorite lines from this book</div>
+        <textarea
+          id="bookQuoteTextInput"
+          class="book-details-notes-textarea"
+          rows="4"
+          placeholder="Paste a quote you want to keep..."
+        ></textarea>
+        <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin-top: var(--space-3);">
+          <input id="bookQuotePageInput" class="form-input" type="number" min="1" placeholder="Page (optional)" />
+          <input id="bookQuoteNoteInput" class="form-input" type="text" placeholder="Thought or context (optional)" />
+        </div>
+        <div class="book-details-notes-actions">
+          <button type="button" class="btn btn-primary" id="saveBookQuoteBtn">
+            <i class="ph ph-floppy-disk"></i>
+            Save Quote
+          </button>
+        </div>
+        <div id="bookQuotesList" style="margin-top: var(--space-3); display: grid; gap: var(--space-3);"></div>
+      </div>
+
       <div class="book-details-actions" id="bookDetailsActions"></div>`;
 
     Utils.show(modal);
@@ -638,8 +661,14 @@ const Library = (() => {
     const notesMeta = body.querySelector('#bookNotesMeta');
     const saveNoteBtn = body.querySelector('#saveBookNoteBtn');
     const clearNoteBtn = body.querySelector('#clearBookNoteBtn');
+    const quoteTextInput = body.querySelector('#bookQuoteTextInput');
+    const quotePageInput = body.querySelector('#bookQuotePageInput');
+    const quoteNoteInput = body.querySelector('#bookQuoteNoteInput');
+    const saveQuoteBtn = body.querySelector('#saveBookQuoteBtn');
+    const quotesList = body.querySelector('#bookQuotesList');
     const shelvesInput = body.querySelector('#bookShelvesInput');
     const saveShelvesBtn = body.querySelector('#saveBookShelvesBtn');
+    let editingQuoteId = null;
 
     function syncNotesMeta(updatedAt) {
       if (!notesMeta) return;
@@ -662,6 +691,130 @@ const Library = (() => {
       _logActivity(nextNotes ? 'note_saved' : 'note_cleared', updated, nextNotes ? { length: nextNotes.length } : {}, updated?.source || 'system');
       return updated;
     }
+
+    function normalizeQuotes(list) {
+      return (Array.isArray(list) ? list : []).map(quote => ({
+        id: quote.id || crypto.randomUUID(),
+        text: String(quote.text || ''),
+        page: quote.page ?? null,
+        note: quote.note ?? '',
+        createdAt: quote.createdAt || new Date().toISOString(),
+        updatedAt: quote.updatedAt || quote.createdAt || new Date().toISOString(),
+      }));
+    }
+
+    function renderQuotes() {
+      if (!quotesList) return;
+      const safeQuotes = normalizeQuotes(Storage.getBookById(book.id)?.quotes || book.quotes || []);
+      if (!safeQuotes.length) {
+        quotesList.innerHTML = `<div class="empty-state" style="margin: 0; padding: var(--space-3);"><div class="empty-state-body" style="margin:0;">No private quotes yet.</div></div>`;
+        return;
+      }
+
+      quotesList.innerHTML = safeQuotes.map(quote => `
+        <div class="activity-item" style="align-items:flex-start; padding: var(--space-3); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); background: var(--bg-elevated);">
+          <div class="activity-text" style="gap: var(--space-1);">
+            <div class="activity-title" style="white-space: pre-wrap;">${Utils.sanitize(quote.text)}</div>
+            ${quote.page || quote.note ? `<div class="activity-subtitle">${[
+              quote.page ? `p. ${Utils.sanitize(String(quote.page))}` : '',
+              quote.note ? Utils.sanitize(quote.note) : '',
+            ].filter(Boolean).join(' · ')}</div>` : ''}
+          </div>
+          <div class="activity-time" style="display:flex; gap: var(--space-2); flex-wrap: wrap; justify-content:flex-end;">
+            <button type="button" class="btn btn-ghost btn-sm" data-quote-action="edit" data-quote-id="${quote.id}">Edit</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-quote-action="delete" data-quote-id="${quote.id}">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function persistQuotes(nextQuotes, eventType, payload = {}) {
+      const updated = Storage.updateBook(book.id, {
+        quotes: nextQuotes,
+      });
+      renderQuotes();
+      _logActivity(eventType, updated, payload, updated?.source || 'system');
+      return updated;
+    }
+
+    function validateQuoteInput(text, pageValue) {
+      const quoteText = String(text || '').trim();
+      if (!quoteText) return 'Quote text is required.';
+
+      if (pageValue) {
+        const page = parseInt(pageValue, 10);
+        if (!Number.isInteger(page) || page <= 0) return 'Page number must be a positive number.';
+        if (book.pageCount && page > book.pageCount) return `Page number cannot exceed ${book.pageCount}.`;
+      }
+
+      return null;
+    }
+
+    function saveQuote(quoteId = editingQuoteId) {
+      const text = quoteTextInput?.value || '';
+      const pageValue = quotePageInput?.value || '';
+      const noteValue = quoteNoteInput?.value || '';
+      const validationError = validateQuoteInput(text, pageValue);
+      if (validationError) {
+        Utils.toast(validationError, 'error');
+        return null;
+      }
+
+      const currentQuotes = normalizeQuotes(Storage.getBookById(book.id)?.quotes || []);
+      const now = new Date().toISOString();
+      const page = pageValue ? parseInt(pageValue, 10) : null;
+
+      let nextQuotes;
+      let eventType;
+      let eventPayload = page ? { page } : {};
+
+      if (quoteId) {
+        nextQuotes = currentQuotes.map(quote => quote.id === quoteId ? {
+          ...quote,
+          text: text.trim(),
+          page,
+          note: noteValue.trim(),
+          updatedAt: now,
+        } : quote);
+        eventType = 'quote_updated';
+        eventPayload = { ...eventPayload, quoteCount: nextQuotes.length };
+      } else {
+        nextQuotes = [
+          {
+            id: crypto.randomUUID(),
+            text: text.trim(),
+            page,
+            note: noteValue.trim(),
+            createdAt: now,
+            updatedAt: now,
+          },
+          ...currentQuotes,
+        ];
+        eventType = 'quote_saved';
+        eventPayload = { ...eventPayload, quoteCount: nextQuotes.length };
+      }
+
+      const updated = persistQuotes(nextQuotes, eventType, eventPayload);
+      if (updated) {
+        quoteTextInput.value = '';
+        if (quotePageInput) quotePageInput.value = '';
+        if (quoteNoteInput) quoteNoteInput.value = '';
+        editingQuoteId = null;
+        if (saveQuoteBtn) saveQuoteBtn.textContent = 'Save Quote';
+        Utils.toast(quoteId ? 'Quote updated' : 'Quote saved', 'success');
+      }
+      return updated;
+    }
+
+    function deleteQuote(quoteId) {
+      const currentQuotes = normalizeQuotes(Storage.getBookById(book.id)?.quotes || []);
+      const nextQuotes = currentQuotes.filter(quote => quote.id !== quoteId);
+      const updated = persistQuotes(nextQuotes, 'quote_deleted', { quoteCount: nextQuotes.length });
+      if (updated) Utils.toast('Quote deleted', 'info');
+      return updated;
+    }
+
+    renderQuotes();
 
     function saveShelves(nextShelves) {
       const updated = Storage.updateBook(book.id, { tags: _parseShelfInput(nextShelves) });
@@ -692,6 +845,35 @@ const Library = (() => {
         Utils.toast('Shelves saved', 'success');
       });
     }
+
+    if (saveQuoteBtn) {
+      saveQuoteBtn.addEventListener('click', () => saveQuote());
+    }
+
+    quotesList?.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-quote-action]');
+      if (!btn) return;
+      const quoteId = btn.dataset.quoteId;
+      const action = btn.dataset.quoteAction;
+      const currentQuote = normalizeQuotes(Storage.getBookById(book.id)?.quotes || []).find(q => q.id === quoteId);
+      if (!currentQuote) return;
+
+      if (action === 'delete') {
+        if (!confirm('Delete this private quote?')) return;
+        deleteQuote(quoteId);
+        return;
+      }
+
+      if (action === 'edit') {
+        editingQuoteId = quoteId;
+        if (quoteTextInput) quoteTextInput.value = currentQuote.text || '';
+        if (quotePageInput) quotePageInput.value = currentQuote.page ?? '';
+        if (quoteNoteInput) quoteNoteInput.value = currentQuote.note || '';
+        if (saveQuoteBtn) saveQuoteBtn.textContent = 'Update Quote';
+        quoteTextInput?.focus();
+        return;
+      }
+    });
 
     if (isReading) {
       const updateBtn = document.createElement('button');

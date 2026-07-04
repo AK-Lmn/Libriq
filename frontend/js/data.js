@@ -4,7 +4,7 @@
    ============================================ */
 
 const LIBRIQ = {
-  VERSION: '2.18.0',
+  VERSION: '2.19.0',
 
   // Reading status constants
   STATUS: {
@@ -62,6 +62,14 @@ function createBook(data) {
     tags:         data.tags         || [],
     notes:        data.notes        ?? '',
     notesUpdatedAt: data.notesUpdatedAt || null,
+    quotes:       Array.isArray(data.quotes) ? data.quotes.map(q => ({
+      id: q.id || crypto.randomUUID(),
+      text: String(q.text || ''),
+      page: q.page ?? null,
+      note: q.note ?? '',
+      createdAt: q.createdAt || new Date().toISOString(),
+      updatedAt: q.updatedAt || q.createdAt || new Date().toISOString(),
+    })) : [],
 
     // Source metadata (from API search)
     source: data.source || 'api',
