@@ -1863,7 +1863,13 @@ async function exportData() {
   Storage.saveBackupMeta?.({ lastExportedAt: exportedAt });
   Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_exported', null, { itemCount: data.data.books.length, activityCount: activity.length }, 'export'));
   Utils.toast('Library exported', 'success');
-  if (document.getElementById('mainContent')?.querySelector('#importLibraryInput')) renderCurrentPage();
+  if (document.getElementById('mainContent')?.querySelector('#importLibraryInput')) {
+    try {
+      Navigation.renderCurrentPage?.();
+    } catch (uiErr) {
+      console.warn('[Libriq] Export UI refresh failed:', uiErr);
+    }
+  }
 }
 
 function _buildManualBackupPayload() {
@@ -2026,7 +2032,11 @@ async function restoreFromCloud() {
 
   Utils.toast('Cloud backup restored', 'success');
   updateBadges();
-  renderCurrentPage();
+  try {
+    Navigation.renderCurrentPage?.();
+  } catch (uiErr) {
+    console.warn('[Libriq] Cloud restore UI refresh failed:', uiErr);
+  }
 }
 
 function promptImportData() {
@@ -2146,7 +2156,11 @@ function _applyImportedBackup(parsed, replaceMode) {
 
   Utils.toast(replaceMode ? 'Library replaced from backup' : 'Library merged from backup', 'success');
   updateBadges();
-  renderCurrentPage();
+  try {
+    Navigation.renderCurrentPage?.();
+  } catch (uiErr) {
+    console.warn('[Libriq] Import UI refresh failed:', uiErr);
+  }
 }
 
 function _mergeBooksForImport(currentBooks, importedBooks) {
