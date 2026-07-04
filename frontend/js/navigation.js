@@ -220,7 +220,62 @@ const CloudBackup = (() => {
     lastError = error;
     if (status === STATUS.BACKED_UP) lastSavedAt = new Date().toISOString();
     logDebug('status set', { status, message });
-    if (Navigation.currentPage === 'settings') renderSettingsPage();
+    updateSettingsBackupUI();
+  }
+
+  function updateSettingsBackupUI() {
+    const card = document.getElementById('settingsCloudBackupCard');
+    if (!card) return;
+
+    const cloudState = getState();
+    const firebase = getFirebaseState();
+    const hasFirestore = Boolean(window.LibriqFirebase?.hasFirestore?.());
+    const offlineMode = Navigation.getSessionPreference?.() === 'offline';
+    const accountCopyEl = card.closest('.goal-widget')?.querySelector('#settingsAccountCloudCopy');
+    const accountBackupCopyEl = card.closest('.goal-widget')?.querySelector('#settingsAccountCloudBackupCopy');
+    const subtitles = card.querySelectorAll('.activity-subtitle');
+    const statusEl = subtitles[0] || null;
+    const secondaryEl = subtitles[1] || null;
+    const lastSavedEl = subtitles[2] || null;
+    const bookCountEl = subtitles[3] || null;
+
+    const accountCopy = !firebase.user
+      ? 'Sign in to enable cloud backup.'
+      : offlineMode
+        ? 'You\'re signed in, but using offline mode for this session. Cloud backup is paused.'
+        : hasFirestore
+          ? 'Cloud backup is active for this account.'
+          : 'You\'re signed in, but cloud backup is unavailable right now.';
+
+    if (statusEl) {
+      statusEl.textContent = cloudState.message || (cloudState.status === STATUS.BACKED_UP ? 'Backed up just now' : 'Cloud backup active');
+    }
+    if (secondaryEl) {
+      secondaryEl.textContent = cloudState.status === STATUS.PAUSED
+        ? (offlineMode ? 'Offline mode pauses automatic backup for this session.' : 'Cloud backup is paused.')
+        : 'Cloud backup saves this device\'s library to your account. Restore from cloud is manual.';
+    }
+    if (lastSavedEl) {
+      lastSavedEl.textContent = cloudState.lastSavedAt
+        ? formatLastSavedLabel(cloudState.lastSavedAt)
+        : 'No cloud backup yet.';
+    }
+    if (bookCountEl) {
+      const meta = Storage.getCloudBackupMeta?.() || {};
+      bookCountEl.textContent = `Book count: ${typeof meta.bookCount === 'number' ? meta.bookCount : 'Unknown'}`;
+    }
+    if (accountCopyEl) accountCopyEl.textContent = accountCopy;
+    if (accountBackupCopyEl) accountBackupCopyEl.textContent = cloudState.lastSavedAt
+      ? formatLastSavedLabel(cloudState.lastSavedAt)
+      : 'Your library is backed up to your account on this device.';
+
+    if (DEBUG_AUTO_BACKUP) {
+      logDebug('targeted cloud backup card update', {
+        accountCopy,
+        status: cloudState.status,
+        lastSavedAt: cloudState.lastSavedAt,
+      });
+    }
   }
 
   function scheduleIfAllowed(reason) {
@@ -342,8 +397,6 @@ const CloudBackup = (() => {
       if (followUp) {
         if (isEligible()) schedule(followUp);
         else setStatus(STATUS.PAUSED, Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Cloud backup paused');
-      } else if (Navigation.currentPage === 'settings') {
-        renderSettingsPage();
       }
       });
     return backupInFlight;
@@ -1756,6 +1809,9 @@ function renderProfilePage() {
 
 function renderSettingsPage() {
   const main  = document.getElementById('mainContent');
+  if (window.localStorage?.getItem('libriq_debug_auto_backup')) {
+    console.debug('[LibriQ][AutoBackup] full settings render');
+  }
   const theme = document.documentElement.getAttribute('data-theme');
   const backupMeta = Storage.getBackupMeta?.() || { lastExportedAt: null };
   const hasBooks = Storage.getBooks().length > 0;
@@ -1984,8 +2040,8 @@ function _buildAccountSection(firebase) {
         <div>
           <div class="activity-title">${Utils.sanitize(user.displayName || 'Signed in')}</div>
           <div class="activity-subtitle">${Utils.sanitize(user.email || '')}</div>
-          <div class="activity-subtitle">${Utils.sanitize(cloudLabel)}</div>
-          ${cloudState.lastSavedAt ? `<div class="activity-subtitle">${Utils.sanitize(backupLabel)}</div>` : ''}
+          <div class="activity-subtitle" id="settingsAccountCloudCopy">${Utils.sanitize(cloudLabel)}</div>
+          ${cloudState.lastSavedAt ? `<div class="activity-subtitle" id="settingsAccountCloudBackupCopy">${Utils.sanitize(backupLabel)}</div>` : ''}
         </div>
       </div>
       <button class="btn btn-secondary btn-sm" id="accountActionBtn" type="button" data-account-action="signout">
@@ -2036,14 +2092,14 @@ function _buildCloudBackupSection(firebase, cloudBackupMeta) {
     : 'No cloud backup yet.';
 
   return `
-    <div class="activity-list">
+    <div class="activity-list" id="settingsCloudBackupCard">
       <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
         <div class="activity-text">
           <div class="activity-title">Cloud backup status</div>
-          <div class="activity-subtitle">${status}</div>
-          <div class="activity-subtitle">${cloudState.pending ? 'Saving…' : 'Cloud backup saves this device\'s library to your account. Restore from cloud is manual.'}</div>
-          <div class="activity-subtitle">${lastSavedText}</div>
-          <div class="activity-subtitle">Book count: ${typeof cloudBackupMeta.bookCount === 'number' ? cloudBackupMeta.bookCount : 'Unknown'}</div>
+          <div class="activity-subtitle" id="cloudBackupStatusText">${status}</div>
+          <div class="activity-subtitle" id="cloudBackupSecondaryText">${cloudState.pending ? 'Saving…' : 'Cloud backup saves this device\'s library to your account. Restore from cloud is manual.'}</div>
+          <div class="activity-subtitle" id="cloudBackupLastSavedText">${lastSavedText}</div>
+          <div class="activity-subtitle" id="cloudBackupBookCountText">Book count: ${typeof cloudBackupMeta.bookCount === 'number' ? cloudBackupMeta.bookCount : 'Unknown'}</div>
         </div>
       </div>
       <div class="settings-cloud-actions" style="display:flex; gap: var(--space-2); flex-wrap: wrap;">
