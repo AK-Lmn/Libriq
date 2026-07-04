@@ -289,7 +289,7 @@
     <div class="modal whats-new-modal">
       <div class="modal-header">
         <div>
-          <h2 class="modal-title">What’s New in LibriQ v2.9.0</h2>
+          <h2 class="modal-title">What’s New in LibriQ v2.18.0</h2>
           <p class="whats-new-subtitle">A quick look at the latest local-first improvements.</p>
         </div>
         <button class="modal-close" id="closeWhatsNew" aria-label="Close release notes">
@@ -323,6 +323,26 @@
         <button class="btn btn-primary" id="whatsNewContinue" type="button">
           <i class="ph ph-check"></i> Got it
         </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="backupImportModal" role="dialog" aria-modal="true" aria-label="Backup import preview" hidden>
+    <div class="modal whats-new-modal">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title" id="backupImportTitle">Import Backup</h2>
+          <p class="whats-new-subtitle" id="backupImportSubtitle">Review the backup before choosing how to apply it.</p>
+        </div>
+        <button class="modal-close" id="closeBackupImport" aria-label="Close import preview">
+          <i class="ph ph-x"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="backupImportBody"></div>
+      <div class="modal-footer whats-new-footer">
+        <button class="btn btn-secondary" id="backupImportCancel" type="button">Cancel</button>
+        <button class="btn btn-secondary" id="backupImportMerge" type="button">Merge with current library</button>
+        <button class="btn btn-danger" id="backupImportReplace" type="button">Replace local library</button>
       </div>
     </div>
   </div>
