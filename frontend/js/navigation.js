@@ -2155,8 +2155,8 @@ function _applyImportedBackup(parsed, replaceMode) {
   Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_imported', null, { itemCount: mergedBooks.length, activityCount: mergedActivity.length, mode: replaceMode ? 'replace' : 'merge' }, 'import'));
 
   Utils.toast(replaceMode ? 'Library replaced from backup' : 'Library merged from backup', 'success');
-  updateBadges();
   try {
+    Navigation.updateBadges?.();
     Navigation.renderCurrentPage?.();
   } catch (uiErr) {
     console.warn('[Libriq] Import UI refresh failed:', uiErr);
