@@ -157,7 +157,7 @@ const Utils = {
           <img src="${Utils.sanitize(book.coverUrl)}"
                alt="Cover of ${Utils.sanitize(book.title)}"
                loading="lazy"
-               onerror="this.parentElement.innerHTML=Utils.buildCoverPlaceholder('${Utils.sanitize(book.title)}')">
+               onerror="this.onerror=null;this.removeAttribute('src');this.parentElement.innerHTML=Utils.buildCoverPlaceholder('${Utils.sanitize(book.title)}')">
         </div>`;
     }
     return `
