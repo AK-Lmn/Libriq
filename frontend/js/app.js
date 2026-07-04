@@ -10,15 +10,14 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: 'What’s New in LibriQ v2.17.0',
+      title: 'What’s New in LibriQ v2.17.1',
       subtitle: 'A quick look at the latest local-first improvements.',
       sections: [
-        ['Yearly Reading Recap', 'Statistics now includes a private yearly recap from your local library data.'],
-        ['Local-Only Summary', 'The recap is generated on-device and does not use private notes or send data anywhere.'],
-        ['Empty First Run', 'New users start with a real empty library instead of seeded sample books.'],
-        ['Privacy Unchanged', 'Analytics remain basic page-view only, and private data handling is unchanged.'],
+        ['Theme Switching Polish', 'Theme changes now apply immediately, and the toggle label updates synchronously.'],
+        ['Version Consistency', 'The app version and service worker cache now stay aligned at v2.17.1.'],
+        ['Privacy Unchanged', 'No backend, account, sync, or new analytics behavior was added.'],
       ],
-      note: 'Your library stays local on your device. No accounts or cloud sync have been added.',
+      note: 'Your library stays local on your device, and the privacy model remains unchanged.',
     },
   };
 

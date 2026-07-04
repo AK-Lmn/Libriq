@@ -484,6 +484,19 @@ Suggested Vercel settings:
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
 
+### v2.17.1 - Maintenance Polish
+
+**Fixed**
+
+* Theme switching now applies immediately, and the toggle label/icon update in sync
+* Statistics keeps the selected Yearly Recap year and rerenders the recap correctly
+* App versioning and the service worker cache now match at v2.17.1
+
+**Notes**
+
+* No backend, account, sync, or new analytics behavior was added
+* The patch stays local-only and keeps the existing privacy model intact
+
 ### v2.17.0 - Yearly Reading Recap
 
 **Added**
