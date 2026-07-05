@@ -269,6 +269,8 @@ const Navigation = (() => {
   };
 })();
 
+window.LibriqNavigation = Navigation;
+
 function _cloudRestoreDismissKey(uid) {
   return uid ? `libriq_cloud_restore_dismissed_${uid}` : 'libriq_cloud_restore_dismissed';
 }
