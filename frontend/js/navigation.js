@@ -6,6 +6,16 @@
 const Navigation = (() => {
   let _currentPage = 'dashboard';
   const SESSION_PREF_KEY = 'libriq_session_pref';
+  const SESSION_MODE_KEY = 'libriq_session_mode';
+  const PREFERRED_SESSION_MODE_KEY = 'libriq_preferred_session_mode';
+  const DEBUG_SYNC = () => localStorage.getItem('libriq_debug_sync') === '1';
+
+  function debugSync(message, details = null) {
+    if (!DEBUG_SYNC()) return;
+    const prefix = '[LibriQ][SyncDebug][Nav]';
+    if (details !== null && details !== undefined) console.debug(prefix, message, details);
+    else console.debug(prefix, message);
+  }
 
   const pages = {
     session:   () => renderSessionChoicePage(),
@@ -55,6 +65,61 @@ const Navigation = (() => {
 
   function setSessionPreference(value) {
     localStorage.setItem(SESSION_PREF_KEY, value);
+    if (value === 'offline') {
+      sessionStorage.setItem(SESSION_MODE_KEY, 'offline');
+      localStorage.setItem(PREFERRED_SESSION_MODE_KEY, 'offline');
+    } else if (value === 'google' || value === 'account') {
+      sessionStorage.setItem(SESSION_MODE_KEY, 'account');
+      localStorage.setItem(PREFERRED_SESSION_MODE_KEY, 'account');
+    } else {
+      sessionStorage.removeItem(SESSION_MODE_KEY);
+    }
+  }
+
+  function getCurrentSessionMode() {
+    return sessionStorage.getItem(SESSION_MODE_KEY) || localStorage.getItem(PREFERRED_SESSION_MODE_KEY) || getSessionPreference();
+  }
+
+  function clearAccountResume() {
+    sessionStorage.removeItem(SESSION_MODE_KEY);
+    localStorage.setItem(PREFERRED_SESSION_MODE_KEY, 'prompt');
+  }
+
+  function shouldResumeAccountMode() {
+    const firebase = window.LibriqFirebase?.getState?.() || {};
+    const allow = Boolean(
+      firebase.user &&
+      firebase.ready &&
+      getCurrentSessionMode() !== 'offline' &&
+      getSessionPreference() !== 'offline'
+    );
+    debugSync('resume check', {
+      uid: firebase.user?.uid || null,
+      ready: firebase.ready,
+      currentSessionMode: getCurrentSessionMode(),
+      preferredSessionMode: localStorage.getItem(PREFERRED_SESSION_MODE_KEY) || null,
+      sessionPref: getSessionPreference(),
+      allowed: allow,
+    });
+    return allow;
+  }
+
+  function resumeAccountModeIfAllowed() {
+    debugSync('resume attempt', {
+      currentPage: _currentPage,
+      sessionChoiceActive: document.body.classList.contains('session-choice-active'),
+    });
+    if (!shouldResumeAccountMode()) {
+      debugSync('resume blocked');
+      return false;
+    }
+    debugSync('resume allowed');
+    if (_currentPage === 'session' || document.body.classList.contains('session-choice-active')) {
+      goTo('dashboard');
+      window.LibriqSyncBeta?.refresh?.();
+      return true;
+    }
+    return false;
   }
 
   function openMobileSidebar() {
@@ -141,18 +206,60 @@ const Navigation = (() => {
 
     applyTheme();
     updateBadges();
+    const tryResume = () => {
+      const firebase = window.LibriqFirebase?.getState?.() || {};
+      debugSync('startup resume check', {
+        uid: firebase.user?.uid || null,
+        ready: firebase.ready,
+        hasUser: Boolean(firebase.user),
+        sessionPref: getSessionPreference(),
+        currentSessionMode: getCurrentSessionMode(),
+      });
+      if (firebase.user && shouldResumeAccountMode()) {
+        resumeAccountModeIfAllowed();
+      }
+    };
+    tryResume();
+    window.setTimeout(tryResume, 500);
     window.addEventListener('libriq:auth-changed', () => {
-      if (_currentPage === 'settings') renderSettingsPage();
+      const firebase = window.LibriqFirebase?.getState?.() || {};
+      debugSync('auth state resolved', {
+        uid: firebase.user?.uid || null,
+        ready: firebase.ready,
+        hasUser: Boolean(firebase.user),
+        currentSessionMode: getCurrentSessionMode(),
+        preferredSessionMode: localStorage.getItem(PREFERRED_SESSION_MODE_KEY) || null,
+        sessionPref: getSessionPreference(),
+      });
+      if (!firebase.user) {
+        clearAccountResume();
+      }
+      if (firebase.user && shouldResumeAccountMode()) {
+        resumeAccountModeIfAllowed();
+      } else if (_currentPage === 'settings') renderSettingsPage();
       if (_currentPage === 'session') renderSessionChoicePage();
       window.LibriqCloudBackup?.refresh?.();
+      window.LibriqSyncBeta?.refresh?.();
       maybeShowNewDeviceCloudPrompt();
     });
+    if (DEBUG_SYNC()) {
+      debugSync('init state', {
+        currentPage: _currentPage,
+        sessionPref: getSessionPreference(),
+        currentSessionMode: getCurrentSessionMode(),
+        preferredSessionMode: localStorage.getItem(PREFERRED_SESSION_MODE_KEY) || null,
+      });
+    }
   }
 
   return {
     init, goTo, renderCurrentPage, updateBadges, toggleTheme, applyTheme,
     setSessionPreference,
     getSessionPreference,
+    getCurrentSessionMode,
+    shouldResumeAccountMode,
+    resumeAccountModeIfAllowed,
+    clearAccountResume,
     clearLibrarySearch,
     get currentPage() { return _currentPage; },
   };
@@ -721,6 +828,7 @@ function renderSessionChoicePage() {
     try {
       await window.LibriqFirebase?.signOut?.();
       Navigation.setSessionPreference('prompt');
+      Navigation.clearAccountResume?.();
     } catch (err) {
       const code = String(err?.code || err?.message || '');
       const cancelled = code.includes('popup-closed-by-user') || code.includes('popup-blocked');
@@ -2003,6 +2111,13 @@ function renderSettingsPage() {
       </div>
 
       <div class="goal-widget" style="margin-bottom: var(--space-4);">
+        <div class="goal-header">
+          <div class="goal-title">Realtime Sync Beta</div>
+        </div>
+        ${_buildSyncSection(firebase)}
+      </div>
+
+      <div class="goal-widget" style="margin-bottom: var(--space-4);">
         <div class="goal-header"><div class="goal-title">Data</div></div>
         <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
           <div class="activity-text">
@@ -2089,7 +2204,7 @@ function renderSettingsPage() {
             ['Basic traffic analytics', 'LibriQ uses anonymous Google Analytics page views to understand general traffic.'],
             ['Accounts are optional', 'Sign in only if you want cloud backup.'],
             ['Automatic cloud backup', 'Signing in enables debounced cloud backups after local changes.'],
-            ['Why realtime sync is not enabled yet', 'Automatic cloud backup keeps a safe copy of this device\'s library in your account. Realtime multi-device sync is not enabled yet because LibriQ needs careful conflict handling first, so older devices do not accidentally overwrite newer progress, notes, or deleted books.'],
+            ['Realtime Sync Beta', 'Realtime Sync Beta can update books across signed-in devices, but it stays separate from the backup document and must be enabled explicitly.'],
             ['Optional JSON export', 'Export a JSON copy anytime for an extra manual safety copy.'],
             ['Private notes and quotes', 'Private notes and quotes stay local unless included in an exported backup.'],
             ['Continue offline', 'Continue offline keeps local data working while cloud backup is paused for that session.'],
@@ -2254,6 +2369,63 @@ function _buildCloudBackupSection(firebase, cloudBackupMeta) {
     </div>`;
 }
 
+function _buildSyncSection(firebase) {
+  const syncState = window.LibriqSyncBeta?.getState?.() || { enabled: false, status: 'off', message: 'Sync Beta off', conflictCount: 0 };
+  const signedIn = Boolean(firebase.user);
+  const offlineMode = Navigation.getSessionPreference?.() === 'offline';
+  if (!firebase.initialized) {
+    return `
+      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+        <div class="activity-text">
+          <div class="activity-title">Realtime Sync Beta</div>
+          <div class="activity-subtitle">Checking sync status...</div>
+        </div>
+      </div>`;
+  }
+  if (!firebase.available || !window.LibriqFirebase?.hasFirestore?.()) {
+    return `
+      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+        <div class="activity-text">
+          <div class="activity-title">Realtime Sync Beta</div>
+          <div class="activity-subtitle">Sync unavailable.</div>
+        </div>
+      </div>`;
+  }
+  if (!signedIn) {
+    return `
+      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+        <div class="activity-text">
+          <div class="activity-title">Realtime Sync Beta</div>
+          <div class="activity-subtitle">Sign in to enable Realtime Sync Beta.</div>
+        </div>
+      </div>`;
+  }
+  const statusText = !syncState.enabled ? 'Sync Beta off'
+    : offlineMode ? 'Sync paused in offline mode'
+    : syncState.status === 'syncing' ? 'Syncing…'
+    : syncState.message || 'Synced just now';
+  const secondary = 'Books only for v4.0.0 beta. Cloud backup and manual restore remain separate safety tools.';
+  return `
+    <div class="activity-list" id="settingsSyncCard">
+      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+        <div class="activity-text">
+          <div class="activity-title">Realtime Sync Beta</div>
+          <div class="activity-subtitle" id="syncStatusText">${Utils.sanitize(statusText)}</div>
+          <div class="activity-subtitle" id="syncSecondaryText">${Utils.sanitize(secondary)}</div>
+          <div class="activity-subtitle" id="syncConflictText">${syncState.conflictCount ? `Some sync conflicts were kept on this device.` : 'No sync conflicts kept on this device yet.'}</div>
+        </div>
+      </div>
+      <div class="settings-cloud-actions" style="display:flex; gap: var(--space-2); flex-wrap: wrap;">
+        <button class="btn btn-primary btn-sm" type="button" id="syncEnableBtn" ${syncState.enabled ? 'disabled' : ''}>
+          Enable Sync Beta
+        </button>
+        <button class="btn btn-secondary btn-sm" type="button" id="syncDisableBtn" ${syncState.enabled ? '' : 'disabled'}>
+          Disable Sync Beta
+        </button>
+      </div>
+    </div>`;
+}
+
 function _wireAccountControls() {
   const btn = document.getElementById('accountActionBtn');
   if (!btn) return;
@@ -2283,6 +2455,25 @@ function _wireAccountControls() {
   const mergeBtn = document.getElementById('cloudBackupMergeBtn');
   if (mergeBtn) mergeBtn.onclick = async () => {
     await openCloudMergePreview();
+  };
+
+  const enableSyncBtn = document.getElementById('syncEnableBtn');
+  if (enableSyncBtn) enableSyncBtn.onclick = () => {
+    if (Navigation.getSessionPreference?.() === 'offline') {
+      Utils.toast('Switch to account mode before enabling sync.', 'warning');
+      return;
+    }
+    if (!firebase.user) {
+      Utils.toast('Sign in first to enable sync.', 'warning');
+      return;
+    }
+    window.LibriqSyncBeta?.enableWithPrompt?.();
+  };
+
+  const disableSyncBtn = document.getElementById('syncDisableBtn');
+  if (disableSyncBtn) disableSyncBtn.onclick = () => {
+    window.LibriqSyncBeta?.setEnabled?.(false);
+    Utils.toast('Realtime Sync Beta disabled', 'info');
   };
 }
 

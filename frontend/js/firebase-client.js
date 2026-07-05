@@ -9,8 +9,14 @@ import {
 import {
   getFirestore,
   doc,
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
   setDoc,
   getDoc,
+  deleteDoc,
+  getDocs,
 } from '../vendor/firebase-firestore.js';
 
 const state = {
@@ -189,5 +195,13 @@ window.LibriqFirebase = {
   getFirestoreClient,
   writeBackupDoc,
   readBackupDoc,
+  doc,
+  setDoc,
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  deleteDoc,
+  getDocs,
   getSessionContext: () => detectInAppBrowser(),
 };
