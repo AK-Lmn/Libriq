@@ -6,6 +6,7 @@
 const LibriqSyncBeta = (() => {
   const STORAGE_KEY = 'libriq_sync_beta_enabled';
   const DEBUG_KEY = 'libriq_debug_sync';
+  const TOMBSTONE_KEY = 'libriq_sync_delete_tombstones';
   const STATUS = {
     OFF: 'off',
     SYNCING: 'syncing',
@@ -24,6 +25,7 @@ const LibriqSyncBeta = (() => {
   let listenerUnsub = null;
   let pendingWriteTimer = null;
   let pendingUiTimer = null;
+  let pendingSettledBackupTimer = null;
   let applyingRemoteChanges = false;
   let suppressWriteUntil = 0;
   let lastRemoteFingerprint = '';
@@ -56,6 +58,37 @@ const LibriqSyncBeta = (() => {
 
   function getDeviceId() {
     return Storage.getDeviceId?.() || localStorage.getItem('libriq_device_id') || 'unknown-device';
+  }
+
+  function readTombstones() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(TOMBSTONE_KEY) || '{}');
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (err) {
+      debugLog('delete tombstone read failed', { error: err?.message || String(err) });
+      return {};
+    }
+  }
+
+  function writeTombstones(tombstones) {
+    localStorage.setItem(TOMBSTONE_KEY, JSON.stringify(tombstones || {}));
+  }
+
+  function recordLocalDelete(id) {
+    if (!id) return null;
+    const timestamp = new Date().toISOString();
+    const tombstones = readTombstones();
+    tombstones[id] = {
+      id,
+      deletedAt: timestamp,
+      updatedAt: timestamp,
+      deviceId: getDeviceId(),
+      sourceDeviceId: getDeviceId(),
+      appVersion: LIBRIQ.VERSION,
+    };
+    writeTombstones(tombstones);
+    debugLog('local delete tombstone recorded', { bookId: id, deletedAt: timestamp });
+    return tombstones[id];
   }
 
   function getSyncBooksCollectionSegments(uid) {
@@ -165,6 +198,8 @@ const LibriqSyncBeta = (() => {
     pendingWriteTimer = null;
     if (pendingUiTimer) clearTimeout(pendingUiTimer);
     pendingUiTimer = null;
+    if (pendingSettledBackupTimer) clearTimeout(pendingSettledBackupTimer);
+    pendingSettledBackupTimer = null;
   }
 
   function refresh() {
@@ -286,15 +321,18 @@ const LibriqSyncBeta = (() => {
   }
 
   function scheduleSettledBackup() {
-    if (!window.LibriqCloudBackup?.scheduleIfAllowed) return;
+    if (!window.LibriqCloudBackup?.runBackup) return;
     if (!enabled || !listenerAttached) return;
     if (applyingRemoteChanges) return;
-    window.LibriqCloudBackup?.suppressAutoBackupFor?.(3000);
-    window.setTimeout(() => {
+    if (pendingSettledBackupTimer) clearTimeout(pendingSettledBackupTimer);
+    window.LibriqCloudBackup?.suppressAutoBackupFor?.(5000);
+    pendingSettledBackupTimer = window.setTimeout(() => {
+      pendingSettledBackupTimer = null;
       if (!enabled || !listenerAttached || applyingRemoteChanges) return;
-      window.LibriqCloudBackup?.scheduleIfAllowed?.('sync-settled');
-      debugLog('settled backup scheduled');
-    }, 2500);
+      if (![STATUS.SYNCED, STATUS.CONFLICT].includes(status)) return;
+      window.LibriqCloudBackup?.runBackup?.('sync-settled', true);
+      debugLog('settled backup started');
+    }, 4500);
   }
 
   function normalizeBookForSync(book) {
@@ -335,33 +373,22 @@ const LibriqSyncBeta = (() => {
     if (!enabled || !user || !window.LibriqFirebase?.hasFirestore?.()) return;
     const localBooks = Storage.getBooks();
     const books = localBooks.map(normalizeBookForSync).filter(Boolean);
+    const tombstones = Object.values(readTombstones()).filter(Boolean);
     setState(STATUS.SYNCING, 'Syncing…');
     try {
       applyingRemoteChanges = true;
       const db = window.LibriqFirebase.getFirestoreClient();
-      const remoteSnapshot = await window.LibriqFirebase.getDocs(
-        window.LibriqFirebase.query(
-          window.LibriqFirebase.collection(db, ...getSyncBooksCollectionSegments(user.uid)),
-          window.LibriqFirebase.orderBy('updatedAt', 'asc'),
-        ),
-      );
-      const localIds = new Set(localBooks.map(book => book.id));
-      const remoteDeletes = [];
-      remoteSnapshot.forEach((docSnap) => {
-        const remote = docSnap.data?.() || docSnap.data || null;
-        if (remote?.id && !localIds.has(remote.id)) {
-          remoteDeletes.push(window.LibriqFirebase.deleteDoc(
-            window.LibriqFirebase.doc(db, ...getSyncBooksCollectionSegments(user.uid), remote.id),
-          ));
-        }
-      });
       const writes = books.map(book => window.LibriqFirebase.setDoc(
         window.LibriqFirebase.doc(db, ...getSyncBooksCollectionSegments(user.uid), book.id),
         book,
       ));
+      const deleteWrites = tombstones.map(tombstone => window.LibriqFirebase.setDoc(
+        window.LibriqFirebase.doc(db, ...getSyncBooksCollectionSegments(user.uid), tombstone.id),
+        tombstone,
+      ));
       const favoriteWrites = books.filter(book => typeof book.isFavorite === 'boolean').map(book => ({ bookId: book.id, isFavorite: book.isFavorite }));
-      debugLog('favorite sync write queued', { reason, favoriteWrites });
-      await Promise.all([...remoteDeletes, ...writes]);
+      debugLog('sync write queued', { reason, favoriteWrites, tombstoneCount: tombstones.length });
+      await Promise.all([...writes, ...deleteWrites]);
       lastWriteAt = new Date().toISOString();
       lastSyncedAt = new Date().toISOString();
       setState(STATUS.SYNCED, 'Waiting for changes', { lastSyncedAt });
@@ -391,11 +418,9 @@ const LibriqSyncBeta = (() => {
     let changed = false;
     let conflicts = 0;
     const nextBooks = localBooks.map(book => ({ ...book }));
-    const remoteIds = new Set();
 
     remoteBooks.forEach(remote => {
       if (!remote?.id) return;
-      remoteIds.add(remote.id);
       const local = byId.get(remote.id);
       const remoteTime = remote.updatedAt || remote.createdAt || null;
       const localTime = local?.updatedAt || local?.createdAt || null;
@@ -447,15 +472,6 @@ const LibriqSyncBeta = (() => {
       }
     });
 
-    for (let i = nextBooks.length - 1; i >= 0; i -= 1) {
-      const local = nextBooks[i];
-      if (!remoteIds.has(local.id)) {
-        nextBooks.splice(i, 1);
-        changed = true;
-        debugLog('remote book applied', { bookId: local.id, reason: 'missing from remote snapshot, treated as delete' });
-      }
-    }
-
     if (!changed) {
       if (conflicts > 0) setState(STATUS.CONFLICT, 'Some sync conflicts were kept on this device.', { conflictCount: conflicts });
       return;
@@ -506,6 +522,9 @@ const LibriqSyncBeta = (() => {
     if (!enabled) return;
     const detail = arguments?.[0]?.detail || null;
     const book = detail && typeof detail === 'object' ? detail : null;
+    if (detail?.id && !book?.title && arguments?.[0]?.type === 'libriq:book:removed') {
+      recordLocalDelete(detail.id);
+    }
     if (book?.id && typeof book.isFavorite === 'boolean') {
       debugLog('favorite local change detected', { bookId: book.id, isFavorite: book.isFavorite, updatedAt: book.updatedAt || null });
     } else {

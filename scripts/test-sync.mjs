@@ -33,6 +33,21 @@ async function setupPage(context, uid, email) {
   return page;
 }
 
+async function resumePage(page, uid, email) {
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await delay(3000);
+  await page.evaluate(({ uid, email }) => {
+    window.LibriqE2E.seedAuth(uid, email, uid);
+    window.LibriqE2E.enableAccountMode();
+    window.LibriqE2E.enableSyncBeta();
+    window.dispatchEvent(new CustomEvent('libriq:auth-changed', { detail: window.LibriqFirebase.getState() }));
+    window.LibriqNavigation.goTo('dashboard');
+    window.LibriqSyncBeta.refresh();
+  }, { uid, email });
+  await delay(3000);
+  assert.equal(await page.evaluate(() => window.LibriqSyncDebug.status().attached), true);
+}
+
 async function main() {
   const server = startServer();
   try {
@@ -68,6 +83,14 @@ async function main() {
 
     await delay(6000);
     assert.equal(await pageB.evaluate((id) => window.LibriqE2E.getBooks().some((book) => book.id === id), bookId), true);
+
+    const contextFresh = await browser.newContext();
+    const pageFresh = await setupPage(contextFresh, sharedUid, 'a@example.com');
+    await delay(6000);
+    assert.equal(await pageFresh.evaluate((id) => window.LibriqE2E.getBooks().some((book) => book.id === id), bookId), true);
+    await pageFresh.close();
+    await contextFresh.close();
+
     await pageB.evaluate((id) => window.LibriqE2E.updateBook(id, { currentPage: 42, status: 'reading' }), bookId);
     await delay(6000);
     assert.equal(await pageA.evaluate((id) => window.LibriqE2E.getBooks().some((book) => book.id === id && book.currentPage === 42), bookId), true);
@@ -84,6 +107,11 @@ async function main() {
     assert.equal(await pageB.evaluate((id) => window.LibriqE2E.getBooks().some((book) => book.id === id), deleteId), true);
     await pageA.evaluate((id) => window.LibriqE2E.deleteBook(id), deleteId);
     await delay(6000);
+    assert.equal(await pageB.evaluate((id) => !window.LibriqE2E.getBooks().some((book) => book.id === id), deleteId), true);
+    await resumePage(pageA, sharedUid, 'a@example.com');
+    await resumePage(pageB, sharedUid, 'a@example.com');
+    await delay(6000);
+    assert.equal(await pageA.evaluate((id) => !window.LibriqE2E.getBooks().some((book) => book.id === id), deleteId), true);
     assert.equal(await pageB.evaluate((id) => !window.LibriqE2E.getBooks().some((book) => book.id === id), deleteId), true);
 
     await pageA.close();
