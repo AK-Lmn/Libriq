@@ -60,15 +60,17 @@ const Navigation = (() => {
   }
 
   function getSessionPreference() {
-    return localStorage.getItem(SESSION_PREF_KEY) || 'prompt';
+    const raw = localStorage.getItem(SESSION_PREF_KEY) || 'prompt';
+    return raw === 'google' ? 'account' : raw;
   }
 
   function setSessionPreference(value) {
-    localStorage.setItem(SESSION_PREF_KEY, value);
-    if (value === 'offline') {
+    const next = value === 'google' ? 'account' : value;
+    localStorage.setItem(SESSION_PREF_KEY, next);
+    if (next === 'offline') {
       sessionStorage.setItem(SESSION_MODE_KEY, 'offline');
       localStorage.setItem(PREFERRED_SESSION_MODE_KEY, 'offline');
-    } else if (value === 'google' || value === 'account') {
+    } else if (next === 'account') {
       sessionStorage.setItem(SESSION_MODE_KEY, 'account');
       localStorage.setItem(PREFERRED_SESSION_MODE_KEY, 'account');
     } else {
@@ -77,7 +79,8 @@ const Navigation = (() => {
   }
 
   function getCurrentSessionMode() {
-    return sessionStorage.getItem(SESSION_MODE_KEY) || localStorage.getItem(PREFERRED_SESSION_MODE_KEY) || getSessionPreference();
+    const raw = sessionStorage.getItem(SESSION_MODE_KEY) || localStorage.getItem(PREFERRED_SESSION_MODE_KEY) || getSessionPreference();
+    return raw === 'google' ? 'account' : raw;
   }
 
   function clearAccountResume() {
@@ -87,16 +90,17 @@ const Navigation = (() => {
 
   function shouldResumeAccountMode() {
     const firebase = window.LibriqFirebase?.getState?.() || {};
+    const stored = getCurrentSessionMode();
     const allow = Boolean(
       firebase.user &&
       firebase.ready &&
-      getCurrentSessionMode() !== 'offline' &&
+      stored !== 'offline' &&
       getSessionPreference() !== 'offline'
     );
     debugSync('resume check', {
       uid: firebase.user?.uid || null,
       ready: firebase.ready,
-      currentSessionMode: getCurrentSessionMode(),
+      currentSessionMode: stored,
       preferredSessionMode: localStorage.getItem(PREFERRED_SESSION_MODE_KEY) || null,
       sessionPref: getSessionPreference(),
       allowed: allow,
@@ -469,6 +473,11 @@ const CloudBackup = (() => {
       logDebug('auto backup skipped with reason', { reason: 'suppressed', requestedReason: reason });
       return;
     }
+    const syncState = window.LibriqSyncBeta?.getState?.() || {};
+    if (syncState.enabled && syncState.status !== 'off' && syncState.status !== 'error') {
+      logDebug('auto backup skipped with reason', { reason: 'sync-active', syncState });
+      return;
+    }
     schedule(reason);
   }
 
@@ -599,6 +608,13 @@ const CloudBackup = (() => {
   }
 
   function schedule(reason = 'local-change') {
+    const syncState = window.LibriqSyncBeta?.getState?.() || {};
+    if (syncState.enabled && syncState.status !== 'off' && syncState.status !== 'error') {
+      const pausedMessage = 'Cloud backup paused while sync is active.';
+      setStatus(STATUS.PAUSED, pausedMessage);
+      logDebug('auto backup skipped with reason', { reason, pausedMessage, syncState });
+      return;
+    }
     if (!isEligible()) {
       const pausedMessage = Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Cloud backup paused';
       setStatus(STATUS.PAUSED, pausedMessage);

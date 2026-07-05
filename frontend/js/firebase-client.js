@@ -160,6 +160,16 @@ function getFirestoreClient() {
   return firestore;
 }
 
+function getCurrentUser() {
+  const current = auth?.currentUser || null;
+  return current ? {
+    uid: current.uid,
+    displayName: current.displayName || '',
+    email: current.email || '',
+    photoURL: current.photoURL || '',
+  } : null;
+}
+
 function hasFirestore() {
   return Boolean(state.available && firestore);
 }
@@ -193,6 +203,7 @@ window.LibriqFirebase = {
   isAvailable: () => state.available,
   hasFirestore,
   getFirestoreClient,
+  getCurrentUser,
   writeBackupDoc,
   readBackupDoc,
   doc,
