@@ -300,6 +300,7 @@ const LibriqSyncBeta = (() => {
       currentPage: book.currentPage ?? 0,
       pages: book.pageCount ?? book.pages ?? 0,
       rating: book.rating ?? null,
+      isFavorite: Boolean(book.isFavorite),
       tags: Array.isArray(book.tags) ? book.tags : [],
       notes: typeof book.notes === 'string' ? book.notes : '',
       quotes: Array.isArray(book.quotes) ? book.quotes : [],
@@ -325,11 +326,13 @@ const LibriqSyncBeta = (() => {
         window.LibriqFirebase.doc(db, ...getSyncBooksCollectionSegments(user.uid), book.id),
         book,
       ));
+      const favoriteWrites = books.filter(book => typeof book.isFavorite === 'boolean').map(book => ({ bookId: book.id, isFavorite: book.isFavorite }));
+      debugLog('favorite sync write queued', { reason, favoriteWrites });
       await Promise.all(writes);
       lastWriteAt = new Date().toISOString();
       lastSyncedAt = new Date().toISOString();
       setState(STATUS.SYNCED, 'Waiting for changes', { lastSyncedAt });
-      debugLog('sync write success', { reason, count: books.length, lastWriteAt });
+      debugLog('sync write success', { reason, count: books.length, lastWriteAt, favoriteWrites });
       Storage.saveCloudBackupMeta?.({ syncReady: true });
       scheduleSettledBackup();
     } catch (err) {
@@ -361,13 +364,14 @@ const LibriqSyncBeta = (() => {
       const local = byId.get(remote.id);
       const remoteTime = remote.updatedAt || remote.createdAt || null;
       const localTime = local?.updatedAt || local?.createdAt || null;
+      const favoriteState = typeof remote.isFavorite === 'boolean' ? remote.isFavorite : null;
 
       if (remote.deletedAt && compareTimes(remote.deletedAt, localTime) >= 0) {
         const idx = nextBooks.findIndex(book => book.id === remote.id);
         if (idx !== -1) {
           nextBooks.splice(idx, 1);
           changed = true;
-          debugLog('remote book applied', { bookId: remote.id, reason: 'deletedAt tombstone' });
+          debugLog('remote book applied', { bookId: remote.id, reason: 'deletedAt tombstone', remoteFavorite: favoriteState });
         }
         return;
       }
@@ -375,7 +379,7 @@ const LibriqSyncBeta = (() => {
       if (!local) {
         nextBooks.push(_toLocalBook(remote));
         changed = true;
-        debugLog('remote book applied', { bookId: remote.id, reason: 'new book from remote' });
+        debugLog('remote book applied', { bookId: remote.id, reason: 'new book from remote', remoteFavorite: favoriteState });
         return;
       }
 
@@ -383,13 +387,22 @@ const LibriqSyncBeta = (() => {
       if (cmp > 0) {
         nextBooks[nextBooks.findIndex(book => book.id === remote.id)] = _mergeRemoteIntoLocal(local, remote);
         changed = true;
-        debugLog('remote book applied', { bookId: remote.id, reason: 'remote newer' });
+        debugLog('remote book applied', { bookId: remote.id, reason: 'remote newer', remoteFavorite: favoriteState, localFavorite: Boolean(local.isFavorite) });
       } else if (cmp < 0) {
-        debugLog('remote book skipped', { bookId: remote.id, reason: 'local newer, queued upload' });
+        debugLog('remote book skipped', { bookId: remote.id, reason: 'local newer, queued upload', remoteFavorite: favoriteState, localFavorite: Boolean(local.isFavorite) });
         queueUpload('local-newer');
       } else {
-        conflicts += 1;
-        debugLog('remote book skipped', { bookId: remote.id, reason: 'timestamp tie or missing timestamp' });
+        const merged = _mergeRemoteIntoLocal(local, remote);
+        const favoriteChanged = typeof remote.isFavorite === 'boolean' && local.isFavorite !== remote.isFavorite;
+        const hasRemoteUpdatedAt = Boolean(remote.updatedAt || remote.createdAt);
+        if (favoriteChanged && (!hasRemoteUpdatedAt || remote.updatedAt === local.updatedAt)) {
+          nextBooks[nextBooks.findIndex(book => book.id === remote.id)] = merged;
+          changed = true;
+          debugLog('remote book applied', { bookId: remote.id, reason: 'favorite changed on timestamp tie', remoteFavorite: favoriteState, localFavorite: Boolean(local.isFavorite) });
+        } else {
+          conflicts += 1;
+          debugLog('remote book skipped', { bookId: remote.id, reason: 'timestamp tie or missing timestamp', remoteFavorite: favoriteState, localFavorite: Boolean(local.isFavorite), remoteUpdatedAt: remote.updatedAt || null, localUpdatedAt: local.updatedAt || null });
+        }
       }
     });
 
@@ -430,6 +443,7 @@ const LibriqSyncBeta = (() => {
       coverUrl: remote.cover || remote.coverUrl || local.coverUrl || null,
       pageCount: remote.pages ?? remote.pageCount ?? local.pageCount ?? 0,
       currentPage: remote.currentPage ?? local.currentPage ?? 0,
+      isFavorite: typeof remote.isFavorite === 'boolean' ? remote.isFavorite : Boolean(local.isFavorite),
       notes: typeof remote.notes === 'string' ? remote.notes : local.notes,
       quotes: Array.isArray(remote.quotes) ? remote.quotes : local.quotes,
       updatedAt: remote.updatedAt || local.updatedAt || new Date().toISOString(),
@@ -440,7 +454,13 @@ const LibriqSyncBeta = (() => {
 
   function onLocalChange() {
     if (!enabled) return;
-    debugLog('local book change detected', { page: Navigation.currentPage, sessionMode: Navigation.getCurrentSessionMode?.() || Navigation.getSessionPreference?.() });
+    const detail = arguments?.[0]?.detail || null;
+    const book = detail && typeof detail === 'object' ? detail : null;
+    if (book?.id && typeof book.isFavorite === 'boolean') {
+      debugLog('favorite local change detected', { bookId: book.id, isFavorite: book.isFavorite, updatedAt: book.updatedAt || null });
+    } else {
+      debugLog('local book change detected', { page: Navigation.currentPage, sessionMode: Navigation.getCurrentSessionMode?.() || Navigation.getSessionPreference?.() });
+    }
     if (!isEligible()) {
       setState(Navigation.getSessionPreference?.() === 'offline' ? STATUS.PAUSED : STATUS.UNAVAILABLE,
         Navigation.getSessionPreference?.() === 'offline' ? 'Sync paused in offline mode' : 'Sync unavailable');
