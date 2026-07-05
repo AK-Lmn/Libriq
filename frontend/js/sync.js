@@ -57,6 +57,15 @@ const LibriqSyncBeta = (() => {
     return Storage.getDeviceId?.() || localStorage.getItem('libriq_device_id') || 'unknown-device';
   }
 
+  function getSyncBooksCollectionSegments(uid) {
+    if (!uid) return null;
+    return ['users', uid, 'sync', 'v1', 'books'];
+  }
+
+  function getSyncBooksCollectionPath(uid) {
+    return uid ? `users/${uid}/sync/v1/books` : null;
+  }
+
   function isAccountMode() {
     return Navigation.getCurrentSessionMode?.() !== 'offline' && Navigation.getSessionPreference?.() !== 'offline';
   }
@@ -173,6 +182,7 @@ const LibriqSyncBeta = (() => {
     });
     if (!enabled) return setState(STATUS.OFF, 'Sync Beta off');
     if (!firebase.available || !firebase.ready || !user || !window.LibriqFirebase?.hasFirestore?.()) {
+      lastError = null;
       return setState(STATUS.UNAVAILABLE, 'Sync unavailable');
     }
     if (!isAccountMode()) {
@@ -183,6 +193,14 @@ const LibriqSyncBeta = (() => {
   }
 
   function attachListener(uid) {
+    const segments = getSyncBooksCollectionSegments(uid);
+    const path = getSyncBooksCollectionPath(uid);
+    if (!segments || !path) {
+      lastError = 'missing uid for sync listener';
+      debugLog('listener attach failed', { uid: uid || null, error: lastError });
+      setState(STATUS.UNAVAILABLE, 'Sync unavailable');
+      return;
+    }
     if (listenerAttached && currentUid === uid && listenerUnsub) {
       debugLog('listener already attached', { uid, listenerPath });
       return;
@@ -191,13 +209,14 @@ const LibriqSyncBeta = (() => {
       listenerUnsub();
       debugLog('sync listener detached', { reason: 'reattach', listenerPath });
     }
-    const colRef = window.LibriqFirebase.collection(window.LibriqFirebase.getFirestoreClient(), 'users', uid, 'sync', 'books');
+    const colRef = window.LibriqFirebase.collection(window.LibriqFirebase.getFirestoreClient(), ...segments);
     const q = window.LibriqFirebase.query(colRef, window.LibriqFirebase.orderBy('updatedAt', 'asc'));
-    listenerPath = `users/${uid}/sync/books`;
+    listenerPath = path;
     currentUid = uid;
     listenerAttached = true;
     debugLog('sync listener attach attempt', { uid, listenerPath });
-    listenerUnsub = window.LibriqFirebase.onSnapshot(q, (snapshot) => {
+    try {
+      listenerUnsub = window.LibriqFirebase.onSnapshot(q, (snapshot) => {
       if (applyingRemoteChanges) return;
       const remoteBooks = [];
       snapshot.forEach((docSnap) => remoteBooks.push(docSnap.data()));
@@ -207,11 +226,20 @@ const LibriqSyncBeta = (() => {
       if (fingerprint === lastRemoteFingerprint) return;
       lastRemoteFingerprint = fingerprint;
       applyRemoteBooks(remoteBooks);
-    }, (err) => {
+      }, (err) => {
       lastError = err?.message || String(err || 'unknown');
       console.warn('[LibriQ][Sync] listener error:', err);
       setState(STATUS.ERROR, 'Sync error. Your local data is safe.');
-    });
+      debugLog('listener error', { uid, listenerPath, error: lastError });
+      });
+    } catch (err) {
+      lastError = err?.message || String(err || 'unknown');
+      listenerAttached = false;
+      listenerUnsub = null;
+      debugLog('listener attach failed', { uid, listenerPath, error: lastError });
+      setState(STATUS.ERROR, 'Sync unavailable. Your local data is safe.');
+      return;
+    }
     debugLog('sync listener attached', { uid, listenerPath });
   }
 
@@ -294,7 +322,7 @@ const LibriqSyncBeta = (() => {
       applyingRemoteChanges = true;
       const db = window.LibriqFirebase.getFirestoreClient();
       const writes = books.map(book => window.LibriqFirebase.setDoc(
-        window.LibriqFirebase.doc(db, 'users', user.uid, 'sync', 'books', book.id),
+        window.LibriqFirebase.doc(db, ...getSyncBooksCollectionSegments(user.uid), book.id),
         book,
       ));
       await Promise.all(writes);
@@ -467,6 +495,10 @@ const LibriqSyncBeta = (() => {
   }
 
   window.LibriqSyncDebug = { status: debugStatus };
+  window.LibriqSyncPaths = {
+    getSyncBooksCollectionSegments,
+    getSyncBooksCollectionPath,
+  };
 
   return { getState, setEnabled, enableWithPrompt, refresh, onLocalChange, queueUpload };
 })();

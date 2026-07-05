@@ -46,7 +46,7 @@ The app is designed to feel like a focused digital reading space instead of a pl
 
 * Realtime Sync Beta now supports books-only syncing across signed-in account-mode devices
 * Automatic cloud backup, manual restore, and cloud merge remain separate safety tools
-* Sync stays opt-in, keeps the backup document untouched, and uses `users/{uid}/sync/books/{bookId}`
+* Sync stays opt-in, keeps the backup document untouched, and uses `users/{uid}/sync/v1/books/{bookId}`
 * Help & Guide and Settings now explain beta status, offline pause behavior, and conflict safety
 * Restore remains manual, and the backup path still stays `users/{uid}/backups/current`
 
@@ -550,7 +550,7 @@ This section tracks notable LibriQ updates. New version logs can be added here a
 **Added**
 
 * Opt-in Realtime Sync Beta for signed-in users in account mode
-* Books-only realtime sync under `users/{uid}/sync/books/{bookId}`
+* Books-only realtime sync under `users/{uid}/sync/v1/books/{bookId}`
 * Sync status, enable, and disable controls in Settings
 * Conservative conflict handling that keeps local data when timestamps are unclear
 
