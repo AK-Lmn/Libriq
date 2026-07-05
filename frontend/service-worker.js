@@ -3,7 +3,7 @@
    App shell caching only. No API response caching.
    ============================================ */
 
-const CACHE_VERSION = 'libriq-v3.5.0';
+const CACHE_VERSION = 'libriq-v4.0.0';
 const CACHE_NAME = `${CACHE_VERSION}-shell`;
 
 const SHELL_ASSETS = [
@@ -33,6 +33,7 @@ const SHELL_ASSETS = [
   './js/dashboard.js',
   './js/navigation.js',
   './js/app.js',
+  './js/sync.js',
   './js/api/cache.js',
   './js/api/googleBooks.js',
   './js/api/index.js',

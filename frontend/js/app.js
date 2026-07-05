@@ -12,14 +12,14 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: "What's New in LibriQ v3.5.0",
-      subtitle: 'LibriQ v3.5.0 adds a manual cloud merge preview so you can compare local and cloud data without enabling realtime sync yet.',
+      title: "What's New in LibriQ v4.0.0",
+      subtitle: 'LibriQ v4.0.0 adds an opt-in Realtime Sync Beta for signed-in account mode while keeping backup and restore separate.',
       sections: [
-        ['Cloud Merge Preview', 'You can now compare local and cloud library data before merging anything.'],
-        ['Conservative Merge', 'LibriQ keeps local conflicts by default and only adds safe cloud-only items.'],
-        ['Sync Safety', 'Help text explains how merge preview prepares the app for future realtime sync.'],
+        ['Realtime Sync Beta', 'Signed-in account mode can now keep book changes updated across devices using a separate sync namespace.'],
+        ['Backup Still Stays', 'Automatic cloud backup, manual restore, and merge remain available as separate safety tools.'],
+        ['Conservative Safety', 'Sync starts only after explicit opt-in and keeps local data protected when conflicts are unclear.'],
       ],
-      note: 'Realtime sync is still not enabled. Merge remains manual and review-first.',
+      note: 'Realtime Sync Beta is optional and does not replace cloud backup or manual restore.',
     },
   };
 
@@ -110,6 +110,9 @@
     window.addEventListener('libriq:book:added',   () => window.LibriqCloudBackup?.scheduleIfAllowed?.('book-added'));
     window.addEventListener('libriq:book:updated', () => window.LibriqCloudBackup?.scheduleIfAllowed?.('book-updated'));
     window.addEventListener('libriq:book:removed', () => window.LibriqCloudBackup?.scheduleIfAllowed?.('book-removed'));
+    window.addEventListener('libriq:book:added',   () => window.LibriqSyncBeta?.onLocalChange?.());
+    window.addEventListener('libriq:book:updated', () => window.LibriqSyncBeta?.onLocalChange?.());
+    window.addEventListener('libriq:book:removed', () => window.LibriqSyncBeta?.onLocalChange?.());
     window.addEventListener('libriq:profile:updated', () => window.LibriqCloudBackup?.scheduleIfAllowed?.('profile-updated'));
     window.addEventListener('libriq:goals:updated', () => window.LibriqCloudBackup?.scheduleIfAllowed?.('goals-updated'));
     window.addEventListener('libriq:streak:updated', () => window.LibriqCloudBackup?.scheduleIfAllowed?.('streak-updated'));
@@ -119,6 +122,7 @@
         cancelScheduledWhatsNew();
         closeWhatsNew();
         window.LibriqCloudBackup?.pause?.('session');
+        window.LibriqSyncBeta?.refresh?.();
         return;
       }
       if (event?.detail?.page) {

@@ -4,7 +4,7 @@
 
 The app is built with **HTML, CSS, and Vanilla JavaScript**, with book data powered by **Open Library** and **Google Books**.
 
-LibriQ is currently focused on being a polished local-first reading tracker. Saved library data, reading progress, ratings, favorites, and private notes are stored in the browser using `localStorage`, with automatic cloud backup for signed-in users, safer manual cloud restore previews, manual cloud merge previews, sync-foundation metadata for future multi-device safety, and optional JSON export/import for manual safety copies.
+LibriQ is currently focused on being a polished local-first reading tracker. Saved library data, reading progress, ratings, favorites, and private notes are stored in the browser using `localStorage`, with automatic cloud backup for signed-in users, safer manual cloud restore previews, manual cloud merge previews, an opt-in Realtime Sync Beta for books-only multi-device updates, sync-foundation metadata for future multi-device safety, and optional JSON export/import for manual safety copies.
 
 LibriQ also uses basic Google Analytics page-view tracking for anonymous traffic measurement only.
 
@@ -42,12 +42,12 @@ The app is designed to feel like a focused digital reading space instead of a pl
 
 ---
 
-## What's New in v3.5.0
+## What's New in v4.0.0
 
-* Manual cloud merge preview now compares local and cloud library data before any merge
-* Conservative merge rules keep local conflicts by default and only add safe cloud-only items
-* Sync foundation metadata continues to support safer future multi-device syncing
-* Help & Guide now explains how merge preview prepares the app for future realtime sync
+* Realtime Sync Beta now supports books-only syncing across signed-in account-mode devices
+* Automatic cloud backup, manual restore, and cloud merge remain separate safety tools
+* Sync stays opt-in, keeps the backup document untouched, and uses `users/{uid}/sync/books/{bookId}`
+* Help & Guide and Settings now explain beta status, offline pause behavior, and conflict safety
 * Restore remains manual, and the backup path still stays `users/{uid}/backups/current`
 
 ---
@@ -203,7 +203,7 @@ It shows:
 
 In v3.0.2, the modal is delayed until after normal app entry so it no longer pops over the session picker or auth-loading state.
 
-In v3.5.0, the modal highlights manual cloud merge preview, conservative merge rules, and future sync safety while keeping local export/import intact.
+In v4.0.0, the modal highlights the opt-in Realtime Sync Beta, the separate backup safety net, and conflict-safe behavior while keeping local export/import intact.
 
 ---
 
@@ -519,11 +519,51 @@ Suggested Vercel settings:
 * Build Command: `npm run build`
 * Output Directory: `frontend`
 
+### Firestore Rules for Backup and Sync
+
+LibriQ's cloud backup and Realtime Sync Beta require Firestore rules that allow both the backup path and the new sync namespace for the signed-in user:
+
+```rules
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/backups/{backupId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId}/sync/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+```
+
 ---
 
 ## Patch Notes
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
+
+### v4.0.0 - Realtime Sync Beta
+
+**Added**
+
+* Opt-in Realtime Sync Beta for signed-in users in account mode
+* Books-only realtime sync under `users/{uid}/sync/books/{bookId}`
+* Sync status, enable, and disable controls in Settings
+* Conservative conflict handling that keeps local data when timestamps are unclear
+
+**Changed**
+
+* Automatic cloud backup still writes to `users/{uid}/backups/current`
+* Manual restore and merge remain separate from sync
+* Continue offline pauses sync and leaves local data working
+
+**Notes**
+
+* Realtime Sync Beta is optional and does not add social features or analytics events
+* Firestore rules must allow the `users/{uid}/sync/{document=**}` namespace
 
 ### v3.0.2 - Sign-in Environment Guard
 
