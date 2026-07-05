@@ -4,7 +4,7 @@
 
 The app is built with **HTML, CSS, and Vanilla JavaScript**, with book data powered by **Open Library** and **Google Books**.
 
-LibriQ is currently focused on being a polished local-first reading tracker. Saved library data, reading progress, ratings, favorites, and private notes are stored in the browser using `localStorage`, with automatic cloud backup for signed-in users, safer manual cloud restore previews, manual cloud merge previews, an opt-in Realtime Sync Beta for books-only multi-device updates, sync-foundation metadata for future multi-device safety, and optional JSON export/import for manual safety copies.
+LibriQ is currently focused on being a polished local-first reading tracker. Saved library data, reading progress, ratings, favorites, and private notes are stored in the browser using `localStorage`, with automatic cloud backup for signed-in users, safer manual cloud restore previews, manual cloud merge previews, automatic Account Sync for signed-in account-mode devices, Sync Health diagnostics, and optional JSON export/import for manual safety copies.
 
 LibriQ also uses basic Google Analytics page-view tracking for anonymous traffic measurement only.
 
@@ -39,6 +39,16 @@ With LibriQ, users can:
 * Use the PWA shell and app icons for offline-friendly access
 
 The app is designed to feel like a focused digital reading space instead of a plain spreadsheet-style tracker.
+
+---
+
+## What's New in v4.1.0
+
+* Settings now includes Sync Health with account sync state, listener state, recent sync times, device ID, last error, and the active sync path
+* Tombstone maintenance can safely prune old local delete records while keeping fresh tombstones for at least 30 days
+* Account Sync still stays separate from backup, restore, and merge
+* Cloud backup still writes to `users/{uid}/backups/current`
+* Account Sync still writes books to `users/{uid}/sync/v1/books`
 
 ---
 
@@ -141,7 +151,7 @@ Cloud backup features include:
 * Manual restore from the saved cloud backup
 * Continued local-only use when no account is signed in
 * JSON export/import still available as an optional manual backup path
-* No realtime sync or automatic merge system yet
+* Account Sync remains separate from backup, restore, and merge
 
 ---
 

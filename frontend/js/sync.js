@@ -8,6 +8,7 @@ const LibriqSyncBeta = (() => {
   const USER_DISABLED_KEY = 'libriq_account_sync_user_disabled';
   const DEBUG_KEY = 'libriq_debug_sync';
   const TOMBSTONE_KEY = 'libriq_sync_delete_tombstones';
+  const TOMBSTONE_MIN_AGE_MS = 30 * 24 * 60 * 60 * 1000;
   const STATUS = {
     OFF: 'off',
     SYNCING: 'syncing',
@@ -39,6 +40,7 @@ const LibriqSyncBeta = (() => {
   let attachInFlight = false;
   let awaitingInitialSnapshot = false;
   let queuedUploadBeforeInitialSnapshot = false;
+  let uploadInFlight = false;
 
   function isUserDisabled() {
     return localStorage.getItem(USER_DISABLED_KEY) === '1';
@@ -84,6 +86,47 @@ const LibriqSyncBeta = (() => {
 
   function writeTombstones(tombstones) {
     localStorage.setItem(TOMBSTONE_KEY, JSON.stringify(tombstones || {}));
+  }
+
+  function getTombstoneTimestamp(tombstone) {
+    const raw = tombstone?.deletedAt || tombstone?.updatedAt || tombstone?.createdAt || null;
+    const time = raw ? new Date(raw).getTime() : NaN;
+    return Number.isFinite(time) ? time : null;
+  }
+
+  function getTombstoneStats() {
+    const tombstones = Object.values(readTombstones()).filter(Boolean);
+    let oldest = null;
+    tombstones.forEach((tombstone) => {
+      const time = getTombstoneTimestamp(tombstone);
+      if (time === null) return;
+      if (oldest === null || time < oldest) oldest = time;
+    });
+    return {
+      tombstoneCount: tombstones.length,
+      oldestTombstoneAt: oldest === null ? null : new Date(oldest).toISOString(),
+    };
+  }
+
+  function pruneOldLocalTombstones(now = Date.now()) {
+    if (applyingRemoteChanges || uploadInFlight || awaitingInitialSnapshot) {
+      debugLog('local tombstone cleanup skipped during active sync');
+      return { pruned: 0, skipped: true, ...getTombstoneStats() };
+    }
+    const tombstones = readTombstones();
+    let pruned = 0;
+    Object.entries(tombstones).forEach(([id, tombstone]) => {
+      const time = getTombstoneTimestamp(tombstone);
+      if (time === null) return;
+      if (now - time < TOMBSTONE_MIN_AGE_MS) return;
+      delete tombstones[id];
+      pruned += 1;
+    });
+    if (pruned > 0) {
+      writeTombstones(tombstones);
+      debugLog('old local tombstones pruned', { pruned });
+    }
+    return { pruned, skipped: false, ...getTombstoneStats() };
   }
 
   function recordLocalDelete(id) {
@@ -182,7 +225,24 @@ const LibriqSyncBeta = (() => {
   }
 
   function getState() {
-    return { enabled, userDisabled: isUserDisabled(), status, message, conflictCount, lastSyncedAt, listenerAttached, listenerPath, lastSnapshotAt };
+    const user = getResolvedUser();
+    const syncPath = getSyncBooksCollectionPath(currentUid || user?.uid || null);
+    return {
+      enabled,
+      userDisabled: isUserDisabled(),
+      status,
+      message,
+      conflictCount,
+      lastSyncedAt,
+      listenerAttached,
+      listenerPath,
+      syncPath,
+      deviceId: getDeviceId(),
+      lastSnapshotAt,
+      lastWriteAt,
+      lastError,
+      ...getTombstoneStats(),
+    };
   }
 
   function setEnabled(nextEnabled, options = {}) {
@@ -420,6 +480,7 @@ const LibriqSyncBeta = (() => {
     const tombstones = Object.values(readTombstones()).filter(Boolean);
     setState(STATUS.SYNCING, 'Syncing…');
     try {
+      uploadInFlight = true;
       applyingRemoteChanges = true;
       const db = window.LibriqFirebase.getFirestoreClient();
       const writes = books.map(book => window.LibriqFirebase.setDoc(
@@ -439,6 +500,9 @@ const LibriqSyncBeta = (() => {
       debugLog('sync write success', { reason, count: books.length, lastWriteAt, favoriteWrites });
       Storage.saveCloudBackupMeta?.({ syncReady: true });
       scheduleSettledBackup();
+      applyingRemoteChanges = false;
+      uploadInFlight = false;
+      pruneOldLocalTombstones();
     } catch (err) {
       lastError = err?.message || String(err || 'unknown');
       console.warn('[LibriQ][Sync] upload failed:', err);
@@ -446,6 +510,7 @@ const LibriqSyncBeta = (() => {
       setState(STATUS.ERROR, 'Sync error. Your local data is safe.');
     } finally {
       applyingRemoteChanges = false;
+      uploadInFlight = false;
     }
   }
 
@@ -635,18 +700,22 @@ const LibriqSyncBeta = (() => {
     if (!isAccountMode()) reasons.push('not account mode');
     if (Navigation.currentPage === 'session' || document.body.classList.contains('session-choice-active')) reasons.push('session choice active');
     if (lastError) reasons.push('listener error');
+    const uid = currentUid || user?.uid || null;
+    const syncPath = getSyncBooksCollectionPath(uid);
     return {
       enabled,
+      userDisabled: isUserDisabled(),
       status,
       attached: listenerAttached,
-      uid: currentUid || user?.uid || null,
-      userDisabled: isUserDisabled(),
+      uid,
       deviceId: getDeviceId(),
       sessionMode,
       listenerPath,
+      syncPath,
       lastSnapshotAt,
       lastWriteAt,
       lastError,
+      ...getTombstoneStats(),
       disabledReasons: reasons,
       firebaseCurrentUserUid: firebase.user?.uid || window.LibriqFirebase?.getCurrentUser?.()?.uid || null,
       firestoreAvailable: Boolean(window.LibriqFirebase?.hasFirestore?.()),
@@ -655,13 +724,13 @@ const LibriqSyncBeta = (() => {
     };
   }
 
-  window.LibriqSyncDebug = { status: debugStatus };
+  window.LibriqSyncDebug = { status: debugStatus, pruneOldLocalTombstones };
   window.LibriqSyncPaths = {
     getSyncBooksCollectionSegments,
     getSyncBooksCollectionPath,
   };
 
-  return { getState, setEnabled, pauseForOffline, enableWithPrompt, refresh, maybeAutoEnable, onLocalChange, queueUpload };
+  return { getState, setEnabled, pauseForOffline, enableWithPrompt, refresh, maybeAutoEnable, onLocalChange, queueUpload, pruneOldLocalTombstones };
 })();
 
 window.LibriqSyncBeta = LibriqSyncBeta;

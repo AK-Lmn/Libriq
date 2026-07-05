@@ -2395,6 +2395,7 @@ function _buildSyncSection(firebase) {
   const syncState = window.LibriqSyncBeta?.getState?.() || { enabled: false, status: 'off', message: 'Account sync off', conflictCount: 0 };
   const signedIn = Boolean(firebase.user || window.LibriqFirebase?.getCurrentUser?.());
   const offlineMode = Navigation.getSessionPreference?.() === 'offline';
+  const healthRows = _buildSyncHealthRows(syncState, offlineMode);
   if (!firebase.initialized) {
     return `
       <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
@@ -2445,9 +2446,47 @@ function _buildSyncSection(firebase) {
         <button class="btn ${syncState.enabled && !offlineMode ? 'btn-secondary' : 'btn-primary'} btn-sm" type="button" id="syncToggleBtn" ${actionDisabled ? 'disabled' : ''} data-sync-enabled="${syncState.enabled && !offlineMode ? '1' : '0'}">
           ${actionLabel}
         </button>
+        <button class="btn btn-secondary btn-sm" type="button" id="syncRefreshStatusBtn">
+          Refresh sync status
+        </button>
+      </div>
+      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+        <div class="activity-text">
+          <div class="activity-title">Sync Health</div>
+          <div class="activity-subtitle">A quick check of this device's sync connection.</div>
+          <div class="sync-health-list">
+            ${healthRows}
+          </div>
+        </div>
       </div>
     </div>`;
 }
+
+function _buildSyncHealthRows(syncState, offlineMode) {
+  const accountStatus = offlineMode ? 'Paused' : syncState.enabled ? 'On' : 'Off';
+  const listenerStatus = syncState.listenerAttached ? 'Connected' : 'Not connected';
+  const lastSynced = syncState.lastSyncedAt ? Utils.formatDate(syncState.lastSyncedAt) : 'Not yet';
+  const lastSnapshot = syncState.lastSnapshotAt ? Utils.formatDate(syncState.lastSnapshotAt) : 'Not yet';
+  const lastError = syncState.lastError || 'None';
+  const userDisabled = syncState.userDisabled ? 'Yes' : 'No';
+  const syncPath = syncState.syncPath || syncState.listenerPath || 'Not available yet';
+  const rows = [
+    ['Account Sync', accountStatus],
+    ['Listener', listenerStatus],
+    ['Last synced', lastSynced],
+    ['Last snapshot', lastSnapshot],
+    ['Device ID', syncState.deviceId || 'Not available yet'],
+    ['Last error', lastError],
+    ['User disabled sync', userDisabled],
+    ['Current sync path', syncPath],
+  ];
+  return rows.map(([label, value]) => `
+    <div class="activity-subtitle">
+      <strong>${Utils.sanitize(label)}:</strong> ${Utils.sanitize(value)}
+    </div>
+  `).join('');
+}
+
 function _wireAccountControls() {
   const btn = document.getElementById('accountActionBtn');
   if (!btn) return;
@@ -2501,6 +2540,13 @@ function _wireAccountControls() {
     }
     window.LibriqSyncBeta?.setEnabled?.(true);
     Utils.toast('Sync is on. Your books will update across signed-in devices.', 'success');
+  };
+
+  const refreshSyncBtn = document.getElementById('syncRefreshStatusBtn');
+  if (refreshSyncBtn) refreshSyncBtn.onclick = () => {
+    window.LibriqSyncBeta?.refresh?.();
+    Utils.toast('Sync status refreshed', 'info');
+    window.setTimeout(() => Navigation.renderCurrentPage?.(), 150);
   };
 
 }

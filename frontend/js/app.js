@@ -12,14 +12,14 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: "What's New in LibriQ v4.0.1",
-      subtitle: 'LibriQ v4.0.1 turns on Account Sync automatically for signed-in account mode while keeping backup and restore separate.',
+      title: "What's New in LibriQ v4.1.0",
+      subtitle: 'LibriQ v4.1.0 adds clearer Sync Health diagnostics and safer long-term delete maintenance.',
       sections: [
-        ['Account Sync', 'Signed-in account mode can now keep book changes updated across devices using a separate sync namespace.'],
-        ['Backup Still Stays', 'Automatic cloud backup, manual restore, and merge remain available as separate safety tools.'],
-        ['Conservative Safety', 'Account Sync turns on automatically in signed-in account mode unless you turn it off, and keeps local data protected when conflicts are unclear.'],
+        ['Sync Health', 'Settings now shows account sync state, listener connection, recent sync times, device ID, and the current sync path.'],
+        ['Tombstone Maintenance', 'Old local delete records can be cleaned up conservatively while fresh deletes stay protected from resurrection.'],
+        ['Still Local-First', 'Account Sync remains separate from backup, restore, and merge, and Continue offline still keeps sync paused.'],
       ],
-      note: 'Account Sync is optional and does not replace cloud backup or manual restore.',
+      note: 'Account Sync still uses users/{uid}/sync/v1/books and cloud backup still uses users/{uid}/backups/current.',
     },
   };
 

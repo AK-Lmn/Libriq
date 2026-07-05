@@ -289,8 +289,8 @@
     <div class="modal whats-new-modal">
       <div class="modal-header">
         <div>
-          <h2 class="modal-title">What's New in LibriQ v4.0.1</h2>
-          <p class="whats-new-subtitle">LibriQ v4.0.1 turns on Account Sync automatically for signed-in account mode while keeping backup and restore separate.</p>
+          <h2 class="modal-title">What's New in LibriQ v4.1.0</h2>
+          <p class="whats-new-subtitle">LibriQ v4.1.0 adds clearer Sync Health diagnostics and safer long-term delete maintenance.</p>
         </div>
         <button class="modal-close" id="closeWhatsNew" aria-label="Close release notes">
           <i class="ph ph-x"></i>
@@ -299,20 +299,20 @@
       <div class="modal-body" id="whatsNewBody">
         <div class="whats-new-list">
           <section class="whats-new-item">
-            <div class="whats-new-item-title">Account Sync</div>
-            <p>Signed-in account mode can now keep book changes updated across devices using a separate sync namespace.</p>
+            <div class="whats-new-item-title">Sync Health</div>
+            <p>Settings now shows account sync state, listener connection, recent sync times, device ID, and the current sync path.</p>
           </section>
           <section class="whats-new-item">
-            <div class="whats-new-item-title">Backup Still Stays</div>
-            <p>Automatic cloud backup, manual restore, and merge remain available as separate safety tools.</p>
+            <div class="whats-new-item-title">Tombstone Maintenance</div>
+            <p>Old local delete records can be cleaned up conservatively while fresh deletes stay protected from resurrection.</p>
           </section>
           <section class="whats-new-item">
-            <div class="whats-new-item-title">Conservative Safety</div>
-            <p>Account Sync turns on automatically in signed-in account mode unless you turn it off, and keeps local data protected when conflicts are unclear.</p>
+            <div class="whats-new-item-title">Still Local-First</div>
+            <p>Account Sync remains separate from backup, restore, and merge, and Continue offline still keeps sync paused.</p>
           </section>
         </div>
         <div class="whats-new-note">
-          Account Sync stays separate from manual merge, backup, and restore.
+          Account Sync still uses users/{uid}/sync/v1/books and cloud backup still uses users/{uid}/backups/current.
         </div>
       </div>
       <div class="modal-footer whats-new-footer">
