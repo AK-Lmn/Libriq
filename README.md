@@ -4,7 +4,7 @@
 
 The app is built with **HTML, CSS, and Vanilla JavaScript**, with book data powered by **Open Library** and **Google Books**.
 
-LibriQ is currently focused on being a polished local-first reading tracker. Saved library data, reading progress, ratings, favorites, and private notes are stored in the browser using `localStorage`, with automatic cloud backup for signed-in users, safer manual cloud restore previews, manual cloud merge previews, an opt-in Realtime Sync Beta for books-only multi-device updates, sync-foundation metadata for future multi-device safety, and optional JSON export/import for manual safety copies.
+LibriQ is currently focused on being a polished local-first reading tracker. Saved library data, reading progress, ratings, favorites, and private notes are stored in the browser using `localStorage`, with automatic cloud backup for signed-in users, safer manual cloud restore previews, manual cloud merge previews, automatic Account Sync for signed-in account-mode devices, Sync Health diagnostics, and optional JSON export/import for manual safety copies.
 
 LibriQ also uses basic Google Analytics page-view tracking for anonymous traffic measurement only.
 
@@ -42,12 +42,22 @@ The app is designed to feel like a focused digital reading space instead of a pl
 
 ---
 
-## What's New in v4.0.0
+## What's New in v4.1.0
 
-* Realtime Sync Beta now supports books-only syncing across signed-in account-mode devices
+* Settings now includes Sync Health with account sync state, listener state, recent sync times, device ID, last error, and the active sync path
+* Tombstone maintenance can safely prune old local delete records while keeping fresh tombstones for at least 30 days
+* Account Sync still stays separate from backup, restore, and merge
+* Cloud backup still writes to `users/{uid}/backups/current`
+* Account Sync still writes books to `users/{uid}/sync/v1/books`
+
+---
+
+## What's New in v4.0.1
+
+* Account Sync now turns on automatically for signed-in account-mode devices
 * Automatic cloud backup, manual restore, and cloud merge remain separate safety tools
-* Sync stays opt-in, keeps the backup document untouched, and uses `users/{uid}/sync/v1/books/{bookId}`
-* Help & Guide and Settings now explain beta status, offline pause behavior, and conflict safety
+* Sync keeps the backup document untouched and uses `users/{uid}/sync/v1/books/{bookId}`
+* Help & Guide and Settings now explain account sync status, offline pause behavior, and conflict safety
 * Restore remains manual, and the backup path still stays `users/{uid}/backups/current`
 
 ---
@@ -141,7 +151,7 @@ Cloud backup features include:
 * Manual restore from the saved cloud backup
 * Continued local-only use when no account is signed in
 * JSON export/import still available as an optional manual backup path
-* No realtime sync or automatic merge system yet
+* Account Sync remains separate from backup, restore, and merge
 
 ---
 
@@ -545,13 +555,13 @@ service cloud.firestore {
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
 
-### v4.0.0 - Realtime Sync Beta
+### v4.0.1 - Automatic Account Sync
 
 **Added**
 
-* Opt-in Realtime Sync Beta for signed-in users in account mode
+* Automatic Account Sync for signed-in users in account mode
 * Books-only realtime sync under `users/{uid}/sync/v1/books/{bookId}`
-* Sync status, enable, and disable controls in Settings
+* Sync status, last synced, listener state, and turn-off controls in Settings
 * Conservative conflict handling that keeps local data when timestamps are unclear
 
 **Changed**
