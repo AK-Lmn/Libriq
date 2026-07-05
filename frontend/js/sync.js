@@ -5,8 +5,10 @@
 
 const LibriqSyncBeta = (() => {
   const STORAGE_KEY = 'libriq_sync_beta_enabled';
+  const USER_DISABLED_KEY = 'libriq_account_sync_user_disabled';
   const DEBUG_KEY = 'libriq_debug_sync';
   const TOMBSTONE_KEY = 'libriq_sync_delete_tombstones';
+  const TOMBSTONE_MIN_AGE_MS = 30 * 24 * 60 * 60 * 1000;
   const STATUS = {
     OFF: 'off',
     SYNCING: 'syncing',
@@ -19,7 +21,7 @@ const LibriqSyncBeta = (() => {
 
   let enabled = localStorage.getItem(STORAGE_KEY) === '1';
   let status = STATUS.OFF;
-  let message = 'Sync Beta off';
+  let message = 'Account sync off';
   let conflictCount = 0;
   let lastSyncedAt = null;
   let listenerUnsub = null;
@@ -36,6 +38,18 @@ const LibriqSyncBeta = (() => {
   let lastWriteAt = null;
   let lastError = null;
   let attachInFlight = false;
+  let awaitingInitialSnapshot = false;
+  let queuedUploadBeforeInitialSnapshot = false;
+  let uploadInFlight = false;
+
+  function isUserDisabled() {
+    return localStorage.getItem(USER_DISABLED_KEY) === '1';
+  }
+
+  function setUserDisabled(nextDisabled) {
+    if (nextDisabled) localStorage.setItem(USER_DISABLED_KEY, '1');
+    else localStorage.removeItem(USER_DISABLED_KEY);
+  }
 
   function getFirebaseState() {
     return window.LibriqFirebase?.getState?.() || {};
@@ -74,6 +88,47 @@ const LibriqSyncBeta = (() => {
     localStorage.setItem(TOMBSTONE_KEY, JSON.stringify(tombstones || {}));
   }
 
+  function getTombstoneTimestamp(tombstone) {
+    const raw = tombstone?.deletedAt || tombstone?.updatedAt || tombstone?.createdAt || null;
+    const time = raw ? new Date(raw).getTime() : NaN;
+    return Number.isFinite(time) ? time : null;
+  }
+
+  function getTombstoneStats() {
+    const tombstones = Object.values(readTombstones()).filter(Boolean);
+    let oldest = null;
+    tombstones.forEach((tombstone) => {
+      const time = getTombstoneTimestamp(tombstone);
+      if (time === null) return;
+      if (oldest === null || time < oldest) oldest = time;
+    });
+    return {
+      tombstoneCount: tombstones.length,
+      oldestTombstoneAt: oldest === null ? null : new Date(oldest).toISOString(),
+    };
+  }
+
+  function pruneOldLocalTombstones(now = Date.now()) {
+    if (applyingRemoteChanges || uploadInFlight || awaitingInitialSnapshot) {
+      debugLog('local tombstone cleanup skipped during active sync');
+      return { pruned: 0, skipped: true, ...getTombstoneStats() };
+    }
+    const tombstones = readTombstones();
+    let pruned = 0;
+    Object.entries(tombstones).forEach(([id, tombstone]) => {
+      const time = getTombstoneTimestamp(tombstone);
+      if (time === null) return;
+      if (now - time < TOMBSTONE_MIN_AGE_MS) return;
+      delete tombstones[id];
+      pruned += 1;
+    });
+    if (pruned > 0) {
+      writeTombstones(tombstones);
+      debugLog('old local tombstones pruned', { pruned });
+    }
+    return { pruned, skipped: false, ...getTombstoneStats() };
+  }
+
   function recordLocalDelete(id) {
     if (!id) return null;
     const timestamp = new Date().toISOString();
@@ -109,7 +164,7 @@ const LibriqSyncBeta = (() => {
     const user = getResolvedUser();
     const sessionMode = Navigation.getCurrentSessionMode?.() || Navigation.getSessionPreference?.();
     const reasons = [];
-    if (!enabled) reasons.push('sync beta disabled');
+    if (!enabled) reasons.push('account sync disabled');
     if (!firebase.available) reasons.push('firebase unavailable');
     if (!firebase.ready) reasons.push('firebase not ready');
     if (!user) reasons.push('no firebase user');
@@ -147,7 +202,13 @@ const LibriqSyncBeta = (() => {
     if (Navigation.currentPage !== 'settings') return;
     const statusEl = document.getElementById('syncStatusText');
     const conflictEl = document.getElementById('syncConflictText');
-    if (statusEl) statusEl.textContent = message;
+    const secondaryEl = document.getElementById('syncSecondaryText');
+    const lastSyncedEl = document.getElementById('syncLastSyncedText');
+    const listenerEl = document.getElementById('syncListenerText');
+    if (statusEl) statusEl.textContent = enabled ? 'Your books sync automatically across signed-in devices.' : (isAccountMode() ? 'Account sync is turned off on this device.' : 'Offline mode: books stay on this device.');
+    if (secondaryEl) secondaryEl.textContent = message;
+    if (lastSyncedEl) lastSyncedEl.textContent = lastSyncedAt ? `Last synced: ${Utils.formatDate(lastSyncedAt)}` : 'Last synced: Not yet';
+    if (listenerEl) listenerEl.textContent = listenerAttached ? `Listener: connected (${listenerPath || 'books'})` : 'Listener: not connected';
     if (conflictEl) {
       conflictEl.textContent = conflictCount
         ? 'Some sync conflicts were kept on this device.'
@@ -164,16 +225,36 @@ const LibriqSyncBeta = (() => {
   }
 
   function getState() {
-    return { enabled, status, message, conflictCount, lastSyncedAt };
+    const user = getResolvedUser();
+    const syncPath = getSyncBooksCollectionPath(currentUid || user?.uid || null);
+    return {
+      enabled,
+      userDisabled: isUserDisabled(),
+      status,
+      message,
+      conflictCount,
+      lastSyncedAt,
+      listenerAttached,
+      listenerPath,
+      syncPath,
+      deviceId: getDeviceId(),
+      lastSnapshotAt,
+      lastWriteAt,
+      lastError,
+      ...getTombstoneStats(),
+    };
   }
 
-  function setEnabled(nextEnabled) {
+  function setEnabled(nextEnabled, options = {}) {
     enabled = Boolean(nextEnabled);
     localStorage.setItem(STORAGE_KEY, enabled ? '1' : '0');
-    debugLog('enabled toggled', { enabled });
+    const userInitiated = options.userInitiated !== false;
+    if (enabled) setUserDisabled(false);
+    else if (userInitiated) setUserDisabled(true);
+    debugLog('enabled toggled', { enabled, userDisabled: isUserDisabled(), userInitiated });
     if (!enabled) {
       teardown();
-      setState(STATUS.OFF, 'Sync Beta off');
+      setState(STATUS.OFF, 'Account sync off');
       return false;
     }
     if (!isAccountMode()) {
@@ -182,6 +263,15 @@ const LibriqSyncBeta = (() => {
     }
     refresh();
     return true;
+  }
+
+  function pauseForOffline() {
+    enabled = false;
+    localStorage.setItem(STORAGE_KEY, '0');
+    teardown();
+    setState(STATUS.PAUSED, 'Sync paused in offline mode');
+    debugLog('sync paused for offline mode', { userDisabled: isUserDisabled() });
+    return false;
   }
 
   function teardown() {
@@ -193,6 +283,7 @@ const LibriqSyncBeta = (() => {
     listenerUnsub = null;
     listenerAttached = false;
     listenerPath = null;
+    awaitingInitialSnapshot = false;
     currentUid = null;
     if (pendingWriteTimer) clearTimeout(pendingWriteTimer);
     pendingWriteTimer = null;
@@ -208,6 +299,7 @@ const LibriqSyncBeta = (() => {
       return;
     }
     teardown();
+    queuedUploadBeforeInitialSnapshot = false;
     const firebase = getFirebaseState();
     const user = getResolvedUser();
     debugLog('refresh check', {
@@ -221,7 +313,7 @@ const LibriqSyncBeta = (() => {
       attached: listenerAttached,
       rawEnabled: localStorage.getItem(STORAGE_KEY),
     });
-    if (!enabled) return setState(STATUS.OFF, 'Sync Beta off');
+    if (!enabled) return setState(STATUS.OFF, 'Account sync off');
     if (!firebase.available || !firebase.ready || !user || !window.LibriqFirebase?.hasFirestore?.()) {
       lastError = null;
       return setState(STATUS.UNAVAILABLE, 'Sync unavailable');
@@ -230,7 +322,6 @@ const LibriqSyncBeta = (() => {
       return setState(STATUS.PAUSED, 'Sync paused in offline mode');
     }
     attachListener(user.uid);
-    queueUpload('refresh');
   }
 
   function attachListener(uid) {
@@ -256,6 +347,7 @@ const LibriqSyncBeta = (() => {
     currentUid = uid;
     listenerAttached = true;
     attachInFlight = true;
+    awaitingInitialSnapshot = true;
     debugLog('sync listener attach attempt', { uid, listenerPath });
     try {
       listenerUnsub = window.LibriqFirebase.onSnapshot(q, (snapshot) => {
@@ -263,11 +355,18 @@ const LibriqSyncBeta = (() => {
         const remoteBooks = [];
         snapshot.forEach((docSnap) => remoteBooks.push(docSnap.data()));
         lastSnapshotAt = new Date().toISOString();
+        const wasAwaitingInitialSnapshot = awaitingInitialSnapshot;
+        awaitingInitialSnapshot = false;
         debugLog('snapshot received', { listenerPath, changeCount: remoteBooks.length, snapshotAt: lastSnapshotAt });
         const fingerprint = JSON.stringify(remoteBooks.map(book => [book.id, book.updatedAt, book.deletedAt, book.deviceId]).sort());
-        if (fingerprint === lastRemoteFingerprint) return;
-        lastRemoteFingerprint = fingerprint;
-        applyRemoteBooks(remoteBooks);
+        if (fingerprint !== lastRemoteFingerprint) {
+          lastRemoteFingerprint = fingerprint;
+          applyRemoteBooks(remoteBooks);
+        }
+        if (wasAwaitingInitialSnapshot || queuedUploadBeforeInitialSnapshot) {
+          queuedUploadBeforeInitialSnapshot = false;
+          window.setTimeout(() => queueUpload('initial-snapshot-settled'), 0);
+        }
       }, (err) => {
         lastError = err?.message || String(err || 'unknown');
         console.warn('[LibriQ][Sync] listener error:', err);
@@ -289,6 +388,11 @@ const LibriqSyncBeta = (() => {
 
   function queueUpload(reason = 'local-change') {
     if (!enabled || applyingRemoteChanges || Date.now() < suppressWriteUntil) return;
+    if (awaitingInitialSnapshot) {
+      queuedUploadBeforeInitialSnapshot = true;
+      debugLog('sync write deferred until initial snapshot', { reason });
+      return;
+    }
     if (!isEligible()) {
       setState(Navigation.getSessionPreference?.() === 'offline' ? STATUS.PAUSED : STATUS.UNAVAILABLE,
         Navigation.getSessionPreference?.() === 'offline' ? 'Sync paused in offline mode' : 'Sync unavailable');
@@ -376,6 +480,7 @@ const LibriqSyncBeta = (() => {
     const tombstones = Object.values(readTombstones()).filter(Boolean);
     setState(STATUS.SYNCING, 'Syncing…');
     try {
+      uploadInFlight = true;
       applyingRemoteChanges = true;
       const db = window.LibriqFirebase.getFirestoreClient();
       const writes = books.map(book => window.LibriqFirebase.setDoc(
@@ -395,6 +500,9 @@ const LibriqSyncBeta = (() => {
       debugLog('sync write success', { reason, count: books.length, lastWriteAt, favoriteWrites });
       Storage.saveCloudBackupMeta?.({ syncReady: true });
       scheduleSettledBackup();
+      applyingRemoteChanges = false;
+      uploadInFlight = false;
+      pruneOldLocalTombstones();
     } catch (err) {
       lastError = err?.message || String(err || 'unknown');
       console.warn('[LibriQ][Sync] upload failed:', err);
@@ -402,6 +510,7 @@ const LibriqSyncBeta = (() => {
       setState(STATUS.ERROR, 'Sync error. Your local data is safe.');
     } finally {
       applyingRemoteChanges = false;
+      uploadInFlight = false;
     }
   }
 
@@ -539,12 +648,34 @@ const LibriqSyncBeta = (() => {
   }
 
   function enableWithPrompt() {
-    const proceed = confirm('Enable Realtime Sync Beta? Export JSON first if you want a manual safety copy. Sync will update books across signed-in devices, and cloud backup remains available.');
-    if (!proceed) return false;
     return setEnabled(true);
   }
 
-  window.addEventListener('libriq:auth-changed', () => { if (enabled) refresh(); });
+  function maybeAutoEnable(reason = 'account-mode') {
+    if (!isAccountMode()) {
+      if (enabled) refresh();
+      return false;
+    }
+    const firebase = getFirebaseState();
+    const user = getResolvedUser();
+    if (isUserDisabled()) {
+      if (enabled) setEnabled(false, { userInitiated: false });
+      debugLog('account sync auto-enable skipped by user preference', { reason, uid: user?.uid || null });
+      return false;
+    }
+    if (!firebase.available || !firebase.ready || !user || !window.LibriqFirebase?.hasFirestore?.()) {
+      if (enabled) refresh();
+      return false;
+    }
+    if (!enabled) {
+      debugLog('account sync auto-enabled', { reason, uid: user.uid });
+      return setEnabled(true);
+    }
+    refresh();
+    return true;
+  }
+
+  window.addEventListener('libriq:auth-changed', () => { maybeAutoEnable('auth-changed'); });
   window.addEventListener('libriq:page-changed', (event) => {
     if (event?.detail?.page === 'session') return;
     scheduleUiRefresh();
@@ -556,7 +687,7 @@ const LibriqSyncBeta = (() => {
   window.addEventListener('online', refresh);
   window.addEventListener('offline', () => setState(STATUS.PAUSED, 'Sync paused in offline mode'));
 
-  if (enabled) refresh();
+  maybeAutoEnable('startup');
 
   function debugStatus() {
     const firebase = getFirebaseState();
@@ -569,16 +700,22 @@ const LibriqSyncBeta = (() => {
     if (!isAccountMode()) reasons.push('not account mode');
     if (Navigation.currentPage === 'session' || document.body.classList.contains('session-choice-active')) reasons.push('session choice active');
     if (lastError) reasons.push('listener error');
+    const uid = currentUid || user?.uid || null;
+    const syncPath = getSyncBooksCollectionPath(uid);
     return {
       enabled,
+      userDisabled: isUserDisabled(),
+      status,
       attached: listenerAttached,
-      uid: currentUid || user?.uid || null,
+      uid,
       deviceId: getDeviceId(),
       sessionMode,
       listenerPath,
+      syncPath,
       lastSnapshotAt,
       lastWriteAt,
       lastError,
+      ...getTombstoneStats(),
       disabledReasons: reasons,
       firebaseCurrentUserUid: firebase.user?.uid || window.LibriqFirebase?.getCurrentUser?.()?.uid || null,
       firestoreAvailable: Boolean(window.LibriqFirebase?.hasFirestore?.()),
@@ -587,13 +724,13 @@ const LibriqSyncBeta = (() => {
     };
   }
 
-  window.LibriqSyncDebug = { status: debugStatus };
+  window.LibriqSyncDebug = { status: debugStatus, pruneOldLocalTombstones };
   window.LibriqSyncPaths = {
     getSyncBooksCollectionSegments,
     getSyncBooksCollectionPath,
   };
 
-  return { getState, setEnabled, enableWithPrompt, refresh, onLocalChange, queueUpload };
+  return { getState, setEnabled, pauseForOffline, enableWithPrompt, refresh, maybeAutoEnable, onLocalChange, queueUpload, pruneOldLocalTombstones };
 })();
 
 window.LibriqSyncBeta = LibriqSyncBeta;

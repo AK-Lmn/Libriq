@@ -368,6 +368,12 @@ if (TEST_MODE) {
       localStorage.setItem('libriq_sync_beta_enabled', '1');
       window.LibriqSyncBeta?.setEnabled?.(true);
     },
+    disableAccountMode() {
+      sessionStorage.setItem('libriq_session_mode', 'offline');
+      localStorage.setItem('libriq_preferred_session_mode', 'offline');
+      localStorage.setItem('libriq_session_pref', 'offline');
+      window.LibriqSyncBeta?.pauseForOffline?.();
+    },
     addBook(book) {
       return Storage.addBook(book);
     },
