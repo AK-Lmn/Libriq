@@ -38,6 +38,10 @@ const LibriqSyncBeta = (() => {
     return window.LibriqFirebase?.getState?.() || {};
   }
 
+  function getResolvedUser() {
+    return window.LibriqFirebase?.getCurrentUser?.() || getFirebaseState().user || null;
+  }
+
   function debugEnabled() {
     return localStorage.getItem(DEBUG_KEY) === '1';
   }
@@ -54,16 +58,36 @@ const LibriqSyncBeta = (() => {
   }
 
   function isAccountMode() {
-    return Navigation.getSessionPreference?.() !== 'offline';
+    return Navigation.getCurrentSessionMode?.() !== 'offline' && Navigation.getSessionPreference?.() !== 'offline';
   }
 
   function isEligible() {
     const firebase = getFirebaseState();
+    const user = getResolvedUser();
+    const sessionMode = Navigation.getCurrentSessionMode?.() || Navigation.getSessionPreference?.();
+    const reasons = [];
+    if (!enabled) reasons.push('sync beta disabled');
+    if (!firebase.available) reasons.push('firebase unavailable');
+    if (!firebase.ready) reasons.push('firebase not ready');
+    if (!user) reasons.push('no firebase user');
+    if (!window.LibriqFirebase?.hasFirestore?.()) reasons.push('firestore unavailable');
+    if (!isAccountMode()) reasons.push(`session mode ${sessionMode}`);
+    if (Navigation.currentPage === 'session') reasons.push('session screen');
+    if (document.body.classList.contains('session-choice-active')) reasons.push('session choice active');
+    const allowed = reasons.length === 0;
+    debugLog('eligibility result', {
+      allowed,
+      reasons,
+      rawSessionPref: Navigation.getSessionPreference?.() || null,
+      normalizedSessionMode: sessionMode || null,
+      uid: user?.uid || null,
+      enabled,
+    });
     return Boolean(
       enabled &&
       firebase.available &&
       firebase.ready &&
-      firebase.user &&
+      user &&
       window.LibriqFirebase?.hasFirestore?.() &&
       isAccountMode() &&
       Navigation.currentPage !== 'session' &&
@@ -135,24 +159,26 @@ const LibriqSyncBeta = (() => {
   function refresh() {
     teardown();
     const firebase = getFirebaseState();
+    const user = getResolvedUser();
     debugLog('refresh check', {
       enabled,
-      uid: firebase.user?.uid || null,
+      uid: user?.uid || null,
       ready: firebase.ready,
-      hasUser: Boolean(firebase.user),
+      hasUser: Boolean(user),
       sessionMode: Navigation.getCurrentSessionMode?.() || Navigation.getSessionPreference?.(),
       sessionPref: Navigation.getSessionPreference?.(),
       currentPage: Navigation.currentPage,
       attached: listenerAttached,
+      rawEnabled: localStorage.getItem(STORAGE_KEY),
     });
     if (!enabled) return setState(STATUS.OFF, 'Sync Beta off');
-    if (!firebase.available || !firebase.ready || !firebase.user || !window.LibriqFirebase?.hasFirestore?.()) {
+    if (!firebase.available || !firebase.ready || !user || !window.LibriqFirebase?.hasFirestore?.()) {
       return setState(STATUS.UNAVAILABLE, 'Sync unavailable');
     }
     if (!isAccountMode()) {
       return setState(STATUS.PAUSED, 'Sync paused in offline mode');
     }
-    attachListener(firebase.user.uid);
+    attachListener(user.uid);
     queueUpload('refresh');
   }
 
@@ -222,6 +248,18 @@ const LibriqSyncBeta = (() => {
     }, 300);
   }
 
+  function scheduleSettledBackup() {
+    if (!window.LibriqCloudBackup?.scheduleIfAllowed) return;
+    if (!enabled || !listenerAttached) return;
+    if (applyingRemoteChanges) return;
+    window.LibriqCloudBackup?.suppressAutoBackupFor?.(3000);
+    window.setTimeout(() => {
+      if (!enabled || !listenerAttached || applyingRemoteChanges) return;
+      window.LibriqCloudBackup?.scheduleIfAllowed?.('sync-settled');
+      debugLog('settled backup scheduled');
+    }, 2500);
+  }
+
   function normalizeBookForSync(book) {
     if (!book || typeof book !== 'object') return null;
     return {
@@ -248,14 +286,15 @@ const LibriqSyncBeta = (() => {
 
   async function uploadLocalBooks(reason = 'local-change') {
     const firebase = getFirebaseState();
-    if (!enabled || !firebase.user || !window.LibriqFirebase?.hasFirestore?.()) return;
+    const user = getResolvedUser();
+    if (!enabled || !user || !window.LibriqFirebase?.hasFirestore?.()) return;
     const books = Storage.getBooks().map(normalizeBookForSync).filter(Boolean);
     setState(STATUS.SYNCING, 'Syncing…');
     try {
       applyingRemoteChanges = true;
       const db = window.LibriqFirebase.getFirestoreClient();
       const writes = books.map(book => window.LibriqFirebase.setDoc(
-        window.LibriqFirebase.doc(db, 'users', firebase.user.uid, 'sync', 'books', book.id),
+        window.LibriqFirebase.doc(db, 'users', user.uid, 'sync', 'books', book.id),
         book,
       ));
       await Promise.all(writes);
@@ -264,6 +303,7 @@ const LibriqSyncBeta = (() => {
       setState(STATUS.SYNCED, 'Waiting for changes', { lastSyncedAt });
       debugLog('sync write success', { reason, count: books.length, lastWriteAt });
       Storage.saveCloudBackupMeta?.({ syncReady: true });
+      scheduleSettledBackup();
     } catch (err) {
       lastError = err?.message || String(err || 'unknown');
       console.warn('[LibriQ][Sync] upload failed:', err);
