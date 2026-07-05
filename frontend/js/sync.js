@@ -5,6 +5,7 @@
 
 const LibriqSyncBeta = (() => {
   const STORAGE_KEY = 'libriq_sync_beta_enabled';
+  const USER_DISABLED_KEY = 'libriq_account_sync_user_disabled';
   const DEBUG_KEY = 'libriq_debug_sync';
   const TOMBSTONE_KEY = 'libriq_sync_delete_tombstones';
   const STATUS = {
@@ -38,6 +39,15 @@ const LibriqSyncBeta = (() => {
   let attachInFlight = false;
   let awaitingInitialSnapshot = false;
   let queuedUploadBeforeInitialSnapshot = false;
+
+  function isUserDisabled() {
+    return localStorage.getItem(USER_DISABLED_KEY) === '1';
+  }
+
+  function setUserDisabled(nextDisabled) {
+    if (nextDisabled) localStorage.setItem(USER_DISABLED_KEY, '1');
+    else localStorage.removeItem(USER_DISABLED_KEY);
+  }
 
   function getFirebaseState() {
     return window.LibriqFirebase?.getState?.() || {};
@@ -172,13 +182,16 @@ const LibriqSyncBeta = (() => {
   }
 
   function getState() {
-    return { enabled, status, message, conflictCount, lastSyncedAt, listenerAttached, listenerPath, lastSnapshotAt };
+    return { enabled, userDisabled: isUserDisabled(), status, message, conflictCount, lastSyncedAt, listenerAttached, listenerPath, lastSnapshotAt };
   }
 
-  function setEnabled(nextEnabled) {
+  function setEnabled(nextEnabled, options = {}) {
     enabled = Boolean(nextEnabled);
     localStorage.setItem(STORAGE_KEY, enabled ? '1' : '0');
-    debugLog('enabled toggled', { enabled });
+    const userInitiated = options.userInitiated !== false;
+    if (enabled) setUserDisabled(false);
+    else if (userInitiated) setUserDisabled(true);
+    debugLog('enabled toggled', { enabled, userDisabled: isUserDisabled(), userInitiated });
     if (!enabled) {
       teardown();
       setState(STATUS.OFF, 'Account sync off');
@@ -190,6 +203,15 @@ const LibriqSyncBeta = (() => {
     }
     refresh();
     return true;
+  }
+
+  function pauseForOffline() {
+    enabled = false;
+    localStorage.setItem(STORAGE_KEY, '0');
+    teardown();
+    setState(STATUS.PAUSED, 'Sync paused in offline mode');
+    debugLog('sync paused for offline mode', { userDisabled: isUserDisabled() });
+    return false;
   }
 
   function teardown() {
@@ -571,6 +593,11 @@ const LibriqSyncBeta = (() => {
     }
     const firebase = getFirebaseState();
     const user = getResolvedUser();
+    if (isUserDisabled()) {
+      if (enabled) setEnabled(false, { userInitiated: false });
+      debugLog('account sync auto-enable skipped by user preference', { reason, uid: user?.uid || null });
+      return false;
+    }
     if (!firebase.available || !firebase.ready || !user || !window.LibriqFirebase?.hasFirestore?.()) {
       if (enabled) refresh();
       return false;
@@ -610,8 +637,10 @@ const LibriqSyncBeta = (() => {
     if (lastError) reasons.push('listener error');
     return {
       enabled,
+      status,
       attached: listenerAttached,
       uid: currentUid || user?.uid || null,
+      userDisabled: isUserDisabled(),
       deviceId: getDeviceId(),
       sessionMode,
       listenerPath,
@@ -632,7 +661,7 @@ const LibriqSyncBeta = (() => {
     getSyncBooksCollectionPath,
   };
 
-  return { getState, setEnabled, enableWithPrompt, refresh, maybeAutoEnable, onLocalChange, queueUpload };
+  return { getState, setEnabled, pauseForOffline, enableWithPrompt, refresh, maybeAutoEnable, onLocalChange, queueUpload };
 })();
 
 window.LibriqSyncBeta = LibriqSyncBeta;
