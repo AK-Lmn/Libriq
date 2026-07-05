@@ -48,6 +48,10 @@ async function waitForSyncAttached(page) {
   await page.waitForFunction(() => Boolean(window.LibriqE2E && window.LibriqSyncDebug?.status?.().attached), null, { timeout: 10000 });
 }
 
+function assertHasFields(object, fields) {
+  fields.forEach((field) => assert.equal(Object.prototype.hasOwnProperty.call(object, field), true, `missing sync status field: ${field}`));
+}
+
 async function main() {
   const server = startServer();
   try {
@@ -65,10 +69,31 @@ async function main() {
     assert.equal(statusA.enabled, true);
     assert.equal(statusA.attached, true);
     assert.equal(statusA.userDisabled, false);
+    assert.equal(statusA.status === 'syncing' || statusA.status === 'synced' || statusA.status === 'off', true);
     assert.equal(statusA.sessionMode, 'account');
     assert.match(statusA.listenerPath, /users\/test-user\/sync\/v1\/books/);
+    assert.match(statusA.syncPath, /users\/test-user\/sync\/v1\/books/);
     assert.ok(statusA.deviceId);
     assert.notEqual(statusA.deviceId, statusB.deviceId);
+    assertHasFields(statusA, [
+      'enabled',
+      'userDisabled',
+      'attached',
+      'status',
+      'uid',
+      'sessionMode',
+      'listenerPath',
+      'lastSnapshotAt',
+      'lastWriteAt',
+      'lastError',
+      'tombstoneCount',
+      'oldestTombstoneAt',
+      'eligibilityAllowed',
+      'disabledReasons',
+    ]);
+    assert.equal(statusA.eligibilityAllowed, true);
+    assert.equal(Array.isArray(statusA.disabledReasons), true);
+    assert.equal(typeof statusA.tombstoneCount, 'number');
 
     const bookId = await pageA.evaluate(() => {
       const book = window.LibriqE2E.addBook({
@@ -109,11 +134,35 @@ async function main() {
     await pageA.evaluate((id) => window.LibriqE2E.deleteBook(id), deleteId);
     await delay(6000);
     assert.equal(await pageB.evaluate((id) => !window.LibriqE2E.getBooks().some((book) => book.id === id), deleteId), true);
+    const tombstoneStatus = await pageA.evaluate(() => window.LibriqSyncDebug.status());
+    assert.equal(tombstoneStatus.tombstoneCount >= 1, true);
     await resumePage(pageA, sharedUid, 'a@example.com');
     await resumePage(pageB, sharedUid, 'a@example.com');
     await delay(6000);
     assert.equal(await pageA.evaluate((id) => !window.LibriqE2E.getBooks().some((book) => book.id === id), deleteId), true);
     assert.equal(await pageB.evaluate((id) => !window.LibriqE2E.getBooks().some((book) => book.id === id), deleteId), true);
+
+    const cleanupResult = await pageA.evaluate(() => {
+      const now = Date.now();
+      const freshAt = new Date(now - 29 * 24 * 60 * 60 * 1000).toISOString();
+      const oldAt = new Date(now - 31 * 24 * 60 * 60 * 1000).toISOString();
+      localStorage.setItem('libriq_sync_delete_tombstones', JSON.stringify({
+        fresh_cleanup_test: { id: 'fresh_cleanup_test', deletedAt: freshAt, updatedAt: freshAt },
+        old_cleanup_test: { id: 'old_cleanup_test', deletedAt: oldAt, updatedAt: oldAt },
+      }));
+      const result = window.LibriqSyncDebug.pruneOldLocalTombstones(now);
+      const remaining = JSON.parse(localStorage.getItem('libriq_sync_delete_tombstones') || '{}');
+      return {
+        result,
+        hasFresh: Boolean(remaining.fresh_cleanup_test),
+        hasOld: Boolean(remaining.old_cleanup_test),
+        remainingCount: Object.keys(remaining).length,
+      };
+    });
+    assert.equal(cleanupResult.result.pruned, 1);
+    assert.equal(cleanupResult.hasFresh, true);
+    assert.equal(cleanupResult.hasOld, false);
+    assert.equal(cleanupResult.remainingCount, 1);
 
     await pageB.evaluate(async () => {
       window.LibriqSyncBeta.setEnabled(false);
