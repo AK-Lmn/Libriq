@@ -12,14 +12,14 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: "What's New in LibriQ v4.1.0",
-      subtitle: 'LibriQ v4.1.0 adds clearer Sync Health diagnostics and safer long-term delete maintenance.',
+      title: "What's New in LibriQ v4.1.1",
+      subtitle: 'LibriQ v4.1.1 makes Settings easier to read while keeping sync safety tools available.',
       sections: [
-        ['Sync Health', 'Settings now shows account sync state, listener connection, recent sync times, device ID, and the current sync path.'],
-        ['Tombstone Maintenance', 'Old local delete records can be cleaned up conservatively while fresh deletes stay protected from resurrection.'],
-        ['Still Local-First', 'Account Sync remains separate from backup, restore, and merge, and Continue offline still keeps sync paused.'],
+        ['Cleaner Settings', 'Settings is now easier to read, with sync and backup controls simplified.'],
+        ['Simpler Sync Status', 'Account Sync now shows only the details most users need.'],
+        ['Advanced Diagnostics', 'Technical sync details are still available when troubleshooting.'],
       ],
-      note: 'Account Sync still uses users/{uid}/sync/v1/books and cloud backup still uses users/{uid}/backups/current.',
+      note: 'The same sync safety and backup behavior stay in place behind the cleaner UI.',
     },
   };
 
