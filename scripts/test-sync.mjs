@@ -16,6 +16,7 @@ async function setupPage(context, uid, email) {
   await page.addInitScript(() => {
     localStorage.setItem('libriq_e2e_test_mode', '1');
     localStorage.setItem('libriq_debug_sync', '1');
+    localStorage.removeItem('libriq_account_sync_user_disabled');
   });
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await delay(3000);
@@ -26,9 +27,7 @@ async function setupPage(context, uid, email) {
     window.LibriqNavigation.goTo('dashboard');
     window.LibriqSyncBeta.maybeAutoEnable('e2e-setup');
   }, { uid, email });
-  await delay(3000);
-  const attached = await page.evaluate(() => Boolean(window.LibriqE2E && window.LibriqSyncDebug && window.LibriqSyncDebug.status().attached));
-  assert.equal(attached, true);
+  await waitForSyncAttached(page);
   return page;
 }
 
@@ -42,8 +41,11 @@ async function resumePage(page, uid, email) {
     window.LibriqNavigation.goTo('dashboard');
     window.LibriqSyncBeta.maybeAutoEnable('e2e-setup');
   }, { uid, email });
-  await delay(3000);
-  assert.equal(await page.evaluate(() => window.LibriqSyncDebug.status().attached), true);
+  await waitForSyncAttached(page);
+}
+
+async function waitForSyncAttached(page) {
+  await page.waitForFunction(() => Boolean(window.LibriqE2E && window.LibriqSyncDebug?.status?.().attached), null, { timeout: 10000 });
 }
 
 async function main() {
@@ -62,6 +64,7 @@ async function main() {
     const statusB = await pageB.evaluate(() => window.LibriqSyncDebug.status());
     assert.equal(statusA.enabled, true);
     assert.equal(statusA.attached, true);
+    assert.equal(statusA.userDisabled, false);
     assert.equal(statusA.sessionMode, 'account');
     assert.match(statusA.listenerPath, /users\/test-user\/sync\/v1\/books/);
     assert.ok(statusA.deviceId);
@@ -112,8 +115,29 @@ async function main() {
     assert.equal(await pageA.evaluate((id) => !window.LibriqE2E.getBooks().some((book) => book.id === id), deleteId), true);
     assert.equal(await pageB.evaluate((id) => !window.LibriqE2E.getBooks().some((book) => book.id === id), deleteId), true);
 
+    await pageB.evaluate(async () => {
+      window.LibriqSyncBeta.setEnabled(false);
+      window.dispatchEvent(new CustomEvent('libriq:auth-changed', { detail: window.LibriqFirebase.getState() }));
+      window.LibriqSyncBeta.maybeAutoEnable('e2e-user-disabled');
+      window.LibriqSyncBeta.refresh();
+    });
+    await delay(1000);
+    const disabledStatus = await pageB.evaluate(() => window.LibriqSyncDebug.status());
+    assert.equal(disabledStatus.enabled, false);
+    assert.equal(disabledStatus.attached, false);
+    assert.equal(disabledStatus.userDisabled, true);
+    assert.equal(disabledStatus.status, 'off');
+
     await pageB.evaluate(() => {
       window.LibriqSyncBeta.setEnabled(true);
+    });
+    await waitForSyncAttached(pageB);
+    const reenabledStatus = await pageB.evaluate(() => window.LibriqSyncDebug.status());
+    assert.equal(reenabledStatus.enabled, true);
+    assert.equal(reenabledStatus.attached, true);
+    assert.equal(reenabledStatus.userDisabled, false);
+
+    await pageB.evaluate(() => {
       window.LibriqE2E.disableAccountMode?.();
       window.LibriqSyncBeta.refresh();
     });

@@ -372,7 +372,7 @@ if (TEST_MODE) {
       sessionStorage.setItem('libriq_session_mode', 'offline');
       localStorage.setItem('libriq_preferred_session_mode', 'offline');
       localStorage.setItem('libriq_session_pref', 'offline');
-      window.LibriqSyncBeta?.setEnabled?.(false);
+      window.LibriqSyncBeta?.pauseForOffline?.();
     },
     addBook(book) {
       return Storage.addBook(book);

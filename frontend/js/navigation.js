@@ -793,8 +793,8 @@ function renderSessionChoicePage() {
     </div>`;
 
   document.getElementById('continueOfflineBtn')?.addEventListener('click', () => {
-    window.LibriqSyncBeta?.setEnabled?.(false);
     Navigation.setSessionPreference('offline');
+    window.LibriqSyncBeta?.pauseForOffline?.();
     Navigation.goTo('dashboard');
   });
 
