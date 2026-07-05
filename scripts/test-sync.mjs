@@ -22,10 +22,9 @@ async function setupPage(context, uid, email) {
   await page.evaluate(({ uid, email }) => {
     window.LibriqE2E.seedAuth(uid, email, uid);
     window.LibriqE2E.enableAccountMode();
-    window.LibriqE2E.enableSyncBeta();
     window.dispatchEvent(new CustomEvent('libriq:auth-changed', { detail: window.LibriqFirebase.getState() }));
     window.LibriqNavigation.goTo('dashboard');
-    window.LibriqSyncBeta.refresh();
+    window.LibriqSyncBeta.maybeAutoEnable('e2e-setup');
   }, { uid, email });
   await delay(3000);
   const attached = await page.evaluate(() => Boolean(window.LibriqE2E && window.LibriqSyncDebug && window.LibriqSyncDebug.status().attached));
@@ -39,10 +38,9 @@ async function resumePage(page, uid, email) {
   await page.evaluate(({ uid, email }) => {
     window.LibriqE2E.seedAuth(uid, email, uid);
     window.LibriqE2E.enableAccountMode();
-    window.LibriqE2E.enableSyncBeta();
     window.dispatchEvent(new CustomEvent('libriq:auth-changed', { detail: window.LibriqFirebase.getState() }));
     window.LibriqNavigation.goTo('dashboard');
-    window.LibriqSyncBeta.refresh();
+    window.LibriqSyncBeta.maybeAutoEnable('e2e-setup');
   }, { uid, email });
   await delay(3000);
   assert.equal(await page.evaluate(() => window.LibriqSyncDebug.status().attached), true);
@@ -113,6 +111,17 @@ async function main() {
     await delay(6000);
     assert.equal(await pageA.evaluate((id) => !window.LibriqE2E.getBooks().some((book) => book.id === id), deleteId), true);
     assert.equal(await pageB.evaluate((id) => !window.LibriqE2E.getBooks().some((book) => book.id === id), deleteId), true);
+
+    await pageB.evaluate(() => {
+      window.LibriqSyncBeta.setEnabled(true);
+      window.LibriqE2E.disableAccountMode?.();
+      window.LibriqSyncBeta.refresh();
+    });
+    await delay(1000);
+    const pausedStatus = await pageB.evaluate(() => window.LibriqSyncDebug.status());
+    assert.equal(pausedStatus.attached, false);
+    assert.equal(pausedStatus.sessionMode, 'offline');
+    assert.equal(['off', 'paused'].includes(pausedStatus.status), true);
 
     await pageA.close();
     await pageB.close();

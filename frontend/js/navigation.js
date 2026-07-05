@@ -793,12 +793,14 @@ function renderSessionChoicePage() {
     </div>`;
 
   document.getElementById('continueOfflineBtn')?.addEventListener('click', () => {
+    window.LibriqSyncBeta?.setEnabled?.(false);
     Navigation.setSessionPreference('offline');
     Navigation.goTo('dashboard');
   });
 
   document.getElementById('googleContinueBtn')?.addEventListener('click', () => {
     Navigation.setSessionPreference('google');
+    window.LibriqSyncBeta?.maybeAutoEnable?.('account-continue');
     Navigation.goTo('dashboard');
   });
 
@@ -810,6 +812,8 @@ function renderSessionChoicePage() {
     try {
       await window.LibriqFirebase?.signInWithGoogle?.();
       Navigation.setSessionPreference('google');
+      window.LibriqSyncBeta?.maybeAutoEnable?.('google-sign-in');
+      Utils.toast('Sync is on. Your books will update across signed-in devices.', 'success');
       Navigation.goTo('dashboard');
     } catch (err) {
       const code = String(err?.code || err?.message || '').toLowerCase();
@@ -1674,7 +1678,7 @@ function renderHelpPage() {
     {
       icon: 'ph-arrows-clockwise',
       title: 'Sync Foundation',
-      body: 'LibriQ currently uses automatic cloud backup, not realtime sync. Sync foundation metadata helps prepare the app for safer multi-device syncing later, including protection against older devices overwriting newer progress or deleted books.',
+      body: 'Account Sync keeps books updated across signed-in devices. Cloud backup, restore, merge, and JSON export/import remain separate safety tools.',
     },
     {
       icon: 'ph-arrows-left-right',
@@ -1743,7 +1747,7 @@ function renderHelpPage() {
             ${[
               ['Restore behavior', 'Restore replaces this device\'s library after confirmation.'],
               ['Merge behavior', 'Merge adds safe cloud-only items without replacing local conflicts.'],
-              ['Realtime sync', 'Realtime sync is still not enabled.'],
+              ['Account sync', 'Books sync automatically in signed-in account mode.'],
               ['Has device ID', syncReadiness.hasDeviceId ? 'Yes' : 'No'],
               ['UpdatedAt coverage', syncReadiness.hasUpdatedAtCoverage ? 'Good coverage' : 'Partial coverage'],
               ['DeletedAt support', syncReadiness.hasDeletedAtSupport ? 'Supported' : 'Not yet consistent'],
@@ -2130,7 +2134,7 @@ function renderSettingsPage() {
 
       <div class="goal-widget" style="margin-bottom: var(--space-4);">
         <div class="goal-header">
-          <div class="goal-title">Realtime Sync Beta</div>
+          <div class="goal-title">Account Sync</div>
         </div>
         ${_buildSyncSection(firebase)}
       </div>
@@ -2222,7 +2226,7 @@ function renderSettingsPage() {
             ['Basic traffic analytics', 'LibriQ uses anonymous Google Analytics page views to understand general traffic.'],
             ['Accounts are optional', 'Sign in only if you want cloud backup.'],
             ['Automatic cloud backup', 'Signing in enables debounced cloud backups after local changes.'],
-            ['Realtime Sync Beta', 'Realtime Sync Beta can update books across signed-in devices, but it stays separate from the backup document and must be enabled explicitly.'],
+            ['Realtime Sync Beta', 'Account Sync updates books automatically across signed-in devices, while cloud backup and manual restore stay separate.'],
             ['Optional JSON export', 'Export a JSON copy anytime for an extra manual safety copy.'],
             ['Private notes and quotes', 'Private notes and quotes stay local unless included in an exported backup.'],
             ['Continue offline', 'Continue offline keeps local data working while cloud backup is paused for that session.'],
@@ -2383,19 +2387,19 @@ function _buildCloudBackupSection(firebase, cloudBackupMeta) {
           Merge cloud with this device
         </button>
       </div>
-      <div class="activity-subtitle" id="cloudBackupGroundworkText">Future sync will need safe merge handling for notes, quotes, and deletions.</div>
+      <div class="activity-subtitle" id="cloudBackupGroundworkText">Account Sync uses safe merge handling for books; backup and restore remain separate.</div>
     </div>`;
 }
 
 function _buildSyncSection(firebase) {
-  const syncState = window.LibriqSyncBeta?.getState?.() || { enabled: false, status: 'off', message: 'Sync Beta off', conflictCount: 0 };
-  const signedIn = Boolean(firebase.user);
+  const syncState = window.LibriqSyncBeta?.getState?.() || { enabled: false, status: 'off', message: 'Account sync off', conflictCount: 0 };
+  const signedIn = Boolean(firebase.user || window.LibriqFirebase?.getCurrentUser?.());
   const offlineMode = Navigation.getSessionPreference?.() === 'offline';
   if (!firebase.initialized) {
     return `
       <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
         <div class="activity-text">
-          <div class="activity-title">Realtime Sync Beta</div>
+          <div class="activity-title">Account Sync</div>
           <div class="activity-subtitle">Checking sync status...</div>
         </div>
       </div>`;
@@ -2404,46 +2408,46 @@ function _buildSyncSection(firebase) {
     return `
       <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
         <div class="activity-text">
-          <div class="activity-title">Realtime Sync Beta</div>
+          <div class="activity-title">Account Sync</div>
           <div class="activity-subtitle">Sync unavailable.</div>
         </div>
       </div>`;
   }
-  if (!signedIn) {
-    return `
-      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
-        <div class="activity-text">
-          <div class="activity-title">Realtime Sync Beta</div>
-          <div class="activity-subtitle">Sign in to enable Realtime Sync Beta.</div>
-        </div>
-      </div>`;
-  }
-  const statusText = !syncState.enabled ? 'Sync Beta off'
-    : offlineMode ? 'Sync paused in offline mode'
-    : syncState.status === 'syncing' ? 'Syncing…'
-    : syncState.message || 'Synced just now';
-  const secondary = 'Books only for v4.0.0 beta. Cloud backup and manual restore remain separate safety tools.';
+  const primary = offlineMode
+    ? 'Offline mode: books stay on this device.'
+    : signedIn && syncState.enabled
+      ? 'Your books sync automatically across signed-in devices.'
+      : signedIn
+        ? 'Account sync is turned off on this device.'
+        : 'Sign in to sync your library.';
+  const statusText = offlineMode ? 'Sync paused in offline mode'
+    : !signedIn ? 'Signed out'
+    : syncState.enabled && syncState.status === 'syncing' ? 'Syncing…'
+    : syncState.enabled ? (syncState.message || 'Synced just now')
+    : 'Account sync off';
+  const lastSynced = syncState.lastSyncedAt ? `Last synced: ${Utils.formatDate(syncState.lastSyncedAt)}` : 'Last synced: Not yet';
+  const listenerState = syncState.listenerAttached ? `Listener: connected (${syncState.listenerPath || 'books'})` : 'Listener: not connected';
+  const actionLabel = syncState.enabled && !offlineMode ? 'Turn off sync' : 'Turn on sync';
+  const actionDisabled = !signedIn || offlineMode;
   return `
     <div class="activity-list" id="settingsSyncCard">
       <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
         <div class="activity-text">
-          <div class="activity-title">Realtime Sync Beta</div>
-          <div class="activity-subtitle" id="syncStatusText">${Utils.sanitize(statusText)}</div>
-          <div class="activity-subtitle" id="syncSecondaryText">${Utils.sanitize(secondary)}</div>
+          <div class="activity-title">Account Sync</div>
+          <div class="activity-subtitle" id="syncStatusText">${Utils.sanitize(primary)}</div>
+          <div class="activity-subtitle" id="syncSecondaryText">${Utils.sanitize(statusText)}</div>
+          <div class="activity-subtitle" id="syncLastSyncedText">${Utils.sanitize(lastSynced)}</div>
+          <div class="activity-subtitle" id="syncListenerText">${Utils.sanitize(listenerState)}</div>
           <div class="activity-subtitle" id="syncConflictText">${syncState.conflictCount ? `Some sync conflicts were kept on this device.` : 'No sync conflicts kept on this device yet.'}</div>
         </div>
       </div>
       <div class="settings-cloud-actions" style="display:flex; gap: var(--space-2); flex-wrap: wrap;">
-        <button class="btn btn-primary btn-sm" type="button" id="syncEnableBtn" ${syncState.enabled ? 'disabled' : ''}>
-          Enable Sync Beta
-        </button>
-        <button class="btn btn-secondary btn-sm" type="button" id="syncDisableBtn" ${syncState.enabled ? '' : 'disabled'}>
-          Disable Sync Beta
+        <button class="btn ${syncState.enabled && !offlineMode ? 'btn-secondary' : 'btn-primary'} btn-sm" type="button" id="syncToggleBtn" ${actionDisabled ? 'disabled' : ''} data-sync-enabled="${syncState.enabled && !offlineMode ? '1' : '0'}">
+          ${actionLabel}
         </button>
       </div>
     </div>`;
 }
-
 function _wireAccountControls() {
   const btn = document.getElementById('accountActionBtn');
   if (!btn) return;
@@ -2475,8 +2479,14 @@ function _wireAccountControls() {
     await openCloudMergePreview();
   };
 
-  const enableSyncBtn = document.getElementById('syncEnableBtn');
+  const enableSyncBtn = document.getElementById('syncToggleBtn');
   if (enableSyncBtn) enableSyncBtn.onclick = () => {
+    if (enableSyncBtn.dataset.syncEnabled === '1') {
+      window.LibriqSyncBeta?.setEnabled?.(false);
+      Utils.toast('Account sync turned off', 'info');
+      Navigation.renderCurrentPage?.();
+      return;
+    }
     const firebase = window.LibriqFirebase?.getState?.() || { available: false, initialized: false, ready: false, user: null };
     if (Navigation.getSessionPreference?.() === 'offline') {
       Utils.toast('Switch to account mode before enabling sync.', 'warning');
@@ -2489,14 +2499,10 @@ function _wireAccountControls() {
     if (!firebase.user) {
       firebase.user = window.LibriqFirebase?.getCurrentUser?.() || null;
     }
-    window.LibriqSyncBeta?.enableWithPrompt?.();
+    window.LibriqSyncBeta?.setEnabled?.(true);
+    Utils.toast('Sync is on. Your books will update across signed-in devices.', 'success');
   };
 
-  const disableSyncBtn = document.getElementById('syncDisableBtn');
-  if (disableSyncBtn) disableSyncBtn.onclick = () => {
-    window.LibriqSyncBeta?.setEnabled?.(false);
-    Utils.toast('Realtime Sync Beta disabled', 'info');
-  };
 }
 
 function _countRecords(list, filterFn) {
