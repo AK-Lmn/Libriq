@@ -2475,13 +2475,17 @@ function _wireAccountControls() {
 
   const enableSyncBtn = document.getElementById('syncEnableBtn');
   if (enableSyncBtn) enableSyncBtn.onclick = () => {
+    const firebase = window.LibriqFirebase?.getState?.() || { available: false, initialized: false, ready: false, user: null };
     if (Navigation.getSessionPreference?.() === 'offline') {
       Utils.toast('Switch to account mode before enabling sync.', 'warning');
       return;
     }
-    if (!firebase.user) {
+    if (!firebase.user && !window.LibriqFirebase?.getCurrentUser?.()) {
       Utils.toast('Sign in first to enable sync.', 'warning');
       return;
+    }
+    if (!firebase.user) {
+      firebase.user = window.LibriqFirebase?.getCurrentUser?.() || null;
     }
     window.LibriqSyncBeta?.enableWithPrompt?.();
   };
