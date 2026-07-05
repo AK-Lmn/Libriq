@@ -42,6 +42,14 @@ The app is designed to feel like a focused digital reading space instead of a pl
 
 ---
 
+## What's New in v4.1.1
+
+* Settings is easier to read, with Account Sync and Cloud Backup controls simplified for everyday use
+* Technical sync details now live behind Advanced diagnostics instead of the normal Settings view
+* Account Sync behavior, tombstone safety, debug helpers, and E2E coverage remain in place
+
+---
+
 ## What's New in v4.1.0
 
 * Settings now includes Sync Health with account sync state, listener state, recent sync times, device ID, last error, and the active sync path

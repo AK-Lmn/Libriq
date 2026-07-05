@@ -2097,7 +2097,7 @@ function renderSettingsPage() {
       <div class="goal-widget" style="margin-bottom: var(--space-4);">
         <div class="goal-header">
           <div>
-            <div class="goal-title">Appearance</div>
+            <div class="goal-title">Appearance / Theme</div>
           </div>
         </div>
         <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
@@ -2140,7 +2140,7 @@ function renderSettingsPage() {
       </div>
 
       <div class="goal-widget" style="margin-bottom: var(--space-4);">
-        <div class="goal-header"><div class="goal-title">Data</div></div>
+        <div class="goal-header"><div class="goal-title">Export / Import</div></div>
         <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
           <div class="activity-text">
             <div class="activity-title">Export library</div>
@@ -2191,45 +2191,20 @@ function renderSettingsPage() {
 
       <div class="goal-widget" style="margin-bottom: var(--space-4);">
         <div class="goal-header">
-          <div class="goal-title">Search &amp; Privacy</div>
+          <div class="goal-title">Privacy / Data</div>
         </div>
         <p class="text-sm text-secondary" style="line-height: var(--leading-loose); margin-top: 0;">
-          LibriQ works without an account. It searches public book sources like Open Library and Google Books, and your library stays local on this device unless you export it manually. Continue offline pauses cloud backup for that session, and JSON export remains available. Some providers may rate-limit requests during heavy usage, but Open Library fallback remains available.
+          LibriQ works without an account. Your library stays on this device unless you choose to back it up, sync it, or export it.
         </p>
-        <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
-          <div class="activity-text">
-            <div class="activity-title">Open Library</div>
-            <div class="activity-subtitle">Available</div>
-          </div>
-        </div>
-        <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
-          <div class="activity-text">
-            <div class="activity-title">Google Books</div>
-            <div class="activity-subtitle">Available</div>
-          </div>
-        </div>
-        <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
-          <div class="activity-text">
-            <div class="activity-title">Google Books key</div>
-            <div class="activity-subtitle">${_hasGoogleBooksKey() ? 'Configured' : 'Not configured'}</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="goal-widget" style="margin-bottom: var(--space-4);">
-        <div class="goal-header">
-          <div class="goal-title">Privacy &amp; Local Data</div>
-        </div>
         <div class="activity-list">
           ${[
             ['Local library storage', 'LibriQ stores your library locally on this device.'],
-            ['Basic traffic analytics', 'LibriQ uses anonymous Google Analytics page views to understand general traffic.'],
-            ['Accounts are optional', 'Sign in only if you want cloud backup.'],
-            ['Automatic cloud backup', 'Signing in enables debounced cloud backups after local changes.'],
-            ['Realtime Sync Beta', 'Account Sync updates books automatically across signed-in devices, while cloud backup and manual restore stay separate.'],
-            ['Optional JSON export', 'Export a JSON copy anytime for an extra manual safety copy.'],
-            ['Private notes and quotes', 'Private notes and quotes stay local unless included in an exported backup.'],
-            ['Continue offline', 'Continue offline keeps local data working while cloud backup is paused for that session.'],
+            ['Analytics', 'LibriQ uses anonymous page views to understand general traffic.'],
+            ['Accounts are optional', 'You can keep using LibriQ without signing in.'],
+            ['Backup and sync', 'Backup, restore, merge, and Account Sync stay separate.'],
+            ['JSON export', 'Export a copy anytime for your own backup.'],
+            ['Private notes and quotes', 'Private notes and quotes stay local unless you include them in a backup.'],
+            ['Continue offline', 'Offline mode keeps your books on this device.'],
           ].map(([title, subtitle]) => `
             <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
               <div class="activity-text">
@@ -2337,7 +2312,7 @@ function _buildCloudBackupSection(firebase, cloudBackupMeta) {
       <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
         <div class="activity-text">
           <div class="activity-title">Cloud backup</div>
-          <div class="activity-subtitle">Cloud backup is unavailable in this build or Firestore is not configured.</div>
+          <div class="activity-subtitle">Cloud backup is unavailable right now.</div>
         </div>
       </div>`;
   }
@@ -2361,16 +2336,18 @@ function _buildCloudBackupSection(firebase, cloudBackupMeta) {
   const lastSavedText = lastSaved
     ? (window.LibriqCloudBackup?.formatLastSavedLabel?.(lastSaved) || `Last backed up: ${Utils.formatDate(lastSaved)}`)
     : 'No cloud backup yet.';
+  const backupHelperText = cloudState.pending
+    ? 'Saving...'
+    : 'Cloud backup is a safety copy of your library. Account Sync updates books across devices, while backup and restore stay separate.';
 
   return `
     <div class="activity-list" id="settingsCloudBackupCard">
       <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
         <div class="activity-text">
-          <div class="activity-title">Cloud backup status</div>
+          <div class="activity-title">Cloud backup</div>
           <div class="activity-subtitle" id="cloudBackupStatusText">${status}</div>
-          <div class="activity-subtitle" id="cloudBackupSecondaryText">${cloudState.pending ? 'Saving…' : 'Your library is quietly backed up to your account. Restore is manual so nothing gets replaced without your permission.'}</div>
+          <div class="activity-subtitle" id="cloudBackupSecondaryText">${backupHelperText}</div>
           <div class="activity-subtitle" id="cloudBackupLastSavedText">${lastSavedText}</div>
-          <div class="activity-subtitle" id="cloudBackupBookCountText">Book count: ${typeof cloudBackupMeta.bookCount === 'number' ? cloudBackupMeta.bookCount : 'Unknown'}</div>
         </div>
       </div>
       <div class="settings-cloud-actions" style="display:flex; gap: var(--space-2); flex-wrap: wrap;">
@@ -2387,7 +2364,6 @@ function _buildCloudBackupSection(firebase, cloudBackupMeta) {
           Merge cloud with this device
         </button>
       </div>
-      <div class="activity-subtitle" id="cloudBackupGroundworkText">Account Sync uses safe merge handling for books; backup and restore remain separate.</div>
     </div>`;
 }
 
@@ -2395,7 +2371,7 @@ function _buildSyncSection(firebase) {
   const syncState = window.LibriqSyncBeta?.getState?.() || { enabled: false, status: 'off', message: 'Account sync off', conflictCount: 0 };
   const signedIn = Boolean(firebase.user || window.LibriqFirebase?.getCurrentUser?.());
   const offlineMode = Navigation.getSessionPreference?.() === 'offline';
-  const healthRows = _buildSyncHealthRows(syncState, offlineMode);
+  const diagnosticsRows = _buildSyncDiagnosticsRows(syncState);
   if (!firebase.initialized) {
     return `
       <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
@@ -2414,20 +2390,19 @@ function _buildSyncSection(firebase) {
         </div>
       </div>`;
   }
-  const primary = offlineMode
+  const description = offlineMode
     ? 'Offline mode: books stay on this device.'
     : signedIn && syncState.enabled
       ? 'Your books sync automatically across signed-in devices.'
       : signedIn
-        ? 'Account sync is turned off on this device.'
+        ? 'Sync is off on this device.'
         : 'Sign in to sync your library.';
-  const statusText = offlineMode ? 'Sync paused in offline mode'
-    : !signedIn ? 'Signed out'
-    : syncState.enabled && syncState.status === 'syncing' ? 'Syncing…'
-    : syncState.enabled ? (syncState.message || 'Synced just now')
-    : 'Account sync off';
+  const syncStatus = offlineMode ? 'Paused'
+    : !signedIn ? 'Off'
+    : syncState.enabled ? 'On'
+    : 'Off';
   const lastSynced = syncState.lastSyncedAt ? `Last synced: ${Utils.formatDate(syncState.lastSyncedAt)}` : 'Last synced: Not yet';
-  const listenerState = syncState.listenerAttached ? `Listener: connected (${syncState.listenerPath || 'books'})` : 'Listener: not connected';
+  const errorText = syncState.status === 'error' && syncState.lastError ? `Sync needs attention: ${syncState.lastError}` : '';
   const actionLabel = syncState.enabled && !offlineMode ? 'Turn off sync' : 'Turn on sync';
   const actionDisabled = !signedIn || offlineMode;
   return `
@@ -2435,11 +2410,10 @@ function _buildSyncSection(firebase) {
       <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
         <div class="activity-text">
           <div class="activity-title">Account Sync</div>
-          <div class="activity-subtitle" id="syncStatusText">${Utils.sanitize(primary)}</div>
-          <div class="activity-subtitle" id="syncSecondaryText">${Utils.sanitize(statusText)}</div>
+          <div class="activity-subtitle" id="syncStatusText">Sync status: ${Utils.sanitize(syncStatus)}</div>
+          <div class="activity-subtitle" id="syncSecondaryText">${Utils.sanitize(description)}</div>
           <div class="activity-subtitle" id="syncLastSyncedText">${Utils.sanitize(lastSynced)}</div>
-          <div class="activity-subtitle" id="syncListenerText">${Utils.sanitize(listenerState)}</div>
-          <div class="activity-subtitle" id="syncConflictText">${syncState.conflictCount ? `Some sync conflicts were kept on this device.` : 'No sync conflicts kept on this device yet.'}</div>
+          ${errorText ? `<div class="activity-subtitle" id="syncErrorText">${Utils.sanitize(errorText)}</div>` : ''}
         </div>
       </div>
       <div class="settings-cloud-actions" style="display:flex; gap: var(--space-2); flex-wrap: wrap;">
@@ -2447,38 +2421,36 @@ function _buildSyncSection(firebase) {
           ${actionLabel}
         </button>
         <button class="btn btn-secondary btn-sm" type="button" id="syncRefreshStatusBtn">
-          Refresh sync status
+          Refresh
         </button>
       </div>
-      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
-        <div class="activity-text">
-          <div class="activity-title">Sync Health</div>
-          <div class="activity-subtitle">A quick check of this device's sync connection.</div>
-          <div class="sync-health-list">
-            ${healthRows}
-          </div>
+      <details class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+        <summary class="activity-title" style="cursor:pointer;">Advanced diagnostics</summary>
+        <div class="activity-text" style="margin-top: var(--space-2);">
+          <div class="activity-subtitle">For troubleshooting only.</div>
+          <div class="sync-health-list">${diagnosticsRows}</div>
         </div>
-      </div>
+      </details>
     </div>`;
 }
 
-function _buildSyncHealthRows(syncState, offlineMode) {
-  const accountStatus = offlineMode ? 'Paused' : syncState.enabled ? 'On' : 'Off';
+function _buildSyncDiagnosticsRows(syncState) {
   const listenerStatus = syncState.listenerAttached ? 'Connected' : 'Not connected';
-  const lastSynced = syncState.lastSyncedAt ? Utils.formatDate(syncState.lastSyncedAt) : 'Not yet';
   const lastSnapshot = syncState.lastSnapshotAt ? Utils.formatDate(syncState.lastSnapshotAt) : 'Not yet';
+  const lastWrite = syncState.lastWriteAt ? Utils.formatDate(syncState.lastWriteAt) : 'Not yet';
   const lastError = syncState.lastError || 'None';
-  const userDisabled = syncState.userDisabled ? 'Yes' : 'No';
+  const eligibility = syncState.eligibilityAllowed ? 'Allowed' : 'Not eligible right now';
   const syncPath = syncState.syncPath || syncState.listenerPath || 'Not available yet';
   const rows = [
-    ['Account Sync', accountStatus],
-    ['Listener', listenerStatus],
-    ['Last synced', lastSynced],
-    ['Last snapshot', lastSnapshot],
     ['Device ID', syncState.deviceId || 'Not available yet'],
+    ['Listener state', listenerStatus],
+    ['Sync path', syncPath],
+    ['Last snapshot', lastSnapshot],
+    ['Last write', lastWrite],
     ['Last error', lastError],
-    ['User disabled sync', userDisabled],
-    ['Current sync path', syncPath],
+    ['Tombstone count', String(syncState.tombstoneCount ?? 0)],
+    ['Oldest tombstone', syncState.oldestTombstoneAt ? Utils.formatDate(syncState.oldestTombstoneAt) : 'None'],
+    ['Eligibility status', eligibility],
   ];
   return rows.map(([label, value]) => `
     <div class="activity-subtitle">
