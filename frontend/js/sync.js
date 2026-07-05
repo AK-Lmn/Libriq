@@ -442,16 +442,27 @@ const LibriqSyncBeta = (() => {
   if (enabled) refresh();
 
   function debugStatus() {
+    const firebase = getFirebaseState();
+    const user = getResolvedUser();
+    const sessionMode = Navigation.getCurrentSessionMode?.() || Navigation.getSessionPreference?.();
+    const reasons = [];
+    if (!enabled) reasons.push('not enabled in storage');
+    if (!user) reasons.push('no uid');
+    if (!firebase.available || !window.LibriqFirebase?.hasFirestore?.()) reasons.push('Firestore unavailable');
+    if (sessionMode === 'offline') reasons.push('not account mode');
+    if (Navigation.currentPage === 'session' || document.body.classList.contains('session-choice-active')) reasons.push('session choice active');
+    if (lastError) reasons.push('listener error');
     return {
       enabled,
       attached: listenerAttached,
-      uid: currentUid,
+      uid: currentUid || user?.uid || null,
       deviceId: getDeviceId(),
-      sessionMode: Navigation.getCurrentSessionMode?.() || Navigation.getSessionPreference?.(),
+      sessionMode,
       listenerPath,
       lastSnapshotAt,
       lastWriteAt,
       lastError,
+      disabledReasons: reasons,
     };
   }
 
