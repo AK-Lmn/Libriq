@@ -33,6 +33,7 @@ const LibriqSyncBeta = (() => {
   let lastSnapshotAt = null;
   let lastWriteAt = null;
   let lastError = null;
+  let attachInFlight = false;
 
   function getFirebaseState() {
     return window.LibriqFirebase?.getState?.() || {};
@@ -151,6 +152,7 @@ const LibriqSyncBeta = (() => {
   }
 
   function teardown() {
+    attachInFlight = false;
     if (listenerUnsub) {
       listenerUnsub();
       debugLog('sync listener detached', { reason: 'teardown', listenerPath });
@@ -166,6 +168,10 @@ const LibriqSyncBeta = (() => {
   }
 
   function refresh() {
+    if (attachInFlight) {
+      debugLog('refresh skipped while attach in flight', { listenerPath, currentUid });
+      return;
+    }
     teardown();
     const firebase = getFirebaseState();
     const user = getResolvedUser();
@@ -214,32 +220,35 @@ const LibriqSyncBeta = (() => {
     listenerPath = path;
     currentUid = uid;
     listenerAttached = true;
+    attachInFlight = true;
     debugLog('sync listener attach attempt', { uid, listenerPath });
     try {
       listenerUnsub = window.LibriqFirebase.onSnapshot(q, (snapshot) => {
-      if (applyingRemoteChanges) return;
-      const remoteBooks = [];
-      snapshot.forEach((docSnap) => remoteBooks.push(docSnap.data()));
-      lastSnapshotAt = new Date().toISOString();
-      debugLog('snapshot received', { listenerPath, changeCount: remoteBooks.length, snapshotAt: lastSnapshotAt });
-      const fingerprint = JSON.stringify(remoteBooks.map(book => [book.id, book.updatedAt, book.deletedAt, book.deviceId]).sort());
-      if (fingerprint === lastRemoteFingerprint) return;
-      lastRemoteFingerprint = fingerprint;
-      applyRemoteBooks(remoteBooks);
+        if (applyingRemoteChanges) return;
+        const remoteBooks = [];
+        snapshot.forEach((docSnap) => remoteBooks.push(docSnap.data()));
+        lastSnapshotAt = new Date().toISOString();
+        debugLog('snapshot received', { listenerPath, changeCount: remoteBooks.length, snapshotAt: lastSnapshotAt });
+        const fingerprint = JSON.stringify(remoteBooks.map(book => [book.id, book.updatedAt, book.deletedAt, book.deviceId]).sort());
+        if (fingerprint === lastRemoteFingerprint) return;
+        lastRemoteFingerprint = fingerprint;
+        applyRemoteBooks(remoteBooks);
       }, (err) => {
-      lastError = err?.message || String(err || 'unknown');
-      console.warn('[LibriQ][Sync] listener error:', err);
-      setState(STATUS.ERROR, 'Sync error. Your local data is safe.');
-      debugLog('listener error', { uid, listenerPath, error: lastError });
+        lastError = err?.message || String(err || 'unknown');
+        console.warn('[LibriQ][Sync] listener error:', err);
+        setState(STATUS.ERROR, 'Sync error. Your local data is safe.');
+        debugLog('listener error', { uid, listenerPath, error: lastError });
       });
     } catch (err) {
       lastError = err?.message || String(err || 'unknown');
       listenerAttached = false;
       listenerUnsub = null;
+      attachInFlight = false;
       debugLog('listener attach failed', { uid, listenerPath, error: lastError });
       setState(STATUS.ERROR, 'Sync unavailable. Your local data is safe.');
       return;
     }
+    attachInFlight = false;
     debugLog('sync listener attached', { uid, listenerPath });
   }
 
@@ -290,17 +299,25 @@ const LibriqSyncBeta = (() => {
 
   function normalizeBookForSync(book) {
     if (!book || typeof book !== 'object') return null;
+    const cover = book.cover ?? book.coverUrl ?? book.imageLinks ?? null;
+    const currentPage = book.currentPage ?? 0;
+    const pageCount = book.pageCount ?? book.pages ?? 0;
     return {
       id: book.id,
       title: book.title || '',
       author: book.author || '',
-      cover: book.cover || book.coverUrl || null,
+      cover,
+      coverUrl: cover,
+      imageLinks: book.imageLinks ?? null,
       isbn: book.isbn || null,
+      identifiers: Array.isArray(book.identifiers) ? book.identifiers : (Array.isArray(book.industryIdentifiers) ? book.industryIdentifiers : []),
       status: book.status || LIBRIQ.STATUS.WISHLIST,
-      currentPage: book.currentPage ?? 0,
-      pages: book.pageCount ?? book.pages ?? 0,
+      currentPage,
+      pages: pageCount,
+      pageCount,
       rating: book.rating ?? null,
       isFavorite: Boolean(book.isFavorite),
+      shelves: Array.isArray(book.shelves) ? book.shelves : [],
       tags: Array.isArray(book.tags) ? book.tags : [],
       notes: typeof book.notes === 'string' ? book.notes : '',
       quotes: Array.isArray(book.quotes) ? book.quotes : [],
@@ -314,21 +331,37 @@ const LibriqSyncBeta = (() => {
   }
 
   async function uploadLocalBooks(reason = 'local-change') {
-    const firebase = getFirebaseState();
     const user = getResolvedUser();
     if (!enabled || !user || !window.LibriqFirebase?.hasFirestore?.()) return;
-    const books = Storage.getBooks().map(normalizeBookForSync).filter(Boolean);
+    const localBooks = Storage.getBooks();
+    const books = localBooks.map(normalizeBookForSync).filter(Boolean);
     setState(STATUS.SYNCING, 'Syncing…');
     try {
       applyingRemoteChanges = true;
       const db = window.LibriqFirebase.getFirestoreClient();
+      const remoteSnapshot = await window.LibriqFirebase.getDocs(
+        window.LibriqFirebase.query(
+          window.LibriqFirebase.collection(db, ...getSyncBooksCollectionSegments(user.uid)),
+          window.LibriqFirebase.orderBy('updatedAt', 'asc'),
+        ),
+      );
+      const localIds = new Set(localBooks.map(book => book.id));
+      const remoteDeletes = [];
+      remoteSnapshot.forEach((docSnap) => {
+        const remote = docSnap.data?.() || docSnap.data || null;
+        if (remote?.id && !localIds.has(remote.id)) {
+          remoteDeletes.push(window.LibriqFirebase.deleteDoc(
+            window.LibriqFirebase.doc(db, ...getSyncBooksCollectionSegments(user.uid), remote.id),
+          ));
+        }
+      });
       const writes = books.map(book => window.LibriqFirebase.setDoc(
         window.LibriqFirebase.doc(db, ...getSyncBooksCollectionSegments(user.uid), book.id),
         book,
       ));
       const favoriteWrites = books.filter(book => typeof book.isFavorite === 'boolean').map(book => ({ bookId: book.id, isFavorite: book.isFavorite }));
       debugLog('favorite sync write queued', { reason, favoriteWrites });
-      await Promise.all(writes);
+      await Promise.all([...remoteDeletes, ...writes]);
       lastWriteAt = new Date().toISOString();
       lastSyncedAt = new Date().toISOString();
       setState(STATUS.SYNCED, 'Waiting for changes', { lastSyncedAt });
@@ -358,9 +391,11 @@ const LibriqSyncBeta = (() => {
     let changed = false;
     let conflicts = 0;
     const nextBooks = localBooks.map(book => ({ ...book }));
+    const remoteIds = new Set();
 
     remoteBooks.forEach(remote => {
       if (!remote?.id) return;
+      remoteIds.add(remote.id);
       const local = byId.get(remote.id);
       const remoteTime = remote.updatedAt || remote.createdAt || null;
       const localTime = local?.updatedAt || local?.createdAt || null;
@@ -399,12 +434,27 @@ const LibriqSyncBeta = (() => {
           nextBooks[nextBooks.findIndex(book => book.id === remote.id)] = merged;
           changed = true;
           debugLog('remote book applied', { bookId: remote.id, reason: 'favorite changed on timestamp tie', remoteFavorite: favoriteState, localFavorite: Boolean(local.isFavorite) });
+        } else if (remote.deletedAt && compareTimes(remote.deletedAt, local?.updatedAt || local?.createdAt || null) >= 0) {
+          const idx = nextBooks.findIndex(book => book.id === remote.id);
+          if (idx !== -1) {
+            nextBooks.splice(idx, 1);
+            changed = true;
+          }
         } else {
           conflicts += 1;
           debugLog('remote book skipped', { bookId: remote.id, reason: 'timestamp tie or missing timestamp', remoteFavorite: favoriteState, localFavorite: Boolean(local.isFavorite), remoteUpdatedAt: remote.updatedAt || null, localUpdatedAt: local.updatedAt || null });
         }
       }
     });
+
+    for (let i = nextBooks.length - 1; i >= 0; i -= 1) {
+      const local = nextBooks[i];
+      if (!remoteIds.has(local.id)) {
+        nextBooks.splice(i, 1);
+        changed = true;
+        debugLog('remote book applied', { bookId: local.id, reason: 'missing from remote snapshot, treated as delete' });
+      }
+    }
 
     if (!changed) {
       if (conflicts > 0) setState(STATUS.CONFLICT, 'Some sync conflicts were kept on this device.', { conflictCount: conflicts });
@@ -497,7 +547,7 @@ const LibriqSyncBeta = (() => {
     if (!enabled) reasons.push('not enabled in storage');
     if (!user) reasons.push('no uid');
     if (!firebase.available || !window.LibriqFirebase?.hasFirestore?.()) reasons.push('Firestore unavailable');
-    if (sessionMode === 'offline') reasons.push('not account mode');
+    if (!isAccountMode()) reasons.push('not account mode');
     if (Navigation.currentPage === 'session' || document.body.classList.contains('session-choice-active')) reasons.push('session choice active');
     if (lastError) reasons.push('listener error');
     return {
@@ -511,6 +561,10 @@ const LibriqSyncBeta = (() => {
       lastWriteAt,
       lastError,
       disabledReasons: reasons,
+      firebaseCurrentUserUid: firebase.user?.uid || window.LibriqFirebase?.getCurrentUser?.()?.uid || null,
+      firestoreAvailable: Boolean(window.LibriqFirebase?.hasFirestore?.()),
+      eligibilityAllowed: isEligible(),
+      eligibilityBlockedReason: reasons[0] || null,
     };
   }
 
