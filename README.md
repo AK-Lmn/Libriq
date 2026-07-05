@@ -42,12 +42,12 @@ The app is designed to feel like a focused digital reading space instead of a pl
 
 ---
 
-## What's New in v4.0.0
+## What's New in v4.0.1
 
-* Realtime Sync Beta now supports books-only syncing across signed-in account-mode devices
+* Account Sync now turns on automatically for signed-in account-mode devices
 * Automatic cloud backup, manual restore, and cloud merge remain separate safety tools
-* Sync stays opt-in, keeps the backup document untouched, and uses `users/{uid}/sync/v1/books/{bookId}`
-* Help & Guide and Settings now explain beta status, offline pause behavior, and conflict safety
+* Sync keeps the backup document untouched and uses `users/{uid}/sync/v1/books/{bookId}`
+* Help & Guide and Settings now explain account sync status, offline pause behavior, and conflict safety
 * Restore remains manual, and the backup path still stays `users/{uid}/backups/current`
 
 ---
@@ -545,13 +545,13 @@ service cloud.firestore {
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
 
-### v4.0.0 - Realtime Sync Beta
+### v4.0.1 - Automatic Account Sync
 
 **Added**
 
-* Opt-in Realtime Sync Beta for signed-in users in account mode
+* Automatic Account Sync for signed-in users in account mode
 * Books-only realtime sync under `users/{uid}/sync/v1/books/{bookId}`
-* Sync status, enable, and disable controls in Settings
+* Sync status, last synced, listener state, and turn-off controls in Settings
 * Conservative conflict handling that keeps local data when timestamps are unclear
 
 **Changed**

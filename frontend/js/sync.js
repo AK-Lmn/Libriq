@@ -19,7 +19,7 @@ const LibriqSyncBeta = (() => {
 
   let enabled = localStorage.getItem(STORAGE_KEY) === '1';
   let status = STATUS.OFF;
-  let message = 'Sync Beta off';
+  let message = 'Account sync off';
   let conflictCount = 0;
   let lastSyncedAt = null;
   let listenerUnsub = null;
@@ -36,6 +36,8 @@ const LibriqSyncBeta = (() => {
   let lastWriteAt = null;
   let lastError = null;
   let attachInFlight = false;
+  let awaitingInitialSnapshot = false;
+  let queuedUploadBeforeInitialSnapshot = false;
 
   function getFirebaseState() {
     return window.LibriqFirebase?.getState?.() || {};
@@ -109,7 +111,7 @@ const LibriqSyncBeta = (() => {
     const user = getResolvedUser();
     const sessionMode = Navigation.getCurrentSessionMode?.() || Navigation.getSessionPreference?.();
     const reasons = [];
-    if (!enabled) reasons.push('sync beta disabled');
+    if (!enabled) reasons.push('account sync disabled');
     if (!firebase.available) reasons.push('firebase unavailable');
     if (!firebase.ready) reasons.push('firebase not ready');
     if (!user) reasons.push('no firebase user');
@@ -147,7 +149,13 @@ const LibriqSyncBeta = (() => {
     if (Navigation.currentPage !== 'settings') return;
     const statusEl = document.getElementById('syncStatusText');
     const conflictEl = document.getElementById('syncConflictText');
-    if (statusEl) statusEl.textContent = message;
+    const secondaryEl = document.getElementById('syncSecondaryText');
+    const lastSyncedEl = document.getElementById('syncLastSyncedText');
+    const listenerEl = document.getElementById('syncListenerText');
+    if (statusEl) statusEl.textContent = enabled ? 'Your books sync automatically across signed-in devices.' : (isAccountMode() ? 'Account sync is turned off on this device.' : 'Offline mode: books stay on this device.');
+    if (secondaryEl) secondaryEl.textContent = message;
+    if (lastSyncedEl) lastSyncedEl.textContent = lastSyncedAt ? `Last synced: ${Utils.formatDate(lastSyncedAt)}` : 'Last synced: Not yet';
+    if (listenerEl) listenerEl.textContent = listenerAttached ? `Listener: connected (${listenerPath || 'books'})` : 'Listener: not connected';
     if (conflictEl) {
       conflictEl.textContent = conflictCount
         ? 'Some sync conflicts were kept on this device.'
@@ -164,7 +172,7 @@ const LibriqSyncBeta = (() => {
   }
 
   function getState() {
-    return { enabled, status, message, conflictCount, lastSyncedAt };
+    return { enabled, status, message, conflictCount, lastSyncedAt, listenerAttached, listenerPath, lastSnapshotAt };
   }
 
   function setEnabled(nextEnabled) {
@@ -173,7 +181,7 @@ const LibriqSyncBeta = (() => {
     debugLog('enabled toggled', { enabled });
     if (!enabled) {
       teardown();
-      setState(STATUS.OFF, 'Sync Beta off');
+      setState(STATUS.OFF, 'Account sync off');
       return false;
     }
     if (!isAccountMode()) {
@@ -193,6 +201,7 @@ const LibriqSyncBeta = (() => {
     listenerUnsub = null;
     listenerAttached = false;
     listenerPath = null;
+    awaitingInitialSnapshot = false;
     currentUid = null;
     if (pendingWriteTimer) clearTimeout(pendingWriteTimer);
     pendingWriteTimer = null;
@@ -208,6 +217,7 @@ const LibriqSyncBeta = (() => {
       return;
     }
     teardown();
+    queuedUploadBeforeInitialSnapshot = false;
     const firebase = getFirebaseState();
     const user = getResolvedUser();
     debugLog('refresh check', {
@@ -221,7 +231,7 @@ const LibriqSyncBeta = (() => {
       attached: listenerAttached,
       rawEnabled: localStorage.getItem(STORAGE_KEY),
     });
-    if (!enabled) return setState(STATUS.OFF, 'Sync Beta off');
+    if (!enabled) return setState(STATUS.OFF, 'Account sync off');
     if (!firebase.available || !firebase.ready || !user || !window.LibriqFirebase?.hasFirestore?.()) {
       lastError = null;
       return setState(STATUS.UNAVAILABLE, 'Sync unavailable');
@@ -230,7 +240,6 @@ const LibriqSyncBeta = (() => {
       return setState(STATUS.PAUSED, 'Sync paused in offline mode');
     }
     attachListener(user.uid);
-    queueUpload('refresh');
   }
 
   function attachListener(uid) {
@@ -256,6 +265,7 @@ const LibriqSyncBeta = (() => {
     currentUid = uid;
     listenerAttached = true;
     attachInFlight = true;
+    awaitingInitialSnapshot = true;
     debugLog('sync listener attach attempt', { uid, listenerPath });
     try {
       listenerUnsub = window.LibriqFirebase.onSnapshot(q, (snapshot) => {
@@ -263,11 +273,18 @@ const LibriqSyncBeta = (() => {
         const remoteBooks = [];
         snapshot.forEach((docSnap) => remoteBooks.push(docSnap.data()));
         lastSnapshotAt = new Date().toISOString();
+        const wasAwaitingInitialSnapshot = awaitingInitialSnapshot;
+        awaitingInitialSnapshot = false;
         debugLog('snapshot received', { listenerPath, changeCount: remoteBooks.length, snapshotAt: lastSnapshotAt });
         const fingerprint = JSON.stringify(remoteBooks.map(book => [book.id, book.updatedAt, book.deletedAt, book.deviceId]).sort());
-        if (fingerprint === lastRemoteFingerprint) return;
-        lastRemoteFingerprint = fingerprint;
-        applyRemoteBooks(remoteBooks);
+        if (fingerprint !== lastRemoteFingerprint) {
+          lastRemoteFingerprint = fingerprint;
+          applyRemoteBooks(remoteBooks);
+        }
+        if (wasAwaitingInitialSnapshot || queuedUploadBeforeInitialSnapshot) {
+          queuedUploadBeforeInitialSnapshot = false;
+          window.setTimeout(() => queueUpload('initial-snapshot-settled'), 0);
+        }
       }, (err) => {
         lastError = err?.message || String(err || 'unknown');
         console.warn('[LibriQ][Sync] listener error:', err);
@@ -289,6 +306,11 @@ const LibriqSyncBeta = (() => {
 
   function queueUpload(reason = 'local-change') {
     if (!enabled || applyingRemoteChanges || Date.now() < suppressWriteUntil) return;
+    if (awaitingInitialSnapshot) {
+      queuedUploadBeforeInitialSnapshot = true;
+      debugLog('sync write deferred until initial snapshot', { reason });
+      return;
+    }
     if (!isEligible()) {
       setState(Navigation.getSessionPreference?.() === 'offline' ? STATUS.PAUSED : STATUS.UNAVAILABLE,
         Navigation.getSessionPreference?.() === 'offline' ? 'Sync paused in offline mode' : 'Sync unavailable');
@@ -539,12 +561,29 @@ const LibriqSyncBeta = (() => {
   }
 
   function enableWithPrompt() {
-    const proceed = confirm('Enable Realtime Sync Beta? Export JSON first if you want a manual safety copy. Sync will update books across signed-in devices, and cloud backup remains available.');
-    if (!proceed) return false;
     return setEnabled(true);
   }
 
-  window.addEventListener('libriq:auth-changed', () => { if (enabled) refresh(); });
+  function maybeAutoEnable(reason = 'account-mode') {
+    if (!isAccountMode()) {
+      if (enabled) refresh();
+      return false;
+    }
+    const firebase = getFirebaseState();
+    const user = getResolvedUser();
+    if (!firebase.available || !firebase.ready || !user || !window.LibriqFirebase?.hasFirestore?.()) {
+      if (enabled) refresh();
+      return false;
+    }
+    if (!enabled) {
+      debugLog('account sync auto-enabled', { reason, uid: user.uid });
+      return setEnabled(true);
+    }
+    refresh();
+    return true;
+  }
+
+  window.addEventListener('libriq:auth-changed', () => { maybeAutoEnable('auth-changed'); });
   window.addEventListener('libriq:page-changed', (event) => {
     if (event?.detail?.page === 'session') return;
     scheduleUiRefresh();
@@ -556,7 +595,7 @@ const LibriqSyncBeta = (() => {
   window.addEventListener('online', refresh);
   window.addEventListener('offline', () => setState(STATUS.PAUSED, 'Sync paused in offline mode'));
 
-  if (enabled) refresh();
+  maybeAutoEnable('startup');
 
   function debugStatus() {
     const firebase = getFirebaseState();
@@ -593,7 +632,7 @@ const LibriqSyncBeta = (() => {
     getSyncBooksCollectionPath,
   };
 
-  return { getState, setEnabled, enableWithPrompt, refresh, onLocalChange, queueUpload };
+  return { getState, setEnabled, enableWithPrompt, refresh, maybeAutoEnable, onLocalChange, queueUpload };
 })();
 
 window.LibriqSyncBeta = LibriqSyncBeta;

@@ -1,0 +1,48 @@
+name: Sync CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+      - work
+
+jobs:
+  sync-tests:
+    name: Build, static checks, and sync E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build
+        run: npm run build
+
+      - name: JavaScript syntax checks
+        run: |
+          node --check frontend/js/sync.js
+          node --check frontend/js/firebase-client.js
+          node --check frontend/js/navigation.js
+          node --check frontend/js/storage.js
+          node --check frontend/js/app.js
+          node --check frontend/js/data.js
+          node --check scripts/e2e-server.mjs
+          node --check scripts/test-sync.mjs
+
+      - name: Sync E2E
+        run: npm run test:sync
