@@ -41,6 +41,7 @@ const LibriqSyncBeta = (() => {
   let awaitingInitialSnapshot = false;
   let queuedUploadBeforeInitialSnapshot = false;
   let uploadInFlight = false;
+  let lastAuthUid = getResolvedUser()?.uid || null;
 
   function isUserDisabled() {
     return localStorage.getItem(USER_DISABLED_KEY) === '1';
@@ -293,6 +294,12 @@ const LibriqSyncBeta = (() => {
     pendingSettledBackupTimer = null;
   }
 
+  function detachForAccountSwitch(reason = 'account-switch') {
+    debugLog('sync detach requested', { reason, currentUid, listenerPath });
+    teardown();
+    setState(enabled ? STATUS.UNAVAILABLE : STATUS.OFF, enabled ? 'Sync waiting for account data' : 'Account sync off');
+  }
+
   function refresh() {
     if (attachInFlight) {
       debugLog('refresh skipped while attach in flight', { listenerPath, currentUid });
@@ -356,17 +363,21 @@ const LibriqSyncBeta = (() => {
         snapshot.forEach((docSnap) => remoteBooks.push(docSnap.data()));
         lastSnapshotAt = new Date().toISOString();
         const wasAwaitingInitialSnapshot = awaitingInitialSnapshot;
+        const hadQueuedLocalChange = queuedUploadBeforeInitialSnapshot;
         awaitingInitialSnapshot = false;
         debugLog('snapshot received', { listenerPath, changeCount: remoteBooks.length, snapshotAt: lastSnapshotAt });
         const fingerprint = JSON.stringify(remoteBooks.map(book => [book.id, book.updatedAt, book.deletedAt, book.deviceId]).sort());
-        if (fingerprint !== lastRemoteFingerprint) {
+        if (wasAwaitingInitialSnapshot && hadQueuedLocalChange) {
+          lastRemoteFingerprint = fingerprint;
+          applyRemoteBooks(remoteBooks);
+          window.setTimeout(() => queueUpload('initial-snapshot-local-change'), 0);
+        } else if (wasAwaitingInitialSnapshot) {
+          applyInitialRemoteBooks(uid, remoteBooks);
+        } else if (fingerprint !== lastRemoteFingerprint) {
           lastRemoteFingerprint = fingerprint;
           applyRemoteBooks(remoteBooks);
         }
-        if (wasAwaitingInitialSnapshot || queuedUploadBeforeInitialSnapshot) {
-          queuedUploadBeforeInitialSnapshot = false;
-          window.setTimeout(() => queueUpload('initial-snapshot-settled'), 0);
-        }
+        queuedUploadBeforeInitialSnapshot = false;
       }, (err) => {
         lastError = err?.message || String(err || 'unknown');
         console.warn('[LibriQ][Sync] listener error:', err);
@@ -387,7 +398,17 @@ const LibriqSyncBeta = (() => {
   }
 
   function queueUpload(reason = 'local-change') {
-    if (!enabled || applyingRemoteChanges || Date.now() < suppressWriteUntil) return;
+    if (!enabled || applyingRemoteChanges) return;
+    const suppressedFor = suppressWriteUntil - Date.now();
+    if (suppressedFor > 0) {
+      if (pendingWriteTimer) clearTimeout(pendingWriteTimer);
+      pendingWriteTimer = setTimeout(() => {
+        pendingWriteTimer = null;
+        queueUpload(reason);
+      }, suppressedFor + 50);
+      debugLog('sync write deferred during suppression window', { reason, suppressedFor });
+      return;
+    }
     if (awaitingInitialSnapshot) {
       queuedUploadBeforeInitialSnapshot = true;
       debugLog('sync write deferred until initial snapshot', { reason });
@@ -475,6 +496,14 @@ const LibriqSyncBeta = (() => {
   async function uploadLocalBooks(reason = 'local-change') {
     const user = getResolvedUser();
     if (!enabled || !user || !window.LibriqFirebase?.hasFirestore?.()) return;
+    if (currentUid && currentUid !== user.uid) {
+      debugLog('sync write blocked for stale uid', { currentUid, authUid: user.uid, reason });
+      return;
+    }
+    if (Storage.getActiveAccountUid?.() !== user.uid) {
+      debugLog('sync write blocked for cache owner mismatch', { cacheUid: Storage.getActiveAccountUid?.() || null, authUid: user.uid, reason });
+      return;
+    }
     const localBooks = Storage.getBooks();
     const books = localBooks.map(normalizeBookForSync).filter(Boolean);
     const tombstones = Object.values(readTombstones()).filter(Boolean);
@@ -599,6 +628,28 @@ const LibriqSyncBeta = (() => {
     scheduleUiRefresh();
   }
 
+  function applyInitialRemoteBooks(uid, remoteBooks) {
+    if (!uid || Storage.getActiveAccountUid?.() !== uid) {
+      debugLog('initial snapshot ignored for stale uid', { snapshotUid: uid, cacheUid: Storage.getActiveAccountUid?.() || null });
+      return;
+    }
+    lastRemoteFingerprint = JSON.stringify(remoteBooks.map(book => [book.id, book.updatedAt, book.deletedAt, book.deviceId]).sort());
+    const activeRemoteBooks = (Array.isArray(remoteBooks) ? remoteBooks : [])
+      .filter(book => book?.id && !book.deletedAt)
+      .map(_toLocalBook);
+    applyingRemoteChanges = true;
+    suppressWriteUntil = Date.now() + 2000;
+    Storage.saveBooks(activeRemoteBooks);
+    Storage.saveCloudBackupMeta?.({ syncReady: true });
+    applyingRemoteChanges = false;
+    setState(STATUS.SYNCED, activeRemoteBooks.length ? 'Waiting for changes' : 'No synced books yet', {
+      conflictCount: 0,
+      lastSyncedAt: new Date().toISOString(),
+    });
+    debugLog('initial remote snapshot applied', { uid, count: activeRemoteBooks.length });
+    scheduleUiRefresh();
+  }
+
   function _toLocalBook(remote) {
     return createBook({
       ...remote,
@@ -675,7 +726,14 @@ const LibriqSyncBeta = (() => {
     return true;
   }
 
-  window.addEventListener('libriq:auth-changed', () => { maybeAutoEnable('auth-changed'); });
+  window.addEventListener('libriq:auth-changed', () => {
+    const nextUid = getResolvedUser()?.uid || null;
+    if (lastAuthUid !== nextUid) {
+      detachForAccountSwitch('auth-uid-changed');
+      lastAuthUid = nextUid;
+    }
+    maybeAutoEnable('auth-changed');
+  });
   window.addEventListener('libriq:page-changed', (event) => {
     if (event?.detail?.page === 'session') return;
     scheduleUiRefresh();
@@ -730,7 +788,7 @@ const LibriqSyncBeta = (() => {
     getSyncBooksCollectionPath,
   };
 
-  return { getState, setEnabled, pauseForOffline, enableWithPrompt, refresh, maybeAutoEnable, onLocalChange, queueUpload, pruneOldLocalTombstones };
+  return { getState, setEnabled, pauseForOffline, enableWithPrompt, refresh, maybeAutoEnable, onLocalChange, queueUpload, pruneOldLocalTombstones, detachForAccountSwitch };
 })();
 
 window.LibriqSyncBeta = LibriqSyncBeta;
