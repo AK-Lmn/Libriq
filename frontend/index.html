@@ -355,6 +355,14 @@
         </button>
       </div>
       <div class="modal-body" id="dangerConfirmContent">
+        <div class="modal-danger-panel">
+          <div class="modal-danger-icon" aria-hidden="true"><i class="ph ph-warning"></i></div>
+          <div>
+            <div class="modal-danger-copy" id="dangerConfirmBodyCopy">This action cannot be undone.</div>
+            <div class="modal-warning-note" style="margin-top: var(--space-3);">Typed confirmation is required before this action can run.</div>
+          </div>
+        </div>
+        <div id="dangerConfirmError" class="modal-inline-error" hidden></div>
         <label class="form-field">
           <span id="dangerConfirmPrompt">Type DELETE to continue</span>
           <input id="dangerConfirmInput" class="form-input" type="text" autocomplete="off" spellcheck="false" />
