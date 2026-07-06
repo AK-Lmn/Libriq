@@ -1210,3 +1210,5 @@ const Library = (() => {
     _setFormRating, _setManualFormRating,
   };
 })();
+
+window.Library = Library;
