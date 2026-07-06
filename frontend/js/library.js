@@ -651,12 +651,18 @@ const Library = (() => {
         <div id="bookQuotesList" style="margin-top: var(--space-3); display: grid; gap: var(--space-3);"></div>
       </div>
 
-      <div class="book-details-actions" id="bookDetailsActions"></div>`;
+      `;
 
     Utils.show(modal);
     document.body.style.overflow = 'hidden';
 
-    const actions = body.querySelector('#bookDetailsActions');
+    let actions = modal.querySelector('#bookDetailsFooter');
+    if (!actions) {
+      actions = document.createElement('div');
+      actions.className = 'modal-footer book-details-footer';
+      actions.id = 'bookDetailsFooter';
+      modal.querySelector('.book-details-modal')?.appendChild(actions);
+    }
     const notesTextarea = body.querySelector('#bookNotesTextarea');
     const notesMeta = body.querySelector('#bookNotesMeta');
     const saveNoteBtn = body.querySelector('#saveBookNoteBtn');
