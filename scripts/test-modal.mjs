@@ -26,11 +26,21 @@ function createElement(id) {
     value: '',
     disabled: false,
     placeholder: '',
+    title: '',
     onclick: null,
     oninput: null,
     className: '',
     style: {},
+    children: [],
     _html: '',
+    appendChild(child) {
+      this.children.push(child);
+      return child;
+    },
+    replaceChildren(...children) {
+      this.children = [...children];
+      return this;
+    },
     setAttribute(name, value) {
       if (name === 'hidden') this.hidden = true;
       else this[name] = value;
@@ -50,6 +60,10 @@ function createElement(id) {
     },
     triggerInput() {
       if (typeof this.oninput === 'function') this.oninput({ target: this });
+    },
+    addEventListener(event, handler) {
+      if (event === 'click') this.onclick = handler;
+      if (event === 'input') this.oninput = handler;
     },
   };
 }
@@ -73,6 +87,7 @@ function createDangerDom() {
   return {
     elements,
     body,
+    createElement,
     getElementById(id) {
       return elements.get(id) || null;
     },
@@ -124,6 +139,164 @@ function createContext() {
   windowObj.Navigation = context.Navigation;
   windowObj.Utils = context.Utils;
   return { context, dom };
+}
+
+function createBookDetailsDom() {
+  const elements = new Map();
+  const footer = createElement('bookDetailsFooter');
+  const modal = createElement('bookDetailsModal');
+  const body = createElement('bookDetailsBody');
+  const closeBtn = createElement('modalClose');
+
+  modal.hidden = true;
+  modal.children = [body, footer];
+  modal.querySelector = (selector) => {
+    if (selector === '.modal-close') return closeBtn;
+    if (selector === '#bookDetailsFooter') return footer;
+    if (selector === '.book-details-modal') return modal;
+    return null;
+  };
+  modal.appendChild = (child) => {
+    modal.children.push(child);
+    return child;
+  };
+  modal.replaceChildren = (...children) => {
+    modal.children = [...children];
+    return modal;
+  };
+
+  body.hidden = false;
+  body.setInnerHTML = (html) => {
+    body._html = html;
+    const idMatches = [...String(html || '').matchAll(/id="([^"]+)"/g)].map(match => match[1]);
+    for (const id of idMatches) {
+      if (!elements.has(id)) elements.set(id, createElement(id));
+    }
+  };
+  Object.defineProperty(body, 'innerHTML', {
+    get() { return body._html || ''; },
+    set(value) {
+      body.setInnerHTML(value);
+    },
+    configurable: true,
+  });
+  body.querySelector = (selector) => {
+    if (selector.startsWith('#')) return elements.get(selector.slice(1)) || null;
+    return null;
+  };
+
+  elements.set('bookDetailsModal', modal);
+  elements.set('bookDetailsBody', body);
+  elements.set('bookDetailsFooter', footer);
+  elements.set('modalClose', closeBtn);
+
+  return {
+    elements,
+    modal,
+    body,
+    footer,
+    createElement,
+    createElement(tag) {
+      return createElement(tag);
+    },
+    getElementById(id) {
+      return elements.get(id) || null;
+    },
+  };
+}
+
+function createBookDetailsContext() {
+  const dom = createBookDetailsDom();
+  const windowObj = {
+    document: dom,
+    console,
+    setTimeout,
+    clearTimeout,
+    addEventListener() {},
+    removeEventListener() {},
+    dispatchEvent() {},
+  };
+  const context = {
+    window: windowObj,
+    document: dom,
+    console,
+    setTimeout,
+    clearTimeout,
+    Storage: {
+      getBookById: () => ({
+        id: 'book-1',
+        title: 'Sample Book',
+        author: 'Sample Author',
+        status: 'reading',
+        currentPage: 40,
+        pageCount: 100,
+        tags: ['Shelf'],
+        rating: null,
+        genres: ['Genre'],
+        notes: '',
+      }),
+      updateBook() { return {}; },
+      removeBook() {},
+    },
+    Navigation: {
+      renderCurrentPage() {},
+      updateBadges() {},
+    },
+    Utils: {
+      toast() {},
+      sanitize: (value) => String(value ?? ''),
+      readingProgress: () => 40,
+      formatDate: (value) => String(value ?? ''),
+      buildCover: () => ({ outerHTML: '<div class="book-cover"></div>' }),
+      buildStars: () => '<span class="star-rating"></span>',
+      statusBadgeClass: () => 'badge-reading',
+      statusLabel: () => 'Reading',
+      show(modal) { modal.hidden = false; },
+      hide(modal) { modal.hidden = true; },
+    },
+    closeDetailsModal() {},
+    LIBRIQ: {
+      STATUS: { READING: 'reading', FINISHED: 'finished' },
+    },
+    _getMetadataQuality: () => ({ className: 'ok', label: 'OK' }),
+  };
+  windowObj.window = windowObj;
+  windowObj.Storage = context.Storage;
+  windowObj.Navigation = context.Navigation;
+  windowObj.Utils = context.Utils;
+  return { context, dom };
+}
+
+function loadBookDetailsFn(context) {
+  const showDetails = extractFunctionBlock(fs.readFileSync(path.join(repoRoot, 'frontend/js/library.js'), 'utf8'), 'function showDetailsModal(bookId) {', '  function closeDetailsModal() {');
+  vm.runInNewContext(showDetails, context, { filename: 'library-show-details-snippet.js' });
+}
+
+function countActionButtons(footer, predicate) {
+  return footer.children.filter(predicate).length;
+}
+
+function testBookDetailsFooterIdempotent() {
+  const { context, dom } = createBookDetailsContext();
+  loadBookDetailsFn(context);
+  const showDetailsModal = context.showDetailsModal || context.window.showDetailsModal;
+  assert.equal(typeof showDetailsModal, 'function', 'showDetailsModal should be available');
+
+  showDetailsModal('book-1');
+  const footer = dom.getElementById('bookDetailsFooter');
+  assert.ok(footer, 'footer should exist');
+  assert.equal(countActionButtons(footer, child => String(child.innerHTML || '').includes('Update Progress')), 1, 'first render should create one Update Progress button');
+  assert.equal(countActionButtons(footer, child => String(child.innerHTML || '').includes('Mark Finished')), 1, 'first render should create one Mark Finished button');
+  assert.equal(countActionButtons(footer, child => String(child.innerHTML || '').includes('Refresh metadata')), 1, 'first render should create one Refresh metadata button');
+  assert.equal(countActionButtons(footer, child => String(child.innerHTML || '').includes('ph-trash')), 1, 'first render should create one Remove button');
+  assert.equal(countActionButtons(footer, child => String(child.title || '').includes('favorites')), 1, 'first render should create one Favorite button');
+
+  showDetailsModal('book-1');
+  assert.equal(countActionButtons(footer, child => String(child.innerHTML || '').includes('Update Progress')), 1, 'reopen should keep one Update Progress button');
+  assert.equal(countActionButtons(footer, child => String(child.innerHTML || '').includes('Mark Finished')), 1, 'reopen should keep one Mark Finished button');
+  assert.equal(countActionButtons(footer, child => String(child.innerHTML || '').includes('Refresh metadata')), 1, 'reopen should keep one Refresh metadata button');
+  assert.equal(countActionButtons(footer, child => String(child.innerHTML || '').includes('ph-trash')), 1, 'reopen should keep one Remove button');
+  assert.equal(countActionButtons(footer, child => String(child.title || '').includes('favorites')), 1, 'reopen should keep one Favorite button');
 }
 
 function loadModalFns(context) {
@@ -195,6 +368,7 @@ async function testAction(context, dom, config) {
 
 async function main() {
   assertSingleInputInMarkup();
+  testBookDetailsFooterIdempotent();
   assert.equal(navSource.includes('window.prompt'), false, 'danger modal code should not use window.prompt');
   assert.equal(navSource.includes('Danger modal unavailable for confirmation dialog'), true, 'danger modal guard should exist');
 
