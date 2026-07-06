@@ -2206,22 +2206,37 @@ function renderRecommendationsPage() {
         <div class="recommendations-heading">
           <span class="library-eyebrow">Local suggestions</span>
           <h1 class="page-title">Recommendations</h1>
-          <p class="page-subtitle">Suggestions built only from your saved library</p>
+          <p class="page-subtitle">Suggestions built from the books you’ve already saved in LibriQ.</p>
         </div>
       </div>
+
+      <section class="recommendations-intro">
+        <div class="recommendations-intro-copy">
+          <div class="recommendations-intro-kicker">Local discovery</div>
+          <div class="recommendations-intro-title">Built from your saved books, favorite authors, and reading shelves.</div>
+          <div class="recommendations-intro-body">These are local suggestions only. LibriQ is using the library data you already have, so the page stays honest until richer recommendations arrive later.</div>
+        </div>
+      </section>
 
       ${recState.hasSignal ? `
         <div class="recommendations-groups stagger">
           ${recState.groups.map(group => buildRecommendationGroup(group)).join('')}
         </div>
+        <div class="recommendations-helper-note">Add more favorites, finished books, and Want to Read titles to improve local suggestions.</div>
       ` : `
         <div class="empty-state recommendations-empty-state">
           <div class="empty-state-icon"><i class="ph ph-sparkle"></i></div>
-          <div class="empty-state-title">Add and rate more books to get better recommendations.</div>
-          <div class="empty-state-body">Once you save a few books, LibriQ will surface nearby reads using your own library signals.</div>
-          <button class="btn btn-primary" onclick="Search.open()">
-            <i class="ph ph-magnifying-glass"></i> Search Books
-          </button>
+          <div class="empty-state-title">Save a few more books to unlock local suggestions.</div>
+          <div class="empty-state-body">Recommendations are built from your saved library, including favorites, finished books, ratings, and Want to Read titles.</div>
+          <div class="recommendations-empty-actions">
+            <button class="btn btn-primary" onclick="Search.open()">
+              <i class="ph ph-magnifying-glass"></i> Search Books
+            </button>
+            <button class="btn btn-secondary" onclick="Navigation.goTo('library')">
+              <i class="ph ph-books"></i> Open Library
+            </button>
+          </div>
+          <div class="recommendations-empty-hint">Add books, favorite a few, finish a few, or move books to Want to Read.</div>
         </div>
       `}
     </div>`;
@@ -2276,14 +2291,14 @@ function _buildRecommendationState(books) {
       .sort((a, b) => _recommendationScore(b) - _recommendationScore(a))
       .slice(0, 4);
     if (booksByAuthor.length) {
-      groups.push({ title: 'More from authors you enjoy', label: topAuthor, books: booksByAuthor });
+      groups.push({ title: 'Books from authors you’ve saved', label: 'Based on authors already in your library', books: booksByAuthor });
     }
   }
 
   if (highRatedBooks.length) {
     groups.push({
       title: 'Highly rated in your library',
-      label: `${highRatedBooks.length} rated book${highRatedBooks.length !== 1 ? 's' : ''}`,
+      label: 'Saved books with strong ratings',
       books: [...highRatedBooks]
         .sort((a, b) => (b.rating || 0) - (a.rating || 0) || _dateValue(b.dateAdded) - _dateValue(a.dateAdded))
         .slice(0, 4),
@@ -2304,7 +2319,8 @@ function _buildRecommendationState(books) {
   if (wishlistBooks.length) {
     groups.push({
       title: 'From your Want to Read shelf',
-      label: `${wishlistBooks.length} book${wishlistBooks.length !== 1 ? 's' : ''}`,
+      label: 'Saved for later',
+      showCardReason: false,
       books: [...wishlistBooks]
         .sort((a, b) => _recommendationScore(b) - _recommendationScore(a))
         .slice(0, 4),
@@ -2331,11 +2347,12 @@ function _buildRecommendationState(books) {
 }
 
 function buildRecommendationGroup(group) {
-  const cards = group.books.map(book => buildRecommendationCard(book, group.label)).join('');
+  const cards = group.books.map(book => buildRecommendationCard(book, group.showCardReason === false ? '' : group.label)).join('');
+  const groupClass = group.books.length === 1 ? 'recommendation-group recommendation-group-single' : 'recommendation-group';
   return `
-    <section class="goal-widget recommendation-group">
+    <section class="goal-widget ${groupClass}">
       <div class="goal-header">
-        <div>
+        <div class="recommendation-group-heading">
           <div class="goal-title">${Utils.sanitize(group.title)}</div>
           <div class="stats-section-meta">${Utils.sanitize(group.label)}</div>
         </div>
@@ -2350,12 +2367,15 @@ function buildRecommendationCard(book, reasonLabel) {
   const isSaved = !!Storage.getBookById(book.id);
   const statusLabel = isSaved ? Utils.statusLabel(book.status) : '';
   const statusClass = isSaved ? `badge ${Utils.statusBadgeClass(book.status)}` : '';
+  const reasonMarkup = reasonLabel ? `<div class="recommendation-card-reason">${Utils.sanitize(reasonLabel)}</div>` : '';
   return `
     <button type="button" class="recommendation-card" ${isSaved ? `onclick="Library.showDetailsModal('${book.id}')"` : 'aria-disabled="true"'}
       ${isSaved ? '' : 'disabled'}>
-      ${Utils.buildCover(book, 'cover-sm')}
+      <div class="recommendation-card-cover">
+        ${Utils.buildCover(book, 'cover-sm')}
+      </div>
       <div class="recommendation-card-body">
-        <div class="recommendation-card-reason">${Utils.sanitize(reasonLabel)}</div>
+        ${reasonMarkup}
         <div class="recommendation-card-title">${Utils.sanitize(book.title)}</div>
         <div class="recommendation-card-author">${Utils.sanitize(book.author)}</div>
         <div class="recommendation-card-meta">
