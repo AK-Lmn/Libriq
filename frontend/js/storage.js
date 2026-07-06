@@ -23,7 +23,7 @@ const Storage = (() => {
     CLOUD_BACKUP: 'libriq_cloud_backup_meta',
   };
   const ACTIVE_UID_KEY = 'libriq_active_account_uid';
-  const SCOPED_DATA_KEYS = new Set(['BOOKS', 'ACTIVITY', 'GOALS', 'CLOUD_BACKUP']);
+  const SCOPED_DATA_KEYS = new Set(['BOOKS', 'PROFILE', 'STREAK', 'GOALS', 'ACTIVITY', 'BACKUP', 'CLOUD_BACKUP']);
   let activeUid = localStorage.getItem(ACTIVE_UID_KEY) || null;
 
   const DEFAULTS = {
@@ -57,11 +57,13 @@ const Storage = (() => {
   }
 
   function _writeDefaults() {
-    const rawProfile = _read(DATA_KEYS.PROFILE);
+    Object.keys(DATA_KEYS).forEach(_migrateLegacyLocalValue);
+
+    const rawProfile = _read(_key('PROFILE'));
     if (!rawProfile || typeof rawProfile !== 'object' || !rawProfile.name) {
-      _write(DATA_KEYS.PROFILE, DEFAULTS.profile());
+      _write(_key('PROFILE'), DEFAULTS.profile());
     } else {
-      _write(DATA_KEYS.PROFILE, { ...DEFAULTS.profile(), ...rawProfile });
+      _write(_key('PROFILE'), { ...DEFAULTS.profile(), ...rawProfile });
     }
 
     const rawGoals = _read(_key('GOALS'));
@@ -69,9 +71,9 @@ const Storage = (() => {
       _write(_key('GOALS'), DEFAULTS.goals());
     }
 
-    const rawStreak = _read(DATA_KEYS.STREAK);
+    const rawStreak = _read(_key('STREAK'));
     if (!rawStreak || typeof rawStreak.current !== 'number') {
-      _write(DATA_KEYS.STREAK, DEFAULTS.streak());
+      _write(_key('STREAK'), DEFAULTS.streak());
     }
 
     const rawBooks = _read(_key('BOOKS'));
@@ -84,9 +86,9 @@ const Storage = (() => {
       _write(_key('ACTIVITY'), DEFAULTS.activity());
     }
 
-    const rawBackup = _read(DATA_KEYS.BACKUP);
+    const rawBackup = _read(_key('BACKUP'));
     if (!rawBackup || typeof rawBackup !== 'object') {
-      _write(DATA_KEYS.BACKUP, DEFAULTS.backup());
+      _write(_key('BACKUP'), DEFAULTS.backup());
     }
 
     const rawCloudBackup = _read(_key('CLOUD_BACKUP'));
@@ -145,9 +147,23 @@ const Storage = (() => {
     return `libriq:users:${uid}:${suffix}`;
   }
 
+  function _localKey(key) {
+    const suffix = key.replace(/^libriq_/, '');
+    return `libriq:local:${suffix}`;
+  }
+
   function _key(name) {
     const base = DATA_KEYS[name];
-    return activeUid && SCOPED_DATA_KEYS.has(name) ? _userKey(activeUid, base) : base;
+    if (!SCOPED_DATA_KEYS.has(name)) return base;
+    return activeUid ? _userKey(activeUid, base) : _localKey(base);
+  }
+
+  function _migrateLegacyLocalValue(name) {
+    if (activeUid || !SCOPED_DATA_KEYS.has(name)) return;
+    const scopedKey = _key(name);
+    if (localStorage.getItem(scopedKey) !== null) return;
+    const legacyValue = localStorage.getItem(DATA_KEYS[name]);
+    if (legacyValue !== null) localStorage.setItem(scopedKey, legacyValue);
   }
 
   function getSyncReadiness() {
@@ -174,7 +190,7 @@ const Storage = (() => {
   function _seedSampleData() {
     const books = SEED_BOOKS.map(b => createBook(b));
     _write(_key('BOOKS'), books);
-    _write(DATA_KEYS.STREAK, { current: 5, longest: 14, lastRead: new Date().toISOString() });
+    _write(_key('STREAK'), { current: 5, longest: 14, lastRead: new Date().toISOString() });
   }
 
   // ── Books ────────────────────────────────
@@ -297,20 +313,20 @@ const Storage = (() => {
   }
 
   function getProfile() {
-    const data = _read(DATA_KEYS.PROFILE);
+    const data = _read(_key('PROFILE'));
     if (!data || typeof data !== 'object') {
       const fresh = DEFAULTS.profile();
-      _write(DATA_KEYS.PROFILE, fresh);
+      _write(_key('PROFILE'), fresh);
       return fresh;
     }
     return { ...DEFAULTS.profile(), ...data };
   }
 
   function getBackupMeta() {
-    const data = _read(DATA_KEYS.BACKUP);
+    const data = _read(_key('BACKUP'));
     if (!data || typeof data !== 'object') {
       const fresh = DEFAULTS.backup();
-      _write(DATA_KEYS.BACKUP, fresh);
+      _write(_key('BACKUP'), fresh);
       return fresh;
     }
     return { ...DEFAULTS.backup(), ...data };
@@ -336,14 +352,14 @@ const Storage = (() => {
   function saveBackupMeta(updates) {
     const current = getBackupMeta();
     const updated = { ...current, ...(updates && typeof updates === 'object' ? updates : {}) };
-    _write(DATA_KEYS.BACKUP, updated);
+    _write(_key('BACKUP'), updated);
     return updated;
   }
 
   function saveProfile(updates) {
     const current = getProfile();
     const updated = { ...current, ...updates };
-    _write(DATA_KEYS.PROFILE, updated);
+    _write(_key('PROFILE'), updated);
     _dispatchChange('profile:updated', updated);
     return updated;
   }
@@ -366,10 +382,10 @@ const Storage = (() => {
   }
 
   function getStreak() {
-    const data = _read(DATA_KEYS.STREAK);
+    const data = _read(_key('STREAK'));
     if (!data || typeof data.current !== 'number') {
       const fresh = DEFAULTS.streak();
-      _write(DATA_KEYS.STREAK, fresh);
+      _write(_key('STREAK'), fresh);
       return fresh;
     }
     return data;
@@ -386,9 +402,23 @@ const Storage = (() => {
     streak.current  = lastRead === yesterday ? streak.current + 1 : 1;
     streak.longest  = Math.max(streak.longest, streak.current);
     streak.lastRead = new Date().toISOString();
-    _write(DATA_KEYS.STREAK, streak);
+    _write(_key('STREAK'), streak);
     _dispatchChange('streak:updated', streak);
     return streak;
+  }
+
+  function saveStreak(streak) {
+    if (!streak || typeof streak !== 'object') return false;
+    const normalized = {
+      ...DEFAULTS.streak(),
+      ...streak,
+      current: Number(streak.current) || 0,
+      longest: Number(streak.longest) || 0,
+      lastRead: streak.lastRead || null,
+    };
+    const result = _write(_key('STREAK'), normalized);
+    if (result) _dispatchChange('streak:updated', normalized);
+    return result;
   }
 
   function resetAll() {
@@ -478,7 +508,7 @@ const Storage = (() => {
     getDeviceId,
     getSyncReadiness,
     getGoals, saveGoals,
-    getStreak, updateStreak,
+    getStreak, updateStreak, saveStreak,
     getActivityLog, addActivityEvent, clearActivityLog, buildActivityEvent, setActivityLog, replaceActivityLog,
     getStats,
   };

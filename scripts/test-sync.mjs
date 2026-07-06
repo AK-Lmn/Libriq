@@ -17,6 +17,17 @@ async function setupPage(context, uid, email) {
     localStorage.setItem('libriq_e2e_test_mode', '1');
     localStorage.setItem('libriq_debug_sync', '1');
     localStorage.removeItem('libriq_account_sync_user_disabled');
+    window.__libriqBootTrace = [];
+    const recordBootTrace = () => {
+      const main = document.getElementById('mainContent');
+      window.__libriqBootTrace.push({
+        page: window.LibriqNavigation?.currentPage || null,
+        text: main?.innerText || '',
+        sessionActive: document.body.classList.contains('session-choice-active'),
+      });
+    };
+    new MutationObserver(recordBootTrace).observe(document.documentElement, { childList: true, subtree: true, attributes: true });
+    window.addEventListener('libriq:page-changed', recordBootTrace);
   });
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await delay(3000);
@@ -218,6 +229,10 @@ async function main() {
         currentPage: 12,
         pageCount: 240,
       });
+      window.LibriqStorage.saveProfile({ name: 'Alice Account', theme: 'light' });
+      window.LibriqStorage.saveGoals({ yearly: 42, year: new Date().getFullYear() });
+      window.LibriqStorage.saveStreak({ current: 5, longest: 5, lastRead: new Date().toISOString() });
+      window.LibriqStorage.addActivityEvent(window.LibriqStorage.buildActivityEvent('note_saved', book, { marker: 'user-a-activity' }, 'manual'));
       return book.id;
     });
     await delay(6000);
@@ -231,7 +246,20 @@ async function main() {
 
     await signInExistingPage(pageIsolation, 'isolation-user-b', 'isolation-b@example.com');
     await delay(3000);
-    assert.equal(await pageIsolation.evaluate(() => window.LibriqE2E.getBooks().length), 0);
+    const userBState = await pageIsolation.evaluate(() => ({
+      books: window.LibriqE2E.getBooks().length,
+      profile: window.LibriqStorage.getProfile(),
+      goals: window.LibriqStorage.getGoals(),
+      streak: window.LibriqStorage.getStreak(),
+      activity: window.LibriqStorage.getActivityLog(),
+      stats: window.LibriqStorage.getStats(),
+    }));
+    assert.equal(userBState.books, 0);
+    assert.equal(userBState.profile.name, 'Reader');
+    assert.equal(userBState.goals.yearly, 12);
+    assert.equal(userBState.streak.current, 0);
+    assert.equal(userBState.activity.length, 0);
+    assert.equal(userBState.stats.total, 0);
     assert.equal(await pageIsolation.evaluate((id) => window.LibriqE2E.getBooks().some((book) => book.id === id), isolationBookId), false);
     const userBRemote = await fetch(`http://127.0.0.1:${port}/__libriq_test_api/collection?path=${encodeURIComponent('users/isolation-user-b/sync/v1/books')}`).then(res => res.json());
     assert.equal(userBRemote.some((book) => book.id === isolationBookId), false);
@@ -242,6 +270,31 @@ async function main() {
     await signInExistingPage(pageIsolation, 'isolation-user-a', 'isolation-a@example.com');
     await delay(6000);
     assert.equal(await pageIsolation.evaluate((id) => window.LibriqE2E.getBooks().some((book) => book.id === id), isolationBookId), true);
+    const userARestored = await pageIsolation.evaluate(() => ({
+      profile: window.LibriqStorage.getProfile(),
+      goals: window.LibriqStorage.getGoals(),
+      streak: window.LibriqStorage.getStreak(),
+      activity: window.LibriqStorage.getActivityLog(),
+    }));
+    assert.equal(userARestored.profile.name, 'Alice Account');
+    assert.equal(userARestored.goals.yearly, 42);
+    assert.equal(userARestored.streak.current, 5);
+    assert.equal(userARestored.activity.some((event) => event.payload?.marker === 'user-a-activity'), true);
+
+    await pageIsolation.reload({ waitUntil: 'domcontentloaded' });
+    await delay(2500);
+    const signedInTrace = await pageIsolation.evaluate(() => window.__libriqBootTrace || []);
+    assert.equal(signedInTrace.some((entry) => entry.text.includes('Sign in to LibriQ')), false);
+    assert.equal(await pageIsolation.evaluate(() => window.LibriqNavigation.currentPage), 'dashboard');
+
+    await pageIsolation.evaluate(async () => {
+      await window.LibriqFirebase.signOut();
+    });
+    await pageIsolation.reload({ waitUntil: 'domcontentloaded' });
+    await delay(2500);
+    const signedOutTrace = await pageIsolation.evaluate(() => window.__libriqBootTrace || []);
+    assert.equal(signedOutTrace.some((entry) => entry.text.includes('Dashboard')), false);
+    assert.equal(await pageIsolation.evaluate(() => window.LibriqNavigation.currentPage), 'session');
     await pageIsolation.close();
     await contextIsolation.close();
 
