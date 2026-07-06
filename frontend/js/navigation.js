@@ -1822,7 +1822,7 @@ function renderGoalsPage() {
   const stats = Storage.getStats();
 
   main.innerHTML = `
-    <div class="page" style="max-width: 600px;">
+    <div class="page goals-page" id="goalsPage" style="max-width: 600px;">
       <div class="page-header" style="margin-bottom: var(--space-6);">
         <h1 class="page-title">Reading Goals</h1>
         <p class="page-subtitle">Set your target for ${new Date().getFullYear()}</p>
@@ -2407,7 +2407,7 @@ function renderProfilePage() {
   const stats   = Storage.getStats();
 
   main.innerHTML = `
-    <div class="page" style="max-width: 600px;">
+    <div class="page profile-page" id="profilePage" style="max-width: 600px;">
       <div class="page-header" style="margin-bottom: var(--space-6);">
         <h1 class="page-title">Profile</h1>
       </div>
@@ -2433,9 +2433,9 @@ function renderProfilePage() {
         </form>
       </div>
 
-      <div class="goal-widget">
+      <div class="goal-widget profile-stats-card">
         <div class="goal-header"><div class="goal-title">Reading Stats</div></div>
-        <div class="stats-row" style="grid-template-columns: repeat(2,1fr); margin: 0; gap: var(--space-3);">
+        <div class="stats-row profile-stats-row" style="grid-template-columns: repeat(2,1fr); margin: 0; gap: var(--space-3);">
           <div class="stat-card"><div class="stat-card-value">${stats.total}</div><div class="stat-card-label">Books tracked</div></div>
           <div class="stat-card"><div class="stat-card-value">${stats.finished}</div><div class="stat-card-label">Books finished</div></div>
           <div class="stat-card"><div class="stat-card-value">${Utils.formatNumber(stats.totalPages)}</div><div class="stat-card-label">Pages read</div></div>
