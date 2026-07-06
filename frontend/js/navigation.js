@@ -3669,41 +3669,31 @@ function _dangerConfirmElements() {
     modal: document.getElementById('dangerConfirmModal'),
     title: document.getElementById('dangerConfirmTitle'),
     body: document.getElementById('dangerConfirmBody'),
+    bodyCopy: document.getElementById('dangerConfirmBodyCopy'),
     prompt: document.getElementById('dangerConfirmPrompt'),
     input: document.getElementById('dangerConfirmInput'),
     action: document.getElementById('dangerConfirmAction'),
     cancel: document.getElementById('dangerConfirmCancel'),
     close: document.getElementById('closeDangerConfirm'),
+    error: document.getElementById('dangerConfirmError'),
   };
 }
 
 function confirmDangerAction({ title, body, prompt, expected, actionLabel }) {
   return new Promise((resolve) => {
     const els = _dangerConfirmElements();
-    if (!els.modal || !els.title || !els.body || !els.prompt || !els.input || !els.action || !els.cancel || !els.close) {
-      console.warn('[Libriq] Danger modal unavailable for confirmation dialog:', title);
+    if (!els.modal || !els.title || !els.body || !els.bodyCopy || !els.prompt || !els.input || !els.action || !els.cancel || !els.close || !els.error) {
+      console.error('[Libriq] Danger modal unavailable for confirmation dialog:', title);
       resolve(false);
       return;
     }
     els.title.textContent = title;
-    els.body.innerHTML = `
-      <div class="modal-danger-panel">
-        <div class="modal-danger-icon" aria-hidden="true"><i class="ph ph-warning"></i></div>
-        <div>
-          <div class="modal-danger-copy">${Utils.sanitize(body)}</div>
-          <div class="modal-warning-note" style="margin-top: var(--space-3);">Typed confirmation is required before this action can run.</div>
-        </div>
-      </div>
-      <div id="dangerConfirmError" class="modal-inline-error" hidden></div>
-      <label class="form-field">
-        <span id="dangerConfirmPrompt">${Utils.sanitize(prompt)}</span>
-        <input id="dangerConfirmInput" class="form-input" type="text" autocomplete="off" spellcheck="false" />
-      </label>
-    `;
-    els.prompt = document.getElementById('dangerConfirmPrompt');
-    els.input = document.getElementById('dangerConfirmInput');
-    const errorEl = document.getElementById('dangerConfirmError');
+    els.bodyCopy.textContent = body;
+    els.prompt.textContent = prompt;
+    els.error.hidden = true;
+    els.error.textContent = '';
     els.input.value = '';
+    els.input.placeholder = prompt;
     els.action.textContent = actionLabel;
     els.action.disabled = true;
     const cleanup = (result = false) => {
@@ -3718,7 +3708,7 @@ function confirmDangerAction({ title, body, prompt, expected, actionLabel }) {
       resolve(result);
     };
     els.input.oninput = () => {
-      if (errorEl) errorEl.hidden = true;
+      els.error.hidden = true;
       els.action.disabled = els.input.value.trim() !== expected;
     };
     els.cancel.onclick = () => cleanup(false);
@@ -3729,10 +3719,8 @@ function confirmDangerAction({ title, body, prompt, expected, actionLabel }) {
         cleanup(true);
       } catch (err) {
         console.warn('[Libriq] Danger action failed:', err);
-        if (errorEl) {
-          errorEl.textContent = 'Something went wrong. Please try again.';
-          errorEl.hidden = false;
-        }
+        els.error.textContent = 'Something went wrong. Please try again.';
+        els.error.hidden = false;
         els.action.disabled = false;
       }
     };

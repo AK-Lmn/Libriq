@@ -1419,6 +1419,15 @@
   color: #991B1B;
 }
 
+#dangerConfirmModal .modal-danger-copy {
+  color: var(--text-primary);
+}
+
+#dangerConfirmModal .modal-warning-note,
+#dangerConfirmModal .form-field > span {
+  color: var(--text-secondary);
+}
+
 #dangerConfirmModal .btn-danger:disabled {
   opacity: 0.55;
   cursor: not-allowed;
@@ -1504,6 +1513,14 @@
 #dangerConfirmModal .form-input {
   color: var(--text-primary);
   background: #fff;
+}
+
+.session-fallback-title {
+  color: #0F172A;
+}
+
+.session-fallback-copy {
+  color: #64748B;
 }
 
 @media (max-width: 640px) {
