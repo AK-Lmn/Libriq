@@ -7,7 +7,6 @@ const LibriqSyncBeta = (() => {
   const STORAGE_KEY = 'libriq_sync_beta_enabled';
   const USER_DISABLED_KEY = 'libriq_account_sync_user_disabled';
   const DEBUG_KEY = 'libriq_debug_sync';
-  const TOMBSTONE_KEY = 'libriq_sync_delete_tombstones';
   const TOMBSTONE_MIN_AGE_MS = 30 * 24 * 60 * 60 * 1000;
   const STATUS = {
     OFF: 'off',
@@ -77,7 +76,9 @@ const LibriqSyncBeta = (() => {
 
   function readTombstones() {
     try {
-      const parsed = JSON.parse(localStorage.getItem(TOMBSTONE_KEY) || '{}');
+      const scoped = Storage.getSyncTombstones?.() || {};
+      if (Object.keys(scoped).length > 0) return scoped;
+      const parsed = JSON.parse(localStorage.getItem('libriq_sync_delete_tombstones') || '{}');
       return parsed && typeof parsed === 'object' ? parsed : {};
     } catch (err) {
       debugLog('delete tombstone read failed', { error: err?.message || String(err) });
@@ -86,7 +87,7 @@ const LibriqSyncBeta = (() => {
   }
 
   function writeTombstones(tombstones) {
-    localStorage.setItem(TOMBSTONE_KEY, JSON.stringify(tombstones || {}));
+    Storage.saveSyncTombstones?.(tombstones || {});
   }
 
   function getTombstoneTimestamp(tombstone) {
@@ -143,8 +144,40 @@ const LibriqSyncBeta = (() => {
       appVersion: LIBRIQ.VERSION,
     };
     writeTombstones(tombstones);
+    markPendingSync('delete', id, id);
     debugLog('local delete tombstone recorded', { bookId: id, deletedAt: timestamp });
     return tombstones[id];
+  }
+
+  function markPendingSync(reason = 'local-change', bookId = null, deleteId = null) {
+    const current = Storage.getSyncMeta?.() || {};
+    const pendingBookIds = new Set(Array.isArray(current.pendingBookIds) ? current.pendingBookIds : []);
+    const pendingDeleteIds = new Set(Array.isArray(current.pendingDeleteIds) ? current.pendingDeleteIds : []);
+    if (bookId) pendingBookIds.add(bookId);
+    if (deleteId) pendingDeleteIds.add(deleteId);
+    Storage.saveSyncMeta?.({
+      ...current,
+      pending: true,
+      pendingSince: current.pendingSince || new Date().toISOString(),
+      pendingReason: reason,
+      pendingBookIds: Array.from(pendingBookIds),
+      pendingDeleteIds: Array.from(pendingDeleteIds),
+      lastError: current.lastError || null,
+    });
+  }
+
+  function clearPendingSync(successAt = new Date().toISOString()) {
+    const current = Storage.getSyncMeta?.() || {};
+    Storage.saveSyncMeta?.({
+      ...current,
+      pending: false,
+      pendingSince: null,
+      pendingReason: null,
+      pendingBookIds: [],
+      pendingDeleteIds: [],
+      lastSyncSuccessAt: successAt,
+      lastError: null,
+    });
   }
 
   function getSyncBooksCollectionSegments(uid) {
@@ -228,6 +261,7 @@ const LibriqSyncBeta = (() => {
   function getState() {
     const user = getResolvedUser();
     const syncPath = getSyncBooksCollectionPath(currentUid || user?.uid || null);
+    const syncMeta = Storage.getSyncMeta?.() || {};
     return {
       enabled,
       userDisabled: isUserDisabled(),
@@ -242,6 +276,13 @@ const LibriqSyncBeta = (() => {
       lastSnapshotAt,
       lastWriteAt,
       lastError,
+      pending: Boolean(syncMeta.pending),
+      pendingSince: syncMeta.pendingSince || null,
+      pendingReason: syncMeta.pendingReason || null,
+      pendingBookIds: Array.isArray(syncMeta.pendingBookIds) ? syncMeta.pendingBookIds : [],
+      pendingDeleteIds: Array.isArray(syncMeta.pendingDeleteIds) ? syncMeta.pendingDeleteIds : [],
+      lastSyncAttemptAt: syncMeta.lastSyncAttemptAt || null,
+      lastSyncSuccessAt: syncMeta.lastSyncSuccessAt || null,
       ...getTombstoneStats(),
     };
   }
@@ -329,6 +370,9 @@ const LibriqSyncBeta = (() => {
       return setState(STATUS.PAUSED, 'Sync paused in offline mode');
     }
     attachListener(user.uid);
+    if (Storage.getSyncMeta?.()?.pending && navigator.onLine !== false) {
+      window.setTimeout(() => queueUpload('refresh-pending'), 0);
+    }
   }
 
   function attachListener(uid) {
@@ -367,10 +411,15 @@ const LibriqSyncBeta = (() => {
         awaitingInitialSnapshot = false;
         debugLog('snapshot received', { listenerPath, changeCount: remoteBooks.length, snapshotAt: lastSnapshotAt });
         const fingerprint = JSON.stringify(remoteBooks.map(book => [book.id, book.updatedAt, book.deletedAt, book.deviceId]).sort());
+        const hasPendingLocalChanges = Boolean(Storage.getSyncMeta?.()?.pending);
         if (wasAwaitingInitialSnapshot && hadQueuedLocalChange) {
           lastRemoteFingerprint = fingerprint;
           applyRemoteBooks(remoteBooks);
           window.setTimeout(() => queueUpload('initial-snapshot-local-change'), 0);
+        } else if (wasAwaitingInitialSnapshot && hasPendingLocalChanges) {
+          lastRemoteFingerprint = fingerprint;
+          debugLog('initial snapshot preserved because pending sync exists', { listenerPath, changeCount: remoteBooks.length });
+          window.setTimeout(() => queueUpload('initial-snapshot-pending'), 0);
         } else if (wasAwaitingInitialSnapshot) {
           applyInitialRemoteBooks(uid, remoteBooks);
         } else if (fingerprint !== lastRemoteFingerprint) {
@@ -422,6 +471,10 @@ const LibriqSyncBeta = (() => {
     if (pendingWriteTimer) clearTimeout(pendingWriteTimer);
     pendingWriteTimer = setTimeout(() => {
       pendingWriteTimer = null;
+      Storage.saveSyncMeta?.({
+        ...(Storage.getSyncMeta?.() || {}),
+        lastSyncAttemptAt: new Date().toISOString(),
+      });
       debugLog('sync write started', { reason, enabled, listenerPath });
       uploadLocalBooks(reason);
     }, 900);
@@ -507,7 +560,7 @@ const LibriqSyncBeta = (() => {
     const localBooks = Storage.getBooks();
     const books = localBooks.map(normalizeBookForSync).filter(Boolean);
     const tombstones = Object.values(readTombstones()).filter(Boolean);
-    setState(STATUS.SYNCING, 'Syncing…');
+    setState(STATUS.SYNCING, 'Syncing...');
     try {
       uploadInFlight = true;
       applyingRemoteChanges = true;
@@ -528,15 +581,22 @@ const LibriqSyncBeta = (() => {
       setState(STATUS.SYNCED, 'Waiting for changes', { lastSyncedAt });
       debugLog('sync write success', { reason, count: books.length, lastWriteAt, favoriteWrites });
       Storage.saveCloudBackupMeta?.({ syncReady: true });
+      clearPendingSync(lastSyncedAt);
       scheduleSettledBackup();
       applyingRemoteChanges = false;
       uploadInFlight = false;
       pruneOldLocalTombstones();
     } catch (err) {
       lastError = err?.message || String(err || 'unknown');
+      Storage.saveSyncMeta?.({
+        ...(Storage.getSyncMeta?.() || {}),
+        pending: true,
+        lastError,
+        lastSyncAttemptAt: new Date().toISOString(),
+      });
       console.warn('[LibriQ][Sync] upload failed:', err);
       debugLog('sync write failure', { reason, error: lastError });
-      setState(STATUS.ERROR, 'Sync error. Your local data is safe.');
+      setState(STATUS.ERROR, 'Saved locally. Will sync when online.');
     } finally {
       applyingRemoteChanges = false;
       uploadInFlight = false;
@@ -685,14 +745,18 @@ const LibriqSyncBeta = (() => {
     if (detail?.id && !book?.title && arguments?.[0]?.type === 'libriq:book:removed') {
       recordLocalDelete(detail.id);
     }
+    if (book?.id) {
+      markPendingSync(detail?.id && !book?.title ? 'delete' : 'local-change', book.id, detail?.id && !book?.title ? detail.id : null);
+    }
     if (book?.id && typeof book.isFavorite === 'boolean') {
       debugLog('favorite local change detected', { bookId: book.id, isFavorite: book.isFavorite, updatedAt: book.updatedAt || null });
     } else {
       debugLog('local book change detected', { page: Navigation.currentPage, sessionMode: Navigation.getCurrentSessionMode?.() || Navigation.getSessionPreference?.() });
     }
     if (!isEligible()) {
-      setState(Navigation.getSessionPreference?.() === 'offline' ? STATUS.PAUSED : STATUS.UNAVAILABLE,
-        Navigation.getSessionPreference?.() === 'offline' ? 'Sync paused in offline mode' : 'Sync unavailable');
+      const offline = Navigation.getSessionPreference?.() === 'offline';
+      setState(offline ? STATUS.PAUSED : STATUS.UNAVAILABLE,
+        offline ? 'Offline mode: sync paused' : 'Saved locally. Will sync when online.');
       return;
     }
     queueUpload('local-change');
@@ -742,7 +806,17 @@ const LibriqSyncBeta = (() => {
   window.addEventListener('libriq:book:added', onLocalChange);
   window.addEventListener('libriq:book:updated', onLocalChange);
   window.addEventListener('libriq:book:removed', onLocalChange);
-  window.addEventListener('online', refresh);
+  window.addEventListener('online', () => {
+    refresh();
+    if (Storage.getSyncMeta?.()?.pending) {
+      queueUpload('reconnect');
+      window.setTimeout(() => {
+        if (Storage.getSyncMeta?.()?.pending && isEligible() && navigator.onLine !== false) {
+          uploadLocalBooks('reconnect-fallback');
+        }
+      }, 750);
+    }
+  });
   window.addEventListener('offline', () => setState(STATUS.PAUSED, 'Sync paused in offline mode'));
 
   maybeAutoEnable('startup');
@@ -751,6 +825,7 @@ const LibriqSyncBeta = (() => {
     const firebase = getFirebaseState();
     const user = getResolvedUser();
     const sessionMode = Navigation.getCurrentSessionMode?.() || Navigation.getSessionPreference?.();
+    const syncMeta = Storage.getSyncMeta?.() || {};
     const reasons = [];
     if (!enabled) reasons.push('not enabled in storage');
     if (!user) reasons.push('no uid');
@@ -773,6 +848,13 @@ const LibriqSyncBeta = (() => {
       lastSnapshotAt,
       lastWriteAt,
       lastError,
+      pending: Boolean(syncMeta.pending),
+      pendingSince: syncMeta.pendingSince || null,
+      pendingReason: syncMeta.pendingReason || null,
+      pendingBookIds: Array.isArray(syncMeta.pendingBookIds) ? syncMeta.pendingBookIds : [],
+      pendingDeleteIds: Array.isArray(syncMeta.pendingDeleteIds) ? syncMeta.pendingDeleteIds : [],
+      lastSyncAttemptAt: syncMeta.lastSyncAttemptAt || null,
+      lastSyncSuccessAt: syncMeta.lastSyncSuccessAt || null,
       ...getTombstoneStats(),
       disabledReasons: reasons,
       firebaseCurrentUserUid: firebase.user?.uid || window.LibriqFirebase?.getCurrentUser?.()?.uid || null,
