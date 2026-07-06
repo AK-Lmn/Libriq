@@ -663,6 +663,7 @@ const Library = (() => {
       actions.id = 'bookDetailsFooter';
       modal.querySelector('.book-details-modal')?.appendChild(actions);
     }
+    actions.replaceChildren();
     const notesTextarea = body.querySelector('#bookNotesTextarea');
     const notesMeta = body.querySelector('#bookNotesMeta');
     const saveNoteBtn = body.querySelector('#saveBookNoteBtn');
