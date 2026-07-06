@@ -1766,7 +1766,9 @@
    ============================================ */
 
 #libraryPage {
-  max-width: 1180px;
+  max-width: 1320px;
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-8);
 }
 
 #libraryPage .library-header {
@@ -1775,8 +1777,6 @@
   justify-content: space-between;
   gap: var(--space-6);
   margin-bottom: var(--space-6);
-  padding-bottom: var(--space-5);
-  border-bottom: 1px solid var(--border-divider);
 }
 
 #libraryPage .library-heading {
@@ -1796,26 +1796,29 @@
 
 #libraryPage .page-title {
   font-family: var(--font-serif);
-  font-size: var(--t-h1-app);
+  font-size: clamp(3rem, 5vw, 4.6rem);
   color: var(--text-strong);
   letter-spacing: 0;
+  line-height: 0.95;
 }
 
 #libraryPage .page-subtitle {
-  color: var(--text-body);
+  color: var(--text-secondary);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
 }
 
 #libraryPage .library-filters {
   margin-bottom: var(--space-6);
   padding: var(--space-2);
-  background: var(--surface-2);
+  background: rgba(255,255,255,0.62);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-lg);
 }
 
 #libraryPage .library-tools {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: var(--space-3);
   align-items: end;
   margin: var(--space-4) 0 var(--space-5);
@@ -1828,7 +1831,7 @@
   min-height: 48px;
   padding: 0 var(--space-3);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
+  border-radius: 12px;
   background: var(--surface-3);
 }
 
@@ -1874,7 +1877,7 @@
   min-height: 48px;
   padding: 0 var(--space-3);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
+  border-radius: 12px;
   background: var(--surface-3);
   color: var(--text-primary);
   font: inherit;
@@ -1906,20 +1909,20 @@
 }
 
 #libraryPage .books-grid {
-  grid-template-columns: repeat(auto-fill, minmax(184px, 1fr));
-  gap: var(--space-5);
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-6);
   align-items: stretch;
 }
 
 #libraryPage .book-card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
   min-width: 0;
   padding: var(--space-3);
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  border-radius: 24px;
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
@@ -1935,19 +1938,19 @@
   width: 100%;
   height: auto;
   aspect-ratio: 2 / 3;
-  border-radius: var(--radius-md);
+  border-radius: 18px;
   box-shadow: var(--shadow-cover);
 }
 
 #libraryPage .book-card-info {
-  gap: 4px;
+  gap: var(--space-2);
   min-height: 0;
 }
 
 #libraryPage .book-card-title {
   color: var(--text-strong);
   font-family: var(--font-serif);
-  font-size: var(--t-card);
+  font-size: var(--text-lg);
   font-weight: var(--weight-semi);
   line-height: var(--leading-snug);
 }
@@ -2006,7 +2009,7 @@
   align-items: center;
   gap: var(--space-2);
   flex-wrap: wrap;
-  margin-top: var(--space-2);
+  margin-top: var(--space-1);
   padding-top: var(--space-2);
   border-top: 1px solid var(--border-divider);
 }
@@ -2085,6 +2088,90 @@
 #libraryPage .book-card > .book-cover {
   background: linear-gradient(180deg, var(--bg-elevated), var(--bg-surface));
   border: 1px solid var(--border-subtle);
+}
+
+html[data-theme="dark"] #libraryPage {
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] #libraryPage .page-title,
+html[data-theme="dark"] #libraryPage .book-card-title,
+html[data-theme="dark"] #libraryPage .empty-state-title {
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] #libraryPage .page-subtitle,
+html[data-theme="dark"] #libraryPage .library-sort-label,
+html[data-theme="dark"] #libraryPage .library-search-icon,
+html[data-theme="dark"] #libraryPage .library-search-input::placeholder,
+html[data-theme="dark"] #libraryPage .library-search-clear,
+html[data-theme="dark"] #libraryPage .book-card-author,
+html[data-theme="dark"] #libraryPage .progress-text,
+html[data-theme="dark"] #libraryPage .empty-state-body {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] #libraryPage .library-filters,
+html[data-theme="dark"] #libraryPage .library-search-wrap,
+html[data-theme="dark"] #libraryPage .library-sort-select,
+html[data-theme="dark"] #libraryPage .book-card,
+html[data-theme="dark"] #libraryPage .empty-state {
+  background: rgba(15, 23, 42, 0.88);
+  border-color: rgba(148, 163, 184, 0.14);
+  box-shadow: 0 20px 50px rgba(2, 6, 23, 0.28);
+}
+
+html[data-theme="dark"] #libraryPage .library-filters .chip {
+  background: rgba(15, 23, 42, 0.82);
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
+html[data-theme="dark"] #libraryPage .library-filters .chip span {
+  background: rgba(148, 163, 184, 0.12);
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] #libraryPage .library-filters .chip.active span {
+  background: rgba(67, 56, 202, 0.18);
+  color: #c7d2fe;
+}
+
+html[data-theme="dark"] #libraryPage .book-card-actions .btn-ghost.btn-icon {
+  background: rgba(148, 163, 184, 0.1);
+  border-color: rgba(148, 163, 184, 0.16);
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] #libraryPage .book-card-actions .btn-ghost.btn-icon:hover,
+html[data-theme="dark"] #libraryPage .book-card-actions .btn-ghost.btn-icon:focus-visible {
+  background: rgba(67, 56, 202, 0.16);
+  border-color: rgba(67, 56, 202, 0.3);
+}
+
+html[data-theme="dark"] #libraryPage .reading-progress {
+  background: rgba(15, 23, 42, 0.76);
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
+html[data-theme="dark"] #libraryPage .progress-bar {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+html[data-theme="dark"] #libraryPage .progress-fill {
+  background: linear-gradient(90deg, #5b63f6, #4338ca);
+  box-shadow: none;
+}
+
+html[data-theme="dark"] #libraryPage .empty-state-icon {
+  background: rgba(67, 56, 202, 0.12);
+  border-color: rgba(67, 56, 202, 0.18);
+  color: #c7d2fe;
+}
+
+html[data-theme="dark"] #libraryPage .book-card:hover,
+html[data-theme="dark"] #libraryPage .book-card:focus-within {
+  background: rgba(15, 23, 42, 0.96);
+  border-color: rgba(99, 102, 241, 0.28);
 }
 
 @media (min-width: 1280px) {
