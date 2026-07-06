@@ -1909,7 +1909,7 @@
 }
 
 #libraryPage .books-grid {
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: var(--space-6);
   align-items: stretch;
 }
@@ -2002,17 +2002,34 @@
 }
 
 #libraryPage .book-card-actions {
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
   margin-top: var(--space-1);
   padding-top: 6px;
   border-top: 1px solid var(--border-divider);
 }
 
+#libraryPage .book-card-actions-primary,
+#libraryPage .book-card-actions-secondary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+#libraryPage .book-card-actions-primary {
+  flex-wrap: wrap;
+}
+
+#libraryPage .book-card-actions-secondary {
+  flex-wrap: nowrap;
+}
+
 #libraryPage .book-card-actions .btn:not(.btn-icon) {
-  flex: 1 1 76px;
-  min-width: 76px;
+  flex: 1 1 0;
+  min-width: 0;
   padding-left: 10px;
   padding-right: 10px;
   white-space: nowrap;
@@ -2035,6 +2052,7 @@
   flex: 0 0 36px;
   width: 36px;
   min-width: 36px;
+  max-width: 36px;
 }
 
 #libraryPage .book-card-actions .btn-ghost.btn-icon {
@@ -2187,6 +2205,10 @@ html[data-theme="dark"] #libraryPage .book-card:hover,
 html[data-theme="dark"] #libraryPage .book-card:focus-within {
   background: rgba(15, 23, 42, 0.96);
   border-color: rgba(99, 102, 241, 0.28);
+}
+
+html[data-theme="dark"] #libraryPage .book-card-actions {
+  border-top-color: rgba(148, 163, 184, 0.14);
 }
 
 html[data-theme="dark"] #libraryPage .book-cover-placeholder {
