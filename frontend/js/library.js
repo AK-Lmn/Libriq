@@ -184,7 +184,7 @@ const Library = (() => {
     const gaps = _getMetadataGaps(book);
     if (gaps.length === 0) return { label: 'Complete', className: 'complete' };
     if (gaps.includes('cover')) return { label: 'Missing cover', className: 'missing-cover' };
-    if (gaps.includes('description')) return { label: 'Missing description', className: 'missing-description' };
+    if (gaps.includes('description')) return { label: 'No description yet', className: 'missing-description' };
     return { label: 'Missing details', className: 'missing-details' };
   }
 

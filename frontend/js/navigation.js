@@ -842,7 +842,7 @@ function renderSessionChoicePage() {
   const sessionContext = window.LibriqFirebase?.getSessionContext?.() || { isInAppBrowser: false, hints: [] };
   const hasUser = Boolean(firebase.user);
   const accountName = getDisplayNameForAccount(firebase.user);
-  const loading = firebase.available && !firebase.ready;
+  const loading = !firebase.initialized || (firebase.available && !firebase.ready);
   const inAppBrowser = Boolean(sessionContext.isInAppBrowser);
   const signInButtonLabel = hasUser ? `Continue as ${Utils.sanitize(accountName)}` : 'Continue with Google';
   const signInButtonHelp = inAppBrowser
@@ -916,7 +916,7 @@ function renderSessionChoicePage() {
               </div>
               <div class="session-card-action"><i class="ph ph-arrow-right"></i></div>
             </button>
-          ` : firebase.available ? `
+          ` : firebase.initialized ? `
             <button class="session-card session-card-primary ${inAppBrowser ? 'session-card-disabled' : ''}" id="googleSignInBtn" type="button" ${inAppBrowser ? 'aria-describedby="googleSignInHelp"' : ''}>
               <div class="session-card-icon"><i class="ph ph-google-logo"></i></div>
               <div class="session-card-content">
@@ -935,7 +935,7 @@ function renderSessionChoicePage() {
             </div>
           `}
 
-          ${!loading && !hasUser && firebase.available ? `
+          ${!loading && !hasUser && firebase.initialized && firebase.available ? `
             <div class="session-auth-tabs" role="tablist" aria-label="Email account options">
               <button class="session-auth-tab active" type="button" data-auth-mode="signin">Sign in with Email</button>
               <button class="session-auth-tab" type="button" data-auth-mode="signup">Create account</button>
@@ -1075,8 +1075,13 @@ function renderSessionChoicePage() {
     renderSessionChoicePage();
   };
 
-  if (authUnavailable && !loading) scheduleFallback('initial');
-  else hideFallback();
+  if (!firebase.initialized) {
+    hideFallback();
+  } else if (authUnavailable && !loading) {
+    scheduleFallback('initial');
+  } else {
+    hideFallback();
+  }
 
   document.getElementById('googleContinueBtn')?.addEventListener('click', () => {
     Navigation.setSessionPreference('google');
