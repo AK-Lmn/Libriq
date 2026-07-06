@@ -27,6 +27,21 @@ const Dashboard = {
     const recentActivity = buildRecentActivity(books);
     const topGenres = stats.topGenres || [];
     const accountName = getDashboardAccountName();
+    const syncState = window.LibriqSyncBeta?.getState?.() || { status: 'off', message: 'Account sync off', pending: false };
+    const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+    const syncLabel = offline
+      ? 'Offline'
+      : syncState.status === 'error'
+        ? 'Sync issue'
+        : syncState.pending
+          ? 'Syncing'
+          : syncState.status === 'paused'
+            ? 'Paused'
+            : syncState.status === 'synced'
+              ? 'Ready'
+              : syncState.enabled
+                ? 'Sync on'
+                : 'Ready';
 
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -40,7 +55,7 @@ const Dashboard = {
         <div class="dashboard-topbar">
           <div class="dashboard-sync">
             <span class="dashboard-sync-dot"></span>
-            <span>System Synced</span>
+            <span>${syncLabel}</span>
           </div>
           <div class="dashboard-actions">
             <button class="btn btn-primary dashboard-add-book" onclick="Search.open()">

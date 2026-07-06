@@ -1195,7 +1195,14 @@
 }
 
 .btn-secondary {
-  background: #fff;
+  background: #F8FAFC;
+  color: var(--text-body);
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+.btn-secondary:hover {
+  background: #EEF2FF;
+  color: var(--text-primary);
 }
 
 .btn-danger {
@@ -1583,6 +1590,87 @@ html[data-theme="dark"] #bookDetailsModal .book-details-actions .btn-ghost.btn-i
 html[data-theme="dark"] #bookDetailsModal .book-details-actions .btn-ghost.btn-icon:focus-visible {
   background: rgba(99, 102, 241, 0.22);
   border-color: rgba(99, 102, 241, 0.34);
+}
+
+html[data-theme="dark"] .add-book-modal .modal-body {
+  background:
+    radial-gradient(circle at top right, rgba(99, 102, 241, 0.14), transparent 40%),
+    linear-gradient(180deg, #0f172a, #111827);
+}
+
+html[data-theme="dark"] .add-book-modal .book-preview {
+  background: rgba(15, 23, 42, 0.88);
+  border-color: rgba(148, 163, 184, 0.14);
+  box-shadow: 0 16px 40px rgba(2, 6, 23, 0.34);
+}
+
+html[data-theme="dark"] .add-book-modal .book-preview-title,
+html[data-theme="dark"] .add-book-modal .book-preview-author {
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] .add-book-modal .book-preview-meta .badge {
+  background: rgba(148, 163, 184, 0.12);
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] .add-book-modal .status-option {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(148, 163, 184, 0.14);
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] .add-book-modal .status-option.selected {
+  background: rgba(67, 56, 202, 0.14);
+  border-color: rgba(99, 102, 241, 0.34);
+}
+
+html[data-theme="dark"] .add-book-modal .form-input,
+html[data-theme="dark"] .add-book-modal .form-select,
+html[data-theme="dark"] .add-book-modal textarea.form-input {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(148, 163, 184, 0.16);
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] .add-book-modal .form-input::placeholder,
+html[data-theme="dark"] .add-book-modal textarea.form-input::placeholder {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .add-book-modal .btn-secondary {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(148, 163, 184, 0.16);
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] .add-book-modal .btn-secondary:hover,
+html[data-theme="dark"] .add-book-modal .btn-secondary:focus-visible {
+  background: rgba(30, 41, 59, 0.96);
+  border-color: rgba(99, 102, 241, 0.34);
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] .add-book-modal .btn-ghost {
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] .add-book-modal .btn-ghost:hover,
+html[data-theme="dark"] .add-book-modal .btn-ghost:focus-visible {
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] #bookDetailsModal .book-details-actions .btn-secondary {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(148, 163, 184, 0.18);
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] #bookDetailsModal .book-details-actions .btn-secondary:hover,
+html[data-theme="dark"] #bookDetailsModal .book-details-actions .btn-secondary:focus-visible {
+  background: rgba(30, 41, 59, 0.96);
+  border-color: rgba(99, 102, 241, 0.34);
+  color: #f8fafc;
 }
 
 #dangerConfirmModal .modal-body {
