@@ -5,7 +5,7 @@
 .sidebar {
   width: var(--sidebar-width);
   height: 100dvh;
-  position: sticky;
+  position: fixed;
   top: 0;
   left: 0;
   display: flex;

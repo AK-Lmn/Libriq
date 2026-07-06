@@ -6,6 +6,7 @@
   "scripts": {
     "build": "node scripts/generate-config.mjs",
     "screenshots": "node scripts/screenshots.mjs",
+    "test:render": "node scripts/test-navigation-render.mjs",
     "test:modal": "node scripts/test-modal.mjs",
     "test:sync": "node scripts/test-sync.mjs",
     "test:sync:headed": "node scripts/test-sync.mjs --headed",
