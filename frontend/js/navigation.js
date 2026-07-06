@@ -2105,7 +2105,7 @@ function renderHelpPage() {
         <div class="help-heading">
           <span class="library-eyebrow">Beginner guide</span>
           <h1 class="page-title">Help & Guide Center</h1>
-          <p class="page-subtitle">A friendly walkthrough for using LibriQ with confidence</p>
+          <p class="page-subtitle">A calm walkthrough for using LibriQ with confidence.</p>
         </div>
       </div>
 
@@ -2114,7 +2114,7 @@ function renderHelpPage() {
         <div class="help-intro-copy">
           <h2 class="help-intro-title">A calm place to learn the app</h2>
           <p class="text-secondary" style="line-height: var(--leading-loose); margin: 0;">
-            LibriQ is designed to stay simple and local-first. This guide covers the core features, backups, and account behavior so you can start building your reading space without needing a tutorial or account.
+            LibriQ stays simple and local-first. This guide covers the core features, backups, and account behavior so you can build your reading space without needing a long tutorial.
           </p>
         </div>
       </div>
@@ -2212,9 +2212,9 @@ function renderRecommendationsPage() {
 
       <section class="recommendations-intro">
         <div class="recommendations-intro-copy">
-          <div class="recommendations-intro-kicker">Local discovery</div>
+          <div class="recommendations-intro-kicker">Local suggestions</div>
           <div class="recommendations-intro-title">Built from your saved books, favorite authors, and reading shelves.</div>
-          <div class="recommendations-intro-body">These are local suggestions only. LibriQ is using the library data you already have, so the page stays honest until richer recommendations arrive later.</div>
+          <div class="recommendations-intro-body">LibriQ is using the library data you already have, so the page stays honest until richer recommendations arrive later.</div>
         </div>
       </section>
 

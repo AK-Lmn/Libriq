@@ -3,8 +3,9 @@
    App shell caching only. No API response caching.
    ============================================ */
 
-const CACHE_VERSION = 'libriq-v4.2.0';
+const CACHE_VERSION = 'libriq-v4.5.1';
 const CACHE_NAME = `${CACHE_VERSION}-shell`;
+const IS_LOCAL_DEV = ['localhost', '127.0.0.1', '::1'].includes(self.location.hostname);
 
 const SHELL_ASSETS = [
   './index.html',
@@ -47,6 +48,10 @@ const SHELL_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
+    if (IS_LOCAL_DEV) {
+      self.skipWaiting();
+      return;
+    }
     const cache = await caches.open(CACHE_NAME);
     await cache.addAll(SHELL_ASSETS.map(scopeUrl));
     self.skipWaiting();
@@ -55,6 +60,12 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
+    if (IS_LOCAL_DEV) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+      await self.registration.unregister();
+      return;
+    }
     const keys = await caches.keys();
     await Promise.all(keys.map((key) => {
       if (key.startsWith('libriq-') && key !== CACHE_NAME) {
@@ -77,6 +88,11 @@ self.addEventListener('fetch', (event) => {
     if (isApiRequest(url)) {
       event.respondWith(fetch(request));
     }
+    return;
+  }
+
+  if (IS_LOCAL_DEV) {
+    event.respondWith(fetch(request));
     return;
   }
 
