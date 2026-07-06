@@ -1029,7 +1029,7 @@ const Library = (() => {
     const isFinished = book.status === LIBRIQ.STATUS.FINISHED;
 
     const card = document.createElement('div');
-    card.className = 'book-card';
+    card.className = `book-card ${isFinished ? 'book-card--finished' : ''} ${isReading ? 'book-card--reading' : ''}`.trim();
     card.dataset.bookId = book.id;
 
     const genreBadges = (book.genres || []).slice(0, 2)

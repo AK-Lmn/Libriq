@@ -4,7 +4,7 @@
    ============================================ */
 
 .dashboard-page {
-  max-width: 1180px;
+  max-width: 1240px;
 }
 
 .dashboard-header {
@@ -58,9 +58,9 @@
 }
 
 .stat-card {
-  min-height: 142px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-hairline);
+  min-height: 160px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
   display: flex;
@@ -119,8 +119,8 @@
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: var(--space-6);
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: var(--space-5);
   align-items: start;
 }
 
@@ -128,22 +128,25 @@
 .dashboard-aside {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-5);
   min-width: 0;
 }
 
 .dashboard-main > section,
 .goal-widget {
-  background: var(--surface-2);
-  border: 1px solid var(--border-hairline);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
-  transition: border-color var(--duration-base) var(--ease-out);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out);
 }
 
 .dashboard-main > section:hover,
 .goal-widget:hover {
   border-color: var(--gold-18);
+  box-shadow: var(--shadow-card);
+  transform: translateY(-1px);
 }
 
 .section-header,
@@ -203,11 +206,11 @@
 .reading-card {
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr);
-  gap: var(--space-4);
+  gap: var(--space-3);
   padding: var(--space-4);
-  background: var(--surface-3);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
   cursor: pointer;
   transition:
     border-color var(--duration-base) var(--ease-out),
@@ -217,7 +220,7 @@
 }
 
 .reading-card:hover {
-  background: var(--surface-4);
+  background: var(--bg-elevated);
   border-color: var(--gold-18);
   transform: translateY(-1px);
   box-shadow: var(--shadow-card);
@@ -233,7 +236,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .reading-card-title {
@@ -250,7 +253,6 @@
 .reading-card-author {
   color: var(--text-body);
   font-size: var(--text-sm);
-  margin-bottom: var(--space-1);
 }
 
 .reading-card-actions {
@@ -317,6 +319,9 @@
 
 .goal-widget {
   padding: var(--space-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
 }
 
 .goal-year {
@@ -400,7 +405,7 @@
   padding: var(--space-3);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
-  background: var(--surface-3);
+  background: var(--bg-elevated);
   text-align: center;
 }
 
@@ -439,6 +444,11 @@
 .activity-item:hover {
   background: var(--gold-04);
   border-color: var(--gold-12);
+}
+
+.dashboard-main > section .empty-state,
+.goal-widget .empty-state {
+  background: linear-gradient(180deg, var(--bg-elevated), var(--bg-surface));
 }
 
 .activity-icon {
@@ -590,6 +600,12 @@
 
   .dashboard-aside {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1101px) {
+  .dashboard-aside > .goal-widget:nth-child(1) {
+    min-height: 450px;
   }
 }
 
