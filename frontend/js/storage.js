@@ -260,6 +260,23 @@ const Storage = (() => {
     return getBooks().filter(b => b.status === status);
   }
 
+  function _getEffectiveFinishedDate(book) {
+    if (!book || book.status !== LIBRIQ.STATUS.FINISHED) return null;
+    const candidates = [
+      book.dateFinished,
+      book.completedAt,
+      book.finishedAt,
+      book.updatedAt,
+      book.createdAt,
+      book.dateAdded,
+    ];
+    for (const value of candidates) {
+      const time = new Date(value || 0).getTime();
+      if (Number.isFinite(time) && time > 0) return new Date(time).toISOString();
+    }
+    return null;
+  }
+
   function toggleFavorite(id) {
     const book = getBookById(id);
     if (!book) return null;
@@ -487,30 +504,29 @@ const Storage = (() => {
   function getStats() {
     const books    = getBooks();
     const thisYear = new Date().getFullYear();
+    const finishedBooks = books.filter(b => b.status === LIBRIQ.STATUS.FINISHED);
+    const finishedBooksWithDates = finishedBooks
+      .map(book => ({ book, finishedDate: _getEffectiveFinishedDate(book) }))
+      .filter(entry => entry.finishedDate);
 
     const total     = books.length;
     const reading   = books.filter(b => b.status === LIBRIQ.STATUS.READING).length;
-    const finished  = books.filter(b => b.status === LIBRIQ.STATUS.FINISHED).length;
+    const finished  = finishedBooks.length;
     const wishlist  = books.filter(b => b.status === LIBRIQ.STATUS.WISHLIST).length;
     const favorites = books.filter(b => b.isFavorite).length;
 
-    const finishedThisYear = books.filter(b =>
-      b.status === LIBRIQ.STATUS.FINISHED &&
-      b.dateFinished &&
-      new Date(b.dateFinished).getFullYear() === thisYear
+    const finishedThisYear = finishedBooksWithDates.filter(({ finishedDate }) =>
+      new Date(finishedDate).getFullYear() === thisYear
     ).length;
 
-    const totalPages = books
-      .filter(b => b.status === LIBRIQ.STATUS.FINISHED)
+    const totalPages = finishedBooks
       .reduce((sum, b) => sum + (b.pageCount || 0), 0);
 
     const pagesByMonth = Array(12).fill(0);
-    books
-      .filter(b => b.status === LIBRIQ.STATUS.FINISHED && b.dateFinished)
-      .forEach(b => {
-        const d = new Date(b.dateFinished);
-        if (d.getFullYear() === thisYear) pagesByMonth[d.getMonth()] += (b.pageCount || 0);
-      });
+    finishedBooksWithDates.forEach(({ book, finishedDate }) => {
+      const d = new Date(finishedDate);
+      if (d.getFullYear() === thisYear) pagesByMonth[d.getMonth()] += (book.pageCount || 0);
+    });
 
     const rated     = books.filter(b => typeof b.rating === 'number' && b.rating > 0);
     const avgRating = rated.length
@@ -528,12 +544,10 @@ const Storage = (() => {
 
     // Monthly finished count for current year
     const monthlyData = Array(12).fill(0);
-    books
-      .filter(b => b.status === LIBRIQ.STATUS.FINISHED && b.dateFinished)
-      .forEach(b => {
-        const d = new Date(b.dateFinished);
-        if (d.getFullYear() === thisYear) monthlyData[d.getMonth()]++;
-      });
+    finishedBooksWithDates.forEach(({ finishedDate }) => {
+      const d = new Date(finishedDate);
+      if (d.getFullYear() === thisYear) monthlyData[d.getMonth()]++;
+    });
 
     return {
       total, reading, finished, wishlist, favorites,
