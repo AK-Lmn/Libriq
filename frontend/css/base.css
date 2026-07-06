@@ -13,18 +13,17 @@ body {
 
 /* ── App Shell Layout ─────────────────────── */
 .app-shell {
-  display: grid;
-  grid-template-columns: var(--sidebar-width) 1fr;
-  grid-template-rows: 1fr;
+  display: block;
   min-height: 100dvh;
 }
 
 .main-content {
-  grid-column: 2;
+  display: block;
   min-height: 100dvh;
   overflow-x: hidden;
   background-color: var(--bg-base);
-  padding-top: 72px;
+  margin-left: var(--sidebar-width);
+  padding-top: var(--space-4);
 }
 
 body.auth-booting,
@@ -34,9 +33,7 @@ body.auth-signed-out {
 
 body.auth-booting .app-shell,
 body.auth-signed-out .app-shell {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr;
+  display: block;
   min-height: 100dvh;
 }
 
@@ -53,8 +50,6 @@ body.auth-signed-out #sidebarOverlay {
 
 body.auth-booting #mainContent,
 body.auth-signed-out #mainContent {
-  grid-column: 1;
-  grid-row: 1;
   min-height: 100dvh;
   width: 100%;
   overflow: visible;
@@ -119,9 +114,18 @@ h4, .h4 {
 
 /* ── Page Container ───────────────────────── */
 .page {
+  display: block;
+  position: relative;
+  z-index: 1;
   padding: var(--space-8) var(--space-8) var(--space-16);
   max-width: var(--content-max);
   animation: pageFadeIn var(--duration-slow) var(--ease-out) both;
+}
+
+#mainContent > .page {
+  display: block;
+  position: relative;
+  z-index: 1;
 }
 
 .page-header {
@@ -208,13 +212,13 @@ kbd {
 /* ── Responsive ───────────────────────────── */
 @media (max-width: 768px) {
   .app-shell {
-    grid-template-columns: 1fr;
-    grid-template-rows: var(--topbar-height) 1fr;
+    display: block;
   }
 
   .main-content {
-    grid-column: 1;
-    grid-row: 2;
+    margin-left: 0;
+    margin-top: var(--topbar-height);
+    padding-top: var(--space-4);
   }
 
   .mobile-topbar {
@@ -224,15 +228,12 @@ kbd {
     padding: 0 var(--space-4);
     background: var(--bg-surface);
     border-bottom: 1px solid var(--border-subtle);
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 40;
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .desktop-topbar {
-    display: none !important;
+    height: var(--topbar-height);
   }
 
   .mobile-menu-btn,
@@ -282,67 +283,10 @@ kbd {
 }
 
 @media (min-width: 769px) {
-  .desktop-topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-3);
-    position: sticky;
-    top: 0;
-    z-index: 35;
-    grid-column: 2;
-    grid-row: 1;
-    height: 72px;
-    padding: 0 var(--space-6);
-    background: rgba(248, 247, 243, 0.92);
-    border-bottom: 1px solid var(--border-subtle);
-    backdrop-filter: blur(18px);
-  }
-
-  .desktop-topbar-search {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-3);
-    min-width: min(560px, 100%);
-    height: 44px;
-    padding: 0 var(--space-4);
-    border: 1px solid var(--border-subtle);
-    border-radius: 999px;
-    background: var(--bg-surface);
-    color: var(--text-secondary);
-    box-shadow: var(--shadow-sm);
-    text-align: left;
-  }
-
-  .desktop-topbar-search:hover {
-    background: var(--bg-elevated);
-    border-color: var(--gold-18);
-  }
-
-  .desktop-topbar-meta {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-  }
-
-  .desktop-status-pill,
-  .desktop-topbar-action {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    height: 44px;
-    padding: 0 var(--space-3);
-    border: 1px solid var(--border-subtle);
-    border-radius: 999px;
-    background: var(--bg-surface);
-    color: var(--text-secondary);
-    box-shadow: var(--shadow-sm);
-  }
-
-  .desktop-topbar-action {
-    width: 44px;
-    justify-content: center;
-    padding: 0;
+  .main-content {
+    margin-left: var(--sidebar-width);
+    margin-top: 0;
+    padding-top: var(--space-4);
   }
 }
 
