@@ -343,6 +343,30 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="dangerConfirmModal" role="dialog" aria-modal="true" aria-label="Danger confirmation" hidden>
+    <div class="modal whats-new-modal">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title" id="dangerConfirmTitle">Delete?</h2>
+          <p class="whats-new-subtitle" id="dangerConfirmBody">This action cannot be undone.</p>
+        </div>
+        <button class="modal-close" id="closeDangerConfirm" aria-label="Close confirmation">
+          <i class="ph ph-x"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="dangerConfirmContent">
+        <label class="form-field">
+          <span id="dangerConfirmPrompt">Type DELETE to continue</span>
+          <input id="dangerConfirmInput" class="form-input" type="text" autocomplete="off" spellcheck="false" />
+        </label>
+      </div>
+      <div class="modal-footer whats-new-footer">
+        <button class="btn btn-secondary" id="dangerConfirmCancel" type="button">Cancel</button>
+        <button class="btn btn-danger" id="dangerConfirmAction" type="button" disabled>Delete</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
   <script src="js/data.js"></script>

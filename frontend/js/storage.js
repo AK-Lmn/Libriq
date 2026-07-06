@@ -137,6 +137,19 @@ const Storage = (() => {
     return setActiveAccountUid(null);
   }
 
+  function clearAccountScopedData(uid = activeUid, options = {}) {
+    const nextUid = uid ? String(uid) : null;
+    if (!nextUid) return false;
+    const keys = Array.isArray(options.keys) && options.keys.length
+      ? new Set(options.keys)
+      : SCOPED_DATA_KEYS;
+    Object.entries(DATA_KEYS).forEach(([name, key]) => {
+      if (!keys.has(name)) return;
+      localStorage.removeItem(_userKey(nextUid, key));
+    });
+    return true;
+  }
+
   function getDeviceId() {
     let deviceId = localStorage.getItem(DATA_KEYS.DEVICE_ID);
     if (!deviceId) {
@@ -539,7 +552,7 @@ const Storage = (() => {
   return {
     bootstrap,
     resetAll,
-    getActiveAccountUid, setActiveAccountUid, clearActiveAccountScope,
+    getActiveAccountUid, setActiveAccountUid, clearActiveAccountScope, clearAccountScopedData,
     getBooks, saveBooks, addBook, updateBook, removeBook,
     getBookById, getBooksByStatus, toggleFavorite,
     getProfile, saveProfile,
