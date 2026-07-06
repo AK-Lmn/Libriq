@@ -334,6 +334,48 @@ async function main() {
     await pageIsolation.close();
     await contextIsolation.close();
 
+    const deletionContext = await browser.newContext();
+    const deletionPage = await setupPage(deletionContext, 'deletion-user', 'delete@example.com');
+    const deletionBookId = await deletionPage.evaluate(() => window.LibriqE2E.addBook({
+      title: 'DELETE ME',
+      author: 'LibriQ',
+      status: 'reading',
+    }).id);
+    await delay(6000);
+    await deletionPage.evaluate(async ({ bookId, portValue }) => {
+      await fetch(`http://127.0.0.1:${portValue}/__libriq_test_api/doc?path=${encodeURIComponent('users/deletion-user/backups/current')}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ data: { app: 'LibriQ', data: { books: [{ id: bookId }], activity: [] } } }),
+      });
+    }, { bookId: deletionBookId, portValue: port });
+    await deletionPage.evaluate(async () => {
+      await window.LibriqSyncBeta.detachForAccountSwitch('test-delete-library');
+      await window.LibriqFirebase.deleteCurrentUserLibraryData();
+      window.LibriqStorage.clearAccountScopedData(window.LibriqFirebase.getCurrentUser().uid, { keys: ['BOOKS', 'ACTIVITY', 'STREAK', 'GOALS', 'BACKUP', 'CLOUD_BACKUP', 'SYNC_META', 'SYNC_TOMBSTONES'] });
+    });
+    await delay(2500);
+    assert.equal(await deletionPage.evaluate(() => window.LibriqE2E.getBooks().length), 0);
+    assert.equal(await deletionPage.evaluate(() => Boolean(window.LibriqFirebase.getCurrentUser())), true);
+    const deletedLibraryRemote = await fetch(`http://127.0.0.1:${port}/__libriq_test_api/collection?path=${encodeURIComponent('users/deletion-user/sync/v1/books')}`).then(res => res.json());
+    assert.equal(deletedLibraryRemote.length, 0);
+    const deletedBackupRemote = await fetch(`http://127.0.0.1:${port}/__libriq_test_api/doc?path=${encodeURIComponent('users/deletion-user/backups/current')}`).then(res => res.json());
+    assert.equal(deletedBackupRemote, null);
+    await deletionPage.reload({ waitUntil: 'domcontentloaded' });
+    await delay(2500);
+    assert.equal(await deletionPage.evaluate(() => window.LibriqE2E.getBooks().length), 0);
+    await deletionPage.evaluate(async () => {
+      await window.LibriqSyncBeta.detachForAccountSwitch('test-delete-account');
+      await window.LibriqFirebase.deleteCurrentUserAccount();
+    });
+    await delay(2500);
+    assert.equal(await deletionPage.evaluate(() => Boolean(window.LibriqFirebase.getCurrentUser())), false);
+    assert.equal(await deletionPage.evaluate(() => window.LibriqNavigation.currentPage), 'session');
+    const deletedAccountRemote = await fetch(`http://127.0.0.1:${port}/__libriq_test_api/collection?path=${encodeURIComponent('users/deletion-user/sync/v1/books')}`).then(res => res.json());
+    assert.equal(deletedAccountRemote.length, 0);
+    await deletionPage.close();
+    await deletionContext.close();
+
     await pageA.close();
     await pageB.close();
     await browser.close();

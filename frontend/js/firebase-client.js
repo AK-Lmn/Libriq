@@ -6,6 +6,7 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signInWithPopup,
+  deleteUser,
   signOut,
 } from '../vendor/firebase-auth.js';
 import {
@@ -372,6 +373,65 @@ async function readBackupDoc(pathSegments) {
   return getDoc(ref);
 }
 
+async function deleteFirestoreDocPath(pathSegments) {
+  if (TEST_MODE) {
+    await testFetch(`/doc?path=${encodeURIComponent(pathSegments.join('/'))}`, { method: 'DELETE' });
+    return true;
+  }
+  if (!firestore || !auth?.currentUser) throw new Error('Firestore is unavailable.');
+  const ref = doc(firestore, ...pathSegments);
+  await deleteDoc(ref);
+  return true;
+}
+
+async function deleteFirestoreCollectionDocs(pathSegments) {
+  if (TEST_MODE) {
+    const res = await testFetch(`/collection?path=${encodeURIComponent(pathSegments.join('/'))}`);
+    const docs = await res.json();
+    await Promise.all((Array.isArray(docs) ? docs : []).map((item) => testFetch(`/doc?path=${encodeURIComponent(`${pathSegments.join('/')}/${item.id}`)}`, { method: 'DELETE' })));
+    return true;
+  }
+  if (!firestore || !auth?.currentUser) throw new Error('Firestore is unavailable.');
+  const ref = collection(firestore, ...pathSegments);
+  const snap = await getDocs(ref);
+  const deletions = [];
+  snap.forEach((docSnap) => {
+    deletions.push(deleteDoc(doc(firestore, ...pathSegments, docSnap.id)));
+  });
+  await Promise.all(deletions);
+  return true;
+}
+
+async function deleteCurrentUserLibraryData() {
+  const user = getCurrentUser();
+  if (!user?.uid) throw new Error('Firebase is unavailable.');
+  await deleteFirestoreCollectionDocs(['users', user.uid, 'sync', 'v1', 'books']);
+  await deleteFirestoreDocPath(['users', user.uid, 'backups', 'current']);
+  return true;
+}
+
+async function deleteCurrentUserAccount() {
+  const user = getCurrentUser();
+  if (!user?.uid) throw new Error('Firebase is unavailable.');
+  await deleteCurrentUserLibraryData();
+  if (TEST_MODE) {
+    await signOutUser();
+    return true;
+  }
+  if (!auth?.currentUser) throw new Error('Firebase is unavailable.');
+  try {
+    await deleteUser(auth.currentUser);
+  } catch (err) {
+    if (String(err?.code || '').includes('requires-recent-login')) {
+      const friendly = new Error('For security, please sign in again before deleting your account.');
+      friendly.code = 'auth/requires-recent-login';
+      throw friendly;
+    }
+    throw err;
+  }
+  return true;
+}
+
 function subscribe(fn) {
   if (typeof fn !== 'function') return () => {};
   listeners.add(fn);
@@ -394,6 +454,8 @@ window.LibriqFirebase = {
   getCurrentUser,
   writeBackupDoc,
   readBackupDoc,
+  deleteCurrentUserLibraryData,
+  deleteCurrentUserAccount,
   doc: (...args) => TEST_MODE ? testFirestore.doc(...args) : doc(...args),
   setDoc: (...args) => TEST_MODE ? testFirestore.setDoc(...args) : setDoc(...args),
   collection: (...args) => TEST_MODE ? testFirestore.collection(...args) : collection(...args),

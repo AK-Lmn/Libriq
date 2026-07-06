@@ -297,6 +297,9 @@ const Navigation = (() => {
     resumeAccountModeIfAllowed,
     clearAccountResume,
     clearLibrarySearch,
+    clearLocalCache,
+    confirmDeleteLibraryData,
+    confirmDeleteAccount,
     get currentPage() { return _currentPage; },
   };
 })();
@@ -2341,12 +2344,17 @@ function renderSettingsPage() {
         </div>
         <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
           <div class="activity-text">
-            <div class="activity-title">Clear all data</div>
-            <div class="activity-subtitle">Remove all books and settings</div>
+            <div class="activity-title">Danger zone</div>
+            <div class="activity-subtitle">Destructive account and cloud data actions live here.</div>
           </div>
-          <button class="btn btn-danger btn-sm" onclick="Navigation.clearAllData()">
-            <i class="ph ph-trash"></i> Clear
-          </button>
+          <div style="display:flex; gap: var(--space-2); flex-wrap: wrap;">
+            <button class="btn btn-danger btn-sm" onclick="Navigation.confirmDeleteLibraryData()">
+              <i class="ph ph-trash"></i> Delete library data
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="Navigation.confirmDeleteAccount()">
+              <i class="ph ph-user-minus"></i> Delete account
+            </button>
+          </div>
         </div>
         <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
           <div class="activity-text">
@@ -2612,6 +2620,11 @@ function _buildSyncSection(firebase) {
         <div class="activity-text" style="margin-top: var(--space-2);">
           <div class="activity-subtitle">For troubleshooting only.</div>
           <div class="sync-health-list">${diagnosticsRows}</div>
+          <div style="margin-top: var(--space-3);">
+            <button class="btn btn-secondary btn-sm" type="button" onclick="Navigation.clearLocalCache()">
+              <i class="ph ph-trash"></i> Clear local cache
+            </button>
+          </div>
         </div>
       </details>
     </div>`;
@@ -3651,86 +3664,138 @@ function _mergeActivityById(currentEvents, importedEvents) {
   return Array.from(byId.values()).sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
 }
 
+function _dangerConfirmElements() {
+  return {
+    modal: document.getElementById('dangerConfirmModal'),
+    title: document.getElementById('dangerConfirmTitle'),
+    body: document.getElementById('dangerConfirmBody'),
+    prompt: document.getElementById('dangerConfirmPrompt'),
+    input: document.getElementById('dangerConfirmInput'),
+    action: document.getElementById('dangerConfirmAction'),
+    cancel: document.getElementById('dangerConfirmCancel'),
+    close: document.getElementById('closeDangerConfirm'),
+  };
+}
+
+function confirmDangerAction({ title, body, prompt, expected, actionLabel }) {
+  return new Promise((resolve) => {
+    const els = _dangerConfirmElements();
+    if (!els.modal || !els.title || !els.body || !els.prompt || !els.input || !els.action || !els.cancel || !els.close) {
+      resolve(window.prompt(`${title}\n\n${body}\n\nType ${expected} to continue:`) === expected);
+      return;
+    }
+    els.title.textContent = title;
+    els.body.textContent = body;
+    els.prompt.textContent = prompt;
+    els.input.value = '';
+    els.action.textContent = actionLabel;
+    els.action.disabled = true;
+    const cleanup = (result = false) => {
+      els.modal.setAttribute('hidden', '');
+      document.body.style.overflow = '';
+      els.input.oninput = null;
+      els.cancel.onclick = null;
+      els.close.onclick = null;
+      els.action.onclick = null;
+      els.modal.onclick = null;
+      resolve(result);
+    };
+    els.input.oninput = () => {
+      els.action.disabled = els.input.value.trim() !== expected;
+    };
+    els.cancel.onclick = () => cleanup(false);
+    els.close.onclick = () => cleanup(false);
+    els.action.onclick = () => {
+      if (els.input.value.trim() === expected) cleanup(true);
+    };
+    els.modal.onclick = (e) => {
+      if (e.target === els.modal) cleanup(false);
+    };
+    els.modal.removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+    window.setTimeout(() => els.input.focus(), 50);
+  });
+}
+
+async function clearLocalCache() {
+  const confirmed = await confirmDangerAction({
+    title: 'Clear local cache?',
+    body: 'This will remove this device\'s local cache only. It will not delete your cloud library or account.',
+    prompt: 'Type CLEAR CACHE to continue',
+    expected: 'CLEAR CACHE',
+    actionLabel: 'Clear cache',
+  });
+  if (!confirmed) return;
+  const firebase = window.LibriqFirebase?.getState?.() || {};
+  if (firebase.user?.uid) {
+    Storage.clearAccountScopedData?.(firebase.user.uid, { keys: ['BOOKS', 'ACTIVITY', 'STREAK', 'GOALS', 'BACKUP', 'CLOUD_BACKUP', 'SYNC_META', 'SYNC_TOMBSTONES'] });
+  }
+  Utils.toast('Local cache cleared.', 'info');
+  Navigation.renderCurrentPage?.();
+  Navigation.updateBadges?.();
+}
+
+async function confirmDeleteLibraryData() {
+  const firebase = window.LibriqFirebase?.getState?.() || {};
+  if (!firebase.user?.uid) {
+    Utils.toast('Sign in first to delete library data.', 'warning');
+    return;
+  }
+  const confirmed = await confirmDangerAction({
+    title: 'Delete library data?',
+    body: 'This will permanently remove your books, notes, progress, activity, streak, and cloud backup for this account. This cannot be undone.',
+    prompt: 'Type DELETE to continue',
+    expected: 'DELETE',
+    actionLabel: 'Delete library data',
+  });
+  if (!confirmed) return;
+  try {
+    window.LibriqSyncBeta?.detachForAccountSwitch?.('delete-library-data');
+    await window.LibriqFirebase.deleteCurrentUserLibraryData?.();
+    Storage.clearAccountScopedData?.(firebase.user.uid, { keys: ['BOOKS', 'ACTIVITY', 'STREAK', 'GOALS', 'BACKUP', 'CLOUD_BACKUP', 'SYNC_META', 'SYNC_TOMBSTONES'] });
+    Navigation.updateBadges?.();
+    Navigation.renderCurrentPage?.();
+    Utils.toast('Library data deleted.', 'success');
+  } catch (err) {
+    console.warn('[Libriq] Delete library data failed:', err);
+    Utils.toast('Could not delete library data right now.', 'error');
+  }
+}
+
+async function confirmDeleteAccount() {
+  const firebase = window.LibriqFirebase?.getState?.() || {};
+  if (!firebase.user?.uid) {
+    Utils.toast('Sign in first to delete your account.', 'warning');
+    return;
+  }
+  const confirmed = await confirmDangerAction({
+    title: 'Delete account?',
+    body: 'This will permanently delete your LibriQ account and all reading data connected to this account. This cannot be undone.',
+    prompt: 'Type DELETE ACCOUNT to continue',
+    expected: 'DELETE ACCOUNT',
+    actionLabel: 'Delete account',
+  });
+  if (!confirmed) return;
+  try {
+    window.LibriqSyncBeta?.detachForAccountSwitch?.('delete-account');
+    await window.LibriqFirebase.deleteCurrentUserAccount?.();
+    Storage.clearAccountScopedData?.(firebase.user.uid, { keys: ['BOOKS', 'ACTIVITY', 'PROFILE', 'STREAK', 'GOALS', 'BACKUP', 'CLOUD_BACKUP', 'SYNC_META', 'SYNC_TOMBSTONES'] });
+    Storage.clearActiveAccountScope?.();
+    Navigation.goTo('session');
+    Utils.toast('Account deleted.', 'success');
+  } catch (err) {
+    const code = String(err?.code || '');
+    if (code.includes('requires-recent-login')) {
+      Utils.toast('For security, please sign in again before deleting your account.', 'warning');
+    } else {
+      console.warn('[Libriq] Delete account failed:', err);
+      Utils.toast('Could not delete your account right now.', 'error');
+    }
+  }
+}
+
 function clearAllData() {
-  const hasBooks = Storage.getBooks().length > 0;
-  if (!hasBooks) {
-    Storage.resetAll();
-    Utils.toast('Library cleared. Starting fresh.', 'info');
-    return;
-  }
-
-  const modal = document.getElementById('backupImportModal');
-  const body = document.getElementById('backupImportBody');
-  const title = document.getElementById('backupImportTitle');
-  const subtitle = document.getElementById('backupImportSubtitle');
-  const cancel = document.getElementById('backupImportCancel');
-  const merge = document.getElementById('backupImportMerge');
-  const replace = document.getElementById('backupImportReplace');
-  const close = document.getElementById('closeBackupImport');
-  if (!modal || !body) {
-    if (confirm('This will delete all your books and settings. Export a backup first if you want one. Continue?')) {
-      Storage.resetAll();
-      Utils.toast('Library cleared. Starting fresh.', 'info');
-    }
-    return;
-  }
-
-  title.textContent = 'Clear All Data';
-  subtitle.textContent = 'Exporting a backup first is strongly recommended.';
-  body.innerHTML = `
-    <div class="whats-new-list">
-      <section class="whats-new-item">
-        <div class="whats-new-item-title">Before you clear</div>
-        <p>This removes all books, settings, goals, streak data, and local backup metadata from this device.</p>
-      </section>
-      <section class="whats-new-item">
-        <div class="whats-new-item-title">Recommended first step</div>
-        <p>Export a backup first so you can restore your library later if needed.</p>
-      </section>
-    </div>
-  `;
-
-  const cleanup = () => {
-    modal.setAttribute('hidden', '');
-    document.body.style.overflow = '';
-    replace.textContent = 'Replace local library';
-    merge.textContent = 'Merge with current library';
-    title.textContent = 'Import Backup';
-    subtitle.textContent = 'Review the backup before choosing how to apply it.';
-    replace.onclick = null;
-    merge.onclick = null;
-    cancel.onclick = null;
-    close.onclick = null;
-  };
-
-  replace.textContent = 'Clear anyway';
-  merge.textContent = 'Export backup first';
-  cancel.textContent = 'Cancel';
-  modal.removeAttribute('hidden');
-  document.body.style.overflow = 'hidden';
-
-  const exportFirst = async () => {
-    cleanup();
-    await exportData();
-    if (confirm('The backup was exported. Clear all local data now?')) {
-      Storage.resetAll();
-      Utils.toast('Library cleared. Starting fresh.', 'info');
-    }
-  };
-  const clearAnyway = () => {
-    cleanup();
-    Storage.resetAll();
-    Utils.toast('Library cleared. Starting fresh.', 'info');
-  };
-  const cancelClear = () => cleanup();
-
-  replace.onclick = clearAnyway;
-  merge.onclick = exportFirst;
-  cancel.onclick = cancelClear;
-  close.onclick = cancelClear;
-  modal.onclick = (e) => {
-    if (e.target === modal) cancelClear();
-  };
+  return clearLocalCache();
 }
 
 function renderActivityPage() {
