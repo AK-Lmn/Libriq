@@ -180,10 +180,16 @@ const Navigation = (() => {
   }
 
   function applyTheme() {
-    const profile  = Storage.getProfile();
-    const theme    = (profile && profile.theme) ? profile.theme : 'dark';
+    const theme = _getActiveTheme();
     document.documentElement.setAttribute('data-theme', theme);
     _updateThemeToggleUI(theme);
+  }
+
+  function _getActiveTheme() {
+    const attrTheme = document.documentElement.getAttribute('data-theme');
+    if (attrTheme === 'dark' || attrTheme === 'light') return attrTheme;
+    const profile = Storage.getProfile?.();
+    return profile?.theme === 'light' ? 'light' : 'dark';
   }
 
   function _withThemeSwitchLock(fn) {
@@ -205,6 +211,7 @@ const Navigation = (() => {
       _updateThemeToggleUI(next);
     });
     Storage.saveProfile({ theme: next });
+    if (_currentPage === 'settings') renderSettingsPage();
   }
 
   function _updateThemeToggleUI(theme) {
@@ -312,6 +319,7 @@ const Navigation = (() => {
 
   return {
     init, goTo, renderCurrentPage, updateBadges, toggleTheme, applyTheme,
+    getActiveTheme: _getActiveTheme,
     updateDesktopStatusPill,
     routeAfterAuthReady,
     setSessionPreference,
@@ -2284,7 +2292,7 @@ function renderSettingsPage() {
   if (window.localStorage?.getItem('libriq_debug_auto_backup')) {
     console.debug('[LibriQ][AutoBackup] full settings render');
   }
-  const theme = document.documentElement.getAttribute('data-theme');
+  const theme = Navigation.getActiveTheme?.() || document.documentElement.getAttribute('data-theme') || 'dark';
   const backupMeta = Storage.getBackupMeta?.() || { lastExportedAt: null };
   const hasBooks = Storage.getBooks().length > 0;
   const firebase = window.LibriqFirebase?.getState?.() || { available: false, initialized: false, user: null };
