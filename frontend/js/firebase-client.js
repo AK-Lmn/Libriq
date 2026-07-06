@@ -122,6 +122,18 @@ function init() {
     app = { name: 'libriq-test-app' };
     testFirestore = createTestFirestore();
     firestore = testFirestore;
+    const storedUid = localStorage.getItem('libriq_e2e_test_uid') || '';
+    if (storedUid) {
+      testUser = {
+        uid: storedUid,
+        displayName: localStorage.getItem('libriq_e2e_test_display_name') || storedUid,
+        email: localStorage.getItem('libriq_e2e_test_email') || `${storedUid}@example.com`,
+        photoURL: '',
+      };
+      window.LibriqStorage?.setActiveAccountUid?.(testUser.uid);
+    } else {
+      window.LibriqStorage?.clearActiveAccountScope?.();
+    }
     state.available = true;
     state.initialized = true;
     state.ready = true;
@@ -235,6 +247,9 @@ async function createAccountWithEmail(email, password) {
 async function signOutUser() {
   if (TEST_MODE) {
     testUser = null;
+    localStorage.removeItem('libriq_e2e_test_uid');
+    localStorage.removeItem('libriq_e2e_test_email');
+    localStorage.removeItem('libriq_e2e_test_display_name');
     window.LibriqStorage?.clearActiveAccountScope?.();
     setState({ user: null, ready: true, available: true });
     return;

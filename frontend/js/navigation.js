@@ -19,6 +19,7 @@ const Navigation = (() => {
   }
 
   const pages = {
+    boot:      () => renderBootPage(),
     session:   () => renderSessionChoicePage(),
     dashboard: () => Dashboard.render(),
     library:   () => renderLibraryPage(),
@@ -38,7 +39,7 @@ const Navigation = (() => {
   function goTo(page) {
     if (!pages[page]) return;
     _currentPage = page;
-    document.body.classList.toggle('session-choice-active', page === 'session');
+    document.body.classList.toggle('session-choice-active', page === 'session' || page === 'boot');
 
     Utils.$$('.nav-item').forEach(el => {
       el.classList.toggle('active', el.dataset.page === page);
@@ -56,7 +57,7 @@ const Navigation = (() => {
   }
 
   function renderCurrentPage() {
-    document.body.classList.toggle('session-choice-active', _currentPage === 'session');
+    document.body.classList.toggle('session-choice-active', _currentPage === 'session' || _currentPage === 'boot');
     if (pages[_currentPage]) pages[_currentPage]();
   }
 
@@ -220,7 +221,7 @@ const Navigation = (() => {
         sessionPref: getSessionPreference(),
         currentSessionMode: getCurrentSessionMode(),
       });
-      if (firebase.user && shouldResumeAccountMode()) {
+      if (firebase.ready && firebase.user && shouldResumeAccountMode()) {
         resumeAccountModeIfAllowed();
       }
     };
@@ -253,6 +254,8 @@ const Navigation = (() => {
       }
       if (firebase.user && shouldResumeAccountMode()) {
         resumeAccountModeIfAllowed();
+      } else if (firebase.ready && _currentPage === 'boot') {
+        routeAfterAuthReady();
       } else if (_currentPage === 'settings') renderSettingsPage();
       if (_currentPage === 'session') renderSessionChoicePage();
       window.LibriqCloudBackup?.refresh?.();
@@ -271,6 +274,7 @@ const Navigation = (() => {
 
   return {
     init, goTo, renderCurrentPage, updateBadges, toggleTheme, applyTheme,
+    routeAfterAuthReady,
     setSessionPreference,
     getSessionPreference,
     getCurrentSessionMode,
@@ -283,6 +287,47 @@ const Navigation = (() => {
 })();
 
 window.LibriqNavigation = Navigation;
+
+function renderBootPage() {
+  const main = document.getElementById('mainContent');
+  if (!main) return;
+  main.innerHTML = `
+    <div class="session-page">
+      <section class="session-hero">
+        <div class="session-card-stack" style="max-width: 420px; margin: 0 auto;">
+          <div class="session-loading-card" aria-live="polite">
+            <div class="session-loading-spinner"></div>
+            <div>
+              <div class="session-card-title">Opening LibriQ</div>
+              <div class="session-card-body">Checking your account before loading your library.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>`;
+}
+
+function routeAfterAuthReady() {
+  const firebase = window.LibriqFirebase?.getState?.() || {};
+  if (!firebase.ready) {
+    Navigation.goTo('boot');
+    return false;
+  }
+  if (firebase.user) {
+    window.LibriqStorage?.setActiveAccountUid?.(firebase.user.uid);
+    Navigation.setSessionPreference?.('account');
+    Navigation.goTo('dashboard');
+    window.LibriqSyncBeta?.maybeAutoEnable?.('auth-ready');
+    return true;
+  }
+  window.LibriqStorage?.clearActiveAccountScope?.();
+  if (Navigation.getCurrentSessionMode?.() === 'offline' || Navigation.getSessionPreference?.() === 'offline') {
+    Navigation.goTo('dashboard');
+    return true;
+  }
+  Navigation.goTo('session');
+  return true;
+}
 
 function _cloudRestoreDismissKey(uid) {
   return uid ? `libriq_cloud_restore_dismissed_${uid}` : 'libriq_cloud_restore_dismissed';
@@ -3253,7 +3298,7 @@ async function restoreFromCloud(preloadedDoc = null) {
     Storage.saveBooks((data.books || []).map(book => createBook(book)));
     Storage.saveProfile(data.profile);
     Storage.saveGoals(data.goals);
-    localStorage.setItem('libriq_streak', JSON.stringify(data.streak));
+    Storage.saveStreak?.(data.streak);
   } catch (err) {
     console.error('[Libriq] Cloud restore local replacement failed:', err);
     Utils.toast("Couldn't restore this backup. Your local data was not changed.", 'error');
@@ -3396,7 +3441,7 @@ function _applyImportedBackup(parsed, replaceMode) {
     Storage.saveGoals(parsed.data.goals);
   }
   if (parsed.data.streak && typeof parsed.data.streak === 'object') {
-    localStorage.setItem('libriq_streak', JSON.stringify(parsed.data.streak));
+    Storage.saveStreak?.(parsed.data.streak);
   }
   Storage.replaceActivityLog?.(mergedActivity);
   Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_imported', null, { itemCount: mergedBooks.length, activityCount: mergedActivity.length, mode: replaceMode ? 'replace' : 'merge' }, 'import'));

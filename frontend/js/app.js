@@ -150,7 +150,8 @@
     resetShellUI();
 
     Navigation.init();
-    Navigation.goTo('session');
+    Navigation.goTo('boot');
+    waitForAuthThenRoute();
 
     Search.init();
 
@@ -179,6 +180,29 @@
       .catch((err) => {
         console.warn('[LibriQ] Service worker registration failed:', err);
       });
+  }
+
+  function waitForAuthThenRoute() {
+    const firebase = window.LibriqFirebase?.getState?.() || {};
+    if (firebase.ready) {
+      Navigation.routeAfterAuthReady?.();
+      return;
+    }
+    let routed = false;
+    const unsubscribe = window.LibriqFirebase?.onChange?.((nextState) => {
+      if (routed || !nextState?.ready) return;
+      routed = true;
+      unsubscribe?.();
+      Navigation.routeAfterAuthReady?.();
+    });
+    window.setTimeout(() => {
+      if (routed) return;
+      const latest = window.LibriqFirebase?.getState?.() || {};
+      if (!latest.ready) return;
+      routed = true;
+      unsubscribe?.();
+      Navigation.routeAfterAuthReady?.();
+    }, 2500);
   }
 
   if (document.readyState === 'loading') {
