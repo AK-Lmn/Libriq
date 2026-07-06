@@ -47,33 +47,37 @@ const Dashboard = {
 
         <!-- Stats Row -->
         <div class="stats-row stagger">
-          <div class="stat-card">
+          <div class="stat-card dashboard-stat-card">
             <div class="stat-card-icon amber">
               <i class="ph ph-books"></i>
             </div>
             <div class="stat-card-value">${stats.total}</div>
             <div class="stat-card-label">Books in library</div>
+            <div class="stat-card-footnote">All saved titles across every shelf.</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card dashboard-stat-card">
             <div class="stat-card-icon blue">
               <i class="ph ph-book-open"></i>
             </div>
             <div class="stat-card-value">${stats.reading}</div>
             <div class="stat-card-label">Currently reading</div>
+            <div class="stat-card-footnote">Books with active progress updates.</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card dashboard-stat-card">
             <div class="stat-card-icon green">
               <i class="ph ph-check-circle"></i>
             </div>
             <div class="stat-card-value">${stats.finishedThisYear}</div>
             <div class="stat-card-label">Finished this year</div>
+            <div class="stat-card-footnote">Books completed during the current calendar year.</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card dashboard-stat-card">
             <div class="stat-card-icon orange">
               <i class="ph ph-fire"></i>
             </div>
             <div class="stat-card-value">${streak.current}</div>
             <div class="stat-card-label">Day streak</div>
+            <div class="stat-card-footnote">Consecutive days with reading activity.</div>
           </div>
         </div>
 
@@ -84,7 +88,7 @@ const Dashboard = {
           <div class="dashboard-main">
 
             <!-- Currently Reading -->
-            <section>
+            <section class="dashboard-panel">
               <div class="section-header">
                 <h2 class="section-title">Currently Reading</h2>
                 <button class="section-action" onclick="Navigation.goTo('reading')">
@@ -100,7 +104,7 @@ const Dashboard = {
             </section>
 
             <!-- Monthly Chart -->
-            <section>
+            <section class="dashboard-panel">
               <div class="section-header">
                 <h2 class="section-title">Books Read — ${new Date().getFullYear()}</h2>
                 <button class="section-action" onclick="Navigation.goTo('stats')">
@@ -111,7 +115,7 @@ const Dashboard = {
             </section>
 
             <!-- Want to Read shelf -->
-            <section>
+            <section class="dashboard-panel">
               <div class="section-header">
                 <h2 class="section-title">Up Next</h2>
                 <button class="section-action" onclick="Navigation.goTo('wishlist')">
@@ -126,7 +130,7 @@ const Dashboard = {
           <div class="dashboard-aside">
 
             <!-- Reading Goal -->
-            <div class="goal-widget">
+            <div class="goal-widget dashboard-panel">
               <div class="goal-header">
                 <div>
                   <div class="goal-title">Reading Goal</div>
@@ -172,7 +176,7 @@ const Dashboard = {
             </div>
 
             <!-- Recent Activity -->
-            <div class="goal-widget">
+            <div class="goal-widget dashboard-panel">
               <div class="goal-header">
                 <div class="goal-title">Recent Activity</div>
               </div>
@@ -188,7 +192,7 @@ const Dashboard = {
 
             <!-- Top Genres -->
             ${topGenres.length > 0 ? `
-              <div class="goal-widget">
+              <div class="goal-widget dashboard-panel">
                 <div class="goal-header">
                   <div class="goal-title">Top Genres</div>
                 </div>

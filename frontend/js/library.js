@@ -1026,6 +1026,7 @@ const Library = (() => {
   function renderBookCard(book) {
     const pct     = Utils.readingProgress(book.currentPage, book.pageCount);
     const isReading = book.status === LIBRIQ.STATUS.READING;
+    const isFinished = book.status === LIBRIQ.STATUS.FINISHED;
 
     const card = document.createElement('div');
     card.className = 'book-card';
@@ -1059,6 +1060,10 @@ const Library = (() => {
             <div class="progress-bar">
               <div class="progress-fill" style="width:${pct}%"></div>
             </div>
+          </div>` : isFinished ? `
+          <div class="book-card-complete">
+            <i class="ph ph-check-circle"></i>
+            Finished and ready for the next shelf.
           </div>` : ''}
 
         <div class="book-card-actions"></div>
