@@ -48,14 +48,26 @@ async function waitForSyncAttached(page) {
   await page.waitForFunction(() => Boolean(window.LibriqE2E && window.LibriqSyncDebug?.status?.().attached), null, { timeout: 10000 });
 }
 
+async function signInExistingPage(page, uid, email) {
+  await page.evaluate(({ uid, email }) => {
+    window.LibriqE2E.seedAuth(uid, email, uid);
+    window.LibriqE2E.enableAccountMode();
+    window.dispatchEvent(new CustomEvent('libriq:auth-changed', { detail: window.LibriqFirebase.getState() }));
+    window.LibriqNavigation.goTo('dashboard');
+    window.LibriqSyncBeta.maybeAutoEnable('e2e-account-switch');
+  }, { uid, email });
+  await waitForSyncAttached(page);
+}
+
 function assertHasFields(object, fields) {
   fields.forEach((field) => assert.equal(Object.prototype.hasOwnProperty.call(object, field), true, `missing sync status field: ${field}`));
 }
 
 async function main() {
-  const server = startServer();
+    const server = startServer();
   try {
     await delay(1500);
+    await fetch(`http://127.0.0.1:${port}/__libriq_test_api/reset`, { method: 'POST' });
     const browser = await chromium.launch({ headless: true });
     const contextA = await browser.newContext();
     const contextB = await browser.newContext();
@@ -195,6 +207,43 @@ async function main() {
     assert.equal(pausedStatus.attached, false);
     assert.equal(pausedStatus.sessionMode, 'offline');
     assert.equal(['off', 'paused'].includes(pausedStatus.status), true);
+
+    const contextIsolation = await browser.newContext();
+    const pageIsolation = await setupPage(contextIsolation, 'isolation-user-a', 'isolation-a@example.com');
+    const isolationBookId = await pageIsolation.evaluate(() => {
+      const book = window.LibriqE2E.addBook({
+        title: 'ACCOUNT ISOLATION A',
+        author: 'LibriQ',
+        status: 'reading',
+        currentPage: 12,
+        pageCount: 240,
+      });
+      return book.id;
+    });
+    await delay(6000);
+    assert.equal(await pageIsolation.evaluate((id) => window.LibriqE2E.getBooks().some((book) => book.id === id), isolationBookId), true);
+
+    await pageIsolation.evaluate(async () => {
+      await window.LibriqFirebase.signOut();
+    });
+    await delay(1000);
+    assert.equal(await pageIsolation.evaluate(() => window.LibriqNavigation.currentPage), 'session');
+
+    await signInExistingPage(pageIsolation, 'isolation-user-b', 'isolation-b@example.com');
+    await delay(3000);
+    assert.equal(await pageIsolation.evaluate(() => window.LibriqE2E.getBooks().length), 0);
+    assert.equal(await pageIsolation.evaluate((id) => window.LibriqE2E.getBooks().some((book) => book.id === id), isolationBookId), false);
+    const userBRemote = await fetch(`http://127.0.0.1:${port}/__libriq_test_api/collection?path=${encodeURIComponent('users/isolation-user-b/sync/v1/books')}`).then(res => res.json());
+    assert.equal(userBRemote.some((book) => book.id === isolationBookId), false);
+
+    await pageIsolation.evaluate(async () => {
+      await window.LibriqFirebase.signOut();
+    });
+    await signInExistingPage(pageIsolation, 'isolation-user-a', 'isolation-a@example.com');
+    await delay(6000);
+    assert.equal(await pageIsolation.evaluate((id) => window.LibriqE2E.getBooks().some((book) => book.id === id), isolationBookId), true);
+    await pageIsolation.close();
+    await contextIsolation.close();
 
     await pageA.close();
     await pageB.close();

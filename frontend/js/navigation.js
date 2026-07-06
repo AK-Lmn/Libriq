@@ -9,6 +9,7 @@ const Navigation = (() => {
   const SESSION_MODE_KEY = 'libriq_session_mode';
   const PREFERRED_SESSION_MODE_KEY = 'libriq_preferred_session_mode';
   const DEBUG_SYNC = () => localStorage.getItem('libriq_debug_sync') === '1';
+  let _lastAuthUid = null;
 
   function debugSync(message, details = null) {
     if (!DEBUG_SYNC()) return;
@@ -227,6 +228,9 @@ const Navigation = (() => {
     window.setTimeout(tryResume, 500);
     window.addEventListener('libriq:auth-changed', () => {
       const firebase = window.LibriqFirebase?.getState?.() || {};
+      const nextUid = firebase.user?.uid || null;
+      const uidChanged = _lastAuthUid !== nextUid;
+      _lastAuthUid = nextUid;
       debugSync('auth state resolved', {
         uid: firebase.user?.uid || null,
         ready: firebase.ready,
@@ -235,8 +239,17 @@ const Navigation = (() => {
         preferredSessionMode: localStorage.getItem(PREFERRED_SESSION_MODE_KEY) || null,
         sessionPref: getSessionPreference(),
       });
+      if (uidChanged) {
+        window.LibriqSyncBeta?.detachForAccountSwitch?.('navigation-auth-change');
+        Navigation.updateBadges?.();
+      }
       if (!firebase.user) {
         clearAccountResume();
+        if (getCurrentSessionMode() !== 'offline' && getSessionPreference() !== 'offline') {
+          if (_currentPage !== 'session') goTo('session');
+          else renderSessionChoicePage();
+          return;
+        }
       }
       if (firebase.user && shouldResumeAccountMode()) {
         resumeAccountModeIfAllowed();

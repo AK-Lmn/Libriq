@@ -22,6 +22,9 @@ const Storage = (() => {
     BACKUP:  'libriq_backup_meta',
     CLOUD_BACKUP: 'libriq_cloud_backup_meta',
   };
+  const ACTIVE_UID_KEY = 'libriq_active_account_uid';
+  const SCOPED_DATA_KEYS = new Set(['BOOKS', 'ACTIVITY', 'GOALS', 'CLOUD_BACKUP']);
+  let activeUid = localStorage.getItem(ACTIVE_UID_KEY) || null;
 
   const DEFAULTS = {
     profile: () => createProfile({ name: 'Reader', theme: 'dark' }),
@@ -61,9 +64,9 @@ const Storage = (() => {
       _write(DATA_KEYS.PROFILE, { ...DEFAULTS.profile(), ...rawProfile });
     }
 
-    const rawGoals = _read(DATA_KEYS.GOALS);
+    const rawGoals = _read(_key('GOALS'));
     if (!rawGoals || typeof rawGoals.yearly !== 'number') {
-      _write(DATA_KEYS.GOALS, DEFAULTS.goals());
+      _write(_key('GOALS'), DEFAULTS.goals());
     }
 
     const rawStreak = _read(DATA_KEYS.STREAK);
@@ -71,14 +74,14 @@ const Storage = (() => {
       _write(DATA_KEYS.STREAK, DEFAULTS.streak());
     }
 
-    const rawBooks = _read(DATA_KEYS.BOOKS);
+    const rawBooks = _read(_key('BOOKS'));
     if (!Array.isArray(rawBooks)) {
-      _write(DATA_KEYS.BOOKS, DEFAULTS.books());
+      _write(_key('BOOKS'), DEFAULTS.books());
     }
 
-    const rawActivity = _read(DATA_KEYS.ACTIVITY);
+    const rawActivity = _read(_key('ACTIVITY'));
     if (!Array.isArray(rawActivity)) {
-      _write(DATA_KEYS.ACTIVITY, DEFAULTS.activity());
+      _write(_key('ACTIVITY'), DEFAULTS.activity());
     }
 
     const rawBackup = _read(DATA_KEYS.BACKUP);
@@ -86,9 +89,9 @@ const Storage = (() => {
       _write(DATA_KEYS.BACKUP, DEFAULTS.backup());
     }
 
-    const rawCloudBackup = _read(DATA_KEYS.CLOUD_BACKUP);
+    const rawCloudBackup = _read(_key('CLOUD_BACKUP'));
     if (!rawCloudBackup || typeof rawCloudBackup !== 'object') {
-      _write(DATA_KEYS.CLOUD_BACKUP, DEFAULTS.cloudBackup());
+      _write(_key('CLOUD_BACKUP'), DEFAULTS.cloudBackup());
     }
   }
 
@@ -109,6 +112,25 @@ const Storage = (() => {
     getDeviceId();
   }
 
+  function getActiveAccountUid() {
+    return activeUid;
+  }
+
+  function setActiveAccountUid(uid) {
+    const nextUid = uid ? String(uid) : null;
+    const changed = activeUid !== nextUid;
+    activeUid = nextUid;
+    if (activeUid) localStorage.setItem(ACTIVE_UID_KEY, activeUid);
+    else localStorage.removeItem(ACTIVE_UID_KEY);
+    _writeDefaults();
+    if (changed) _dispatchChange('storage:scope-changed', { uid: activeUid });
+    return changed;
+  }
+
+  function clearActiveAccountScope() {
+    return setActiveAccountUid(null);
+  }
+
   function getDeviceId() {
     let deviceId = localStorage.getItem(DATA_KEYS.DEVICE_ID);
     if (!deviceId) {
@@ -116,6 +138,16 @@ const Storage = (() => {
       localStorage.setItem(DATA_KEYS.DEVICE_ID, deviceId);
     }
     return deviceId;
+  }
+
+  function _userKey(uid, key) {
+    const suffix = key.replace(/^libriq_/, '');
+    return `libriq:users:${uid}:${suffix}`;
+  }
+
+  function _key(name) {
+    const base = DATA_KEYS[name];
+    return activeUid && SCOPED_DATA_KEYS.has(name) ? _userKey(activeUid, base) : base;
   }
 
   function getSyncReadiness() {
@@ -141,23 +173,23 @@ const Storage = (() => {
   // Kept for future opt-in demos / screenshots without affecting real first runs.
   function _seedSampleData() {
     const books = SEED_BOOKS.map(b => createBook(b));
-    _write(DATA_KEYS.BOOKS, books);
+    _write(_key('BOOKS'), books);
     _write(DATA_KEYS.STREAK, { current: 5, longest: 14, lastRead: new Date().toISOString() });
   }
 
   // ── Books ────────────────────────────────
 
   function getBooks() {
-    const data = _read(DATA_KEYS.BOOKS);
+    const data = _read(_key('BOOKS'));
     if (!Array.isArray(data)) {
-      _write(DATA_KEYS.BOOKS, []);
+      _write(_key('BOOKS'), []);
       return [];
     }
     return data;
   }
 
   function saveBooks(books) {
-    return _write(DATA_KEYS.BOOKS, books);
+    return _write(_key('BOOKS'), books);
   }
 
   function addBook(bookData) {
@@ -202,9 +234,9 @@ const Storage = (() => {
   }
 
   function getActivityLog() {
-    const data = _read(DATA_KEYS.ACTIVITY);
+    const data = _read(_key('ACTIVITY'));
     if (!Array.isArray(data)) {
-      _write(DATA_KEYS.ACTIVITY, DEFAULTS.activity());
+      _write(_key('ACTIVITY'), DEFAULTS.activity());
       return [];
     }
     return data.filter(Boolean).slice(-500);
@@ -212,7 +244,7 @@ const Storage = (() => {
 
   function saveActivityLog(events) {
     if (!Array.isArray(events)) return false;
-    const result = _write(DATA_KEYS.ACTIVITY, events.slice(-500));
+    const result = _write(_key('ACTIVITY'), events.slice(-500));
     if (result) _dispatchChange('activity:updated', { count: Math.min(events.length, 500) });
     return result;
   }
@@ -285,10 +317,10 @@ const Storage = (() => {
   }
 
   function getCloudBackupMeta() {
-    const data = _read(DATA_KEYS.CLOUD_BACKUP);
+    const data = _read(_key('CLOUD_BACKUP'));
     if (!data || typeof data !== 'object') {
       const fresh = DEFAULTS.cloudBackup();
-      _write(DATA_KEYS.CLOUD_BACKUP, fresh);
+      _write(_key('CLOUD_BACKUP'), fresh);
       return fresh;
     }
     return { ...DEFAULTS.cloudBackup(), ...data };
@@ -297,7 +329,7 @@ const Storage = (() => {
   function saveCloudBackupMeta(updates) {
     const current = getCloudBackupMeta();
     const updated = { ...current, ...(updates && typeof updates === 'object' ? updates : {}) };
-    _write(DATA_KEYS.CLOUD_BACKUP, updated);
+    _write(_key('CLOUD_BACKUP'), updated);
     return updated;
   }
 
@@ -317,10 +349,10 @@ const Storage = (() => {
   }
 
   function getGoals() {
-    const data = _read(DATA_KEYS.GOALS);
+    const data = _read(_key('GOALS'));
     if (!data || typeof data.yearly !== 'number') {
       const fresh = DEFAULTS.goals();
-      _write(DATA_KEYS.GOALS, fresh);
+      _write(_key('GOALS'), fresh);
       return fresh;
     }
     return data;
@@ -328,7 +360,7 @@ const Storage = (() => {
 
   function saveGoals(goals) {
     if (!goals || typeof goals.yearly !== 'number' || goals.yearly < 1) return false;
-    const result = _write(DATA_KEYS.GOALS, goals);
+    const result = _write(_key('GOALS'), goals);
     if (result) _dispatchChange('goals:updated', goals);
     return result;
   }
@@ -360,7 +392,9 @@ const Storage = (() => {
   }
 
   function resetAll() {
-    Object.values(DATA_KEYS).forEach(k => localStorage.removeItem(k));
+    Object.entries(DATA_KEYS).forEach(([name, key]) => {
+      localStorage.removeItem(activeUid && SCOPED_DATA_KEYS.has(name) ? _userKey(activeUid, key) : key);
+    });
     bootstrap();
     _dispatchChange('reset', {});
   }
@@ -435,6 +469,7 @@ const Storage = (() => {
   return {
     bootstrap,
     resetAll,
+    getActiveAccountUid, setActiveAccountUid, clearActiveAccountScope,
     getBooks, saveBooks, addBook, updateBook, removeBook,
     getBookById, getBooksByStatus, toggleFavorite,
     getProfile, saveProfile,
@@ -448,3 +483,5 @@ const Storage = (() => {
     getStats,
   };
 })();
+
+window.LibriqStorage = Storage;
