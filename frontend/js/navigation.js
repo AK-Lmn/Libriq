@@ -853,6 +853,18 @@ function renderSessionChoicePage() {
     : '';
   const openInBrowserHref = 'https://libriq.app';
   const authUnavailable = !firebase.available || (typeof navigator !== 'undefined' && navigator.onLine === false);
+  const offlineCheckDelayMs = 900;
+  const offlineStabilityMs = 1400;
+
+  if (!window.LibriqSessionFallback) {
+    window.LibriqSessionFallback = {
+      timer: null,
+      lastRequestedAt: 0,
+      dismissAt: 0,
+      modalVisible: false,
+    };
+  }
+  const fallbackState = window.LibriqSessionFallback;
 
   main.innerHTML = `
     <div class="session-page">
@@ -977,10 +989,59 @@ function renderSessionChoicePage() {
     window.LibriqSyncBeta?.pauseForOffline?.();
     Navigation.goTo('dashboard');
   };
+  const hideFallback = () => {
+    const modal = document.getElementById('sessionFallbackModal');
+    if (!modal) return;
+    modal.hidden = true;
+    fallbackState.modalVisible = false;
+    fallbackState.dismissAt = Date.now();
+  };
   const showFallback = () => {
     const modal = document.getElementById('sessionFallbackModal');
     if (!modal) return;
     modal.hidden = false;
+    fallbackState.modalVisible = true;
+    fallbackState.dismissAt = 0;
+  };
+  const clearFallbackTimer = () => {
+    if (fallbackState.timer) {
+      window.clearTimeout(fallbackState.timer);
+      fallbackState.timer = null;
+    }
+  };
+  const shouldShowBlockingOffline = () => {
+    if (typeof navigator === 'undefined') return false;
+    if (navigator.onLine !== false) return false;
+    if (document.visibilityState && document.visibilityState !== 'visible') return false;
+    if (Navigation.getSessionPreference?.() === 'offline') return false;
+    if (Navigation.getCurrentSessionMode?.() === 'offline') return false;
+    return true;
+  };
+  const scheduleFallback = (reason = 'network') => {
+    fallbackState.lastRequestedAt = Date.now();
+    clearFallbackTimer();
+    if (!shouldShowBlockingOffline()) {
+      hideFallback();
+      return;
+    }
+    fallbackState.timer = window.setTimeout(() => {
+      fallbackState.timer = null;
+      if (!shouldShowBlockingOffline()) {
+        hideFallback();
+        return;
+      }
+      if (Date.now() - fallbackState.lastRequestedAt < offlineStabilityMs) return;
+      showFallback();
+    }, offlineCheckDelayMs);
+  };
+  const reconcileFallback = () => {
+    if (typeof navigator !== 'undefined' && navigator.onLine !== false) {
+      clearFallbackTimer();
+      hideFallback();
+      renderSessionChoicePage();
+      return;
+    }
+    scheduleFallback('recheck');
   };
   const setEmailMode = (mode) => {
     const nextMode = mode === 'signup' ? 'signup' : 'signin';
@@ -1008,13 +1069,14 @@ function renderSessionChoicePage() {
   };
   const retryAuth = () => {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-      showFallback();
+      scheduleFallback('retry');
       return;
     }
     renderSessionChoicePage();
   };
 
-  if (authUnavailable && !loading) showFallback();
+  if (authUnavailable && !loading) scheduleFallback('initial');
+  else hideFallback();
 
   document.getElementById('googleContinueBtn')?.addEventListener('click', () => {
     Navigation.setSessionPreference('google');
@@ -1098,6 +1160,13 @@ function renderSessionChoicePage() {
       Utils.toast(cancelled ? 'Sign-out was cancelled.' : 'Could not switch accounts right now.', 'error');
     }
   });
+
+  if (!window.LibriqSessionFallback.listenersAttached) {
+    window.addEventListener('online', reconcileFallback);
+    window.addEventListener('offline', () => scheduleFallback('offline-event'));
+    document.addEventListener('visibilitychange', reconcileFallback);
+    window.LibriqSessionFallback.listenersAttached = true;
+  }
 }
 
 function isAuthNetworkError(err) {
