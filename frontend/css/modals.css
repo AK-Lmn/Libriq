@@ -1424,6 +1424,16 @@
   cursor: not-allowed;
 }
 
+#dangerConfirmModal .modal-inline-error {
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: 16px;
+  background: rgba(220, 38, 38, 0.08);
+  color: #991B1B;
+  border: 1px solid rgba(220, 38, 38, 0.14);
+  line-height: var(--leading-loose);
+}
+
 #searchModal .search-modal {
   background: #fff;
 }

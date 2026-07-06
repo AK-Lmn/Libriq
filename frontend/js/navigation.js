@@ -3681,7 +3681,8 @@ function confirmDangerAction({ title, body, prompt, expected, actionLabel }) {
   return new Promise((resolve) => {
     const els = _dangerConfirmElements();
     if (!els.modal || !els.title || !els.body || !els.prompt || !els.input || !els.action || !els.cancel || !els.close) {
-      resolve(window.prompt(`${title}\n\n${body}\n\nType ${expected} to continue:`) === expected);
+      console.warn('[Libriq] Danger modal unavailable for confirmation dialog:', title);
+      resolve(false);
       return;
     }
     els.title.textContent = title;
@@ -3693,6 +3694,7 @@ function confirmDangerAction({ title, body, prompt, expected, actionLabel }) {
           <div class="modal-warning-note" style="margin-top: var(--space-3);">Typed confirmation is required before this action can run.</div>
         </div>
       </div>
+      <div id="dangerConfirmError" class="modal-inline-error" hidden></div>
       <label class="form-field">
         <span id="dangerConfirmPrompt">${Utils.sanitize(prompt)}</span>
         <input id="dangerConfirmInput" class="form-input" type="text" autocomplete="off" spellcheck="false" />
@@ -3700,6 +3702,7 @@ function confirmDangerAction({ title, body, prompt, expected, actionLabel }) {
     `;
     els.prompt = document.getElementById('dangerConfirmPrompt');
     els.input = document.getElementById('dangerConfirmInput');
+    const errorEl = document.getElementById('dangerConfirmError');
     els.input.value = '';
     els.action.textContent = actionLabel;
     els.action.disabled = true;
@@ -3715,12 +3718,23 @@ function confirmDangerAction({ title, body, prompt, expected, actionLabel }) {
       resolve(result);
     };
     els.input.oninput = () => {
+      if (errorEl) errorEl.hidden = true;
       els.action.disabled = els.input.value.trim() !== expected;
     };
     els.cancel.onclick = () => cleanup(false);
     els.close.onclick = () => cleanup(false);
-    els.action.onclick = () => {
-      if (els.input.value.trim() === expected) cleanup(true);
+    els.action.onclick = async () => {
+      try {
+        if (els.input.value.trim() !== expected) return;
+        cleanup(true);
+      } catch (err) {
+        console.warn('[Libriq] Danger action failed:', err);
+        if (errorEl) {
+          errorEl.textContent = 'Something went wrong. Please try again.';
+          errorEl.hidden = false;
+        }
+        els.action.disabled = false;
+      }
     };
     els.modal.onclick = (e) => {
       if (e.target === els.modal) cleanup(false);
