@@ -39,7 +39,7 @@ const Navigation = (() => {
   function goTo(page) {
     if (!pages[page]) return;
     _currentPage = page;
-    document.body.classList.toggle('session-choice-active', page === 'session' || page === 'boot');
+    applyAuthShellStateForPage(page);
 
     Utils.$$('.nav-item').forEach(el => {
       el.classList.toggle('active', el.dataset.page === page);
@@ -57,8 +57,23 @@ const Navigation = (() => {
   }
 
   function renderCurrentPage() {
-    document.body.classList.toggle('session-choice-active', _currentPage === 'session' || _currentPage === 'boot');
+    applyAuthShellStateForPage(_currentPage);
     if (pages[_currentPage]) pages[_currentPage]();
+  }
+
+  function applyAuthShellStateForPage(page) {
+    const body = document.body;
+    body.classList.remove('auth-booting', 'auth-signed-in', 'auth-signed-out', 'auth-local-only');
+    if (page === 'boot') {
+      body.classList.add('auth-booting');
+    } else if (page === 'session') {
+      body.classList.add('auth-signed-out');
+    } else if (getCurrentSessionMode() === 'offline' || getSessionPreference() === 'offline') {
+      body.classList.add('auth-local-only');
+    } else {
+      body.classList.add('auth-signed-in');
+    }
+    body.classList.toggle('session-choice-active', page === 'session' || page === 'boot');
   }
 
   function getSessionPreference() {
