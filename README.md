@@ -42,6 +42,15 @@ The app is designed to feel like a focused digital reading space instead of a pl
 
 ---
 
+## What's New in v4.2.0
+
+* LibriQ now opens as a cloud-first account flow with Google, email sign-in, and account creation
+* Email/password auth shows friendly errors for invalid email, wrong password, weak password, duplicate accounts, and network issues
+* Continue offline moved into the no-internet fallback modal with Retry and local-only offline entry
+* Firestore sync paths, tombstone behavior, backup paths, and book data models remain unchanged
+
+---
+
 ## What's New in v4.1.1
 
 * Settings is easier to read, with Account Sync and Cloud Backup controls simplified for everyday use
@@ -562,6 +571,20 @@ service cloud.firestore {
 ## Patch Notes
 
 This section tracks notable LibriQ updates. New version logs can be added here as the project grows.
+
+### v4.2.0 - Cloud-first Auth Flow
+
+**Added**
+
+* Email/password account creation and sign-in
+* No-internet fallback modal with Retry and Continue offline
+* Friendly auth errors that avoid exposing raw Firebase error strings
+
+**Changed**
+
+* Normal login now focuses on Google, email sign-in, and account creation
+* Continue offline moved out of the normal login screen and into the connection fallback
+* Existing Firestore sync paths, backup paths, tombstones, and book data models remain unchanged
 
 ### v4.0.1 - Automatic Account Sync
 

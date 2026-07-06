@@ -1,8 +1,10 @@
 import { initializeApp, getApp, getApps } from '../vendor/firebase-app.js';
 import {
+  createUserWithEmailAndPassword,
   getAuth,
   GoogleAuthProvider,
   onAuthStateChanged,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
 } from '../vendor/firebase-auth.js';
@@ -193,6 +195,36 @@ async function signInWithGoogle() {
   return signInWithPopup(auth, provider);
 }
 
+async function signInWithEmail(email, password) {
+  if (TEST_MODE) {
+    const normalizedEmail = String(email || '').trim();
+    testUser = {
+      uid: localStorage.getItem('libriq_e2e_test_uid') || `email-${normalizedEmail || 'reader'}`,
+      displayName: normalizedEmail.split('@')[0] || 'Reader',
+      email: normalizedEmail,
+      photoURL: '',
+    };
+    setState({ ready: true, user: testUser, available: true });
+    return { user: testUser };
+  }
+  if (!state.available || !auth) {
+    const error = new Error('Firebase is unavailable.');
+    error.code = 'auth/network-request-failed';
+    throw error;
+  }
+  return signInWithEmailAndPassword(auth, String(email || '').trim(), password);
+}
+
+async function createAccountWithEmail(email, password) {
+  if (TEST_MODE) return signInWithEmail(email, password);
+  if (!state.available || !auth) {
+    const error = new Error('Firebase is unavailable.');
+    error.code = 'auth/network-request-failed';
+    throw error;
+  }
+  return createUserWithEmailAndPassword(auth, String(email || '').trim(), password);
+}
+
 async function signOutUser() {
   if (TEST_MODE) {
     testUser = null;
@@ -330,6 +362,8 @@ window.LibriqFirebase = {
   getState: () => ({ ...state }),
   onChange: subscribe,
   signInWithGoogle,
+  signInWithEmail,
+  createAccountWithEmail,
   signOut: signOutUser,
   isAvailable: () => state.available,
   hasFirestore,
