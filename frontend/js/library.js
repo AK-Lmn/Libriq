@@ -1085,10 +1085,16 @@ const Library = (() => {
     if (book.status !== LIBRIQ.STATUS.FINISHED) {
       const finishBtn = document.createElement('button');
       finishBtn.className = 'btn btn-secondary btn-sm';
-      finishBtn.innerHTML = '<i class="ph ph-check"></i> Finish';
+      finishBtn.innerHTML = `<i class="ph ph-check"></i> ${
+        isReading ? 'Finish' : 'Start Reading'
+      }`;
       finishBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        Library.setStatus(book.id, LIBRIQ.STATUS.FINISHED);
+        if (isReading) {
+          Library.setStatus(book.id, LIBRIQ.STATUS.FINISHED);
+        } else {
+          Library.setStatus(book.id, LIBRIQ.STATUS.READING);
+        }
         Navigation.renderCurrentPage();
       });
       actions.appendChild(finishBtn);
