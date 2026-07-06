@@ -1614,7 +1614,7 @@ function renderFavoritesPage() {
         </div>
       </div>
 
-      <div class="goal-widget" style="margin-bottom: var(--space-8);">
+        <div class="goal-widget" style="margin-bottom: var(--space-8);">
         <div class="goal-header" style="gap: var(--space-3); align-items: center; justify-content: space-between; flex-wrap: wrap;">
           <div>
             <div class="goal-title">Yearly Recap</div>
@@ -1626,11 +1626,19 @@ function renderFavoritesPage() {
           </select>
         </div>
 
+        ${recap.missingFinishDates ? `
+          <div class="empty-state stats-empty-state" style="margin-top: var(--space-4);">
+            <div class="empty-state-icon"><i class="ph ph-hourglass-medium"></i></div>
+            <div class="empty-state-title">${recap.missingFinishDates} finished book${recap.missingFinishDates !== 1 ? 's are' : ' is'} missing a finish date</div>
+            <div class="empty-state-body">Statistics is using the best available local metadata so your finished books still appear here.</div>
+          </div>
+        ` : ''}
+
         ${recap.finishedCount === 0 ? `
           <div class="empty-state stats-empty-state" style="margin-top: var(--space-4);">
             <div class="empty-state-icon"><i class="ph ph-book-open"></i></div>
             <div class="empty-state-title">No finished books for this year yet.</div>
-            <div class="empty-state-body">Search or open your library to keep reading.</div>
+            <div class="empty-state-body">If your finished books are missing finish dates, Statistics will show a note above instead of counting them as empty.</div>
             <div style="display:flex; gap: var(--space-2); flex-wrap: wrap; justify-content: center;">
               <button class="btn btn-primary btn-sm" onclick="Search.open()">
                 <i class="ph ph-magnifying-glass"></i> Search Books
@@ -1887,7 +1895,7 @@ function _getRecapYears() {
   years.add(currentYear);
 
   Storage.getBooks().forEach(book => {
-    const year = Number.parseInt(String(book?.dateFinished || '').slice(0, 4), 10);
+    const year = Number.parseInt(String(_getEffectiveFinishedDate(book) || '').slice(0, 4), 10);
     if (!Number.isNaN(year)) years.add(year);
   });
 
@@ -1911,42 +1919,44 @@ function _setRecapYear(year) {
 }
 
 function _buildYearlyRecap(year) {
-  const books = Storage.getBooks().filter(book => {
-    const finishedYear = Number.parseInt(String(book?.dateFinished || '').slice(0, 4), 10);
-    return Number.isInteger(finishedYear) && finishedYear === year;
-  });
-
-  const finishedBooks = books.filter(book => book.dateFinished);
-  const finishedCount = finishedBooks.length;
-  const pagesRead = finishedBooks.reduce((sum, book) => sum + (Number(book.pageCount) > 0 ? Number(book.pageCount) : 0), 0);
-  const ratedBooks = finishedBooks.filter(book => typeof book.rating === 'number' && book.rating > 0);
+  const finishedEntries = Storage.getBooks()
+    .map(book => ({ book, finishedDate: _getEffectiveFinishedDate(book) }))
+    .filter(({ finishedDate }) => {
+      const finishedYear = Number.parseInt(String(finishedDate || '').slice(0, 4), 10);
+      return Number.isInteger(finishedYear) && finishedYear === year;
+    });
+  const books = finishedEntries.map(entry => entry.book);
+  const finishedCount = books.length;
+  const missingFinishDates = books.filter(book => !book.dateFinished && !book.completedAt && !book.finishedAt).length;
+  const pagesRead = books.reduce((sum, book) => sum + (Number(book.pageCount) > 0 ? Number(book.pageCount) : 0), 0);
+  const ratedBooks = books.filter(book => typeof book.rating === 'number' && book.rating > 0);
   const avgRating = ratedBooks.length
     ? (ratedBooks.reduce((sum, book) => sum + book.rating, 0) / ratedBooks.length).toFixed(1)
     : null;
 
   const monthCounts = Array(12).fill(0);
   const monthLabels = LIBRIQ.MONTHS;
-  finishedBooks.forEach(book => {
-    const month = new Date(book.dateFinished).getMonth();
+  finishedEntries.forEach(({ finishedDate }) => {
+    const month = new Date(finishedDate).getMonth();
     if (!Number.isNaN(month)) monthCounts[month]++;
   });
   const activeMonthIndex = monthCounts.indexOf(Math.max(...monthCounts));
   const activeMonthLabel = activeMonthIndex >= 0 ? monthLabels[activeMonthIndex] : '–';
 
-  const longestBook = finishedBooks
+  const longestBook = books
     .filter(book => Number(book.pageCount) > 0)
     .slice()
     .sort((a, b) => (Number(b.pageCount) || 0) - (Number(a.pageCount) || 0))[0] || null;
 
   const highestRatedBooks = ratedBooks
     .slice()
-    .sort((a, b) => (b.rating || 0) - (a.rating || 0) || new Date(b.dateFinished || 0) - new Date(a.dateFinished || 0))
+    .sort((a, b) => (b.rating || 0) - (a.rating || 0) || new Date(_getEffectiveFinishedDate(b) || 0) - new Date(_getEffectiveFinishedDate(a) || 0))
     .filter(book => book.rating === (ratedBooks[0]?.rating || null))
     .slice(0, 5);
 
   const genreCounts = new Map();
   const shelfCounts = new Map();
-  finishedBooks.forEach(book => {
+  books.forEach(book => {
     (Array.isArray(book.genres) ? book.genres : []).forEach(genre => {
       const clean = String(genre || '').trim();
       if (!clean) return;
@@ -1980,7 +1990,25 @@ function _buildYearlyRecap(year) {
     longestBook,
     highestRatedBooks,
     topBucket,
+    missingFinishDates,
   };
+}
+
+function _getEffectiveFinishedDate(book) {
+  if (!book || book.status !== LIBRIQ.STATUS.FINISHED) return null;
+  const candidates = [
+    book.dateFinished,
+    book.completedAt,
+    book.finishedAt,
+    book.updatedAt,
+    book.createdAt,
+    book.dateAdded,
+  ];
+  for (const value of candidates) {
+    const time = new Date(value || 0).getTime();
+    if (Number.isFinite(time) && time > 0) return new Date(time).toISOString();
+  }
+  return null;
 }
 
 function _topCountEntry(map) {
