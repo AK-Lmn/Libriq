@@ -1328,7 +1328,7 @@ function renderStatusPage(status, title, iconClass) {
   const books = Storage.getBooksByStatus(status);
 
   main.innerHTML = `
-    <div class="page status-page">
+    <div class="page status-page" id="statusPage">
       <div class="page-header status-header">
         <div class="status-heading">
           <span class="library-eyebrow">${status === LIBRIQ.STATUS.READING ? 'Reading queue' : 'Finished shelf'}</span>
@@ -2273,7 +2273,7 @@ function renderSettingsPage() {
     : 'No cloud backup yet.';
 
   main.innerHTML = `
-    <div class="page settings-page">
+    <div class="page settings-page" id="settingsPage">
       <div class="settings-header">
         <div class="settings-heading">
           <span class="settings-eyebrow">App preferences</span>
