@@ -1522,21 +1522,21 @@ html[data-theme="dark"] #searchModal .search-footer {
 html[data-theme="dark"] #searchModal .search-input,
 html[data-theme="dark"] #searchModal .search-filter-input,
 html[data-theme="dark"] #searchModal .search-filter-select {
-  color: #e2e8f0;
+  color: #f8fafc;
   background: #111827;
   border-color: rgba(148, 163, 184, 0.18);
 }
 
 html[data-theme="dark"] #searchModal .search-input::placeholder,
 html[data-theme="dark"] #searchModal .search-filter-input::placeholder {
-  color: #94a3b8;
+  color: #cbd5e1;
 }
 
 html[data-theme="dark"] #searchModal .search-input-icon,
 html[data-theme="dark"] #searchModal .search-close-btn,
 html[data-theme="dark"] #searchModal .search-footer span,
 html[data-theme="dark"] #searchModal .search-footer span kbd {
-  color: #cbd5e1;
+  color: #e2e8f0;
 }
 
 html[data-theme="dark"] #searchModal .search-input-wrap:focus-within {

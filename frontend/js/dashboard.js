@@ -260,7 +260,7 @@ function buildFeaturedReadingHero(book) {
             <i class="ph ph-play"></i>
             Resume Reading
           </button>
-          <button class="btn btn-secondary" onclick="Library.showAddModal(${JSON.stringify(book).replace(/"/g, '&quot;')})">
+          <button class="btn btn-secondary" onclick="Library.showDetailsModal('${book.id}')">
             View Details
           </button>
         </div>
