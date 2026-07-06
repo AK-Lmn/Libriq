@@ -12,14 +12,14 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: "What's New in LibriQ v4.1.1",
-      subtitle: 'LibriQ v4.1.1 makes Settings easier to read while keeping sync safety tools available.',
+      title: "What's New in LibriQ v4.2.0",
+      subtitle: 'LibriQ v4.2.0 makes account sign-in the front door while preserving offline fallback.',
       sections: [
-        ['Cleaner Settings', 'Settings is now easier to read, with sync and backup controls simplified.'],
-        ['Simpler Sync Status', 'Account Sync now shows only the details most users need.'],
-        ['Advanced Diagnostics', 'Technical sync details are still available when troubleshooting.'],
+        ['Cloud-first Sign-in', 'The login screen now focuses on Google, email sign-in, and account creation.'],
+        ['Email Accounts', 'You can now sign up or sign in with an email address and password.'],
+        ['Offline Fallback', 'Continue offline now appears when LibriQ cannot reach account services.'],
       ],
-      note: 'The same sync safety and backup behavior stay in place behind the cleaner UI.',
+      note: 'Firestore sync paths, backup paths, delete tombstones, and book data stay unchanged.',
     },
   };
 

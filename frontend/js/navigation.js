@@ -680,14 +680,15 @@ function renderSessionChoicePage() {
   const accountName = getDisplayNameForAccount(firebase.user);
   const loading = firebase.available && !firebase.ready;
   const inAppBrowser = Boolean(sessionContext.isInAppBrowser);
-  const signInButtonLabel = hasUser ? `Continue as ${Utils.sanitize(accountName)}` : 'Sign in with Google';
+  const signInButtonLabel = hasUser ? `Continue as ${Utils.sanitize(accountName)}` : 'Continue with Google';
   const signInButtonHelp = inAppBrowser
     ? 'Google sign-in may not work inside this app browser.'
-    : 'Optional account sign-in. This does not upload your library data.';
+    : 'Use your account for cloud backup and Account Sync.';
   const browserHelp = inAppBrowser
     ? 'Open LibriQ in Chrome or Safari to sign in with Google.'
     : '';
   const openInBrowserHref = 'https://libriq.app';
+  const authUnavailable = !firebase.available || (typeof navigator !== 'undefined' && navigator.onLine === false);
 
   main.innerHTML = `
     <div class="session-page">
@@ -697,20 +698,15 @@ function renderSessionChoicePage() {
 
         <div class="session-copy">
           <span class="session-eyebrow">Welcome to LibriQ</span>
-          <h1 class="session-title">Choose your session</h1>
+          <h1 class="session-title">Sign in to LibriQ</h1>
           <p class="session-subtitle">
-            Start locally, or continue with your Google account if you are already signed in.
-            Signing in does not upload your library data.
+            Continue with an account so your reading life can move with you. If the connection drops, local-only mode is still available.
           </p>
 
           <div class="session-points">
             <div class="session-point">
-              <i class="ph ph-shield-check"></i>
-              <span>Your library stays on this device unless you export it.</span>
-            </div>
-            <div class="session-point">
-              <i class="ph ph-wifi-slash"></i>
-              <span>Continue offline keeps your local data working and pauses cloud backup for that session.</span>
+              <i class="ph ph-cloud-check"></i>
+              <span>Account mode enables cloud backup and Account Sync for signed-in devices.</span>
             </div>
             ${inAppBrowser ? `
             <div class="session-point session-point-warning">
@@ -718,8 +714,8 @@ function renderSessionChoicePage() {
               <span>Google sign-in may not work inside this app browser.</span>
             </div>` : ''}
             <div class="session-point">
-              <i class="ph ph-cloud-arrow-up"></i>
-              <span>No cloud backup, sync, or analytics events are added here.</span>
+              <i class="ph ph-shield-check"></i>
+              <span>Continue offline only appears when LibriQ cannot reach account services.</span>
             </div>
           </div>
         </div>
@@ -735,17 +731,8 @@ function renderSessionChoicePage() {
             </div>
           ` : ''}
 
-          <button class="session-card session-card-primary" id="continueOfflineBtn" type="button">
-            <div class="session-card-icon"><i class="ph ph-house-simple"></i></div>
-            <div class="session-card-content">
-              <div class="session-card-title">Continue offline</div>
-              <div class="session-card-body">Use LibriQ locally with your saved library, search tools, and settings. JSON export still works.</div>
-            </div>
-            <div class="session-card-action"><i class="ph ph-arrow-right"></i></div>
-          </button>
-
           ${loading ? '' : hasUser ? `
-            <button class="session-card session-card-secondary" id="googleContinueBtn" type="button">
+            <button class="session-card session-card-primary" id="googleContinueBtn" type="button">
               <div class="session-card-icon"><i class="ph ph-user-circle"></i></div>
               <div class="session-card-content">
                 <div class="session-card-title">Continue as ${Utils.sanitize(accountName)}</div>
@@ -754,7 +741,7 @@ function renderSessionChoicePage() {
               <div class="session-card-action"><i class="ph ph-arrow-right"></i></div>
             </button>
           ` : firebase.available ? `
-            <button class="session-card session-card-secondary ${inAppBrowser ? 'session-card-disabled' : ''}" id="googleSignInBtn" type="button" ${inAppBrowser ? 'aria-describedby="googleSignInHelp"' : ''}>
+            <button class="session-card session-card-primary ${inAppBrowser ? 'session-card-disabled' : ''}" id="googleSignInBtn" type="button" ${inAppBrowser ? 'aria-describedby="googleSignInHelp"' : ''}>
               <div class="session-card-icon"><i class="ph ph-google-logo"></i></div>
               <div class="session-card-content">
                 <div class="session-card-title">${signInButtonLabel}</div>
@@ -766,11 +753,27 @@ function renderSessionChoicePage() {
             <div class="session-card session-card-unavailable">
               <div class="session-card-icon"><i class="ph ph-warning-circle"></i></div>
               <div class="session-card-content">
-                <div class="session-card-title">Google sign-in unavailable</div>
-                <div class="session-card-body">Continue offline is available right now. Your local data still works.</div>
+                <div class="session-card-title">Account sign-in unavailable</div>
+                <div class="session-card-body">LibriQ cannot reach account services right now.</div>
               </div>
             </div>
           `}
+
+          ${!loading && !hasUser && firebase.available ? `
+            <div class="session-auth-tabs" role="tablist" aria-label="Email account options">
+              <button class="session-auth-tab active" type="button" data-auth-mode="signin">Sign in with Email</button>
+              <button class="session-auth-tab" type="button" data-auth-mode="signup">Create account</button>
+            </div>
+            <form class="session-email-form" id="emailAuthForm" novalidate>
+              <input class="form-input" id="sessionEmailInput" type="email" placeholder="Email address" autocomplete="email" required />
+              <input class="form-input" id="sessionPasswordInput" type="password" placeholder="Password" autocomplete="current-password" required />
+              <p class="session-auth-error" id="sessionAuthError" role="alert" hidden></p>
+              <button class="btn btn-primary" id="emailAuthSubmit" type="submit">
+                <i class="ph ph-envelope-simple"></i>
+                <span>Sign in with Email</span>
+              </button>
+            </form>
+          ` : ''}
 
           ${browserHelp ? `
             <div class="session-help-callout">
@@ -786,17 +789,68 @@ function renderSessionChoicePage() {
           ` : ''}
 
           <p class="session-fineprint">
-            Choosing a session only changes how you enter LibriQ. It does not upload private library data.
+            Account mode keeps existing backup and sync behavior. Offline mode remains available when the network is unavailable.
           </p>
         </div>
       </section>
+      <div class="session-fallback-modal" id="sessionFallbackModal" role="dialog" aria-modal="true" aria-labelledby="sessionFallbackTitle" hidden>
+        <div class="session-fallback-card">
+          <div class="session-card-icon"><i class="ph ph-wifi-slash"></i></div>
+          <div>
+            <h2 class="session-fallback-title" id="sessionFallbackTitle">No internet connection</h2>
+            <p class="session-fallback-copy">LibriQ could not reach account services. Retry, or continue offline with local-only data on this device.</p>
+          </div>
+          <div class="session-fallback-actions">
+            <button class="btn btn-primary" id="authRetryBtn" type="button"><i class="ph ph-arrow-clockwise"></i> Retry</button>
+            <button class="btn btn-secondary" id="fallbackOfflineBtn" type="button"><i class="ph ph-house-simple"></i> Continue offline</button>
+          </div>
+        </div>
+      </div>
     </div>`;
 
-  document.getElementById('continueOfflineBtn')?.addEventListener('click', () => {
+  const continueOffline = () => {
     Navigation.setSessionPreference('offline');
     window.LibriqSyncBeta?.pauseForOffline?.();
     Navigation.goTo('dashboard');
-  });
+  };
+  const showFallback = () => {
+    const modal = document.getElementById('sessionFallbackModal');
+    if (!modal) return;
+    modal.hidden = false;
+  };
+  const setEmailMode = (mode) => {
+    const nextMode = mode === 'signup' ? 'signup' : 'signin';
+    const form = document.getElementById('emailAuthForm');
+    const password = document.getElementById('sessionPasswordInput');
+    const submit = document.getElementById('emailAuthSubmit');
+    form?.setAttribute('data-auth-mode', nextMode);
+    password?.setAttribute('autocomplete', nextMode === 'signup' ? 'new-password' : 'current-password');
+    if (submit) submit.querySelector('span').textContent = nextMode === 'signup' ? 'Create account' : 'Sign in with Email';
+    Utils.$$('.session-auth-tab').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.authMode === nextMode);
+    });
+  };
+  const showAuthError = (message) => {
+    const errorEl = document.getElementById('sessionAuthError');
+    if (!errorEl) return;
+    errorEl.textContent = message;
+    errorEl.hidden = false;
+  };
+  const clearAuthError = () => {
+    const errorEl = document.getElementById('sessionAuthError');
+    if (!errorEl) return;
+    errorEl.textContent = '';
+    errorEl.hidden = true;
+  };
+  const retryAuth = () => {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      showFallback();
+      return;
+    }
+    renderSessionChoicePage();
+  };
+
+  if (authUnavailable && !loading) showFallback();
 
   document.getElementById('googleContinueBtn')?.addEventListener('click', () => {
     Navigation.setSessionPreference('google');
@@ -816,35 +870,58 @@ function renderSessionChoicePage() {
       Utils.toast('Sync is on. Your books will update across signed-in devices.', 'success');
       Navigation.goTo('dashboard');
     } catch (err) {
-      const code = String(err?.code || err?.message || '').toLowerCase();
       console.warn('[Libriq] Google sign-in failed:', {
         code: err?.code || '',
         message: err?.message || '',
         details: err?.details || null,
       });
-      const isUnauthorizedDomain = code.includes('auth/unauthorized-domain') || code.includes('unauthorized-domain');
-      const isPopupBlocked = code.includes('auth/popup-blocked') || code.includes('popup-blocked');
-      const isPopupClosed = code.includes('auth/popup-closed-by-user') || code.includes('popup-closed-by-user');
-      const isInvalidApiKey = code.includes('auth/invalid-api-key') || code.includes('invalid-api-key');
-      const isConfigNotFound = code.includes('auth/configuration-not-found') || code.includes('configuration-not-found');
-      const isDisallowedUserAgent = code.includes('auth/disallowed-useragent') || code.includes('disallowed_useragent') || code.includes('disallowed-useragent');
-      if (isDisallowedUserAgent) {
-        Utils.toast('Google sign-in may not work inside this app browser. Open LibriQ in Chrome or Safari.', 'warning');
-      } else if (isUnauthorizedDomain) {
-        Utils.toast('This domain is not authorized for Google sign-in yet.', 'error');
-      } else if (isInvalidApiKey) {
-        Utils.toast('Google sign-in is not configured correctly for this build.', 'error');
-      } else if (isConfigNotFound) {
-        Utils.toast('Account setup is incomplete for this build.', 'error');
-      } else if (isPopupBlocked) {
-        Utils.toast('Your browser blocked the sign-in popup.', 'warning');
-      } else if (isPopupClosed) {
-        Utils.toast('Sign-in was cancelled.', 'info');
+      const message = getFriendlyAuthError(err, 'google');
+      if (isAuthNetworkError(err)) {
+        showFallback();
       } else {
-        Utils.toast('Could not sign in right now.', 'error');
+        Utils.toast(message, getAuthToastType(err));
       }
     }
   });
+
+  Utils.$$('.session-auth-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      clearAuthError();
+      setEmailMode(btn.dataset.authMode);
+    });
+  });
+
+  document.getElementById('emailAuthForm')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    clearAuthError();
+    const form = event.currentTarget;
+    const mode = form?.getAttribute('data-auth-mode') === 'signup' ? 'signup' : 'signin';
+    const email = document.getElementById('sessionEmailInput')?.value || '';
+    const password = document.getElementById('sessionPasswordInput')?.value || '';
+    const submit = document.getElementById('emailAuthSubmit');
+    submit?.setAttribute('disabled', '');
+    try {
+      if (mode === 'signup') {
+        await window.LibriqFirebase?.createAccountWithEmail?.(email, password);
+      } else {
+        await window.LibriqFirebase?.signInWithEmail?.(email, password);
+      }
+      Navigation.setSessionPreference('account');
+      window.LibriqSyncBeta?.maybeAutoEnable?.(mode === 'signup' ? 'email-sign-up' : 'email-sign-in');
+      Utils.toast('Sync is on. Your books will update across signed-in devices.', 'success');
+      Navigation.goTo('dashboard');
+    } catch (err) {
+      console.warn('[Libriq] Email auth failed:', { code: err?.code || '', message: err?.message || '' });
+      const message = getFriendlyAuthError(err, mode);
+      if (isAuthNetworkError(err)) showFallback();
+      showAuthError(message);
+    } finally {
+      submit?.removeAttribute('disabled');
+    }
+  });
+
+  document.getElementById('authRetryBtn')?.addEventListener('click', retryAuth);
+  document.getElementById('fallbackOfflineBtn')?.addEventListener('click', continueOffline);
 
   document.getElementById('switchAccountBtn')?.addEventListener('click', async () => {
     try {
@@ -857,6 +934,36 @@ function renderSessionChoicePage() {
       Utils.toast(cancelled ? 'Sign-out was cancelled.' : 'Could not switch accounts right now.', 'error');
     }
   });
+}
+
+function isAuthNetworkError(err) {
+  const code = String(err?.code || err?.message || '').toLowerCase();
+  return code.includes('network-request-failed') || code.includes('unavailable') || code.includes('failed to fetch') || (typeof navigator !== 'undefined' && navigator.onLine === false);
+}
+
+function getAuthToastType(err) {
+  const code = String(err?.code || err?.message || '').toLowerCase();
+  if (code.includes('popup-closed-by-user')) return 'info';
+  if (code.includes('popup-blocked') || code.includes('disallowed')) return 'warning';
+  return 'error';
+}
+
+function getFriendlyAuthError(err, mode = 'signin') {
+  const code = String(err?.code || err?.message || '').toLowerCase();
+  if (code.includes('invalid-email')) return 'Enter a valid email address.';
+  if (code.includes('wrong-password') || code.includes('invalid-credential') || code.includes('user-not-found')) return 'The email or password does not look right.';
+  if (code.includes('weak-password')) return 'Choose a stronger password with at least 6 characters.';
+  if (code.includes('email-already-in-use') || code.includes('account-exists-with-different-credential')) return 'An account already exists for that email. Try signing in instead.';
+  if (code.includes('missing-password')) return 'Enter your password to continue.';
+  if (code.includes('network-request-failed') || code.includes('unavailable') || code.includes('failed to fetch')) return 'LibriQ cannot reach account services right now.';
+  if (code.includes('unauthorized-domain')) return 'This domain is not authorized for account sign-in yet.';
+  if (code.includes('invalid-api-key')) return 'Account sign-in is not configured correctly for this build.';
+  if (code.includes('configuration-not-found')) return 'Account setup is incomplete for this build.';
+  if (code.includes('popup-blocked')) return 'Your browser blocked the sign-in popup.';
+  if (code.includes('popup-closed-by-user')) return 'Sign-in was cancelled.';
+  if (code.includes('disallowed-useragent')) return 'Google sign-in may not work inside this app browser. Open LibriQ in Chrome or Safari.';
+  if (mode === 'signup') return 'Could not create the account right now.';
+  return 'Could not sign in right now.';
 }
 
 Navigation.exportData = exportData;
@@ -2258,7 +2365,7 @@ function _buildAccountSection(firebase) {
           <div class="activity-subtitle">Sign in to enable cloud backup.</div>
         </div>
         <button class="btn btn-secondary btn-sm" id="accountActionBtn" type="button" data-account-action="signin">
-          Sign in with Google
+          Sign in
         </button>
       </div>`;
   }
@@ -2934,7 +3041,7 @@ function _findBookMergeMatch(book, localById, localByIsbn, localByKey) {
 async function mergeCloudWithThisDevice(docData, plan) {
   const firebase = window.LibriqFirebase?.getState?.() || {};
   if (!firebase.user) {
-    Utils.toast('Sign in with Google first to merge from cloud.', 'warning');
+    Utils.toast('Sign in first to merge from cloud.', 'warning');
     return;
   }
   if (!window.LibriqFirebase?.hasFirestore?.()) {
@@ -3068,7 +3175,7 @@ function _countSafeQuoteAdds(localQuotes, cloudQuotes) {
 async function backupToCloud() {
   const firebase = window.LibriqFirebase?.getState?.() || {};
   if (!firebase.user) {
-    Utils.toast('Sign in with Google first to use cloud backup.', 'warning');
+    Utils.toast('Sign in first to use cloud backup.', 'warning');
     return;
   }
   if (!window.LibriqFirebase?.hasFirestore?.()) {
@@ -3088,7 +3195,7 @@ async function backupToCloud() {
 async function restoreFromCloud(preloadedDoc = null) {
   const firebase = window.LibriqFirebase?.getState?.() || {};
   if (!firebase.user) {
-    Utils.toast('Sign in with Google first to restore from cloud.', 'warning');
+    Utils.toast('Sign in first to restore from cloud.', 'warning');
     return;
   }
   if (!window.LibriqFirebase?.hasFirestore?.()) {
