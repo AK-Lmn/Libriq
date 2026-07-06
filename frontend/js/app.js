@@ -12,14 +12,14 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: "What's New in LibriQ v4.3.0",
-      subtitle: 'LibriQ v4.3.0 lets signed-in users keep reading and editing while temporarily offline.',
+      title: "What's New in LibriQ v4.4.0",
+      subtitle: 'LibriQ v4.4.0 adds account and library deletion with careful confirmation.',
       sections: [
-        ['Offline Editing', 'Signed-in users can keep editing their library while internet is temporarily unavailable.'],
-        ['Durable Pending Sync', 'Offline edits save locally, survive refresh, and wait to sync when connectivity returns.'],
-        ['UID-scoped Safety', 'Offline deletes create UID-scoped tombstones, and pending sync state stays scoped to the signed-in account.'],
+        ['Delete Library Data', 'Signed-in users can remove their cloud library data and backup without deleting the Firebase Auth account.'],
+        ['Delete Account', 'Signed-in users can delete the account itself after a strict confirmation step.'],
+        ['Safer Cleanup', 'Pending sync is cleared, local cache cleanup stays UID-scoped, and destructive actions remain isolated from local-only mode.'],
       ],
-      note: 'Local-only offline mode remains separate, sync status is friendlier, and Firestore and backup paths stay unchanged.',
+      note: 'Delete actions use strict typed confirmations, Firestore library and backup cleanup, and keep sync and backup paths unchanged.',
     },
   };
 

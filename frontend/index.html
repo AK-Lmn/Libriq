@@ -289,8 +289,8 @@
     <div class="modal whats-new-modal">
       <div class="modal-header">
         <div>
-          <h2 class="modal-title">What's New in LibriQ v4.3.0</h2>
-          <p class="whats-new-subtitle">LibriQ v4.3.0 lets signed-in users keep editing while temporarily offline.</p>
+          <h2 class="modal-title">What's New in LibriQ v4.4.0</h2>
+          <p class="whats-new-subtitle">LibriQ v4.4.0 adds account and library deletion with careful confirmation.</p>
         </div>
         <button class="modal-close" id="closeWhatsNew" aria-label="Close release notes">
           <i class="ph ph-x"></i>
@@ -299,20 +299,20 @@
       <div class="modal-body" id="whatsNewBody">
         <div class="whats-new-list">
           <section class="whats-new-item">
-            <div class="whats-new-item-title">Offline Editing</div>
-            <p>Signed-in users can keep editing their library while internet is temporarily unavailable.</p>
+            <div class="whats-new-item-title">Delete Library Data</div>
+            <p>Signed-in users can remove their cloud library data and backup without deleting the Firebase Auth account.</p>
           </section>
           <section class="whats-new-item">
-            <div class="whats-new-item-title">Durable Pending Sync</div>
-            <p>Offline edits save locally, survive refresh, and wait to sync when connectivity returns.</p>
+            <div class="whats-new-item-title">Delete Account</div>
+            <p>Signed-in users can delete the account itself after a strict confirmation step.</p>
           </section>
           <section class="whats-new-item">
-            <div class="whats-new-item-title">UID-scoped Safety</div>
-            <p>Offline deletes create UID-scoped tombstones, and pending sync state stays scoped to the signed-in account.</p>
+            <div class="whats-new-item-title">Safer Cleanup</div>
+            <p>Pending sync is cleared, local cache cleanup stays UID-scoped, and destructive actions remain isolated from local-only mode.</p>
           </section>
         </div>
         <div class="whats-new-note">
-          Local-only offline mode remains separate, sync status is friendlier, and Firestore and backup paths stay unchanged.
+          Delete actions use strict typed confirmations, Firestore library and backup cleanup, and keep sync and backup paths unchanged.
         </div>
       </div>
       <div class="modal-footer whats-new-footer">

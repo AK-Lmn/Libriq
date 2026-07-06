@@ -42,16 +42,16 @@ The app is designed to feel like a focused digital reading space instead of a pl
 
 ---
 
-## What's New in v4.3.0
+## What's New in v4.4.0
 
-* Signed-in users can keep editing while temporarily offline
-* Offline edits save locally and survive refresh
-* Pending edits auto-sync when internet returns
-* Offline deletes create UID-scoped tombstones
-* Pending sync state stays scoped to the signed-in UID
-* Local-only offline mode remains separate from signed-in account mode
-* Settings now shows friendly sync status like "Saved locally. Will sync when online."
-* Firestore sync paths, backup paths, tombstone behavior, account isolation, and book data models remain unchanged
+* Delete library data removes the current signed-in user's cloud library and backup data
+* Delete account removes cloud library data, backup data, and then deletes the Firebase Auth account
+* Strict typed confirmations protect both destructive actions
+* Clear local cache moved under Advanced diagnostics
+* UID-scoped cache cleanup keeps account-owned local data isolated
+* Pending sync is cleared so deleted data does not re-upload
+* Firestore library and backup cleanup stay on the existing paths
+* Local-only/offline mode remains separate from signed-in account mode
 
 ## What's New in v4.2.0
 
@@ -597,25 +597,25 @@ This section tracks notable LibriQ updates. New version logs can be added here a
 * Continue offline moved out of the normal login screen and into the connection fallback
 * Existing Firestore sync paths, backup paths, tombstones, and book data models remain unchanged
 
-### v4.3.0 - Signed-in Offline Sync
+### v4.4.0 - Account & Data Deletion
 
 **Added**
 
-* Signed-in offline editing that keeps working while internet is temporarily unavailable
-* Persistent pending sync state for local writes and deletes
-* UID-scoped pending tombstones and reconnect-safe retry behavior
+* Delete library data for the current signed-in account
+* Delete account with strict typed confirmation and friendly reauth handling
+* Safe cleanup for Firestore library docs, cloud backup data, UID-scoped cache, and pending sync state
 
 **Changed**
 
-* Offline edits now save locally, survive refresh, and auto-sync when the connection returns
-* Settings shows a friendlier pending state such as "Saved locally. Will sync when online."
-* Local-only offline mode stays separate from signed-in account mode
+* Destructive actions now live in a clearer Danger Zone / Account & Data area
+* Clear local cache is tucked under Advanced diagnostics instead of the primary destructive actions
+* Deleted data is prevented from re-uploading by clearing pending sync state first
 
 **Notes**
 
 * Firestore sync paths still use `users/{uid}/sync/v1/books`
 * Cloud backup paths still use `users/{uid}/backups/current`
-* Account isolation, tombstone handling, and the book data model remain intact
+* Tombstone behavior, account isolation, and the book data model remain intact
 
 ### v4.0.1 - Automatic Account Sync
 
