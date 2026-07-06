@@ -1456,23 +1456,54 @@
 #searchModal .search-input,
 #searchModal .search-filter-input,
 #searchModal .search-filter-select {
-  color: var(--text-primary);
+  color: #0F172A;
+  background: #ffffff;
 }
 
 #searchModal .search-input::placeholder,
 #searchModal .search-filter-input::placeholder {
-  color: var(--text-tertiary);
+  color: #64748B;
 }
 
 #searchModal .search-close-btn,
 #searchModal .search-input-icon {
-  color: var(--text-secondary);
+  color: #475569;
 }
 
 #searchModal .search-advanced-toggle,
 #searchModal .search-footer-action {
   background: rgba(67, 56, 202, 0.04);
   border-color: rgba(67, 56, 202, 0.12);
+}
+
+#searchModal .search-input {
+  caret-color: var(--accent);
+  -webkit-text-fill-color: #0F172A;
+}
+
+#searchModal .search-input:focus,
+#searchModal .search-filter-input:focus,
+#searchModal .search-filter-select:focus {
+  outline: none;
+  border-color: rgba(67, 56, 202, 0.36);
+  box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.12);
+}
+
+#searchModal .search-input-wrap {
+  background: #ffffff;
+}
+
+#searchModal .search-footer span,
+#searchModal .search-footer span kbd {
+  color: #64748B;
+}
+
+#searchModal .search-footer-action {
+  color: #4338CA;
+}
+
+#searchModal .search-footer-action:hover {
+  background: rgba(67, 56, 202, 0.08);
 }
 
 #bookDetailsModal .book-details-title,
