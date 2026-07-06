@@ -1491,18 +1491,22 @@ function renderStatusPage(status, title, iconClass) {
     return;
   }
   const books = Storage.getBooksByStatus(status);
+  const summaries = {
+    [LIBRIQ.STATUS.READING]: ['Reading queue', 'Books you are currently moving through.'],
+    [LIBRIQ.STATUS.WISHLIST]: ['Wishlist', 'Books saved for later.'],
+    [LIBRIQ.STATUS.FINISHED]: ['Finished shelf', 'Books you have completed.'],
+  };
+  const [eyebrow, subtitle] = summaries[status] || ['Reading list', 'Books on this shelf.'];
+  const summaryLabel = `${books.length} book${books.length !== 1 ? 's' : ''}`;
 
   main.innerHTML = `
     <div class="page status-page" id="statusPage">
       <div class="page-header status-header">
         <div class="status-heading">
-          <span class="library-eyebrow">${status === LIBRIQ.STATUS.READING ? 'Reading queue' : 'Finished shelf'}</span>
+          <span class="library-eyebrow">${eyebrow}</span>
           <h1 class="page-title">${title}</h1>
-          <p class="page-subtitle">${books.length} book${books.length !== 1 ? 's' : ''}</p>
+          <p class="page-subtitle">${summaryLabel}${subtitle ? ` · ${subtitle}` : ''}</p>
         </div>
-        <button class="btn btn-primary" onclick="Search.open()">
-          <i class="ph ph-plus"></i> Add Book
-        </button>
       </div>
       <div class="books-grid" id="statusGrid"></div>
     </div>`;
@@ -1524,10 +1528,13 @@ function renderFavoritesPage() {
   const books = Storage.getBooks().filter(b => b.isFavorite);
 
   main.innerHTML = `
-    <div class="page">
-      <div class="page-header" style="margin-bottom: var(--space-6);">
-        <h1 class="page-title">Favorites</h1>
-        <p class="page-subtitle">${books.length} book${books.length !== 1 ? 's' : ''} you loved</p>
+    <div class="page status-page" id="statusPage">
+      <div class="page-header status-header">
+        <div class="status-heading">
+          <span class="library-eyebrow">Favorite books</span>
+          <h1 class="page-title">Favorites</h1>
+          <p class="page-subtitle">${books.length} book${books.length !== 1 ? 's' : ''} saved with a heart</p>
+        </div>
       </div>
       <div class="books-grid" id="favoritesGrid"></div>
     </div>`;
@@ -1538,7 +1545,7 @@ function renderFavoritesPage() {
       <div class="empty-state" style="grid-column:1/-1;">
         <div class="empty-state-icon"><i class="ph ph-heart"></i></div>
         <div class="empty-state-title">No favorites yet</div>
-        <div class="empty-state-body">Tap the heart on any book to add it here.</div>
+        <div class="empty-state-body">Tap the heart on any book to save it here.</div>
       </div>`;
   } else {
     books.forEach(b => grid.appendChild(Library.renderBookCard(b)));
