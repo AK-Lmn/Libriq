@@ -210,8 +210,28 @@ const Navigation = (() => {
   function _updateThemeToggleUI(theme) {
     const icon  = document.getElementById('themeIcon');
     const label = document.getElementById('themeLabel');
+    const iconDesktop = document.getElementById('themeIconDesktop');
     if (icon)  icon.className   = theme === 'dark' ? 'ph ph-moon' : 'ph ph-sun';
+    if (iconDesktop) iconDesktop.className = theme === 'dark' ? 'ph ph-moon' : 'ph ph-sun';
     if (label) label.textContent = theme === 'dark' ? 'Dark mode' : 'Light mode';
+  }
+
+  function updateDesktopStatusPill() {
+    const el = document.getElementById('desktopStatusPill');
+    if (!el) return;
+    const firebase = window.LibriqFirebase?.getState?.() || {};
+    const syncState = window.LibriqSyncBeta?.getState?.() || {};
+    const offline = getSessionPreference() === 'offline' || getCurrentSessionMode() === 'offline';
+    const label = !firebase.user
+      ? 'Signed out'
+      : offline
+        ? 'Offline mode'
+        : syncState.enabled
+          ? 'Sync on'
+          : 'Ready';
+    el.querySelector('span')?.replaceChildren(document.createTextNode(label));
+    const icon = el.querySelector('i');
+    if (icon) icon.className = !firebase.user ? 'ph ph-user-circle' : offline ? 'ph ph-wifi-slash' : syncState.enabled ? 'ph ph-swap' : 'ph ph-signal';
   }
 
   function init() {
@@ -224,9 +244,11 @@ const Navigation = (() => {
     document.getElementById('sidebarOverlay')?.addEventListener('touchstart', closeMobileSidebar, { passive: true });
 
     document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
+    document.getElementById('themeToggleDesktop')?.addEventListener('click', toggleTheme);
 
     applyTheme();
     updateBadges();
+    updateDesktopStatusPill();
     const tryResume = () => {
       const firebase = window.LibriqFirebase?.getState?.() || {};
       debugSync('startup resume check', {
@@ -275,6 +297,7 @@ const Navigation = (() => {
       if (_currentPage === 'session') renderSessionChoicePage();
       window.LibriqCloudBackup?.refresh?.();
       window.LibriqSyncBeta?.refresh?.();
+      updateDesktopStatusPill();
       maybeShowNewDeviceCloudPrompt();
     });
     if (DEBUG_SYNC()) {
@@ -289,6 +312,7 @@ const Navigation = (() => {
 
   return {
     init, goTo, renderCurrentPage, updateBadges, toggleTheme, applyTheme,
+    updateDesktopStatusPill,
     routeAfterAuthReady,
     setSessionPreference,
     getSessionPreference,

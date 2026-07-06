@@ -52,6 +52,8 @@ const Search = (() => {
   function updateShortcutLabel() {
     const badge = document.getElementById('searchShortcutBadge');
     if (badge) badge.textContent = Utils.getSearchShortcutLabel();
+    const desktopBadge = document.getElementById('searchShortcutBadgeDesktop');
+    if (desktopBadge) desktopBadge.textContent = Utils.getSearchShortcutLabel();
   }
 
   function close() {
@@ -425,6 +427,7 @@ const Search = (() => {
     updateShortcutLabel();
 
     document.getElementById('openSearch')?.addEventListener('click', open);
+    document.getElementById('openSearchDesktop')?.addEventListener('click', open);
     document.getElementById('mobileSearchBtn')?.addEventListener('click', open);
     document.getElementById('closeSearch')?.addEventListener('click', close);
 
