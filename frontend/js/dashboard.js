@@ -130,9 +130,9 @@ const Dashboard = {
                 <span><i class="ph ph-dot"></i> Active focus session: ${formatFocusTime(streak)}</span>
                 <span>${stats.avgRating ? `Average rating ${stats.avgRating}` : 'No ratings yet'}</span>
               </div>
-              <button class="btn btn-primary dashboard-note-button" type="button" onclick="Navigation.goTo('settings')">
-                <i class="ph ph-note-pencil"></i>
-                Open Note Studio
+              <button class="btn btn-primary dashboard-note-button" type="button" onclick="Navigation.goTo('activity')">
+                <i class="ph ph-clock-counter-clockwise"></i>
+                View Activity
               </button>
             </section>
 
@@ -261,7 +261,7 @@ function buildFeaturedReadingHero(book) {
             Resume Reading
           </button>
           <button class="btn btn-secondary" onclick="Library.showAddModal(${JSON.stringify(book).replace(/"/g, '&quot;')})">
-            View Annotations
+            View Details
           </button>
         </div>
       </div>
@@ -328,7 +328,7 @@ function buildActivityEmptyState() {
 }
 
 function formatFocusTime(streak) {
-  const minutes = Math.max(15, (streak.current || 0) * 15);
+  const minutes = Math.max(15, Math.min(90, (streak.current || 0) * 15));
   return `${minutes}m`;
 }
 
