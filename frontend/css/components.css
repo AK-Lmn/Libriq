@@ -1977,10 +1977,6 @@
   min-height: 24px;
 }
 
-#libraryPage .badge-reading::before { content: 'Reading'; font-weight: var(--weight-bold); }
-#libraryPage .badge-finished::before { content: 'Finished'; font-weight: var(--weight-bold); }
-#libraryPage .badge-wishlist::before { content: 'Want to Read'; font-weight: var(--weight-bold); }
-
 #libraryPage .reading-progress {
   margin-top: var(--space-2);
   padding: var(--space-2);
@@ -2007,18 +2003,18 @@
 
 #libraryPage .book-card-actions {
   align-items: center;
-  gap: var(--space-1);
+  gap: 6px;
   flex-wrap: wrap;
   margin-top: var(--space-1);
-  padding-top: var(--space-1);
+  padding-top: 6px;
   border-top: 1px solid var(--border-divider);
 }
 
 #libraryPage .book-card-actions .btn:not(.btn-icon) {
-  flex: 1 0 min(100%, 82px);
-  min-width: 82px;
-  padding-left: var(--space-3);
-  padding-right: var(--space-3);
+  flex: 1 1 76px;
+  min-width: 76px;
+  padding-left: 10px;
+  padding-right: 10px;
   white-space: nowrap;
 }
 
@@ -2028,7 +2024,7 @@
 
 #libraryPage .book-card--finished .book-card-complete {
   margin-top: var(--space-1);
-  padding: 3px var(--space-2);
+  padding: 2px var(--space-2);
 }
 
 #libraryPage .book-card--finished .book-card-meta {
