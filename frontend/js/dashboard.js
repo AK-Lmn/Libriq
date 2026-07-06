@@ -1,4 +1,4 @@
-/* ============================================
+﻿/* ============================================
    LIBRIQ DASHBOARD
    Home page renderer
    ============================================ */
@@ -6,148 +6,163 @@
 const Dashboard = {
 
   render() {
-    const main    = document.getElementById('mainContent');
-    const stats   = Storage.getStats();
-    const streak  = Storage.getStreak();
-    const goals   = Storage.getGoals();
+    const main = document.getElementById('mainContent');
+    if (!main) {
+      console.error('[LibriQ] Missing #mainContent while rendering dashboard page.');
+      return;
+    }
+    main.hidden = false;
+    main.style.display = '';
+    main.style.visibility = '';
+    main.style.opacity = '';
+
+    const stats = Storage.getStats();
+    const streak = Storage.getStreak();
+    const goals = Storage.getGoals();
     const profile = Storage.getProfile();
     const reading = Storage.getBooksByStatus(LIBRIQ.STATUS.READING);
-    const books   = Storage.getBooks();
+    const books = Storage.getBooks();
+    const featuredBook = pickFeaturedReadingBook(reading, books);
+    const recentBooks = buildRecentBooks(books);
+    const recentActivity = buildRecentActivity(books);
+    const topGenres = stats.topGenres || [];
+    const accountName = getDashboardAccountName();
 
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-
     const goalPct = Math.min(100, Math.round((stats.finishedThisYear / goals.yearly) * 100));
     const ringOffset = Math.round(283 - (283 * goalPct / 100));
-    const booksLeft  = Math.max(0, goals.yearly - stats.finishedThisYear);
-    const weeksLeft  = Math.ceil((new Date(new Date().getFullYear(), 11, 31) - new Date()) / 604800000);
-
-    const recentActivity = buildRecentActivity(books);
-    const topGenres      = stats.topGenres;
-    const accountName    = getDashboardAccountName();
+    const booksLeft = Math.max(0, goals.yearly - stats.finishedThisYear);
+    const weeksLeft = Math.ceil((new Date(new Date().getFullYear(), 11, 31) - new Date()) / 604800000);
 
     main.innerHTML = `
-      <div class="page" id="dashboardPage">
-
-        <!-- Header -->
-        <div class="dashboard-header">
-          <div class="dashboard-greeting">
-            <span class="greeting-label">${greeting} ✦</span>
-            <h1 class="greeting-title">
-              Welcome back, <span>${Utils.sanitize(accountName)}</span>
-            </h1>
+      <div class="page dashboard-page" id="dashboardPage">
+        <div class="dashboard-topbar">
+          <div class="dashboard-sync">
+            <span class="dashboard-sync-dot"></span>
+            <span>System Synced</span>
           </div>
           <div class="dashboard-actions">
-            <button class="btn btn-primary" onclick="Search.open()">
+            <button class="btn btn-primary dashboard-add-book" onclick="Search.open()">
               <i class="ph ph-plus"></i>
               Add Book
             </button>
           </div>
         </div>
 
-        <!-- Stats Row -->
-        <div class="stats-row stagger">
-          <div class="stat-card dashboard-stat-card">
-            <div class="stat-card-icon amber">
-              <i class="ph ph-books"></i>
-            </div>
-            <div class="stat-card-value">${stats.total}</div>
-            <div class="stat-card-label">Books in library</div>
-            <div class="stat-card-footnote">All saved titles across every shelf.</div>
+        <div class="dashboard-hero-shell">
+          <div class="dashboard-greeting">
+            <span class="greeting-label">${greeting}</span>
+            <h1 class="greeting-title">Welcome back, <span>${Utils.sanitize(accountName)}</span></h1>
+            <p class="greeting-subtitle">You&apos;ve reached <strong>${goalPct}%</strong> of your monthly reading goal.</p>
           </div>
-          <div class="stat-card dashboard-stat-card">
-            <div class="stat-card-icon blue">
-              <i class="ph ph-book-open"></i>
+          <div class="dashboard-micro-stats">
+            <div class="dashboard-mini-card">
+              <span class="dashboard-mini-label">Streak</span>
+              <div class="dashboard-mini-value">${streak.current} ${streak.current === 1 ? 'Day' : 'Days'}</div>
             </div>
-            <div class="stat-card-value">${stats.reading}</div>
-            <div class="stat-card-label">Currently reading</div>
-            <div class="stat-card-footnote">Books with active progress updates.</div>
-          </div>
-          <div class="stat-card dashboard-stat-card">
-            <div class="stat-card-icon green">
-              <i class="ph ph-check-circle"></i>
+            <div class="dashboard-mini-card">
+              <span class="dashboard-mini-label">Yearly goal</span>
+              <div class="dashboard-mini-value">${goals.yearly > 0 ? `${stats.finishedThisYear}/${goals.yearly}` : `${stats.finishedThisYear}`}</div>
             </div>
-            <div class="stat-card-value">${stats.finishedThisYear}</div>
-            <div class="stat-card-label">Finished this year</div>
-            <div class="stat-card-footnote">Books completed during the current calendar year.</div>
-          </div>
-          <div class="stat-card dashboard-stat-card">
-            <div class="stat-card-icon orange">
-              <i class="ph ph-fire"></i>
-            </div>
-            <div class="stat-card-value">${streak.current}</div>
-            <div class="stat-card-label">Day streak</div>
-            <div class="stat-card-footnote">Consecutive days with reading activity.</div>
           </div>
         </div>
 
-        <!-- Main Grid -->
-        <div class="dashboard-grid">
-
-          <!-- Left Column -->
+        <div class="dashboard-layout">
           <div class="dashboard-main">
-
-            <!-- Currently Reading -->
-            <section class="dashboard-panel">
-              <div class="section-header">
-                <h2 class="section-title">Currently Reading</h2>
-                <button class="section-action" onclick="Navigation.goTo('reading')">
-                  View all
-                </button>
+            <section class="dashboard-panel dashboard-feature-panel">
+              <div class="section-header dashboard-section-header">
+                <h2 class="section-title">Reading Now</h2>
+                <button class="section-action" onclick="Navigation.goTo('reading')">View all</button>
               </div>
-              <div class="currently-reading-list">
-                ${reading.length === 0
-                  ? buildReadingEmptyState()
-                  : reading.slice(0, 3).map(b => buildReadingCard(b)).join('')
-                }
-              </div>
+              ${featuredBook ? buildFeaturedReadingHero(featuredBook) : buildFeaturedEmptyHero()}
             </section>
 
-            <!-- Monthly Chart -->
-            <section class="dashboard-panel">
-              <div class="section-header">
-                <h2 class="section-title">Books Read — ${new Date().getFullYear()}</h2>
-                <button class="section-action" onclick="Navigation.goTo('stats')">
-                  Full stats
-                </button>
+            <section class="dashboard-panel dashboard-recent-panel">
+              <div class="section-header dashboard-section-header">
+                <h2 class="section-title">Recently Updated</h2>
+                <button class="section-action" onclick="Navigation.goTo('library')">View all library</button>
               </div>
-              ${buildMonthlyChart(stats.monthlyData)}
+              ${recentBooks.length ? buildRecentBooksRow(recentBooks) : buildRecentEmptyState()}
             </section>
 
-            <!-- Want to Read shelf -->
-            <section class="dashboard-panel">
-              <div class="section-header">
-                <h2 class="section-title">Up Next</h2>
-                <button class="section-action" onclick="Navigation.goTo('wishlist')">
-                  View all
-                </button>
+            <section class="dashboard-panel dashboard-compact-panel">
+              <div class="section-header dashboard-section-header">
+                <h2 class="section-title">Reading Momentum</h2>
+                <button class="section-action" onclick="Navigation.goTo('stats')">Full stats</button>
               </div>
-              ${buildWishlistShelf()}
+              <div class="dashboard-compact-grid">
+                <div class="dashboard-compact-card">
+                  <span class="dashboard-compact-label">Books in library</span>
+                  <strong>${stats.total}</strong>
+                  <span>All saved titles</span>
+                </div>
+                <div class="dashboard-compact-card">
+                  <span class="dashboard-compact-label">Currently reading</span>
+                  <strong>${stats.reading}</strong>
+                  <span>Active progress updates</span>
+                </div>
+                <div class="dashboard-compact-card">
+                  <span class="dashboard-compact-label">Finished this year</span>
+                  <strong>${stats.finishedThisYear}</strong>
+                  <span>${booksLeft} left to goal</span>
+                </div>
+                <div class="dashboard-compact-card">
+                  <span class="dashboard-compact-label">Day streak</span>
+                  <strong>${streak.current}</strong>
+                  <span>Consecutive reading days</span>
+                </div>
+              </div>
             </section>
           </div>
 
-          <!-- Right Column -->
-          <div class="dashboard-aside">
+          <aside class="dashboard-aside">
+            <section class="dashboard-panel dashboard-quick-panel">
+              <div class="section-header dashboard-section-header">
+                <h2 class="section-title">Quick Workspace</h2>
+                <button class="section-action" onclick="Navigation.goTo('activity')">Activity</button>
+              </div>
+              <div class="dashboard-quick-note">
+                <div class="dashboard-quote-label">Latest capture</div>
+                <p>${Utils.sanitize(getQuickNoteText(profile, recentActivity, featuredBook))}</p>
+              </div>
+              <div class="dashboard-quick-meta">
+                <span><i class="ph ph-dot"></i> Active focus session: ${formatFocusTime(streak)}</span>
+                <span>${stats.avgRating ? `Average rating ${stats.avgRating}` : 'No ratings yet'}</span>
+              </div>
+              <button class="btn btn-primary dashboard-note-button" type="button" onclick="Navigation.goTo('settings')">
+                <i class="ph ph-note-pencil"></i>
+                Open Note Studio
+              </button>
+            </section>
 
-            <!-- Reading Goal -->
-            <div class="goal-widget dashboard-panel">
-              <div class="goal-header">
+            <section class="dashboard-panel dashboard-activity-panel">
+              <div class="section-header dashboard-section-header">
+                <h2 class="section-title">Recent Activity</h2>
+              </div>
+              <div class="activity-list dashboard-activity-list">
+                ${recentActivity.length
+                  ? recentActivity.slice(0, 5).map(a => buildActivityItem(a)).join('')
+                  : buildActivityEmptyState()}
+              </div>
+            </section>
+
+            <section class="dashboard-panel dashboard-goal-panel">
+              <div class="goal-header dashboard-goal-header">
                 <div>
                   <div class="goal-title">Reading Goal</div>
                   <div class="goal-year text-xs text-tertiary">${new Date().getFullYear()}</div>
                 </div>
-                <button class="btn btn-ghost btn-sm" onclick="Navigation.goTo('goals')">
-                  Edit
-                </button>
+                <button class="btn btn-ghost btn-sm" onclick="Navigation.goTo('goals')">Edit</button>
               </div>
-              <div class="goal-progress-ring">
+              <div class="goal-progress-ring dashboard-goal-ring">
                 <div class="goal-ring-wrap">
                   <svg class="goal-ring-svg" viewBox="0 0 100 100">
-                    <circle class="goal-ring-bg" cx="50" cy="50" r="45"/>
+                    <circle class="goal-ring-bg" cx="50" cy="50" r="45"></circle>
                     <circle class="goal-ring-fill ${goalPct >= 100 ? 'complete' : ''}"
                       cx="50" cy="50" r="45"
                       style="stroke-dashoffset: ${ringOffset}"
-                      id="goalRingFill"/>
+                      id="goalRingFill"></circle>
                   </svg>
                   <div class="goal-ring-text">
                     <span class="goal-ring-value">${stats.finishedThisYear}</span>
@@ -173,45 +188,25 @@ const Dashboard = {
                   </div>
                 </div>
               </div>
-            </div>
+            </section>
 
-            <!-- Recent Activity -->
-            <div class="goal-widget dashboard-panel">
-              <div class="goal-header">
-                <div class="goal-title">Recent Activity</div>
-              </div>
-              <div class="activity-list">
-                ${recentActivity.length
-                  ? recentActivity.slice(0, 5).map(a => buildActivityItem(a)).join('')
-                  : `<p class="text-sm text-tertiary" style="padding: var(--space-4) 0;">
-                      No activity yet. Start reading!
-                    </p>`
-                }
-              </div>
-            </div>
-
-            <!-- Top Genres -->
             ${topGenres.length > 0 ? `
-              <div class="goal-widget dashboard-panel">
-                <div class="goal-header">
-                  <div class="goal-title">Top Genres</div>
+              <section class="dashboard-panel dashboard-genres-panel">
+                <div class="section-header dashboard-section-header">
+                  <h2 class="section-title">Top Genres</h2>
                 </div>
                 <div class="genre-list">
                   ${topGenres.map(([genre, count]) => buildGenreRow(genre, count, stats.total)).join('')}
                 </div>
-              </div>` : ''
+              </section>` : ''
             }
-
-          </div>
+          </aside>
         </div>
       </div>`;
-
-    // Animate goal ring in after render
-    requestAnimationFrame(() => {
-      // Ring animation happens via CSS transition on the inline style
-    });
   },
 };
+
+window.Dashboard = Dashboard;
 
 function getDashboardAccountName() {
   const profile = Storage.getProfile();
@@ -228,7 +223,137 @@ function getDashboardAccountName() {
   return profileName || 'Reader';
 }
 
-// ── Dashboard helpers ─────────────────────────
+function pickFeaturedReadingBook(reading, books) {
+  const source = reading?.length ? reading : (books || []);
+  return source
+    .slice()
+    .filter(Boolean)
+    .sort((a, b) => {
+      const aDate = new Date(a.dateUpdated || a.dateStarted || a.dateAdded || 0).getTime();
+      const bDate = new Date(b.dateUpdated || b.dateStarted || b.dateAdded || 0).getTime();
+      return bDate - aDate;
+    })[0] || null;
+}
+
+function buildFeaturedReadingHero(book) {
+  const pct = Utils.readingProgress(book.currentPage, book.pageCount);
+  const timeLeft = book.pageCount && book.currentPage ? Math.max(0, book.pageCount - book.currentPage) : null;
+  return `
+    <div class="dashboard-hero-card">
+      <div class="dashboard-hero-cover">
+        ${Utils.buildCover(book, 'cover-xl')}
+      </div>
+      <div class="dashboard-hero-content">
+        <span class="dashboard-pill">${Utils.sanitize(book.genre || book.subject || book.category || 'Reading now')}</span>
+        <h3 class="dashboard-hero-title">${Utils.sanitize(book.title)}</h3>
+        <p class="dashboard-hero-author">by ${Utils.sanitize(book.author || 'Unknown author')}${timeLeft !== null ? ` • ${timeLeft} pages left` : ''}</p>
+        <div class="dashboard-progress-meta">
+          <span>Progress</span>
+          <strong>${pct}%</strong>
+        </div>
+        <div class="progress-bar dashboard-progress-bar">
+          <div class="progress-fill ${pct >= 100 ? 'complete' : ''}" style="width:${pct}%"></div>
+        </div>
+        <p class="dashboard-hero-quote">${Utils.sanitize(buildFeaturedQuote(book))}</p>
+        <div class="dashboard-hero-actions">
+          <button class="btn btn-primary" onclick="Library.showProgressModal('${book.id}')">
+            <i class="ph ph-play"></i>
+            Resume Reading
+          </button>
+          <button class="btn btn-secondary" onclick="Library.showAddModal(${JSON.stringify(book).replace(/"/g, '&quot;')})">
+            View Annotations
+          </button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function buildFeaturedEmptyHero() {
+  return `
+    <div class="dashboard-hero-card dashboard-hero-card-empty">
+      <div class="dashboard-hero-content">
+        <span class="dashboard-pill">Reading now</span>
+        <h3 class="dashboard-hero-title">Your next session starts here</h3>
+        <p class="dashboard-hero-author">Add a book to surface a featured reading card with progress and quick actions.</p>
+        <div class="dashboard-hero-actions">
+          <button class="btn btn-primary" onclick="Search.open()">
+            <i class="ph ph-plus"></i>
+            Add Book
+          </button>
+          <button class="btn btn-secondary" onclick="Navigation.goTo('library')">
+            Browse Library
+          </button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function buildFeaturedQuote(book) {
+  const source = String(book.notes?.[0]?.text || book.quote || book.description || '').trim();
+  if (source) return source.slice(0, 220);
+  return 'Continue from where you left off and keep the reading momentum flowing.';
+}
+
+function buildRecentBooksRow(books) {
+  return `
+    <div class="dashboard-recent-row">
+      ${books.slice(0, 4).map(book => `
+        <button class="dashboard-recent-card" onclick="Library.showAddModal(${JSON.stringify(book).replace(/"/g, '&quot;')})" type="button">
+          ${Utils.buildCover(book, 'cover-md')}
+          <div class="dashboard-recent-copy">
+            <strong>${Utils.sanitize(book.title)}</strong>
+            <span>${Utils.formatDate(book.dateUpdated || book.dateStarted || book.dateAdded || new Date())}</span>
+          </div>
+        </button>
+      `).join('')}
+    </div>`;
+}
+
+function buildRecentEmptyState() {
+  return `
+    <div class="dashboard-empty-state">
+      <div class="empty-state-icon"><i class="ph ph-books"></i></div>
+      <div class="empty-state-title">No recent updates yet</div>
+      <div class="empty-state-body">Add a few books or update reading progress and they will appear here.</div>
+    </div>`;
+}
+
+function buildActivityEmptyState() {
+  return `
+    <div class="dashboard-empty-state dashboard-empty-state-compact">
+      <div class="empty-state-icon"><i class="ph ph-clock-counter-clockwise"></i></div>
+      <div class="empty-state-title">No activity yet</div>
+      <div class="empty-state-body">Progress updates and book changes will show up here once you start reading.</div>
+    </div>`;
+}
+
+function formatFocusTime(streak) {
+  const minutes = Math.max(15, (streak.current || 0) * 15);
+  return `${minutes}m`;
+}
+
+function buildRecentBooks(books) {
+  return (books || [])
+    .slice()
+    .filter(Boolean)
+    .sort((a, b) => {
+      const aDate = new Date(a.dateUpdated || a.dateStarted || a.dateAdded || 0).getTime();
+      const bDate = new Date(b.dateUpdated || b.dateStarted || b.dateAdded || 0).getTime();
+      return bDate - aDate;
+    });
+}
+
+function getQuickNoteText(profile, recentActivity, featuredBook) {
+  const name = String(profile?.name || '').trim();
+  if (recentActivity?.length) {
+    const item = recentActivity[0];
+    return `Last update: ${item.label || item.type} for ${item.title}.`;
+  }
+  if (featuredBook) return `${featuredBook.title} is ready when you are, ${name || 'reader'}.`;
+  return 'Add a book to start building your reading workspace.';
+}
+
+// Dashboard helpers
 
 function buildReadingCard(book) {
   const pct = Utils.readingProgress(book.currentPage, book.pageCount);
@@ -401,8 +526,8 @@ function buildRecentActivity(books) {
 function buildActivityItem(activity) {
   const labels = {
     finished: 'Finished',
-    started:  'Started reading',
-    added:    'Added to wishlist',
+    started: 'Started reading',
+    added: 'Added to wishlist',
   };
   return `
     <div class="activity-item">
@@ -411,7 +536,7 @@ function buildActivityItem(activity) {
       </div>
       <div class="activity-text">
         <div class="activity-title">${Utils.sanitize(activity.title)}</div>
-        <div class="activity-subtitle">${Utils.sanitize(activity.label || labels[activity.type] || activity.subtitle || '')}${activity.payloadText ? ` · ${Utils.sanitize(activity.payloadText)}` : ''}</div>
+        <div class="activity-subtitle">${Utils.sanitize(activity.label || labels[activity.type] || activity.subtitle || '')}${activity.payloadText ? ` • ${Utils.sanitize(activity.payloadText)}` : ''}</div>
       </div>
       <div class="activity-time">${Utils.timeAgo(activity.date)}</div>
     </div>`;
@@ -470,3 +595,5 @@ function buildGenreRow(genre, count, total) {
       </div>
     </div>`;
 }
+
+
