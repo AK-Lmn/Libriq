@@ -173,12 +173,12 @@ async function main() {
       const now = Date.now();
       const freshAt = new Date(now - 29 * 24 * 60 * 60 * 1000).toISOString();
       const oldAt = new Date(now - 31 * 24 * 60 * 60 * 1000).toISOString();
-      localStorage.setItem('libriq_sync_delete_tombstones', JSON.stringify({
+      window.LibriqStorage.saveSyncTombstones({
         fresh_cleanup_test: { id: 'fresh_cleanup_test', deletedAt: freshAt, updatedAt: freshAt },
         old_cleanup_test: { id: 'old_cleanup_test', deletedAt: oldAt, updatedAt: oldAt },
-      }));
+      });
       const result = window.LibriqSyncDebug.pruneOldLocalTombstones(now);
-      const remaining = JSON.parse(localStorage.getItem('libriq_sync_delete_tombstones') || '{}');
+      const remaining = window.LibriqStorage.getSyncTombstones();
       return {
         result,
         hasFresh: Boolean(remaining.fresh_cleanup_test),
@@ -222,6 +222,36 @@ async function main() {
     assert.equal(pausedStatus.attached, false);
     assert.equal(pausedStatus.sessionMode, 'offline');
     assert.equal(['off', 'paused'].includes(pausedStatus.status), true);
+
+    const offlineContext = await browser.newContext();
+    const offlinePage = await setupPage(offlineContext, 'offline-sync-user', 'offline@example.com');
+    await offlineContext.setOffline(true);
+    await offlinePage.evaluate(() => {
+      window.dispatchEvent(new Event('offline'));
+    });
+    await offlinePage.evaluate(() => {
+      const book = window.LibriqE2E.addBook({
+        title: 'OFFLINE SYNC TEST',
+        author: 'LibriQ',
+        status: 'reading',
+        currentPage: 10,
+        pageCount: 100,
+      });
+      window.LibriqE2E.updateBook(book.id, { currentPage: 11 });
+    });
+    await delay(1000);
+    const offlineState = await offlinePage.evaluate(() => window.LibriqSyncDebug.status());
+    assert.equal(offlineState.pending, true);
+    assert.equal(offlineState.pendingBookIds.length >= 1, true);
+    assert.equal(await offlinePage.evaluate(() => window.LibriqE2E.getBooks().some((book) => book.title === 'OFFLINE SYNC TEST')), true);
+    assert.equal(await offlinePage.evaluate(() => window.LibriqStorage.getSyncMeta().pending), true);
+    await offlineContext.setOffline(false);
+    await offlinePage.evaluate(() => window.dispatchEvent(new Event('online')));
+    await delay(6000);
+    const offlineRemote = await fetch(`http://127.0.0.1:${port}/__libriq_test_api/collection?path=${encodeURIComponent('users/offline-sync-user/sync/v1/books')}`).then(res => res.json());
+    assert.equal(offlineRemote.some((book) => book.title === 'OFFLINE SYNC TEST' && book.currentPage === 11), true);
+    await offlinePage.close();
+    await offlineContext.close();
 
     const contextIsolation = await browser.newContext();
     const pageIsolation = await setupPage(contextIsolation, 'isolation-user-a', 'isolation-a@example.com');

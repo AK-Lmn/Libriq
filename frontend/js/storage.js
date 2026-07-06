@@ -21,9 +21,11 @@ const Storage = (() => {
     // Local backup metadata used only for Settings/Data copy and import preview.
     BACKUP:  'libriq_backup_meta',
     CLOUD_BACKUP: 'libriq_cloud_backup_meta',
+    SYNC_META: 'libriq_sync_meta',
+    SYNC_TOMBSTONES: 'libriq_sync_delete_tombstones',
   };
   const ACTIVE_UID_KEY = 'libriq_active_account_uid';
-  const SCOPED_DATA_KEYS = new Set(['BOOKS', 'PROFILE', 'STREAK', 'GOALS', 'ACTIVITY', 'BACKUP', 'CLOUD_BACKUP']);
+  const SCOPED_DATA_KEYS = new Set(['BOOKS', 'PROFILE', 'STREAK', 'GOALS', 'ACTIVITY', 'BACKUP', 'CLOUD_BACKUP', 'SYNC_META', 'SYNC_TOMBSTONES']);
   let activeUid = localStorage.getItem(ACTIVE_UID_KEY) || null;
 
   const DEFAULTS = {
@@ -34,6 +36,8 @@ const Storage = (() => {
     activity: () => [],
     backup: () => ({ lastExportedAt: null }),
     cloudBackup: () => ({ lastCloudBackupAt: null, bookCount: null, activityCount: null, deviceId: null, backupVersion: null, appVersion: null, schemaVersion: null, createdAt: null, updatedAt: null, notesCount: null, quotesCount: null, lastLocalUpdatedAt: null, syncReady: false }),
+    syncMeta: () => ({ pending: false, pendingSince: null, pendingReason: null, pendingBookIds: [], pendingDeleteIds: [], lastSyncAttemptAt: null, lastSyncSuccessAt: null, lastError: null }),
+    syncTombstones: () => ({}),
   };
 
   function _read(key) {
@@ -407,6 +411,42 @@ const Storage = (() => {
     return streak;
   }
 
+  function getSyncMeta() {
+    const data = _read(_key('SYNC_META'));
+    if (!data || typeof data !== 'object') {
+      const fresh = DEFAULTS.syncMeta();
+      _write(_key('SYNC_META'), fresh);
+      return fresh;
+    }
+    return { ...DEFAULTS.syncMeta(), ...data };
+  }
+
+  function saveSyncMeta(updates) {
+    const current = getSyncMeta();
+    const updated = { ...current, ...(updates && typeof updates === 'object' ? updates : {}) };
+    if (!Array.isArray(updated.pendingBookIds)) updated.pendingBookIds = [];
+    if (!Array.isArray(updated.pendingDeleteIds)) updated.pendingDeleteIds = [];
+    _write(_key('SYNC_META'), updated);
+    return updated;
+  }
+
+  function clearSyncMeta() {
+    const cleared = DEFAULTS.syncMeta();
+    _write(_key('SYNC_META'), cleared);
+    return cleared;
+  }
+
+  function getSyncTombstones() {
+    const data = _read(_key('SYNC_TOMBSTONES'));
+    return data && typeof data === 'object' ? data : {};
+  }
+
+  function saveSyncTombstones(tombstones) {
+    const next = tombstones && typeof tombstones === 'object' ? tombstones : {};
+    _write(_key('SYNC_TOMBSTONES'), next);
+    return next;
+  }
+
   function saveStreak(streak) {
     if (!streak || typeof streak !== 'object') return false;
     const normalized = {
@@ -505,6 +545,8 @@ const Storage = (() => {
     getProfile, saveProfile,
     getBackupMeta, saveBackupMeta,
     getCloudBackupMeta, saveCloudBackupMeta,
+    getSyncMeta, saveSyncMeta, clearSyncMeta,
+    getSyncTombstones, saveSyncTombstones,
     getDeviceId,
     getSyncReadiness,
     getGoals, saveGoals,

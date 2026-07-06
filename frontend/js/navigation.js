@@ -2573,15 +2573,18 @@ function _buildSyncSection(firebase) {
   const description = offlineMode
     ? 'Offline mode: books stay on this device.'
     : signedIn && syncState.enabled
-      ? 'Your books sync automatically across signed-in devices.'
+      ? (syncState.pending ? 'Saved locally. Will sync when online.' : 'Your books sync automatically across signed-in devices.')
       : signedIn
         ? 'Sync is off on this device.'
         : 'Sign in to sync your library.';
   const syncStatus = offlineMode ? 'Paused'
     : !signedIn ? 'Off'
+    : syncState.pending ? 'Pending'
     : syncState.enabled ? 'On'
     : 'Off';
-  const lastSynced = syncState.lastSyncedAt ? `Last synced: ${Utils.formatDate(syncState.lastSyncedAt)}` : 'Last synced: Not yet';
+  const lastSynced = syncState.pending && syncState.pendingSince
+    ? `Saved locally: ${Utils.formatDate(syncState.pendingSince)}`
+    : syncState.lastSyncedAt ? `Last synced: ${Utils.formatDate(syncState.lastSyncedAt)}` : 'Last synced: Not yet';
   const errorText = syncState.status === 'error' && syncState.lastError ? `Sync needs attention: ${syncState.lastError}` : '';
   const actionLabel = syncState.enabled && !offlineMode ? 'Turn off sync' : 'Turn on sync';
   const actionDisabled = !signedIn || offlineMode;
@@ -2619,6 +2622,8 @@ function _buildSyncDiagnosticsRows(syncState) {
   const lastSnapshot = syncState.lastSnapshotAt ? Utils.formatDate(syncState.lastSnapshotAt) : 'Not yet';
   const lastWrite = syncState.lastWriteAt ? Utils.formatDate(syncState.lastWriteAt) : 'Not yet';
   const lastError = syncState.lastError || 'None';
+  const pendingBooks = Array.isArray(syncState.pendingBookIds) ? syncState.pendingBookIds.length : 0;
+  const pendingDeletes = Array.isArray(syncState.pendingDeleteIds) ? syncState.pendingDeleteIds.length : 0;
   const eligibility = syncState.eligibilityAllowed ? 'Allowed' : 'Not eligible right now';
   const syncPath = syncState.syncPath || syncState.listenerPath || 'Not available yet';
   const rows = [
@@ -2628,6 +2633,8 @@ function _buildSyncDiagnosticsRows(syncState) {
     ['Last snapshot', lastSnapshot],
     ['Last write', lastWrite],
     ['Last error', lastError],
+    ['Pending books', String(pendingBooks)],
+    ['Pending deletes', String(pendingDeletes)],
     ['Tombstone count', String(syncState.tombstoneCount ?? 0)],
     ['Oldest tombstone', syncState.oldestTombstoneAt ? Utils.formatDate(syncState.oldestTombstoneAt) : 'None'],
     ['Eligibility status', eligibility],
