@@ -3707,6 +3707,7 @@ function confirmDangerAction({ title, body, prompt, expected, actionLabel }) {
       els.modal.setAttribute('hidden', '');
       document.body.style.overflow = '';
       els.input.oninput = null;
+      window.removeEventListener('keydown', onKeyDown);
       els.cancel.onclick = null;
       els.close.onclick = null;
       els.action.onclick = null;
@@ -3724,10 +3725,10 @@ function confirmDangerAction({ title, body, prompt, expected, actionLabel }) {
     els.modal.onclick = (e) => {
       if (e.target === els.modal) cleanup(false);
     };
-    const onKeyDown = (e) => {
+    function onKeyDown(e) {
       if (e.key === 'Escape' && !els.modal.hasAttribute('hidden')) cleanup(false);
-    };
-    window.addEventListener('keydown', onKeyDown, { once: true });
+    }
+    window.addEventListener('keydown', onKeyDown);
     els.modal.removeAttribute('hidden');
     document.body.style.overflow = 'hidden';
     window.setTimeout(() => els.input.focus(), 50);

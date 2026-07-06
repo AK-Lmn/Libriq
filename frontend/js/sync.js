@@ -405,11 +405,12 @@ const LibriqSyncBeta = (() => {
         if (applyingRemoteChanges) return;
         const remoteBooks = [];
         snapshot.forEach((docSnap) => remoteBooks.push(docSnap.data()));
+        const snapshotFromCache = Boolean(snapshot?.metadata?.fromCache);
         lastSnapshotAt = new Date().toISOString();
         const wasAwaitingInitialSnapshot = awaitingInitialSnapshot;
         const hadQueuedLocalChange = queuedUploadBeforeInitialSnapshot;
         awaitingInitialSnapshot = false;
-        debugLog('snapshot received', { listenerPath, changeCount: remoteBooks.length, snapshotAt: lastSnapshotAt });
+        debugLog('snapshot received', { listenerPath, changeCount: remoteBooks.length, snapshotAt: lastSnapshotAt, fromCache: snapshotFromCache });
         const fingerprint = JSON.stringify(remoteBooks.map(book => [book.id, book.updatedAt, book.deletedAt, book.deviceId]).sort());
         const hasPendingLocalChanges = Boolean(Storage.getSyncMeta?.()?.pending);
         if (wasAwaitingInitialSnapshot && hadQueuedLocalChange) {
@@ -421,7 +422,7 @@ const LibriqSyncBeta = (() => {
           debugLog('initial snapshot preserved because pending sync exists', { listenerPath, changeCount: remoteBooks.length });
           window.setTimeout(() => queueUpload('initial-snapshot-pending'), 0);
         } else if (wasAwaitingInitialSnapshot) {
-          applyInitialRemoteBooks(uid, remoteBooks);
+          applyInitialSnapshotSafely(uid, remoteBooks, { fromCache: snapshotFromCache });
         } else if (fingerprint !== lastRemoteFingerprint) {
           lastRemoteFingerprint = fingerprint;
           applyRemoteBooks(remoteBooks);
@@ -708,6 +709,25 @@ const LibriqSyncBeta = (() => {
     });
     debugLog('initial remote snapshot applied', { uid, count: activeRemoteBooks.length });
     scheduleUiRefresh();
+  }
+
+  function applyInitialSnapshotSafely(uid, remoteBooks, options = {}) {
+    const fromCache = Boolean(options?.fromCache);
+    const localBooks = Storage.getBooks();
+    const hasLocalBooks = Array.isArray(localBooks) && localBooks.length > 0;
+    const hasRemoteBooks = Array.isArray(remoteBooks) && remoteBooks.length > 0;
+    if (fromCache && !hasRemoteBooks && hasLocalBooks) {
+      debugLog('initial empty cache snapshot ignored to preserve local books', {
+        uid,
+        localCount: localBooks.length,
+        remoteCount: remoteBooks.length,
+      });
+      lastRemoteFingerprint = JSON.stringify(localBooks.map(book => [book.id, book.updatedAt, book.deletedAt, book.deviceId]).sort());
+      setState(STATUS.PAUSED, 'Saved locally. Will sync when online.');
+      scheduleUiRefresh();
+      return;
+    }
+    applyInitialRemoteBooks(uid, remoteBooks);
   }
 
   function _toLocalBook(remote) {
