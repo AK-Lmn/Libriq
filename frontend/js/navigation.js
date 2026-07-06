@@ -11,6 +11,25 @@ const Navigation = (() => {
   const DEBUG_SYNC = () => localStorage.getItem('libriq_debug_sync') === '1';
   let _lastAuthUid = null;
 
+  function getMainContentRoot(context = 'navigation') {
+    const main = document.getElementById('mainContent');
+    if (!main) {
+      console.error(`[LibriQ] Missing #mainContent while rendering ${context}.`);
+      return null;
+    }
+
+    main.hidden = false;
+    main.style.display = '';
+    main.style.visibility = '';
+    main.style.opacity = '';
+    main.style.height = '';
+    main.style.maxHeight = '';
+    main.style.overflow = '';
+    main.style.position = '';
+    main.style.inset = '';
+    return main;
+  }
+
   function debugSync(message, details = null) {
     if (!DEBUG_SYNC()) return;
     const prefix = '[LibriQ][SyncDebug][Nav]';
@@ -48,17 +67,48 @@ const Navigation = (() => {
 
     closeMobileSidebar();
 
-    pages[page]();
+    const main = getMainContentRoot(`goTo(${page})`);
+    if (main) main.innerHTML = '';
+    try {
+      pages[page]();
+    } catch (err) {
+      console.error(`[LibriQ] Failed to render ${page} page:`, err);
+      if (main) {
+        main.innerHTML = `
+          <div class="page" id="${page}Page">
+            <div class="page-header">
+              <h1 class="page-title">${Utils.sanitize(page.charAt(0).toUpperCase() + page.slice(1))}</h1>
+              <p class="page-subtitle">This page could not finish rendering.</p>
+            </div>
+          </div>`;
+      }
+    }
     if (page !== 'session') window.LibriqCloudBackup?.refresh?.();
     if (page === 'session') window.LibriqCloudBackup?.refresh?.();
 
-    document.getElementById('mainContent').scrollTop = 0;
+    const mainRoot = getMainContentRoot(`goTo(${page})`);
+    if (mainRoot) mainRoot.scrollTop = 0;
     window.dispatchEvent(new CustomEvent('libriq:page-changed', { detail: { page } }));
   }
 
   function renderCurrentPage() {
     applyAuthShellStateForPage(_currentPage);
-    if (pages[_currentPage]) pages[_currentPage]();
+    const main = getMainContentRoot(`renderCurrentPage(${_currentPage})`);
+    if (main) main.innerHTML = '';
+    try {
+      if (pages[_currentPage]) pages[_currentPage]();
+    } catch (err) {
+      console.error(`[LibriQ] Failed to render current page ${_currentPage}:`, err);
+      if (main) {
+        main.innerHTML = `
+          <div class="page" id="${_currentPage}Page">
+            <div class="page-header">
+              <h1 class="page-title">${Utils.sanitize(_currentPage.charAt(0).toUpperCase() + _currentPage.slice(1))}</h1>
+              <p class="page-subtitle">This page could not finish rendering.</p>
+            </div>
+          </div>`;
+      }
+    }
   }
 
   function applyAuthShellStateForPage(page) {
@@ -341,6 +391,7 @@ window.LibriqNavigation = Navigation;
 function renderBootPage() {
   const main = document.getElementById('mainContent');
   if (!main) return;
+  main.hidden = false;
   main.innerHTML = `
     <div class="session-page">
       <section class="session-hero">
@@ -782,6 +833,11 @@ window.LibriqCloudBackup = CloudBackup;
 
 function renderSessionChoicePage() {
   const main = document.getElementById('mainContent');
+  if (!main) {
+    console.error('[LibriQ] Missing #mainContent while rendering session choice page.');
+    return;
+  }
+  main.hidden = false;
   const firebase = window.LibriqFirebase?.getState?.() || { available: false, initialized: false, ready: false, user: null };
   const sessionContext = window.LibriqFirebase?.getSessionContext?.() || { isInAppBrowser: false, hints: [] };
   const hasUser = Boolean(firebase.user);
@@ -1081,6 +1137,10 @@ Navigation.clearAllData = clearAllData;
 
 function renderLibraryPage() {
   const main  = document.getElementById('mainContent');
+  if (!main) {
+    console.error('[LibriQ] Missing #mainContent while rendering library page.');
+    return;
+  }
   const books = Storage.getBooks();
   const state = _getLibraryState();
   const shelves = _getLibraryShelves(books);
@@ -1357,6 +1417,10 @@ function buildLibraryEmpty(filter = 'all', query = '') {
 
 function renderStatusPage(status, title, iconClass) {
   const main  = document.getElementById('mainContent');
+  if (!main) {
+    console.error(`[LibriQ] Missing #mainContent while rendering ${title} page.`);
+    return;
+  }
   const books = Storage.getBooksByStatus(status);
 
   main.innerHTML = `
@@ -1384,6 +1448,10 @@ function renderStatusPage(status, title, iconClass) {
 
 function renderFavoritesPage() {
   const main  = document.getElementById('mainContent');
+  if (!main) {
+    console.error('[LibriQ] Missing #mainContent while rendering favorites page.');
+    return;
+  }
   const books = Storage.getBooks().filter(b => b.isFavorite);
 
   main.innerHTML = `
@@ -1410,6 +1478,10 @@ function renderFavoritesPage() {
 
   function renderStatsPage() {
     const main  = document.getElementById('mainContent');
+    if (!main) {
+      console.error('[LibriQ] Missing #mainContent while rendering statistics page.');
+      return;
+    }
     const stats = Storage.getStats();
     const goals = Storage.getGoals();
     const streak = Storage.getStreak();
@@ -1661,6 +1733,10 @@ function renderFavoritesPage() {
 
 function renderGoalsPage() {
   const main  = document.getElementById('mainContent');
+  if (!main) {
+    console.error('[LibriQ] Missing #mainContent while rendering goals page.');
+    return;
+  }
   const goals = Storage.getGoals();
   const stats = Storage.getStats();
 
@@ -1848,6 +1924,10 @@ function getDisplayNameForAccount(user) {
 
 function renderHelpPage() {
   const main = document.getElementById('mainContent');
+  if (!main) {
+    console.error('[LibriQ] Missing #mainContent while rendering help page.');
+    return;
+  }
   const syncReadiness = Storage.getSyncReadiness?.() || { syncReady: false };
 
   const guideSections = [
@@ -2004,6 +2084,10 @@ function renderHelpPage() {
 
 function renderRecommendationsPage() {
   const main = document.getElementById('mainContent');
+  if (!main) {
+    console.error('[LibriQ] Missing #mainContent while rendering recommendations page.');
+    return;
+  }
   const books = Storage.getBooks();
   const recState = _buildRecommendationState(books);
 
@@ -2234,6 +2318,10 @@ function _dateValue(value) {
 
 function renderProfilePage() {
   const main    = document.getElementById('mainContent');
+  if (!main) {
+    console.error('[LibriQ] Missing #mainContent while rendering profile page.');
+    return;
+  }
   const profile = Storage.getProfile();
   const stats   = Storage.getStats();
 
@@ -2289,6 +2377,10 @@ function renderProfilePage() {
 
 function renderSettingsPage() {
   const main  = document.getElementById('mainContent');
+  if (!main) {
+    console.error('[LibriQ] Missing #mainContent while rendering settings page.');
+    return;
+  }
   if (window.localStorage?.getItem('libriq_debug_auto_backup')) {
     console.debug('[LibriQ][AutoBackup] full settings render');
   }
