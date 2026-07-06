@@ -12,14 +12,14 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: "What's New in LibriQ v4.2.0",
-      subtitle: 'LibriQ v4.2.0 makes account sign-in the front door while preserving offline fallback.',
+      title: "What's New in LibriQ v4.3.0",
+      subtitle: 'LibriQ v4.3.0 lets signed-in users keep reading and editing while temporarily offline.',
       sections: [
-        ['Cloud-first Sign-in', 'The login screen now focuses on Google, email sign-in, and account creation.'],
-        ['Email Accounts', 'You can now sign up or sign in with an email address and password.'],
-        ['Offline Fallback', 'Continue offline now appears when LibriQ cannot reach account services.'],
+        ['Offline Editing', 'Signed-in users can keep editing their library while internet is temporarily unavailable.'],
+        ['Durable Pending Sync', 'Offline edits save locally, survive refresh, and wait to sync when connectivity returns.'],
+        ['UID-scoped Safety', 'Offline deletes create UID-scoped tombstones, and pending sync state stays scoped to the signed-in account.'],
       ],
-      note: 'Firestore sync paths, backup paths, delete tombstones, and book data stay unchanged.',
+      note: 'Local-only offline mode remains separate, sync status is friendlier, and Firestore and backup paths stay unchanged.',
     },
   };
 

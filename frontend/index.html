@@ -289,8 +289,8 @@
     <div class="modal whats-new-modal">
       <div class="modal-header">
         <div>
-          <h2 class="modal-title">What's New in LibriQ v4.2.0</h2>
-          <p class="whats-new-subtitle">LibriQ v4.2.0 makes account sign-in the front door while preserving offline fallback.</p>
+          <h2 class="modal-title">What's New in LibriQ v4.3.0</h2>
+          <p class="whats-new-subtitle">LibriQ v4.3.0 lets signed-in users keep editing while temporarily offline.</p>
         </div>
         <button class="modal-close" id="closeWhatsNew" aria-label="Close release notes">
           <i class="ph ph-x"></i>
@@ -299,20 +299,20 @@
       <div class="modal-body" id="whatsNewBody">
         <div class="whats-new-list">
           <section class="whats-new-item">
-            <div class="whats-new-item-title">Cloud-first Sign-in</div>
-            <p>The login screen now focuses on Google, email sign-in, and account creation.</p>
+            <div class="whats-new-item-title">Offline Editing</div>
+            <p>Signed-in users can keep editing their library while internet is temporarily unavailable.</p>
           </section>
           <section class="whats-new-item">
-            <div class="whats-new-item-title">Email Accounts</div>
-            <p>You can now sign up or sign in with an email address and password.</p>
+            <div class="whats-new-item-title">Durable Pending Sync</div>
+            <p>Offline edits save locally, survive refresh, and wait to sync when connectivity returns.</p>
           </section>
           <section class="whats-new-item">
-            <div class="whats-new-item-title">Offline Fallback</div>
-            <p>Continue offline now appears when LibriQ cannot reach account services.</p>
+            <div class="whats-new-item-title">UID-scoped Safety</div>
+            <p>Offline deletes create UID-scoped tombstones, and pending sync state stays scoped to the signed-in account.</p>
           </section>
         </div>
         <div class="whats-new-note">
-          Firestore sync paths, backup paths, delete tombstones, and book data stay unchanged.
+          Local-only offline mode remains separate, sync status is friendlier, and Firestore and backup paths stay unchanged.
         </div>
       </div>
       <div class="modal-footer whats-new-footer">
