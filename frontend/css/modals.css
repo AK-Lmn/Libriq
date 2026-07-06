@@ -1244,7 +1244,6 @@
   display: grid;
   gap: var(--space-4);
   padding: var(--space-5);
-  padding-bottom: calc(var(--space-5) + 96px);
   overflow: auto;
   min-height: 0;
 }
@@ -1356,10 +1355,7 @@
   background: rgba(148, 163, 184, 0.16);
 }
 
-#bookDetailsModal .book-details-actions {
-  position: sticky;
-  bottom: 0;
-  z-index: 1;
+#bookDetailsModal .book-details-footer {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -1367,10 +1363,11 @@
   flex-wrap: wrap;
   padding: var(--space-4);
   border-top: 1px solid rgba(17, 24, 39, 0.08);
-  border-radius: 24px 24px 0 0;
+  border-radius: 0 0 24px 24px;
   background: rgba(255,255,255,0.94);
   backdrop-filter: blur(14px);
   box-shadow: 0 -10px 30px rgba(15, 23, 42, 0.06);
+  flex: none;
 }
 
 #bookDetailsModal .book-details-actions .btn {
@@ -1524,12 +1521,12 @@ html[data-theme="dark"] #bookDetailsModal .book-details-meta-row,
 html[data-theme="dark"] #bookDetailsModal .book-details-progress,
 html[data-theme="dark"] #bookDetailsModal .book-details-description,
 html[data-theme="dark"] #bookDetailsModal .book-details-notes,
-html[data-theme="dark"] #bookDetailsModal .book-details-actions {
+html[data-theme="dark"] #bookDetailsModal .book-details-footer {
   background: rgba(15, 23, 42, 0.92);
   border-color: rgba(148, 163, 184, 0.14);
 }
 
-html[data-theme="dark"] #bookDetailsModal .book-details-actions {
+html[data-theme="dark"] #bookDetailsModal .book-details-footer {
   box-shadow: 0 -10px 30px rgba(2, 6, 23, 0.48);
 }
 
