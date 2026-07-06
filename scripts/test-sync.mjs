@@ -20,10 +20,14 @@ async function setupPage(context, uid, email) {
     window.__libriqBootTrace = [];
     const recordBootTrace = () => {
       const main = document.getElementById('mainContent');
+      const sidebar = document.getElementById('sidebar');
+      const sidebarStyle = sidebar ? getComputedStyle(sidebar) : null;
       window.__libriqBootTrace.push({
         page: window.LibriqNavigation?.currentPage || null,
         text: main?.innerText || '',
         sessionActive: document.body.classList.contains('session-choice-active'),
+        bodyClass: document.body.className,
+        sidebarVisible: Boolean(sidebar && sidebarStyle && sidebarStyle.display !== 'none' && sidebar.getClientRects().length > 0),
       });
     };
     new MutationObserver(recordBootTrace).observe(document.documentElement, { childList: true, subtree: true, attributes: true });
@@ -294,6 +298,8 @@ async function main() {
     await delay(2500);
     const signedOutTrace = await pageIsolation.evaluate(() => window.__libriqBootTrace || []);
     assert.equal(signedOutTrace.some((entry) => entry.text.includes('Dashboard')), false);
+    assert.equal(signedOutTrace.some((entry) => entry.sidebarVisible), false);
+    assert.equal(signedOutTrace.some((entry) => entry.text.includes('My Library')), false);
     assert.equal(await pageIsolation.evaluate(() => window.LibriqNavigation.currentPage), 'session');
     await pageIsolation.close();
     await contextIsolation.close();

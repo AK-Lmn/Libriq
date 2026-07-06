@@ -26,6 +26,39 @@ body {
   background-color: var(--bg-base);
 }
 
+body.auth-booting,
+body.auth-signed-out {
+  overflow: hidden;
+}
+
+body.auth-booting .app-shell,
+body.auth-signed-out .app-shell {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  min-height: 100dvh;
+}
+
+body.auth-booting .sidebar,
+body.auth-booting .mobile-topbar,
+body.auth-booting #sidebar,
+body.auth-booting #sidebarOverlay,
+body.auth-signed-out .sidebar,
+body.auth-signed-out .mobile-topbar,
+body.auth-signed-out #sidebar,
+body.auth-signed-out #sidebarOverlay {
+  display: none !important;
+}
+
+body.auth-booting #mainContent,
+body.auth-signed-out #mainContent {
+  grid-column: 1;
+  grid-row: 1;
+  min-height: 100dvh;
+  width: 100%;
+  overflow: visible;
+}
+
 html.theme-switching *,
 html.theme-switching *::before,
 html.theme-switching *::after {
