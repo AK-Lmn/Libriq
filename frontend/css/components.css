@@ -1335,6 +1335,7 @@
   flex-direction: column;
   gap: var(--space-3);
   min-width: 0;
+  height: 100%;
   padding: var(--space-3);
   border-radius: 24px;
   overflow: hidden;
@@ -1390,7 +1391,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  margin-top: var(--space-1);
+  margin-top: auto;
   padding-top: 6px;
   border-top: 1px solid var(--border-divider);
 }
@@ -1406,10 +1407,13 @@
 
 #statusPage .book-card-actions-primary {
   flex-wrap: wrap;
+  min-height: 36px;
 }
 
 #statusPage .book-card-actions-secondary {
   flex-wrap: nowrap;
+  min-height: 36px;
+  justify-content: flex-end;
 }
 
 #statusPage .book-card-actions .btn:not(.btn-icon) {
@@ -2605,6 +2609,10 @@ html[data-theme="dark"] #statusPage .empty-state-icon {
     border-radius: var(--radius-md);
   }
 
+  #statusPage .book-card-actions {
+    margin-top: auto;
+  }
+
   #statusPage .book-card-actions .btn:not(.btn-icon) {
     flex: 1 0 100%;
     min-width: 100%;
@@ -2635,6 +2643,11 @@ html[data-theme="dark"] #statusPage .empty-state-icon {
 
   #statusPage .book-card-actions {
     grid-column: 1 / -1;
+  }
+
+  #statusPage .book-card-actions-primary,
+  #statusPage .book-card-actions-secondary {
+    min-height: 0;
   }
 }
 

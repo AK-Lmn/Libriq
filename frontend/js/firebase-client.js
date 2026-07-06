@@ -41,10 +41,14 @@ let firestore = null;
 let authListener = null;
 let testUser = null;
 let testFirestore = null;
+let initRetryTimer = null;
+let initRetryStartedAt = 0;
 const TEST_MODE = Boolean(
   (location.hostname === 'localhost' || location.hostname === '127.0.0.1') &&
   (new URLSearchParams(location.search).get('libriq_e2e_test_mode') === '1' || localStorage.getItem('libriq_e2e_test_mode') === '1')
 );
+const INIT_RETRY_TIMEOUT_MS = 3500;
+const INIT_RETRY_INTERVAL_MS = 75;
 
 function getTestApiBase() {
   return `${location.origin}/__libriq_test_api`;
@@ -144,8 +148,34 @@ function init() {
   }
 
   if (!hasConfig) {
+    if ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && !initRetryTimer) {
+      initRetryStartedAt = initRetryStartedAt || Date.now();
+      initRetryTimer = window.setInterval(() => {
+        if (hasConfig) {
+          window.clearInterval(initRetryTimer);
+          initRetryTimer = null;
+          initRetryStartedAt = 0;
+          init();
+          return;
+        }
+        if (Date.now() - initRetryStartedAt > INIT_RETRY_TIMEOUT_MS) {
+          window.clearInterval(initRetryTimer);
+          initRetryTimer = null;
+          initRetryStartedAt = 0;
+          setState({ available: false, initialized: true, ready: true, user: null });
+        }
+      }, INIT_RETRY_INTERVAL_MS);
+      return state;
+    }
+
     setState({ available: false, initialized: true, ready: true, user: null });
     return state;
+  }
+
+  if (initRetryTimer) {
+    window.clearInterval(initRetryTimer);
+    initRetryTimer = null;
+    initRetryStartedAt = 0;
   }
 
   try {
