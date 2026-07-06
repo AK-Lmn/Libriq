@@ -49,6 +49,12 @@ const documentStub = {
     const actionsNode = {
       appendChild: child => child,
     };
+    const primaryActionsNode = {
+      appendChild: child => child,
+    };
+    const secondaryActionsNode = {
+      appendChild: child => child,
+    };
     return {
       tagName: String(tag || '').toUpperCase(),
       dataset: {},
@@ -56,7 +62,12 @@ const documentStub = {
       innerHTML: '',
       textContent: '',
       classList: makeClassList(),
-      querySelector: selector => (selector === '.book-card-actions' ? actionsNode : null),
+      querySelector: selector => {
+        if (selector === '.book-card-actions') return actionsNode;
+        if (selector === '.book-card-actions-primary') return primaryActionsNode;
+        if (selector === '.book-card-actions-secondary') return secondaryActionsNode;
+        return null;
+      },
       querySelectorAll: () => [],
       closest: () => null,
       addEventListener: () => {},

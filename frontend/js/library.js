@@ -1066,10 +1066,14 @@ const Library = (() => {
             Finished and ready for the next shelf.
           </div>` : ''}
 
-        <div class="book-card-actions"></div>
+        <div class="book-card-actions">
+          <div class="book-card-actions-primary"></div>
+          <div class="book-card-actions-secondary"></div>
+        </div>
       </div>`;
 
-    const actions = card.querySelector('.book-card-actions');
+    const primaryActions = card.querySelector('.book-card-actions-primary');
+    const secondaryActions = card.querySelector('.book-card-actions-secondary');
 
     if (isReading) {
       const updateBtn = document.createElement('button');
@@ -1079,12 +1083,12 @@ const Library = (() => {
         e.stopPropagation();
         Library.showProgressModal(book.id);
       });
-      actions.appendChild(updateBtn);
+      primaryActions.appendChild(updateBtn);
     }
 
     if (book.status !== LIBRIQ.STATUS.FINISHED) {
       const finishBtn = document.createElement('button');
-      finishBtn.className = 'btn btn-secondary btn-sm';
+      finishBtn.className = 'btn btn-secondary btn-sm book-card-primary-action';
       finishBtn.innerHTML = `<i class="ph ph-check"></i> ${
         isReading ? 'Finish' : 'Start Reading'
       }`;
@@ -1097,7 +1101,7 @@ const Library = (() => {
         }
         Navigation.renderCurrentPage();
       });
-      actions.appendChild(finishBtn);
+      primaryActions.appendChild(finishBtn);
     }
 
     const favBtn = document.createElement('button');
@@ -1113,7 +1117,7 @@ const Library = (() => {
   Navigation.updateBadges();
   Navigation.renderCurrentPage();
 });
-    actions.appendChild(favBtn);
+    secondaryActions.appendChild(favBtn);
 
     const removeBtn = document.createElement('button');
     removeBtn.className = 'btn btn-ghost btn-sm btn-icon';
@@ -1123,7 +1127,7 @@ const Library = (() => {
       e.stopPropagation();
       Library.removeBook(book.id, book.title);
     });
-    actions.appendChild(removeBtn);
+    secondaryActions.appendChild(removeBtn);
 
     card.addEventListener('click', (e) => {
       if (!e.target.closest('.book-card-actions')) {
