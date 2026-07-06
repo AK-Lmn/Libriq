@@ -176,6 +176,26 @@
     if (!('serviceWorker' in navigator)) return;
     if (location.protocol === 'file:') return;
 
+    const isLocalDevHost = ['localhost', '127.0.0.1', '::1'].includes(location.hostname);
+    if (isLocalDevHost) {
+      navigator.serviceWorker.getRegistration?.('./service-worker.js')?.then((registration) => {
+        registration?.unregister?.();
+      }).catch((err) => {
+        console.warn('[LibriQ] Service worker cleanup failed:', err);
+      });
+      navigator.serviceWorker.getRegistrations?.().then((registrations) => {
+        registrations.forEach((registration) => registration.unregister());
+      }).catch((err) => {
+        console.warn('[LibriQ] Service worker cleanup failed:', err);
+      });
+      caches?.keys?.().then((keys) => {
+        return Promise.all(keys.filter((key) => key.startsWith('libriq-')).map((key) => caches.delete(key)));
+      }).catch((err) => {
+        console.warn('[LibriQ] Cache cleanup failed:', err);
+      });
+      return;
+    }
+
     navigator.serviceWorker.register('./service-worker.js')
       .catch((err) => {
         console.warn('[LibriQ] Service worker registration failed:', err);

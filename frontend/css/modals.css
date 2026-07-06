@@ -392,12 +392,14 @@
 /* ── What's New Modal ─────────────────────── */
 .whats-new-modal {
   max-width: 680px;
+  background: linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
+  border-color: var(--border-subtle);
 }
 
 .whats-new-subtitle {
   margin-top: 4px;
   font-size: var(--text-sm);
-  color: var(--text-secondary);
+  color: var(--text-dim);
 }
 
 .whats-new-list {
@@ -410,19 +412,19 @@
   padding: var(--space-4);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  background: var(--bg-elevated);
+  background: var(--surface-2);
 }
 
 .whats-new-item-title {
   margin-bottom: var(--space-1);
   font-family: var(--font-serif);
   font-size: var(--text-md);
-  color: var(--text-primary);
+  color: var(--text-strong);
 }
 
 .whats-new-item p {
   margin: 0;
-  color: var(--text-secondary);
+  color: var(--text-dim);
   line-height: var(--leading-loose);
 }
 
@@ -430,15 +432,32 @@
   margin-top: var(--space-4);
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
-  background: var(--gold-06);
+  background: var(--gold-04);
   border: 1px solid var(--gold-10);
-  color: var(--text-secondary);
+  color: var(--text-dim);
   font-size: var(--text-sm);
   line-height: var(--leading-loose);
 }
 
 .whats-new-footer {
   justify-content: flex-end;
+  background: linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
+}
+
+.whats-new-footer .btn {
+  border-color: var(--border-soft);
+}
+
+html[data-theme="dark"] .whats-new-modal {
+  background: linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
+}
+
+html[data-theme="dark"] .whats-new-note {
+  background: rgba(193, 156, 88, 0.10);
+}
+
+html[data-theme="dark"] .whats-new-footer {
+  background: linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
 }
 
 /* ── Add Book Modal ───────────────────────── */
