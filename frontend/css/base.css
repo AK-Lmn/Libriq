@@ -24,6 +24,7 @@ body {
   min-height: 100dvh;
   overflow-x: hidden;
   background-color: var(--bg-base);
+  padding-top: 72px;
 }
 
 body.auth-booting,
@@ -200,6 +201,10 @@ kbd {
   display: none;
 }
 
+.desktop-topbar {
+  display: none;
+}
+
 /* ── Responsive ───────────────────────────── */
 @media (max-width: 768px) {
   .app-shell {
@@ -224,6 +229,10 @@ kbd {
     z-index: 40;
     grid-column: 1;
     grid-row: 1;
+  }
+
+  .desktop-topbar {
+    display: none !important;
   }
 
   .mobile-menu-btn,
@@ -269,6 +278,71 @@ kbd {
 
   .page {
     padding: var(--space-6) var(--space-4) var(--space-16);
+  }
+}
+
+@media (min-width: 769px) {
+  .desktop-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    position: sticky;
+    top: 0;
+    z-index: 35;
+    grid-column: 2;
+    grid-row: 1;
+    height: 72px;
+    padding: 0 var(--space-6);
+    background: rgba(248, 247, 243, 0.92);
+    border-bottom: 1px solid var(--border-subtle);
+    backdrop-filter: blur(18px);
+  }
+
+  .desktop-topbar-search {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: min(560px, 100%);
+    height: 44px;
+    padding: 0 var(--space-4);
+    border: 1px solid var(--border-subtle);
+    border-radius: 999px;
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    box-shadow: var(--shadow-sm);
+    text-align: left;
+  }
+
+  .desktop-topbar-search:hover {
+    background: var(--bg-elevated);
+    border-color: var(--gold-18);
+  }
+
+  .desktop-topbar-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .desktop-status-pill,
+  .desktop-topbar-action {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    height: 44px;
+    padding: 0 var(--space-3);
+    border: 1px solid var(--border-subtle);
+    border-radius: 999px;
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .desktop-topbar-action {
+    width: 44px;
+    justify-content: center;
+    padding: 0;
   }
 }
 
