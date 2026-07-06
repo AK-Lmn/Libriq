@@ -874,7 +874,7 @@ function renderSessionChoicePage() {
           <div class="session-card-icon"><i class="ph ph-wifi-slash"></i></div>
           <div>
             <h2 class="session-fallback-title" id="sessionFallbackTitle">No internet connection</h2>
-            <p class="session-fallback-copy">LibriQ could not reach account services. Retry, or continue offline with local-only data on this device.</p>
+            <p class="session-fallback-copy">LibriQ needs internet to sign in and sync your library. You can continue offline on this device, and your changes will stay local.</p>
           </div>
           <div class="session-fallback-actions">
             <button class="btn btn-primary" id="authRetryBtn" type="button"><i class="ph ph-arrow-clockwise"></i> Retry</button>
@@ -3685,8 +3685,21 @@ function confirmDangerAction({ title, body, prompt, expected, actionLabel }) {
       return;
     }
     els.title.textContent = title;
-    els.body.textContent = body;
-    els.prompt.textContent = prompt;
+    els.body.innerHTML = `
+      <div class="modal-danger-panel">
+        <div class="modal-danger-icon" aria-hidden="true"><i class="ph ph-warning"></i></div>
+        <div>
+          <div class="modal-danger-copy">${Utils.sanitize(body)}</div>
+          <div class="modal-warning-note" style="margin-top: var(--space-3);">Typed confirmation is required before this action can run.</div>
+        </div>
+      </div>
+      <label class="form-field">
+        <span id="dangerConfirmPrompt">${Utils.sanitize(prompt)}</span>
+        <input id="dangerConfirmInput" class="form-input" type="text" autocomplete="off" spellcheck="false" />
+      </label>
+    `;
+    els.prompt = document.getElementById('dangerConfirmPrompt');
+    els.input = document.getElementById('dangerConfirmInput');
     els.input.value = '';
     els.action.textContent = actionLabel;
     els.action.disabled = true;
@@ -3711,6 +3724,10 @@ function confirmDangerAction({ title, body, prompt, expected, actionLabel }) {
     els.modal.onclick = (e) => {
       if (e.target === els.modal) cleanup(false);
     };
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape' && !els.modal.hasAttribute('hidden')) cleanup(false);
+    };
+    window.addEventListener('keydown', onKeyDown, { once: true });
     els.modal.removeAttribute('hidden');
     document.body.style.overflow = 'hidden';
     window.setTimeout(() => els.input.focus(), 50);
@@ -3743,7 +3760,7 @@ async function confirmDeleteLibraryData() {
   }
   const confirmed = await confirmDangerAction({
     title: 'Delete library data?',
-    body: 'This will permanently remove your books, notes, progress, activity, streak, and cloud backup for this account. This cannot be undone.',
+    body: 'This permanently removes your books, notes, progress, activity, streak, and cloud backup for this account. This cannot be undone.',
     prompt: 'Type DELETE to continue',
     expected: 'DELETE',
     actionLabel: 'Delete library data',
@@ -3770,7 +3787,7 @@ async function confirmDeleteAccount() {
   }
   const confirmed = await confirmDangerAction({
     title: 'Delete account?',
-    body: 'This will permanently delete your LibriQ account and all reading data connected to this account. This cannot be undone.',
+    body: 'This permanently deletes your LibriQ account and all reading data connected to it. This cannot be undone.',
     prompt: 'Type DELETE ACCOUNT to continue',
     expected: 'DELETE ACCOUNT',
     actionLabel: 'Delete account',

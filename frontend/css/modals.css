@@ -1163,3 +1163,157 @@
     padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom));
   }
 }
+
+/* ============================================
+   STUDIO MODAL REFRESH
+   Shared light modal language and Studio dialogs.
+   ============================================ */
+
+.modal-overlay,
+.session-fallback-modal {
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.modal {
+  background: #fff;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  box-shadow: 0 28px 72px rgba(15, 23, 42, 0.16);
+}
+
+.modal-footer {
+  background: #fff;
+}
+
+.modal--sheet {
+  max-width: 720px;
+}
+
+.btn-primary {
+  background: #4338CA;
+  color: #fff;
+}
+
+.btn-secondary {
+  background: #fff;
+}
+
+.btn-danger {
+  background: #DC2626;
+  color: #fff;
+}
+
+.session-fallback-card {
+  background: #fff;
+  border-radius: 24px;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  box-shadow: 0 28px 72px rgba(15, 23, 42, 0.16);
+}
+
+.session-card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(67, 56, 202, 0.10);
+  color: #4338CA;
+}
+
+#bookDetailsModal .book-details-modal {
+  max-width: 780px;
+}
+
+#bookDetailsModal .modal-body {
+  display: grid;
+  gap: var(--space-4);
+}
+
+#bookDetailsModal .book-details-hero {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: var(--space-5);
+  padding: var(--space-5);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(67, 56, 202, 0.04), rgba(255,255,255,0));
+}
+
+#bookDetailsModal .book-details-hero > .book-cover {
+  width: 200px;
+  height: 292px;
+  border-radius: 20px;
+}
+
+#bookDetailsModal .book-details-title {
+  color: var(--text-primary);
+  font-size: clamp(1.55rem, 3vw, 2.3rem);
+}
+
+#bookDetailsModal .book-details-author {
+  color: var(--text-secondary);
+  font-size: var(--text-md);
+}
+
+#bookDetailsModal .book-details-notes,
+#bookDetailsModal .book-details-description,
+#bookDetailsModal .book-details-progress {
+  padding: var(--space-4);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 20px;
+  background: #fff;
+}
+
+#bookDetailsModal .book-details-notes-textarea {
+  background: #FBFCFE;
+  border-radius: 16px;
+  border-color: rgba(67, 56, 202, 0.14);
+  min-height: 140px;
+}
+
+#bookDetailsModal .book-details-desc-text {
+  line-height: var(--leading-loose);
+  color: var(--text-secondary);
+}
+
+#bookDetailsModal .book-details-actions {
+  position: sticky;
+  bottom: 0;
+  padding: var(--space-4);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 20px;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(8px);
+}
+
+#dangerConfirmModal .modal-danger-panel {
+  margin-bottom: var(--space-4);
+}
+
+#dangerConfirmModal .modal-title {
+  color: #991B1B;
+}
+
+#dangerConfirmModal .btn-danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .modal {
+    max-height: 92dvh;
+  }
+
+  .modal--sheet {
+    border-radius: 24px 24px 0 0;
+  }
+
+  #bookDetailsModal .book-details-hero {
+    grid-template-columns: 1fr;
+  }
+
+  #bookDetailsModal .book-details-hero > .book-cover {
+    width: 100%;
+    height: 320px;
+  }
+}
