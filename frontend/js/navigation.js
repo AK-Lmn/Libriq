@@ -4093,7 +4093,7 @@ function renderActivityPage() {
 
   main.innerHTML = `
     <div class="page" id="activityPage">
-      <div class="page-header library-header" style="margin-bottom: var(--space-6);">
+      <div class="page-header library-header activity-header">
         <div class="library-heading">
           <span class="library-eyebrow">Reading history</span>
           <h1 class="page-title">Activity</h1>
@@ -4141,7 +4141,7 @@ function _setActivityState(updates) {
 }
 
 function _buildActivityFilterChip(key, label, count, active) {
-  return `<button class="chip ${active === key ? 'active' : ''}" data-filter="${key}">${label} <span>${count}</span></button>`;
+  return `<button class="chip activity-chip ${active === key ? 'active' : ''}" data-filter="${key}">${label} <span class="activity-chip-count">${count}</span></button>`;
 }
 
 function _filterActivityEvents(events, filter) {
@@ -4173,7 +4173,7 @@ function _groupActivityByDate(events) {
   });
 
   return Array.from(groups.entries()).map(([key, items]) => ({
-    label: key === today ? 'Today' : key === yesterday ? 'Yesterday' : key,
+    label: key === today ? 'Today' : key === yesterday ? 'Yesterday' : new Date(key).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
     items: items.map(_normalizeActivityForView),
   }));
 }
@@ -4198,11 +4198,7 @@ function _normalizeActivityForView(event) {
     backup_imported: ['Backup imported', 'ph-upload-simple', 'var(--accent-dim)', 'var(--accent)'],
   };
   const entry = iconMap[event.type] || ['Activity', 'ph-bell', 'var(--color-neutral-dim)', 'var(--text-tertiary)'];
-  const payloadBits = [];
-  if (event.payload?.status) payloadBits.push(String(event.payload.status));
-  if (event.payload?.rating !== undefined && event.payload?.rating !== null) payloadBits.push(`${event.payload.rating}/5`);
-  if (event.payload?.currentPage !== undefined) payloadBits.push(`p.${event.payload.currentPage}`);
-  if (event.source) payloadBits.push(event.source);
+  const statusLabel = String(event.payload?.status || '').toLowerCase();
 
   return {
     ...event,
@@ -4212,14 +4208,14 @@ function _normalizeActivityForView(event) {
     icon: entry[1],
     iconBg: entry[2],
     iconColor: entry[3],
-    payloadText: payloadBits.join(' • '),
+    payloadText: _getActivityDetailText(event, statusLabel),
     date: event.timestamp,
   };
 }
 
 function buildActivityEmptyState(filter) {
   const messages = {
-    all: ['Nothing here yet', 'Add a book to start building your library.'],
+    all: ['Nothing here yet', 'Reading updates, book changes, notes, and sync events will appear here as you use LibriQ.'],
     books: ['No book activity yet', 'Add or update a book to see it here.'],
     progress: ['No progress updates yet', 'Track a reading session or finish a book to populate this view.'],
     notes: ['No notes activity yet', 'Save or clear a note to see it here.'],
@@ -4228,11 +4224,61 @@ function buildActivityEmptyState(filter) {
   };
   const [title, body] = messages[filter] || messages.all;
   return `
-    <div class="empty-state" style="grid-column: 1 / -1;">
+    <div class="empty-state activity-empty-state" style="grid-column: 1 / -1;">
       <div class="empty-state-icon"><i class="ph ph-clock-counter-clockwise"></i></div>
       <div class="empty-state-title">${title}</div>
       <div class="empty-state-body">${body}</div>
+      <div style="display:flex; gap: var(--space-2); flex-wrap: wrap; justify-content: center;">
+        <button class="btn btn-secondary btn-sm" onclick="Navigation.goTo('library')">
+          <i class="ph ph-books"></i> Library
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="Search.open()">
+          <i class="ph ph-magnifying-glass"></i> Search Books
+        </button>
+      </div>
     </div>`;
+}
+
+function _formatActivityMeta(event) {
+  return event.payloadText || event.label || '';
+}
+
+function _formatActivityTime(date) {
+  return Utils.timeAgo(date);
+}
+
+function buildActivityItem(activity) {
+  return `
+    <article class="activity-item activity-row">
+      <div class="activity-timeline-dot"></div>
+      <div class="activity-icon activity-icon--${activity.type}" style="background:${activity.iconBg}; color:${activity.iconColor}">
+        <i class="ph ${activity.icon}"></i>
+      </div>
+      <div class="activity-content">
+        <div class="activity-title-row">
+          <div class="activity-title">${Utils.sanitize(activity.title)}</div>
+          <div class="activity-time">${_formatActivityTime(activity.date)}</div>
+        </div>
+        <div class="activity-subtitle">${Utils.sanitize(_formatActivityMeta(activity) || activity.subtitle || '')}</div>
+      </div>
+    </article>`;
+}
+
+function _getActivityDetailText(event, statusLabel) {
+  const rating = event?.payload?.rating;
+  if (event.type === 'status_changed' && statusLabel === 'finished') return 'Status updated to Finished';
+  if (event.type === 'book_finished') return 'Marked as finished';
+  if (event.type === 'progress_updated') return 'Progress updated';
+  if (event.type === 'metadata_refreshed') return 'Metadata refreshed';
+  if (event.type === 'favorite_added') return 'Added to favorites';
+  if (event.type === 'favorite_removed') return 'Removed from favorites';
+  if (event.type === 'note_saved') return 'Note saved';
+  if (event.type === 'note_cleared') return 'Note cleared';
+  if (event.type === 'backup_exported') return 'Backup exported';
+  if (event.type === 'backup_imported') return 'Backup imported';
+  if (event.type === 'rating_updated' && rating !== undefined && rating !== null) return `Rating updated to ${rating}/5`;
+  if (event.type === 'status_changed' && statusLabel) return `Status updated to ${Utils.capitalize(statusLabel)}`;
+  return '';
 }
 
 function buildRatedBookRow(book, rank) {
