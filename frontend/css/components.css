@@ -3130,14 +3130,14 @@ html[data-theme="dark"] #statusPage .empty-state-icon {
 
   #libraryPage .books-grid {
     grid-template-columns: 1fr;
-    gap: var(--space-3);
+    gap: var(--space-2);
   }
 
   #libraryPage .book-card {
     display: grid;
     grid-template-columns: 84px minmax(0, 1fr);
-    gap: var(--space-3);
-    padding: var(--space-3);
+    gap: var(--space-2);
+    padding: 10px;
     border-radius: 18px;
   }
 
@@ -3148,7 +3148,8 @@ html[data-theme="dark"] #statusPage .empty-state-icon {
   }
 
   #libraryPage .book-card-title {
-    font-size: var(--text-base);
+    font-size: 0.95rem;
+    line-height: 1.2;
   }
 
   #libraryPage .book-card-author {
@@ -3156,40 +3157,44 @@ html[data-theme="dark"] #statusPage .empty-state-icon {
   }
 
   #libraryPage .book-card-meta {
-    gap: 6px;
+    gap: 4px;
     margin-top: 0;
   }
 
   #libraryPage .badge {
-    min-height: 22px;
+    min-height: 20px;
+  }
+
+  #libraryPage .badge-metadata-missing-description {
+    display: none;
   }
 
   #libraryPage .reading-progress {
-    padding: 10px;
-    margin-top: var(--space-1);
+    padding: 8px 10px;
+    margin-top: 4px;
   }
 
   #libraryPage .book-card-actions {
     grid-column: 1 / -1;
-    gap: 6px;
-    padding-top: var(--space-2);
+    gap: 4px;
+    padding-top: 8px;
   }
 
   #libraryPage .book-card-actions-primary,
   #libraryPage .book-card-actions-secondary {
-    gap: 6px;
+    gap: 4px;
   }
 
   #libraryPage .book-card-actions .btn:not(.btn-icon) {
-    min-height: 38px;
+    min-height: 34px;
     padding: 0 var(--space-3);
     font-size: var(--text-xs);
   }
 
   #libraryPage .book-card-actions .btn-icon {
-    flex-basis: 40px;
-    width: 40px;
-    min-width: 40px;
+    flex-basis: 36px;
+    width: 36px;
+    min-width: 36px;
   }
 
   #libraryPage .empty-state {
@@ -3218,7 +3223,7 @@ html[data-theme="dark"] #statusPage .empty-state-icon {
   }
 
   #libraryPage .book-card-actions .btn:not(.btn-icon) {
-    min-height: 36px;
+    min-height: 32px;
   }
 }
 
@@ -3230,6 +3235,7 @@ html[data-theme="dark"] #statusPage .empty-state-icon {
 
   #libraryPage .book-card {
     grid-template-columns: 72px minmax(0, 1fr);
+    padding: 9px;
   }
 
   #libraryPage .book-card > .book-cover {
@@ -3238,9 +3244,9 @@ html[data-theme="dark"] #statusPage .empty-state-icon {
   }
 
   #libraryPage .book-card-actions .btn-icon {
-    flex-basis: 38px;
-    width: 38px;
-    min-width: 38px;
+    flex-basis: 34px;
+    width: 34px;
+    min-width: 34px;
   }
 }
 
