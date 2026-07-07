@@ -2536,11 +2536,6 @@ function renderSettingsPage() {
           <h1 class="page-title">Settings</h1>
           <p class="page-subtitle">Tune the app, manage backups, and keep your library safe.</p>
         </div>
-        <div class="settings-header-card">
-          <div class="settings-header-card-label">Current mode</div>
-          <div class="settings-header-card-value">${theme === 'dark' ? 'Dark theme' : 'Light theme'}</div>
-          <div class="settings-header-card-note">${firebase.user ? 'Signed in and ready for cloud features.' : 'Running locally on this device.'}</div>
-        </div>
       </div>
 
       <div class="settings-grid">
