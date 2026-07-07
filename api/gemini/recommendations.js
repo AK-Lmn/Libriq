@@ -22,13 +22,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    const body = await readJsonBody(req);
     const adminDeps = await getFirebaseAdminDependencies();
     if (!adminDeps?.auth || !adminDeps?.firestore) {
       res.statusCode = 503;
       res.end(JSON.stringify({ error: 'Gemini backend is not configured yet.' }));
       return;
     }
+
+    const body = await readJsonBody(req);
 
     const store = await createFirestoreGeminiStore(adminDeps.firestore);
     const result = await handleGeminiRequest({

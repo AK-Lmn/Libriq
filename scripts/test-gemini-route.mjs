@@ -58,11 +58,44 @@ async function main() {
   });
   assert.equal(invalidAuth.statusCode, 401);
 
+  const invalidRequestStore = {
+    quotaCalls: 0,
+    async getQuota() {
+      return { count: 0 };
+    },
+    async consumeQuota() {
+      this.quotaCalls += 1;
+      return { count: 1 };
+    },
+    async getCache() {
+      return null;
+    },
+    async setCache() {
+      return null;
+    },
+  };
+  const invalidRequest = await lib.handleGeminiRequest({
+    authHeader: 'Bearer valid-token',
+    body: { mode: 'home', books: [{ title: '', author: '' }] },
+    auth: {
+      async verifyIdToken() {
+        return { uid: 'user-1' };
+      },
+    },
+    store: invalidRequestStore,
+    callGeminiFn: async () => ({ recommendations: [] }),
+  });
+  assert.equal(invalidRequest.statusCode, 400);
+  assert.equal(invalidRequestStore.quotaCalls, 0);
+
   const quotaStore = {
+    quotaCalls: 0,
+    cacheCalls: 0,
     async getQuota(uid, dateKey) {
       return this.map?.get(`${uid}:${dateKey}`) || null;
     },
-    async incrementQuota(uid, dateKey) {
+    async consumeQuota(uid, dateKey) {
+      this.quotaCalls += 1;
       this.map = this.map || new Map();
       const key = `${uid}:${dateKey}`;
       const current = this.map.get(key) || { count: 0 };
@@ -74,6 +107,7 @@ async function main() {
       return null;
     },
     async setCache() {
+      this.cacheCalls += 1;
       return null;
     },
   };
@@ -100,13 +134,79 @@ async function main() {
     callGeminiFn: async () => ({ recommendations: [{ title: 'Rec', author: 'Rec', reason: 'Why' }] }),
   });
   assert.equal(quotaExceeded.statusCode, 429);
+  assert.equal(quotaStore.quotaCalls, 5);
 
-  let geminiCalls = 0;
-  const cacheStore = {
+  const quotaBlockedStore = {
+    quotaCalls: 0,
+    async getQuota() {
+      return { count: 5 };
+    },
+    async consumeQuota() {
+      this.quotaCalls += 1;
+      return { count: 6 };
+    },
+    async getCache() {
+      return null;
+    },
+    async setCache() {
+      return null;
+    },
+  };
+  let quotaBlockedCalls = 0;
+  const quotaBlocked = await lib.handleGeminiRequest({
+    authHeader: 'Bearer valid-token',
+    body: { mode: 'home', books: [{ title: 'Book', author: 'Author' }] },
+    auth: quotaAuth,
+    store: quotaBlockedStore,
+    callGeminiFn: async () => {
+      quotaBlockedCalls += 1;
+      return { recommendations: [{ title: 'Rec', author: 'Rec', reason: 'Why' }] };
+    },
+  });
+  assert.equal(quotaBlocked.statusCode, 429);
+  assert.equal(quotaBlockedCalls, 0);
+  assert.equal(quotaBlockedStore.quotaCalls, 0);
+
+  const failingGeminiStore = {
+    quotaCalls: 0,
+    cacheCalls: 0,
     async getQuota() {
       return { count: 0 };
     },
-    async incrementQuota() {
+    async consumeQuota() {
+      this.quotaCalls += 1;
+      return { count: 1 };
+    },
+    async getCache() {
+      return null;
+    },
+    async setCache() {
+      this.cacheCalls += 1;
+      return null;
+    },
+  };
+  const geminiFailure = await lib.handleGeminiRequest({
+    authHeader: 'Bearer valid-token',
+    body: { mode: 'home', books: [{ title: 'Book', author: 'Author' }] },
+    auth: quotaAuth,
+    store: failingGeminiStore,
+    callGeminiFn: async () => {
+      throw new Error('model failed');
+    },
+  });
+  assert.equal(geminiFailure.statusCode, 500);
+  assert.equal(failingGeminiStore.quotaCalls, 0);
+  assert.equal(failingGeminiStore.cacheCalls, 0);
+
+  let geminiCalls = 0;
+  const cacheStore = {
+    quotaCalls: 0,
+    cacheCalls: 0,
+    async getQuota() {
+      return { count: 0 };
+    },
+    async consumeQuota() {
+      this.quotaCalls += 1;
       return { count: 1 };
     },
     async getCache() {
@@ -116,6 +216,7 @@ async function main() {
       };
     },
     async setCache() {
+      this.cacheCalls += 1;
       throw new Error('should not set cache on hit');
     },
   };
@@ -132,18 +233,24 @@ async function main() {
   assert.equal(cacheHit.statusCode, 200);
   assert.equal(cacheHit.body.recommendations[0].title, 'Cached');
   assert.equal(geminiCalls, 0);
+  assert.equal(cacheStore.quotaCalls, 0);
+  assert.equal(cacheStore.cacheCalls, 0);
 
   const cacheMissStore = {
+    quotaCalls: 0,
+    cacheCalls: 0,
     async getQuota() {
       return { count: 0 };
     },
-    async incrementQuota() {
+    async consumeQuota() {
+      this.quotaCalls += 1;
       return { count: 1 };
     },
     async getCache() {
       return null;
     },
     async setCache(uid, mode, payload) {
+      this.cacheCalls += 1;
       this.saved = { uid, mode, payload };
     },
   };
@@ -158,6 +265,34 @@ async function main() {
   assert.equal(cacheMiss.body.recommendations[0].title, 'Dune');
   assert.equal(Object.prototype.hasOwnProperty.call(cacheMiss.body.recommendations[0], 'extra'), false);
   assert.equal(cacheMissStore.saved.uid, 'user-1');
+  assert.equal(cacheMissStore.quotaCalls, 1);
+  assert.equal(cacheMissStore.cacheCalls, 1);
+
+  const malformedStore = {
+    quotaCalls: 0,
+    async getQuota() {
+      return { count: 0 };
+    },
+    async consumeQuota() {
+      this.quotaCalls += 1;
+      return { count: 1 };
+    },
+    async getCache() {
+      return null;
+    },
+    async setCache() {
+      return null;
+    },
+  };
+  const malformed = await lib.handleGeminiRequest({
+    authHeader: 'Bearer valid-token',
+    body: { mode: 'home', books: [{ title: 'Book', author: 'Author' }] },
+    auth: quotaAuth,
+    store: malformedStore,
+    callGeminiFn: async () => ({ recommendations: [{ title: '', author: 'Bad', reason: '' }] }),
+  });
+  assert.equal(malformed.statusCode, 502);
+  assert.equal(malformedStore.quotaCalls, 0);
 
   const bodyMin = lib.validateRequestBody({
     mode: 'home',
@@ -168,10 +303,12 @@ async function main() {
   assert.equal(Object.prototype.hasOwnProperty.call(bodyMin.value.books[0], 'uid'), false);
 
   const noUidStore = {
+    quotaCalls: 0,
     async getQuota() {
       return { count: 0 };
     },
-    async incrementQuota() {
+    async consumeQuota() {
+      this.quotaCalls += 1;
       return { count: 1 };
     },
     async getCache() {
@@ -190,11 +327,12 @@ async function main() {
     },
     auth: quotaAuth,
     store: noUidStore,
-    callGeminiFn: async () => ({ recommendations: [] }),
+    callGeminiFn: async () => ({ recommendations: [{ title: 'Book 2', author: 'Author 2', reason: 'Why' }] }),
   });
   assert.equal(noUidFromBody.statusCode, 200);
   assert.equal(noUidFromBody.body.meta.mode, 'home');
   assert.equal(Object.prototype.hasOwnProperty.call(noUidFromBody.body.meta, 'uid'), false);
+  assert.equal(noUidStore.quotaCalls, 1);
 
   const handlerResponse = await route.default({
     method: 'POST',

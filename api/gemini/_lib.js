@@ -300,7 +300,7 @@ export function createMemoryGeminiStore(initialState = {}) {
     async getQuota(uid, dateKey) {
       return quota.get(`${uid}:${dateKey}`) || null;
     },
-    async incrementQuota(uid, dateKey) {
+    async consumeQuota(uid, dateKey) {
       const key = `${uid}:${dateKey}`;
       const current = quota.get(key) || { count: 0 };
       const next = {
@@ -310,6 +310,9 @@ export function createMemoryGeminiStore(initialState = {}) {
       };
       quota.set(key, next);
       return next;
+    },
+    async incrementQuota(uid, dateKey) {
+      return this.consumeQuota(uid, dateKey);
     },
     async getCache(uid, mode) {
       return cache.get(`${uid}:${mode}`) || null;
@@ -335,7 +338,7 @@ export async function createFirestoreGeminiStore(firestore) {
       const snap = await firestore.collection('users').doc(uid).collection('ai_recommendations_quota').doc(dateKey).get();
       return snap.exists ? snap.data() : null;
     },
-    async incrementQuota(uid, dateKey) {
+    async consumeQuota(uid, dateKey) {
       const ref = firestore.collection('users').doc(uid).collection('ai_recommendations_quota').doc(dateKey);
       const snap = await ref.get();
       const currentCount = Number(snap.exists ? snap.data()?.count : 0) || 0;
@@ -346,6 +349,9 @@ export async function createFirestoreGeminiStore(firestore) {
       };
       await ref.set(next, { merge: true });
       return next;
+    },
+    async incrementQuota(uid, dateKey) {
+      return this.consumeQuota(uid, dateKey);
     },
     async getCache(uid, mode) {
       const snap = await firestore.collection('users').doc(uid).collection('ai_recommendations_cache').doc(mode).get();
@@ -451,11 +457,25 @@ export async function handleGeminiRequest({
     return { statusCode: 429, body: { error: 'Daily Gemini recommendation limit reached. Try again tomorrow.' } };
   }
 
-  await store.incrementQuota(uid, dateKey).catch(() => null);
   const geminiPayload = validation.value;
-  const geminiResult = await callGeminiFn(geminiPayload);
+  let geminiResult;
+  try {
+    geminiResult = await callGeminiFn(geminiPayload);
+  } catch {
+    return { statusCode: 500, body: { error: 'Gemini request failed.' } };
+  }
   const cleaned = normalizeGeminiResponsePayload(geminiResult);
+  if (!cleaned.recommendations.length) {
+    return { statusCode: 502, body: { error: 'Gemini returned no valid recommendations.' } };
+  }
+
   await store.setCache(uid, validation.value.mode, cleaned).catch(() => null);
+
+  try {
+    await consumeQuotaRecord(store, uid, dateKey);
+  } catch {
+    return { statusCode: 503, body: { error: 'Unable to update Gemini quota right now.' } };
+  }
 
   return {
     statusCode: 200,
@@ -475,6 +495,21 @@ export function normalizeGeminiResponsePayload(payload) {
       .slice(0, MAX_RECOMMENDATIONS),
   };
 }
+
+export function isSuccessfulGeminiPayload(payload) {
+  return normalizeGeminiResponsePayload(payload).recommendations.length > 0;
+}
+
+export async function consumeQuotaRecord(store, uid, dateKey) {
+  if (!store) throw new Error('Gemini storage is unavailable.');
+  if (typeof store.consumeQuota === 'function') return store.consumeQuota(uid, dateKey);
+  if (typeof store.incrementQuota === 'function') return store.incrementQuota(uid, dateKey);
+  throw new Error('Gemini storage cannot consume quota.');
+}
+
+// Dev/test reset note:
+// To clear a user's daily quota manually, delete or reset:
+// users/{uid}/ai_recommendations_quota/{yyyy-mm-dd}
 
 export function buildMeta({ uid, mode, fromCache, implemented }) {
   return {
