@@ -3768,11 +3768,8 @@ html[data-theme="dark"] #activityPage .activity-day-label {
   position: relative;
   z-index: 1;
   display: grid;
-  place-items: start center;
-  padding:
-    clamp(var(--space-4), 3vw, var(--space-8))
-    clamp(var(--space-6), 4vw, var(--space-10))
-    clamp(var(--space-6), 4vw, var(--space-10));
+  place-items: center;
+  padding: clamp(var(--space-6), 4vw, var(--space-10));
   background:
     radial-gradient(circle at top left, rgba(201,168,76,0.16), transparent 28%),
     radial-gradient(circle at bottom right, rgba(123,157,201,0.12), transparent 26%),
@@ -3787,7 +3784,7 @@ html[data-theme="dark"] #activityPage .activity-day-label {
   grid-template-columns: minmax(0, 1.05fr) minmax(360px, 430px);
   gap: clamp(var(--space-6), 4vw, var(--space-12));
   align-items: center;
-  padding: clamp(var(--space-5), 4.5vw, var(--space-9));
+  padding: clamp(var(--space-6), 5vw, var(--space-10));
   border: 1px solid var(--border-subtle);
   border-radius: clamp(var(--radius-xl), 4vw, 36px);
   background:
