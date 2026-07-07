@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
 
 const libUrl = new URL('../api/gemini/_lib.js', import.meta.url).href;
+const routeUrl = new URL('../api/gemini/recommendations.js', import.meta.url).href;
 
 async function main() {
   const lib = await import(libUrl);
+  const route = await import(routeUrl);
+  assert.equal(typeof route.default, 'function');
 
   const validation = lib.validateRequestBody({
     mode: 'home',
@@ -192,6 +195,16 @@ async function main() {
   assert.equal(noUidFromBody.statusCode, 200);
   assert.equal(noUidFromBody.body.meta.mode, 'home');
   assert.equal(Object.prototype.hasOwnProperty.call(noUidFromBody.body.meta, 'uid'), false);
+
+  const handlerResponse = await route.default({
+    method: 'POST',
+    headers: { authorization: 'Bearer valid-token', 'content-length': '0' },
+    async *[Symbol.asyncIterator]() {},
+  }, {
+    setHeader() {},
+    end() {},
+  });
+  assert.equal(typeof handlerResponse, 'undefined');
 
   console.log('gemini route test passed');
 }
