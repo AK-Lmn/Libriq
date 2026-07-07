@@ -664,6 +664,12 @@ const Library = (() => {
       modal.querySelector('.book-details-modal')?.appendChild(actions);
     }
     actions.replaceChildren();
+    const primaryActions = document.createElement('div');
+    primaryActions.className = 'book-details-primary-row';
+    const secondaryActions = document.createElement('div');
+    secondaryActions.className = 'book-details-secondary-row';
+    const utilityActions = document.createElement('div');
+    utilityActions.className = 'book-details-utility-row';
     const notesTextarea = body.querySelector('#bookNotesTextarea');
     const notesMeta = body.querySelector('#bookNotesMeta');
     const saveNoteBtn = body.querySelector('#saveBookNoteBtn');
@@ -891,7 +897,7 @@ const Library = (() => {
         closeDetailsModal();
         Library.showProgressModal(book.id);
       });
-      actions.appendChild(updateBtn);
+      primaryActions.appendChild(updateBtn);
     }
 
     if (book.status !== LIBRIQ.STATUS.FINISHED) {
@@ -904,7 +910,7 @@ const Library = (() => {
         closeDetailsModal();
         Navigation.renderCurrentPage();
       });
-      actions.appendChild(finishBtn);
+      secondaryActions.appendChild(finishBtn);
     }
 
     const refreshBtn = document.createElement('button');
@@ -934,7 +940,7 @@ const Library = (() => {
         refreshBtn.disabled = false;
       }
     });
-    actions.appendChild(refreshBtn);
+    secondaryActions.appendChild(refreshBtn);
 
     const favBtn = document.createElement('button');
     favBtn.className = 'btn btn-ghost btn-icon';
@@ -945,16 +951,14 @@ const Library = (() => {
     if (book.isFavorite) favIcon.style.color = 'var(--color-danger)';
     favBtn.appendChild(favIcon);
     favBtn.addEventListener('click', () => {
-    const updated = Library.toggleFavorite(book.id);
-
-    favIcon.className = updated?.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart';
-    favIcon.style.color = updated?.isFavorite ? 'var(--color-danger)' : '';
-    favBtn.title = updated?.isFavorite ? 'Remove from favorites' : 'Add to favorites';
-
-    Navigation.updateBadges();
-    Navigation.renderCurrentPage();
-});
-    actions.appendChild(favBtn);
+      const updated = Library.toggleFavorite(book.id);
+      favIcon.className = updated?.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart';
+      favIcon.style.color = updated?.isFavorite ? 'var(--color-danger)' : '';
+      favBtn.title = updated?.isFavorite ? 'Remove from favorites' : 'Add to favorites';
+      Navigation.updateBadges();
+      Navigation.renderCurrentPage();
+    });
+    utilityActions.appendChild(favBtn);
 
     const removeBtn = document.createElement('button');
     removeBtn.className = 'btn btn-ghost';
@@ -968,7 +972,11 @@ const Library = (() => {
       Navigation.updateBadges();
       Navigation.renderCurrentPage();
     });
-    actions.appendChild(removeBtn);
+    utilityActions.appendChild(removeBtn);
+
+    if (primaryActions.childElementCount) actions.appendChild(primaryActions);
+    if (secondaryActions.childElementCount) actions.appendChild(secondaryActions);
+    if (utilityActions.childElementCount) actions.appendChild(utilityActions);
 
     modal.querySelector('.modal-close').onclick = closeDetailsModal;
     modal.onclick = (e) => { if (e.target === modal) closeDetailsModal(); };

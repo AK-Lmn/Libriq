@@ -1000,11 +1000,26 @@ html[data-theme="dark"] .whats-new-footer {
 
 #bookDetailsModal .book-details-actions {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-2);
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: var(--space-3);
   padding-top: var(--space-1);
+}
+
+#bookDetailsModal .book-details-primary-row,
+#bookDetailsModal .book-details-secondary-row,
+#bookDetailsModal .book-details-utility-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+#bookDetailsModal .book-details-primary-row,
+#bookDetailsModal .book-details-secondary-row,
+#bookDetailsModal .book-details-utility-row {
+  display: contents;
 }
 
 #bookDetailsModal .book-details-actions .btn {
@@ -1014,11 +1029,11 @@ html[data-theme="dark"] .whats-new-footer {
 #bookDetailsModal .book-details-actions .btn-primary,
 #bookDetailsModal .book-details-actions .btn-secondary,
 #bookDetailsModal .book-details-actions .btn-ghost {
-  flex: 0 1 auto;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 #bookDetailsModal .book-details-actions .btn-ghost.btn-icon {
-  margin-right: auto;
   width: 44px;
   min-width: 44px;
   padding: 0;
@@ -1095,19 +1110,35 @@ html[data-theme="dark"] .whats-new-footer {
     gap: var(--space-2);
   }
 
-  #bookDetailsModal .book-details-actions .btn:not(.btn-icon) {
-    flex: 1 1 100%;
+  #bookDetailsModal .book-details-primary-row,
+  #bookDetailsModal .book-details-secondary-row,
+  #bookDetailsModal .book-details-utility-row {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  #bookDetailsModal .book-details-primary-row {
+    grid-template-columns: 1fr;
+  }
+
+  #bookDetailsModal .book-details-secondary-row,
+  #bookDetailsModal .book-details-utility-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #bookDetailsModal .book-details-secondary-row .btn:only-child,
+  #bookDetailsModal .book-details-utility-row .btn:only-child {
+    grid-column: 1 / -1;
+  }
+
+  #bookDetailsModal .book-details-actions .btn {
     width: 100%;
   }
 
   #bookDetailsModal .book-details-actions .btn-ghost.btn-icon {
-    flex: 0 0 44px;
-    margin-right: 0;
-  }
-
-  #bookDetailsModal .book-details-actions .btn-ghost:not(.btn-icon) {
-    flex: 1 1 calc(100% - 52px);
-    width: auto;
+    width: 100%;
+    min-width: 0;
+    flex-basis: auto;
   }
 }
 
@@ -1222,6 +1253,12 @@ html[data-theme="dark"] .whats-new-footer {
     justify-content: stretch;
     padding-top: var(--space-2);
     padding-bottom: var(--space-2);
+  }
+
+  #bookDetailsModal .book-details-primary-row,
+  #bookDetailsModal .book-details-secondary-row,
+  #bookDetailsModal .book-details-utility-row {
+    display: contents;
   }
 
   #bookDetailsModal .book-details-actions .btn {
@@ -1595,7 +1632,6 @@ html[data-theme="dark"] .whats-new-footer {
 }
 
 #bookDetailsModal .book-details-actions .btn-ghost.btn-icon {
-  margin-right: auto;
   width: 44px;
   min-width: 44px;
   padding: 0;
@@ -1604,7 +1640,8 @@ html[data-theme="dark"] .whats-new-footer {
 #bookDetailsModal .book-details-actions .btn-primary,
 #bookDetailsModal .book-details-actions .btn-secondary,
 #bookDetailsModal .book-details-actions .btn-ghost {
-  flex: 0 1 auto;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .add-book-modal {
