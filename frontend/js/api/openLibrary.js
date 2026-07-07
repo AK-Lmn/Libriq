@@ -151,6 +151,9 @@ const OpenLibraryAPI = (() => {
       const works = Array.isArray(data?.works) ? data.works : [];
       return works.slice(0, limit).map(work => _normalizeSubjectResult(work, key)).filter(Boolean);
     } catch (err) {
+      if (_isExpectedAbort(err)) {
+        return [];
+      }
       console.warn('[Libriq/OL] Subject search failed:', err.message);
       _lastFetchFailed = _isNetworkFailure(err);
       return [];
@@ -397,6 +400,13 @@ const OpenLibraryAPI = (() => {
       || message.includes('failed to fetch')
       || message.includes('networkerror')
       || message.includes('network error');
+  }
+
+  function _isExpectedAbort(err) {
+    const message = String(err?.message || '').toLowerCase();
+    return err?.name === 'AbortError'
+      || message.includes('aborted')
+      || message.includes('signal is aborted without reason');
   }
 
   return {

@@ -121,6 +121,31 @@ async function main() {
   assert.equal(safeFallback.title, 'Legacy Book');
   assert.doesNotThrow(() => vm.runInNewContext('OpenLibraryAPI.enrichBook(null)', context));
 
+  const warnings = [];
+  const abortContext = {
+    console: {
+      ...console,
+      warn: (...args) => warnings.push(args.join(' ')),
+    },
+    window: null,
+    globalThis: null,
+    fetch: async () => { throw Object.assign(new Error('signal is aborted without reason'), { name: 'AbortError' }); },
+    AbortController,
+    setTimeout,
+    clearTimeout,
+    URL,
+    URLSearchParams,
+    navigator: { onLine: true },
+  };
+  abortContext.window = abortContext;
+  abortContext.globalThis = abortContext;
+  loadScript(path.join(repoRoot, 'frontend/js/api/bookIdentity.js'), abortContext);
+  loadScript(path.join(repoRoot, 'frontend/js/api/normalizeBook.js'), abortContext);
+  loadScript(path.join(repoRoot, 'frontend/js/api/openLibrary.js'), abortContext);
+  const aborted = await vm.runInNewContext(`OpenLibraryAPI.searchBySubject('fiction', { limit: 2 })`, abortContext);
+  assert.equal(aborted.length, 0);
+  assert.equal(warnings.some(line => line.includes('Subject search failed')), false);
+
   console.log('open library enrichment test passed');
 }
 

@@ -72,6 +72,31 @@ async function main() {
   const offlineResults = await vm.runInNewContext(`GutendexAPI.searchCuratedClassics({ limit: 3, topic: 'classics' })`, context);
   assert.equal(offlineResults.length, 0);
 
+  const warnings = [];
+  const abortContext = {
+    console: {
+      ...console,
+      warn: (...args) => warnings.push(args.join(' ')),
+    },
+    window: null,
+    globalThis: null,
+    fetch: async () => { throw Object.assign(new Error('signal is aborted without reason'), { name: 'AbortError' }); },
+    AbortController,
+    setTimeout,
+    clearTimeout,
+    URL,
+    URLSearchParams,
+    navigator: { onLine: true },
+  };
+  abortContext.window = abortContext;
+  abortContext.globalThis = abortContext;
+  loadScript(path.join(repoRoot, 'frontend/js/api/bookIdentity.js'), abortContext);
+  loadScript(path.join(repoRoot, 'frontend/js/api/normalizeBook.js'), abortContext);
+  loadScript(path.join(repoRoot, 'frontend/js/api/gutendex.js'), abortContext);
+  const aborted = await vm.runInNewContext(`GutendexAPI.searchCuratedClassics({ limit: 3, topic: 'classics' })`, abortContext);
+  assert.equal(aborted.length, 0);
+  assert.equal(warnings.some(line => line.includes('Discovery failed')), false);
+
   console.log('gutendex test passed');
 }
 
@@ -79,4 +104,3 @@ main().catch((err) => {
   console.error(err);
   process.exitCode = 1;
 });
-

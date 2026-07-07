@@ -34,6 +34,9 @@ const GutendexAPI = (() => {
         .map(result => _normalizeGutendexBook(result, topic))
         .filter(Boolean);
     } catch (err) {
+      if (_isExpectedAbort(err)) {
+        return [];
+      }
       console.warn('[Libriq/Gutendex] Discovery failed:', err.message);
       _lastFetchFailed = _isNetworkFailure(err);
       return [];
@@ -176,9 +179,15 @@ const GutendexAPI = (() => {
       || message.includes('network error');
   }
 
+  function _isExpectedAbort(err) {
+    const message = String(err?.message || '').toLowerCase();
+    return err?.name === 'AbortError'
+      || message.includes('aborted')
+      || message.includes('signal is aborted without reason');
+  }
+
   return {
     searchCuratedClassics,
     hadNetworkFailure: () => _lastFetchFailed,
   };
 })();
-
