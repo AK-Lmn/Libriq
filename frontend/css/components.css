@@ -914,6 +914,203 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   color: var(--text-dim);
 }
 
+@media (max-width: 430px) {
+  #recommendationsPage {
+    padding-top: var(--space-3);
+    padding-bottom: var(--space-6);
+  }
+
+  #recommendationsPage .recommendations-header {
+    margin-bottom: var(--space-4);
+  }
+
+  #recommendationsPage .recommendations-heading {
+    gap: var(--space-1);
+  }
+
+  #recommendationsPage .page-subtitle {
+    font-size: var(--text-sm);
+    line-height: var(--leading-snug);
+  }
+
+  #recommendationsPage .recommendations-intro {
+    padding: var(--space-4);
+    border-radius: 18px;
+    margin-bottom: var(--space-4);
+  }
+
+  #recommendationsPage .recommendations-intro-copy {
+    gap: var(--space-2);
+  }
+
+  #recommendationsPage .recommendations-intro-kicker {
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+  }
+
+  #recommendationsPage .recommendations-intro-title {
+    font-size: var(--text-lg);
+    line-height: var(--leading-snug);
+  }
+
+  #recommendationsPage .recommendations-intro-body {
+    font-size: var(--text-sm);
+    line-height: var(--leading-relaxed);
+  }
+
+  #recommendationsPage .recommendations-groups {
+    gap: var(--space-4);
+  }
+
+  #recommendationsPage .recommendation-group,
+  #recommendationsPage .recommendations-empty-state {
+    padding: var(--space-4);
+    border-radius: 18px;
+  }
+
+  #recommendationsPage .recommendation-group .goal-header {
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+
+  #recommendationsPage .recommendation-group::before {
+    width: 3px;
+  }
+
+  #recommendationsPage .recommendation-group-heading {
+    gap: 2px;
+  }
+
+  #recommendationsPage .recommendation-card-grid {
+    gap: var(--space-3);
+  }
+
+  #recommendationsPage .recommendation-card {
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: var(--space-3);
+    min-height: 96px;
+    padding: var(--space-3);
+    border-radius: 16px;
+  }
+
+  #recommendationsPage .recommendation-card-cover {
+    width: 48px;
+    flex-basis: 48px;
+  }
+
+  #recommendationsPage .recommendation-card .book-cover {
+    width: 48px;
+    height: 70px;
+  }
+
+  #recommendationsPage .recommendation-card-body {
+    gap: 3px;
+  }
+
+  #recommendationsPage .recommendation-card-reason {
+    font-size: 10px;
+    line-height: 1.2;
+  }
+
+  #recommendationsPage .recommendation-card-title {
+    font-size: 0.96rem;
+    line-height: 1.28;
+  }
+
+  #recommendationsPage .recommendation-card-author {
+    font-size: 0.82rem;
+  }
+
+  #recommendationsPage .recommendation-card-meta {
+    margin-top: 4px;
+    gap: 6px;
+  }
+
+  #recommendationsPage .recommendations-empty-state {
+    margin-top: var(--space-4);
+  }
+
+  #recommendationsPage .recommendations-empty-actions {
+    gap: var(--space-2);
+  }
+
+  #recommendationsPage .recommendations-helper-note,
+  #recommendationsPage .recommendations-empty-hint {
+    font-size: 0.84rem;
+    line-height: var(--leading-snug);
+  }
+
+  #recommendationsPage .btn {
+    min-height: 42px;
+  }
+}
+
+@media (max-width: 390px) {
+  #recommendationsPage .recommendation-card {
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 10px;
+    min-height: 92px;
+    padding: 10px;
+  }
+
+  #recommendationsPage .recommendation-card .book-cover {
+    width: 44px;
+    height: 64px;
+  }
+
+  #recommendationsPage .recommendation-card-title {
+    font-size: 0.92rem;
+  }
+
+  #recommendationsPage .recommendation-card-author {
+    font-size: 0.8rem;
+  }
+
+  #recommendationsPage .recommendation-card-reason {
+    -webkit-line-clamp: 2;
+  }
+
+  #recommendationsPage .recommendation-group .stats-section-meta {
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 360px) {
+  #recommendationsPage .page-subtitle {
+    font-size: 0.92rem;
+  }
+
+  #recommendationsPage .recommendations-intro-title {
+    font-size: 0.98rem;
+  }
+
+  #recommendationsPage .recommendation-card {
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 9px;
+    min-height: 88px;
+    padding: 9px;
+  }
+
+  #recommendationsPage .recommendation-card .book-cover {
+    width: 42px;
+    height: 61px;
+  }
+
+  #recommendationsPage .recommendation-card-title {
+    font-size: 0.9rem;
+  }
+
+  #recommendationsPage .recommendation-card-author,
+  #recommendationsPage .recommendations-helper-note,
+  #recommendationsPage .recommendations-empty-hint {
+    font-size: 0.78rem;
+  }
+
+  #recommendationsPage .recommendation-card-meta .badge {
+    font-size: 10px;
+  }
+}
+
 @media (max-width: 900px) {
   .recommendation-card-grid {
     grid-template-columns: 1fr;
