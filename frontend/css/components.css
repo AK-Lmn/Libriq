@@ -2373,21 +2373,12 @@ html:not([data-theme="dark"]) #recommendationsPage .recommendations-intro-meta .
 }
 
 #settingsPage .settings-header {
-  gap: var(--space-4);
+  gap: var(--space-3);
   margin-bottom: var(--space-6);
 }
 
-#settingsPage .settings-heading,
-#settingsPage .settings-header-card {
-  border-radius: 24px;
-}
-
-#settingsPage .settings-header-card {
-  padding: var(--space-5);
-  background:
-    radial-gradient(circle at top right, rgba(79, 70, 229, 0.08), transparent 35%),
-    linear-gradient(180deg, var(--bg-surface), var(--bg-elevated));
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+#settingsPage .settings-heading {
+  max-width: 760px;
 }
 
 #settingsPage .settings-grid {
@@ -2551,12 +2542,6 @@ html[data-theme="dark"] #settingsPage .btn-danger {
   background: rgba(127, 29, 29, 0.88);
 }
 
-#settingsPage .settings-header-card {
-  background:
-    radial-gradient(circle at top right, rgba(123, 157, 201, 0.10), transparent 35%),
-    linear-gradient(180deg, var(--bg-surface), var(--bg-elevated));
-}
-
 #settingsPage .settings-panel {
   background:
     radial-gradient(circle at top right, rgba(123, 157, 201, 0.05), transparent 34%),
@@ -2588,7 +2573,6 @@ html[data-theme="dark"] #settingsPage .settings-callout {
   }
 
   #settingsPage .settings-header {
-    grid-template-columns: 1fr;
     margin-bottom: var(--space-4);
   }
 
@@ -2607,7 +2591,6 @@ html[data-theme="dark"] #settingsPage .settings-callout {
     letter-spacing: 0.08em;
   }
 
-  #settingsPage .settings-header-card,
   #settingsPage .settings-panel {
     padding: var(--space-4);
     border-radius: 22px;
@@ -2700,7 +2683,6 @@ html[data-theme="dark"] #settingsPage .settings-callout {
 }
 
 @media (max-width: 390px) {
-  #settingsPage .settings-header-card,
   #settingsPage .settings-panel {
     padding: 14px;
   }
