@@ -4253,36 +4253,202 @@ body.session-choice-active .toast-container {
 
 @media (max-width: 640px) {
   .session-page {
-    padding: var(--space-4);
+    align-items: start;
+    padding:
+      calc(var(--space-3) + env(safe-area-inset-top))
+      calc(var(--space-3) + env(safe-area-inset-right))
+      calc(var(--space-4) + env(safe-area-inset-bottom))
+      calc(var(--space-3) + env(safe-area-inset-left));
   }
 
   .session-hero {
-    padding: var(--space-5);
-    border-radius: 28px;
+    width: min(100%, 430px);
+    padding: var(--space-4);
+    border-radius: 24px;
+    gap: var(--space-4);
+  }
+
+  .session-copy {
+    gap: var(--space-3);
+  }
+
+  .session-eyebrow {
+    padding: 4px var(--space-2);
+    letter-spacing: 0.06em;
+  }
+
+  .session-title {
+    font-size: clamp(1.9rem, 10vw, 2.7rem);
+    line-height: 0.98;
+    max-width: 9ch;
+  }
+
+  .session-subtitle {
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
+    max-width: 34ch;
+  }
+
+  .session-points {
+    gap: var(--space-2);
+    max-width: none;
+  }
+
+  .session-point {
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    line-height: var(--leading-snug);
+  }
+
+  .session-point i {
+    margin-top: 1px;
+    font-size: 1rem;
+  }
+
+  .session-card-stack {
+    gap: var(--space-3);
   }
 
   .session-card {
     padding: var(--space-3);
     gap: var(--space-3);
+    border-radius: 22px;
+    align-items: flex-start;
   }
 
   .session-card-icon {
     width: 44px;
     height: 44px;
     flex-basis: 44px;
+    border-radius: 14px;
   }
 
-  .session-title {
-    font-size: clamp(2rem, 12vw, 3rem);
-  }
-
-  .session-subtitle {
+  .session-card-title {
     font-size: var(--text-base);
+    line-height: var(--leading-snug);
+  }
+
+  .session-card-body,
+  .session-help-copy,
+  .session-fineprint {
+    font-size: var(--text-sm);
+  }
+
+  .session-card-body {
+    line-height: var(--leading-normal);
+  }
+
+  .session-card-action {
+    align-self: center;
+    margin-left: auto;
+  }
+
+  .session-auth-tabs {
+    gap: 3px;
+    padding: 3px;
+  }
+
+  .session-auth-tab {
+    min-height: 38px;
+    font-size: var(--text-xs);
+  }
+
+  .session-email-form {
+    gap: var(--space-2);
+  }
+
+  .session-email-form .form-input {
+    min-height: 42px;
+    padding: 0.7rem var(--space-3);
+    font-size: var(--text-sm);
+  }
+
+  .session-email-form .btn {
+    min-height: 44px;
+    padding-inline: var(--space-4);
+  }
+
+  .session-help-callout {
+    padding: var(--space-3);
   }
 
   .session-help-callout {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .session-fineprint {
+    line-height: var(--leading-normal);
+    color: var(--text-dim);
+  }
+}
+
+@media (max-width: 430px) {
+  .session-page {
+    padding-top: calc(var(--space-2) + env(safe-area-inset-top));
+  }
+
+  .session-hero {
+    width: 100%;
+    padding: var(--space-3);
+    border-radius: 22px;
+  }
+
+  .session-title {
+    font-size: clamp(1.8rem, 11vw, 2.35rem);
+    max-width: 10ch;
+  }
+
+  .session-subtitle {
+    max-width: none;
+  }
+
+  .session-point {
+    font-size: var(--text-xs);
+  }
+
+  .session-card {
+    padding: var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .session-card-body {
+    font-size: var(--text-xs);
+  }
+
+  .session-auth-tab {
+    min-height: 36px;
+  }
+
+  .session-email-form .form-input {
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 360px) {
+  .session-hero {
+    padding: var(--space-3);
+    border-radius: 20px;
+  }
+
+  .session-title {
+    font-size: clamp(1.65rem, 10vw, 2.1rem);
+  }
+
+  .session-subtitle,
+  .session-fineprint,
+  .session-help-copy {
+    font-size: 0.9rem;
+  }
+
+  .session-card {
+    border-radius: 20px;
+  }
+
+  .session-card-icon {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
   }
 }
 
