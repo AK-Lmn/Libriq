@@ -584,7 +584,7 @@ const Library = (() => {
           </div>
         </div>` : ''}
 
-      <div class="book-details-description">
+      <div class="book-details-description ${description ? '' : 'book-details-description--empty'}">
         <h3 class="book-details-section-title">About this book</h3>
         <p class="book-details-desc-text">${Utils.sanitize(synopsis)}</p>
       </div>
