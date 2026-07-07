@@ -4,6 +4,13 @@
    ============================================ */
 
 const Search = (() => {
+  const Identity = window.BookIdentity || globalThis.BookIdentity || {
+    isSameBook: (left, right) => {
+      const clean = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+      return clean(left?.title) === clean(right?.title) && clean(left?.author) === clean(right?.author);
+    },
+    getSourceLabels: () => [],
+  };
   let currentQuery = '';
   let focusedIndex = -1;
   let results = [];
@@ -229,9 +236,12 @@ const Search = (() => {
 
   function buildApiResultItem(book) {
     const existingBook = Storage.getBooks().find(b =>
-      b.title.toLowerCase() === book.title.toLowerCase() &&
-      b.author.toLowerCase() === book.author.toLowerCase()
+      Identity.isSameBook(b, book)
     );
+    const sourceBadges = Array.isArray(book.sourceBadges) ? book.sourceBadges : Identity.getSourceLabels(book);
+    const sourceBadgeHtml = sourceBadges.length
+      ? `<div class="search-result-source-badges">${sourceBadges.map(label => `<span class="badge badge-accent">${Utils.sanitize(label)}</span>`).join('')}</div>`
+      : '';
 
     const el = document.createElement('div');
     el.className = 'search-result-item';
@@ -240,6 +250,7 @@ const Search = (() => {
       <div class="search-result-info">
         <div class="search-result-title">${Utils.sanitize(book.title)}</div>
         <div class="search-result-author">${Utils.sanitize(book.author)}</div>
+        ${sourceBadgeHtml}
         <div class="search-result-meta">
           ${book.publishYear ? `${book.publishYear} · ` : ''}
           ${book.pageCount ? Utils.formatPages(book.pageCount) : ''}

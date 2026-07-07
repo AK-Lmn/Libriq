@@ -8,10 +8,23 @@
      title, author, coverUrl, isbn, pageCount,
      publishYear, publisher, description, genres,
      language, googleBooksId, openLibraryId,
+     internetArchiveId, archiveUrl, readableSourceLinks,
      rating, ratingsCount, previewLink
    ============================================ */
 
 const NormalizeBook = (() => {
+  const Identity = window.BookIdentity || globalThis.BookIdentity || {
+    normalizeIsbn: value => String(value || '').toUpperCase().replace(/[^0-9X]/g, ''),
+    buildSourceBadgeData: (book = {}) => ({
+      sourceIds: {
+        ...(book.openLibraryId ? { openlibrary: book.openLibraryId } : {}),
+        ...(book.googleBooksId ? { google: book.googleBooksId } : {}),
+      },
+      sourceBadges: [],
+      sources: [],
+    }),
+    normalizeSourceId: value => String(value || '').trim().toLowerCase(),
+  };
 
   const OL_COVER = 'https://covers.openlibrary.org/b/id';
 
@@ -22,20 +35,49 @@ const NormalizeBook = (() => {
     if (!doc || !doc.title) return null;
 
     const coverId = doc.cover_i || (doc.cover_edition_key ? null : null);
+    const sourceData = Identity.buildSourceBadgeData({
+      source: 'openlibrary',
+      openLibraryId: doc.key || null,
+      sourceIds: { openlibrary: doc.key || null },
+      identifiers: Array.isArray(doc.isbn) ? doc.isbn.map(identifier => ({ type: 'isbn', identifier })) : [],
+    });
 
     return {
       title:         doc.title,
       author:        _firstOf(doc.author_name) || 'Unknown Author',
       coverUrl:      coverId ? `${OL_COVER}/${coverId}-L.jpg` : null,
       isbn:          _firstOf(doc.isbn) || null,
+      isbns:         Array.isArray(doc.isbn) ? doc.isbn.map(isbn => Identity.normalizeIsbn(isbn)).filter(Boolean) : [],
       pageCount:     doc.number_of_pages_median || 0,
       publishYear:   doc.first_publish_year || null,
+      firstPublishYear: doc.first_publish_year || null,
       publisher:     _firstOf(doc.publisher) || null,
       description:   null,           // OL search doesn't return descriptions
       genres:        _cleanSubjects(doc.subject),
       language:      _olLanguage(doc.language),
       openLibraryId: doc.key || null,
+      internetArchiveId: null,
+      internetArchiveIds: [],
+      archiveUrl: null,
+      readableSourceLinks: [],
+      openLibraryWorkKey: _normalizeOpenLibraryWorkKey(doc.work_key || doc.key),
+      openLibraryEditionKey: doc.cover_edition_key || null,
+      openLibraryAuthorKeys: Array.isArray(doc.author_key) ? doc.author_key.map(value => _normalizeOpenLibraryAuthorKey(value)).filter(Boolean) : [],
+      coverId:      coverId || null,
+      gutendexId:   null,
+      gutenbergId:  null,
+      editionCount:  doc.edition_count || null,
+      subjects:     _cleanSubjects(doc.subject),
+      subjectPlaces:_cleanSubjects(doc.subject_places || doc.subject_place),
+      subjectPeople: _cleanSubjects(doc.subject_people || doc.subject_person),
+      subjectTimes:  _cleanSubjects(doc.subject_times || doc.subject_time),
       googleBooksId: null,
+      sourceIds:     sourceData.sourceIds,
+      identifiers:   Array.isArray(doc.isbn)
+        ? doc.isbn.map(isbn => ({ type: 'ISBN', identifier: Identity.normalizeIsbn(isbn) })).filter(item => item.identifier)
+        : [],
+      sourceBadges:  sourceData.sourceBadges,
+      sources:       sourceData.sources,
       rating:        null,
       ratingsCount:  null,
       previewLink:   null,
@@ -53,6 +95,12 @@ const NormalizeBook = (() => {
 
     // GB sometimes gives multiple ISBNs — prefer ISBN-13
     const isbn = _gbISBN(v.industryIdentifiers);
+    const sourceData = Identity.buildSourceBadgeData({
+      source: 'google',
+      googleBooksId: item.id || null,
+      sourceIds: { google: item.id || null },
+      identifiers: Array.isArray(v.industryIdentifiers) ? v.industryIdentifiers : [],
+    });
 
     // Prefer the largest available thumbnail
     const coverUrl = v.imageLinks
@@ -68,6 +116,9 @@ const NormalizeBook = (() => {
       author:        _firstOf(v.authors) || 'Unknown Author',
       coverUrl:      coverUrl ? coverUrl.replace('http://', 'https://') : null,
       isbn,
+      isbns:         Array.isArray(v.industryIdentifiers)
+        ? v.industryIdentifiers.map(identifier => Identity.normalizeIsbn(identifier?.identifier)).filter(Boolean)
+        : [],
       pageCount:     v.pageCount || 0,
       publishYear:   _gbYear(v.publishedDate),
       publisher:     v.publisher || null,
@@ -75,7 +126,22 @@ const NormalizeBook = (() => {
       genres:        Array.isArray(v.categories) ? v.categories.slice(0, 5) : [],
       language:      v.language || null,
       openLibraryId: null,
+      internetArchiveId: null,
+      internetArchiveIds: [],
+      archiveUrl: null,
+      readableSourceLinks: [],
+      gutendexId: null,
+      gutenbergId: null,
       googleBooksId: item.id || null,
+      sourceIds:     sourceData.sourceIds,
+      identifiers:   Array.isArray(v.industryIdentifiers)
+        ? v.industryIdentifiers.map(identifier => ({
+            type: identifier?.type || 'UNKNOWN',
+            identifier: Identity.normalizeIsbn(identifier?.identifier) || String(identifier?.identifier || '').trim(),
+          })).filter(identifier => identifier.identifier)
+        : [],
+      sourceBadges:  sourceData.sourceBadges,
+      sources:       sourceData.sources,
       rating:        v.averageRating || null,
       ratingsCount:  v.ratingsCount  || null,
       previewLink:   v.previewLink   || null,
@@ -120,6 +186,23 @@ const NormalizeBook = (() => {
     const isbn13 = identifiers.find(i => i.type === 'ISBN_13');
     const isbn10 = identifiers.find(i => i.type === 'ISBN_10');
     return (isbn13 || isbn10)?.identifier || null;
+  }
+
+  function _normalizeOpenLibraryWorkKey(value) {
+    const clean = String(value || '').trim();
+    if (!clean) return null;
+    if (clean.startsWith('/works/') || clean.startsWith('works/')) {
+      return clean.startsWith('/works/') ? clean : `/${clean}`;
+    }
+    return null;
+  }
+
+  function _normalizeOpenLibraryAuthorKey(value) {
+    const clean = String(value || '').trim();
+    if (!clean) return null;
+    if (clean.startsWith('/authors/')) return clean;
+    if (clean.startsWith('authors/')) return `/${clean}`;
+    return null;
   }
 
   return { fromOpenLibrary, fromGoogleBooks };

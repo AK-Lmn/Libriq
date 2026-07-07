@@ -1,10 +1,15 @@
 {
   "name": "libriq",
   "private": true,
-  "version": "4.5.2",
+  "version": "4.6.0",
   "type": "module",
   "scripts": {
     "build": "node scripts/generate-config.mjs",
+    "test:identity": "node scripts/test-book-identity.mjs",
+    "test:openlibrary": "node scripts/test-openlibrary.mjs",
+    "test:subject-discovery": "node scripts/test-subject-discovery.mjs",
+    "test:gutendex": "node scripts/test-gutendex.mjs",
+    "test:internet-archive": "node scripts/test-internet-archive.mjs",
     "screenshots": "node scripts/screenshots.mjs",
     "test:render": "node scripts/test-navigation-render.mjs",
     "test:modal": "node scripts/test-modal.mjs",

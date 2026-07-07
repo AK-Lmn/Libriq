@@ -12,15 +12,15 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: "What's New in LibriQ v4.5.2",
-      subtitle: 'A full Studio polish pass for the cloud-first LibriQ experience.',
+      title: "What's New in LibriQ v4.6.0",
+      subtitle: 'Smarter book metadata, better discovery, and safer source handling.',
       sections: [
-        ['Studio polish across the app', 'Desktop and mobile views now feel more consistent across Dashboard, Library, Book Details, Status pages, Statistics, Activity, Recommendations, Settings, and guides.'],
-        ['Cloud-first account flow', 'Sign in with Google or email. Offline access appears only when account services are unavailable.'],
-        ['Safer account and data controls', 'Delete library data, delete account, backups, sync controls, and diagnostics remain clearly separated with strict confirmations.'],
-        ['Better mobile experience', 'Mobile navigation, cards, modals, settings, and reading pages were tuned for phone-sized screens.'],
+        ['Better book metadata', 'Search results and saved books now carry richer identity signals so LibriQ can merge duplicate sources more safely.'],
+        ['Source badges', 'Open Library, Google Books, Project Gutenberg, and Internet Archive badges make book origins easier to understand at a glance.'],
+        ['Discover rails', 'Recommendations now use Open Library subjects and a free classics rail to surface more relevant books after local content loads.'],
+        ['Read and archive links', 'When available, Internet Archive links appear in Book Details without changing the normal search experience.'],
       ],
-      note: 'No AI recommendations or expanded metadata sources yet. Those are planned for later roadmap versions.',
+      note: 'This release stays backward-compatible with older saved books and keeps search, sync, and library behavior intact.',
     },
   };
 

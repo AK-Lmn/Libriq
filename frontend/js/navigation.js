@@ -2243,7 +2243,189 @@ function renderRecommendationsPage() {
           <div class="recommendations-empty-hint">Add books, favorite a few, finish a few, or move books to Want to Read.</div>
         </div>
       `}
+      <div id="subjectDiscoveryRoot" class="recommendations-subject-discovery"></div>
+      <div id="gutenbergDiscoveryRoot" class="recommendations-subject-discovery"></div>
     </div>`;
+
+  _hydrateSubjectDiscovery(books);
+  _hydrateGutendexDiscovery(books);
+}
+
+async function _hydrateSubjectDiscovery(books) {
+  const root = document.getElementById('subjectDiscoveryRoot');
+  if (!root) return;
+  if (!navigator.onLine || !OpenLibraryAPI?.searchBySubject) {
+    root.innerHTML = '';
+    return;
+  }
+
+  const discoveryState = _buildSubjectDiscoveryState(books);
+  if (!discoveryState.rails.length) {
+    root.innerHTML = '';
+    return;
+  }
+
+  root.innerHTML = `
+    <div class="recommendations-groups recommendations-sections stagger">
+      ${discoveryState.rails.map(rail => buildSubjectDiscoveryRail(rail)).join('')}
+    </div>`;
+
+  const railNodes = Array.from(root.querySelectorAll('[data-subject-key]'));
+  await Promise.all(railNodes.map(async (node) => {
+    const subjectKey = node.dataset.subjectKey;
+    const limit = Number(node.dataset.limit || 6);
+    const booksForRail = await OpenLibraryAPI.searchBySubject(subjectKey, { limit });
+    const filtered = _filterSubjectDiscoveryBooks(booksForRail, books, limit);
+    if (!filtered.length) {
+      node.innerHTML = `<div class="recommendations-helper-note">We couldn’t load this subject right now. The local recommendations above are still here.</div>`;
+      return;
+    }
+    node.querySelector('.recommendation-card-grid').innerHTML = filtered.map(book => buildRecommendationCard(book, 'Open Library subject')).join('');
+  }));
+}
+
+function _buildSubjectDiscoveryState(books) {
+  const safeBooks = Array.isArray(books) ? books.filter(Boolean) : [];
+  const subjectCounts = new Map();
+  const pickSubject = (value) => String(value || '').trim().toLowerCase();
+
+  safeBooks.forEach((book) => {
+    const weight = (book.isFavorite ? 4 : 1) + (typeof book.rating === 'number' ? book.rating : 0) + (book.status === LIBRIQ.STATUS.FINISHED ? 2 : 0);
+    const subjects = _subjectCandidatesFromBook(book);
+    subjects.forEach((subject) => {
+      const key = pickSubject(subject);
+      if (!key) return;
+      subjectCounts.set(key, (subjectCounts.get(key) || 0) + weight);
+    });
+  });
+
+  const fallback = ['fiction', 'fantasy', 'romance', 'mystery', 'science fiction', 'classics', 'history', 'self improvement'];
+  const ranked = [...subjectCounts.entries()].sort((a, b) => b[1] - a[1]).map(([key]) => key);
+  const selected = ranked.length ? ranked.slice(0, 3) : fallback.slice(0, 3);
+
+  const labelMap = {
+    'science fiction': 'Science Fiction',
+    'self improvement': 'Self Improvement',
+  };
+
+  return {
+    rails: selected.map((subjectKey) => ({
+      label: labelMap[subjectKey] || Utils.formatDisplayName(subjectKey),
+      subjectKey,
+      limit: 6,
+    })),
+  };
+}
+
+function _subjectCandidatesFromBook(book) {
+  const values = [];
+  if (Array.isArray(book?.subjects)) values.push(...book.subjects);
+  if (Array.isArray(book?.genres)) values.push(...book.genres);
+  if (book?.isFavorite || book?.status === LIBRIQ.STATUS.FINISHED || book?.status === LIBRIQ.STATUS.READING) {
+    values.push(...(Array.isArray(book?.genres) ? book.genres : []));
+  }
+  return Array.from(new Set(values.map(value => String(value || '').trim()).filter(Boolean)));
+}
+
+function _filterSubjectDiscoveryBooks(books, savedBooks, limit = 6) {
+  const safeBooks = Array.isArray(books) ? books.filter(Boolean) : [];
+  const saved = Array.isArray(savedBooks) ? savedBooks.filter(Boolean) : [];
+  const filtered = [];
+  for (const book of safeBooks) {
+    if (saved.some(savedBook => BookIdentity?.isSameBook ? BookIdentity.isSameBook(savedBook, book) : _normalizeText(savedBook.title) === _normalizeText(book.title))) continue;
+    if (filtered.some(existing => BookIdentity?.isSameBook ? BookIdentity.isSameBook(existing, book) : _normalizeText(existing.title) === _normalizeText(book.title))) continue;
+    filtered.push(book);
+    if (filtered.length >= limit) break;
+  }
+  return filtered;
+}
+
+function buildSubjectDiscoveryRail(rail) {
+  return `
+    <section class="goal-widget recommendations-section" data-subject-key="${Utils.sanitize(rail.subjectKey)}" data-limit="${rail.limit}">
+      <div class="goal-header recommendations-section-header">
+        <div class="recommendation-group-heading">
+          <div class="goal-title">Open Library: ${Utils.sanitize(rail.label)}</div>
+          <div class="stats-section-meta">Subject-backed discovery</div>
+        </div>
+      </div>
+      <div class="recommendation-card-grid recommendations-item-grid">
+        <div class="recommendations-helper-note recommendations-subject-loading">
+          <span class="spinner spinner--inline" aria-hidden="true"></span>
+          <span>Loading subject picks from Open Library…</span>
+        </div>
+      </div>
+    </section>`;
+}
+
+async function _hydrateGutendexDiscovery(books) {
+  const root = document.getElementById('gutenbergDiscoveryRoot');
+  if (!root) return;
+  if (!navigator.onLine || !GutendexAPI?.searchCuratedClassics) {
+    root.innerHTML = '';
+    return;
+  }
+
+  const rail = _buildGutendexDiscoveryState(books);
+  if (!rail) {
+    root.innerHTML = '';
+    return;
+  }
+
+  root.innerHTML = buildGutendexDiscoveryRail(rail);
+
+  const cardsNode = root.querySelector('[data-gutendex-rail]');
+  if (!cardsNode) return;
+
+  const booksForRail = await GutendexAPI.searchCuratedClassics({ limit: rail.limit, topic: rail.topic });
+  const filtered = _filterDiscoveryBooks(booksForRail, books, rail.limit);
+  if (!filtered.length) {
+    cardsNode.innerHTML = `<div class="recommendations-helper-note">We couldn’t load free classics right now. Your local recommendations are still shown above.</div>`;
+    return;
+  }
+  cardsNode.querySelector('.recommendation-card-grid').innerHTML = filtered.map(book => buildRecommendationCard(book, 'Project Gutenberg')).join('');
+}
+
+function _buildGutendexDiscoveryState(books) {
+  const safeBooks = Array.isArray(books) ? books.filter(Boolean) : [];
+  const hasSignal = safeBooks.length > 0;
+  return {
+    label: 'Free Classics',
+    topic: 'classics',
+    limit: 6,
+    hasSignal,
+  };
+}
+
+function _filterDiscoveryBooks(books, savedBooks, limit = 6) {
+  const safeBooks = Array.isArray(books) ? books.filter(Boolean) : [];
+  const saved = Array.isArray(savedBooks) ? savedBooks.filter(Boolean) : [];
+  const filtered = [];
+  for (const book of safeBooks) {
+    if (saved.some(savedBook => BookIdentity?.isSameBook ? BookIdentity.isSameBook(savedBook, book) : _normalizeText(savedBook.title) === _normalizeText(book.title))) continue;
+    if (filtered.some(existing => BookIdentity?.isSameBook ? BookIdentity.isSameBook(existing, book) : _normalizeText(existing.title) === _normalizeText(book.title))) continue;
+    filtered.push(book);
+    if (filtered.length >= limit) break;
+  }
+  return filtered;
+}
+
+function buildGutendexDiscoveryRail(rail) {
+  return `
+    <section class="goal-widget recommendations-section" data-gutendex-rail="true" data-limit="${rail.limit}" data-topic="${Utils.sanitize(rail.topic)}">
+      <div class="goal-header recommendations-section-header">
+        <div class="recommendation-group-heading">
+          <div class="goal-title">Free Classics</div>
+          <div class="stats-section-meta">Project Gutenberg picks from Gutendex</div>
+        </div>
+      </div>
+      <div class="recommendation-card-grid recommendations-item-grid">
+        <div class="recommendations-helper-note recommendations-subject-loading">
+          <span class="spinner spinner--inline" aria-hidden="true"></span>
+          <span>Loading free classics…</span>
+        </div>
+      </div>
+    </section>`;
 }
 
 function _buildRecommendationState(books) {
@@ -2371,6 +2553,9 @@ function buildRecommendationCard(book, reasonLabel) {
   const isSaved = !!Storage.getBookById(book.id);
   const statusLabel = isSaved ? Utils.statusLabel(book.status) : '';
   const statusClass = isSaved ? `badge ${Utils.statusBadgeClass(book.status)}` : '';
+  const sourceBadges = Array.isArray(book.sourceBadges) && book.sourceBadges.length
+    ? `<div class="recommendation-card-source-badges">${book.sourceBadges.map(label => `<span class="badge badge-accent">${Utils.sanitize(label)}</span>`).join('')}</div>`
+    : '';
   return `
     <button type="button" class="recommendation-card recommendations-item" ${isSaved ? `onclick="Library.showDetailsModal('${book.id}')"` : 'aria-disabled="true"'}
       ${isSaved ? '' : 'disabled'}>
@@ -2384,6 +2569,7 @@ function buildRecommendationCard(book, reasonLabel) {
         </div>
         <div class="recommendation-card-title">${Utils.sanitize(book.title)}</div>
         <div class="recommendation-card-author">${Utils.sanitize(book.author)}</div>
+        ${sourceBadges}
       </div>
     </button>`;
 }
