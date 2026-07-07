@@ -2200,6 +2200,25 @@ function renderRecommendationsPage() {
   const books = Storage.getBooks();
   const recState = _buildRecommendationState(books);
 
+  const aiState = _getGeminiRecommendationsUiState();
+  const aiSection = aiState.visible ? `
+      <section class="recommendations-ai-panel" id="geminiRecommendationsPanel">
+        <div class="recommendations-ai-header">
+          <div>
+            <div class="recommendations-ai-kicker">AI recommendations</div>
+            <div class="recommendations-ai-title">Generate a focused reading nudge from your saved library.</div>
+            <div class="recommendations-ai-copy">Uses your reading history to suggest books. Notes, quotes, and reviews are not sent.</div>
+          </div>
+          <button class="btn btn-primary" id="geminiRecommendationsBtn" type="button" ${aiState.disabled ? 'disabled' : ''}>
+            <i class="ph ph-sparkle"></i>
+            Generate AI Recommendations
+          </button>
+        </div>
+        <div class="recommendations-ai-state" id="geminiRecommendationsState">${Utils.sanitize(aiState.message)}</div>
+        <div class="recommendations-ai-results" id="geminiRecommendationsResults" hidden></div>
+      </section>
+    ` : '';
+
   main.innerHTML = `
     <div class="page recommendations-page" id="recommendationsPage">
       <div class="page-header recommendations-header">
@@ -2243,12 +2262,153 @@ function renderRecommendationsPage() {
           <div class="recommendations-empty-hint">Add books, favorite a few, finish a few, or move books to Want to Read.</div>
         </div>
       `}
+      ${aiSection}
       <div id="subjectDiscoveryRoot" class="recommendations-subject-discovery"></div>
       <div id="gutenbergDiscoveryRoot" class="recommendations-subject-discovery"></div>
     </div>`;
 
+  _wireGeminiRecommendations();
   _hydrateSubjectDiscovery(books);
   _hydrateGutendexDiscovery(books);
+}
+
+function _getGeminiRecommendationsUiState() {
+  const firebase = window.LibriqFirebase?.getState?.() || { available: false, ready: false, user: null };
+  const online = navigator.onLine !== false;
+  const offlineMode = Navigation.getSessionPreference?.() === 'offline' || Navigation.getCurrentSessionMode?.() === 'offline';
+  if (!firebase.ready) {
+    return {
+      visible: true,
+      disabled: true,
+      activeSession: false,
+      message: 'Preparing AI recommendations...',
+    };
+  }
+  const activeSession = Boolean(firebase.user && online && !offlineMode);
+  if (!firebase.user) {
+    return { visible: false, disabled: true, activeSession: false, message: '' };
+  }
+  if (!online || offlineMode) {
+    return {
+      visible: true,
+      disabled: true,
+      activeSession: false,
+      message: "You're offline right now. Local recommendations are still available.",
+    };
+  }
+  return {
+    visible: true,
+    disabled: !activeSession,
+    activeSession,
+    message: 'Uses your reading history to suggest books. Notes, quotes, and reviews are not sent.',
+  };
+}
+
+function _wireGeminiRecommendations() {
+  const btn = document.getElementById('geminiRecommendationsBtn');
+  const results = document.getElementById('geminiRecommendationsResults');
+  const stateNode = document.getElementById('geminiRecommendationsState');
+  if (!btn || !results || !stateNode) return;
+
+  const books = Storage.getBooks();
+  btn.onclick = async () => {
+    const state = _getGeminiRecommendationsUiState();
+    if (!state.activeSession) {
+      if (!navigator.onLine || Navigation.getSessionPreference?.() === 'offline' || Navigation.getCurrentSessionMode?.() === 'offline') {
+        stateNode.textContent = "You're offline right now. Local recommendations are still available.";
+      } else {
+        stateNode.textContent = 'Please sign in again to use AI recommendations.';
+      }
+      btn.disabled = true;
+      return;
+    }
+
+    btn.disabled = true;
+    results.hidden = false;
+    results.innerHTML = `
+      <div class="recommendations-ai-loading">
+        <span class="spinner spinner--inline" aria-hidden="true"></span>
+        <span>Generating AI recommendations...</span>
+      </div>`;
+    stateNode.textContent = 'Working from your recent reading signals...';
+
+    try {
+      const response = await GeminiRecommendationsAPI.generateRecommendations({
+        mode: _getGeminiRecommendationsMode(),
+        books,
+      });
+      _renderGeminiRecommendations(results, response);
+      stateNode.textContent = response.meta.fromCache
+        ? 'Showing saved AI recommendations from today.'
+        : 'Generated just now.';
+    } catch (err) {
+      const code = String(err?.code || '').toLowerCase();
+      const status = Number(err?.status || 0);
+      if (code === 'offline') {
+        console.debug('[Libriq/Gemini] Skipped while offline.');
+        stateNode.textContent = 'Connect to the internet to generate AI recommendations.';
+      } else if (code === 'auth-loading') {
+        console.debug('[Libriq/Gemini] Waiting for Firebase auth readiness.');
+        stateNode.textContent = 'Preparing AI recommendations...';
+      } else if (code === 'auth' || code === 'auth-expired' || status === 401) {
+        console.debug('[Libriq/Gemini] Missing or expired Firebase session.', { code, status });
+        stateNode.textContent = 'Please sign in again to use AI recommendations.';
+      } else if (status === 429) {
+        console.debug('[Libriq/Gemini] Gemini quota exhausted.');
+        stateNode.textContent = "You've used today's AI recommendations. Try again tomorrow.";
+      } else if (status === 503) {
+        console.debug('[Libriq/Gemini] Gemini backend unavailable.');
+        stateNode.textContent = 'AI recommendations could not load right now. Your local recommendations are still available.';
+      } else {
+        console.debug('[Libriq/Gemini] Gemini request failed.', { code, status });
+        stateNode.textContent = 'AI recommendations could not load right now. Your local recommendations are still available.';
+      }
+      results.hidden = true;
+      results.innerHTML = '';
+    } finally {
+      const nextState = _getGeminiRecommendationsUiState();
+      btn.disabled = nextState.disabled;
+    }
+  };
+}
+
+function _getGeminiRecommendationsMode() {
+  return 'recommendations';
+}
+
+function _renderGeminiRecommendations(container, response) {
+  const recs = Array.isArray(response?.recommendations) ? response.recommendations.slice(0, 8) : [];
+  if (!recs.length) {
+    container.innerHTML = `
+      <div class="recommendations-ai-empty">
+        AI recommendations could not load right now. Your local recommendations are still available.
+      </div>`;
+    return;
+  }
+  container.innerHTML = `
+    <div class="recommendations-ai-results-header">
+      <div class="recommendations-ai-results-title">AI suggestions</div>
+      <div class="recommendations-ai-results-meta">${response.meta.fromCache ? 'Showing saved AI recommendations from today.' : 'Generated just now.'}</div>
+    </div>
+    <div class="recommendation-card-grid recommendations-item-grid recommendations-ai-grid">
+      ${recs.map((rec) => buildGeminiRecommendationCard(rec)).join('')}
+    </div>`;
+}
+
+function buildGeminiRecommendationCard(rec) {
+  return `
+    <article class="recommendation-card recommendation-card--ai">
+      <div class="recommendation-card-body">
+        <div class="recommendation-card-meta">
+          <span class="badge badge-accent">AI</span>
+          ${rec.confidence !== undefined ? `<span class="badge badge-metadata">Confidence ${Math.round(rec.confidence * 100)}%</span>` : ''}
+          ${rec.sourceHint ? `<span class="badge badge-metadata">${Utils.sanitize(rec.sourceHint)}</span>` : ''}
+        </div>
+        <h3 class="recommendation-card-title">${Utils.sanitize(rec.title)}</h3>
+        <div class="recommendation-card-author">${Utils.sanitize(rec.author)}</div>
+        <p class="recommendation-card-description">${Utils.sanitize(rec.reason)}</p>
+      </div>
+    </article>`;
 }
 
 async function _hydrateSubjectDiscovery(books) {

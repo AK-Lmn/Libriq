@@ -10,6 +10,8 @@
     "test:subject-discovery": "node scripts/test-subject-discovery.mjs",
     "test:gutendex": "node scripts/test-gutendex.mjs",
     "test:internet-archive": "node scripts/test-internet-archive.mjs",
+    "test:gemini": "node scripts/test-gemini-route.mjs",
+    "test:gemini-client": "node scripts/test-gemini-client.mjs",
     "screenshots": "node scripts/screenshots.mjs",
     "test:render": "node scripts/test-navigation-render.mjs",
     "test:modal": "node scripts/test-modal.mjs",
@@ -21,7 +23,7 @@
     "playwright": "^1.55.0"
   },
   "dependencies": {
-    "firebase": "^12.15.0"
+    "firebase": "^12.15.0",
+    "firebase-admin": "^13.10.0"
   }
 }
-

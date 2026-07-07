@@ -261,7 +261,22 @@ LibriQ's current public metadata usage does not require API keys for Open Librar
 
 Google Books search works best with a Google Books API key configured, and Firebase configuration is still required for auth and cloud sync.
 
-Gemini is not implemented yet.
+Gemini is now routed through a backend/serverless foundation at `/api/gemini/recommendations`, which expects `GEMINI_API_KEY` in the deployment environment and keeps that key out of frontend JavaScript.
+
+Gemini is not exposed in the browser yet, and the AI recommendations UI still comes later.
+
+Recommended Gemini environment variables:
+
+* `GEMINI_API_KEY` for the serverless route
+* `GEMINI_MODEL` to override the default flash model
+* `GEMINI_API_BASE` only if the deployment needs a different Gemini endpoint
+* `FIREBASE_SERVICE_ACCOUNT_JSON` for Firebase Admin auth and Firestore access
+* or `FIREBASE_ADMIN_PROJECT_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL`, and `FIREBASE_ADMIN_PRIVATE_KEY` as separate env vars
+* `FIREBASE_PRIVATE_KEY` is also supported as a fallback for the private key value
+
+Quota and cache enforcement are now server-side and stored in Firestore for verified Firebase UIDs.
+
+The route never trusts a frontend-provided UID, and Firebase Admin credentials stay in deployment environment variables only.
 
 ---
 

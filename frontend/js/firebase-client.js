@@ -49,6 +49,7 @@ const TEST_MODE = Boolean(
 );
 const INIT_RETRY_TIMEOUT_MS = 3500;
 const INIT_RETRY_INTERVAL_MS = 75;
+const AUTH_READY_TIMEOUT_MS = 1500;
 
 function getTestApiBase() {
   return `${location.origin}/__libriq_test_api`;
@@ -306,6 +307,43 @@ function getCurrentUser() {
   } : null;
 }
 
+function _waitForAuthReady(timeoutMs = AUTH_READY_TIMEOUT_MS) {
+  if (TEST_MODE) return Promise.resolve(true);
+  if (state.ready || !auth) return Promise.resolve(Boolean(state.ready));
+  return new Promise((resolve) => {
+    const startedAt = Date.now();
+    const poll = () => {
+      if (state.ready || auth?.currentUser || Date.now() - startedAt >= timeoutMs) {
+        resolve(Boolean(state.ready || auth?.currentUser));
+        return;
+      }
+      window.setTimeout(poll, 50);
+    };
+    poll();
+  });
+}
+
+async function getCurrentAuthUser(options = {}) {
+  const waitForReady = options?.waitForReady !== false;
+  if (waitForReady) {
+    await _waitForAuthReady(options?.timeoutMs);
+  }
+  if (TEST_MODE) return testUser;
+  return auth?.currentUser || null;
+}
+
+async function getCurrentUserIdToken(forceRefresh = false) {
+  if (TEST_MODE) return localStorage.getItem('libriq_e2e_test_id_token') || null;
+  const current = await getCurrentAuthUser({ waitForReady: true });
+  if (!current?.getIdToken) return null;
+  try {
+    return await current.getIdToken(forceRefresh);
+  } catch (err) {
+    console.warn('[Libriq] Firebase token retrieval failed:', err);
+    return null;
+  }
+}
+
 function hasFirestore() {
   return Boolean(state.available && firestore);
 }
@@ -482,6 +520,8 @@ window.LibriqFirebase = {
   hasFirestore,
   getFirestoreClient,
   getCurrentUser,
+  getCurrentAuthUser,
+  getCurrentUserIdToken,
   writeBackupDoc,
   readBackupDoc,
   deleteCurrentUserLibraryData,
