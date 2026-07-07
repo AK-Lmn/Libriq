@@ -30,9 +30,13 @@ function createElement(id) {
     onclick: null,
     oninput: null,
     className: '',
+    dataset: {},
     style: {},
     children: [],
     _html: '',
+    get childElementCount() {
+      return this.children.length;
+    },
     appendChild(child) {
       this.children.push(child);
       return child;
@@ -273,7 +277,13 @@ function loadBookDetailsFn(context) {
 }
 
 function countActionButtons(footer, predicate) {
-  return footer.children.filter(predicate).length;
+  const walk = (node) => {
+    if (!node) return 0;
+    const own = predicate(node) ? 1 : 0;
+    const kids = Array.isArray(node.children) ? node.children.reduce((sum, child) => sum + walk(child), 0) : 0;
+    return own + kids;
+  };
+  return walk(footer);
 }
 
 function testBookDetailsFooterIdempotent() {
