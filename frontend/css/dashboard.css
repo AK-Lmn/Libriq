@@ -1180,9 +1180,7 @@ html[data-theme="dark"] #dashboardPage .dashboard-goal-header::before {
 
   #dashboardPage .dashboard-section-header::before,
   #dashboardPage .dashboard-goal-header::before {
-    width: 2px;
-    min-height: 20px;
-    opacity: 0.45;
+    display: none;
   }
 
   #dashboardPage.dashboard-page {
@@ -1220,8 +1218,8 @@ html[data-theme="dark"] #dashboardPage .dashboard-goal-header::before {
   }
 
   #dashboardPage .dashboard-hero-shell {
-    gap: var(--space-4);
-    margin-bottom: var(--space-5);
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
   }
 
   #dashboardPage .greeting-label {
@@ -1240,7 +1238,7 @@ html[data-theme="dark"] #dashboardPage .dashboard-goal-header::before {
   }
 
   #dashboardPage .dashboard-micro-stats {
-    gap: var(--space-3);
+    gap: var(--space-2);
   }
 
   #dashboardPage .dashboard-mini-card {
@@ -1258,7 +1256,7 @@ html[data-theme="dark"] #dashboardPage .dashboard-goal-header::before {
   }
 
   #dashboardPage .dashboard-layout {
-    gap: var(--space-4);
+    gap: var(--space-3);
   }
 
   #dashboardPage .dashboard-panel,
@@ -1268,7 +1266,7 @@ html[data-theme="dark"] #dashboardPage .dashboard-goal-header::before {
   }
 
   #dashboardPage .dashboard-section-header {
-    margin-bottom: var(--space-3);
+    margin-bottom: var(--space-2);
   }
 
   #dashboardPage .dashboard-micro-stats,
@@ -1329,7 +1327,7 @@ html[data-theme="dark"] #dashboardPage .dashboard-goal-header::before {
   }
 
   #dashboardPage .dashboard-recent-row {
-    gap: var(--space-3);
+    gap: var(--space-2);
   }
 
   #dashboardPage .dashboard-recent-card .book-cover {
