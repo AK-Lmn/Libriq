@@ -697,7 +697,7 @@ html:not([data-theme="dark"]) .help-intro-icon {
   margin-top: var(--space-3);
   padding: var(--space-5);
   background:
-    radial-gradient(circle at top right, rgba(99, 102, 241, 0.06), transparent 28%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.05), transparent 28%),
     linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
   border: 1px solid var(--border-subtle);
   border-radius: 24px;
@@ -735,15 +735,15 @@ html:not([data-theme="dark"]) .help-intro-icon {
 
 html:not([data-theme="dark"]) .recommendations-intro {
   background:
-    radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent 28%),
-    linear-gradient(180deg, #fffefb 0%, #f5f2ec 100%);
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.04), transparent 28%),
+    linear-gradient(180deg, #fffefb 0%, #f5f4ef 100%);
   border-color: rgba(148, 163, 184, 0.22);
 }
 
 html:not([data-theme="dark"]) .recommendation-group,
 html:not([data-theme="dark"]) .recommendation-card,
 html:not([data-theme="dark"]) .recommendations-empty-state {
-  background: linear-gradient(180deg, #fffefb 0%, #f6f2ea 100%);
+  background: linear-gradient(180deg, #fffefb 0%, #f7f4ee 100%);
 }
 
 .recommendations-groups {
@@ -757,7 +757,7 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   position: relative;
   overflow: hidden;
   background:
-    radial-gradient(circle at top right, rgba(59, 130, 246, 0.05), transparent 30%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.04), transparent 30%),
     linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
   border: 1px solid var(--border-subtle);
   border-radius: 24px;
@@ -769,12 +769,7 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
 }
 
 .recommendation-group::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background: linear-gradient(180deg, transparent, rgba(96, 165, 250, 0.92), transparent);
-  opacity: 0.34;
+  content: none;
 }
 
 .recommendation-group-heading {
@@ -787,6 +782,7 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
 .recommendation-group .stats-section-meta {
   color: var(--text-dim);
   white-space: normal;
+  font-size: var(--text-sm);
 }
 
 .recommendation-group .goal-header {
@@ -813,7 +809,7 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   min-height: 118px;
   padding: var(--space-4);
   background:
-    radial-gradient(circle at top right, rgba(96, 165, 250, 0.04), transparent 28%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.03), transparent 28%),
     linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
   border: 1px solid var(--border-subtle);
   border-radius: 20px;
@@ -900,7 +896,7 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   padding: var(--space-6);
   max-width: 760px;
   background:
-    radial-gradient(circle at top right, rgba(96, 165, 250, 0.04), transparent 30%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.03), transparent 30%),
     linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
   border: 1px solid var(--border-subtle);
   border-radius: 24px;
@@ -925,6 +921,67 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   font-size: var(--text-sm);
   color: var(--text-dim);
   max-width: 760px;
+}
+
+#recommendationsPage .goal-title,
+#recommendationsPage .recommendation-card-title,
+#recommendationsPage .recommendations-intro-title,
+#recommendationsPage .empty-state-title {
+  letter-spacing: -0.01em;
+}
+
+#recommendationsPage .goal-header::before {
+  content: none;
+}
+
+#recommendationsPage .recommendations-section-header {
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+#recommendationsPage .recommendations-section-header::before {
+  content: none;
+}
+
+#recommendationsPage .recommendations-hero-heading {
+  gap: var(--space-1);
+  max-width: 760px;
+}
+
+#recommendationsPage .recommendations-sections {
+  gap: var(--space-5);
+}
+
+#recommendationsPage .recommendations-item-grid {
+  gap: var(--space-4);
+}
+
+#recommendationsPage .recommendations-item {
+  background:
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.03), transparent 28%),
+    linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  box-shadow: var(--shadow-xs);
+}
+
+#recommendationsPage .recommendations-item .recommendation-card-reason {
+  color: var(--text-dim);
+}
+
+#recommendationsPage .recommendations-section .stats-section-meta,
+#recommendationsPage .recommendations-section .recommendation-card-reason {
+  color: var(--text-dim);
+}
+
+#recommendationsPage .goal-widget,
+#recommendationsPage .recommendations-intro,
+#recommendationsPage .recommendation-group,
+#recommendationsPage .recommendation-card,
+#recommendationsPage .recommendations-empty-state {
+  background-clip: padding-box;
 }
 
 @media (max-width: 430px) {
@@ -987,15 +1044,9 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
     border-radius: 20px;
   }
 
-  #recommendationsPage .recommendation-group .goal-header {
+  #recommendationsPage .recommendations-section-header {
     gap: var(--space-2);
     margin-bottom: var(--space-3);
-  }
-
-  #recommendationsPage .recommendation-group::before {
-    width: 3px;
-    background: linear-gradient(180deg, transparent, rgba(96, 165, 250, 0.92), transparent);
-    opacity: 0.26;
   }
 
   #recommendationsPage .recommendation-group-heading {

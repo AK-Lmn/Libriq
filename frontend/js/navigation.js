@@ -2201,16 +2201,16 @@ function renderRecommendationsPage() {
   const recState = _buildRecommendationState(books);
 
   main.innerHTML = `
-    <div class="page" id="recommendationsPage">
+    <div class="page recommendations-page" id="recommendationsPage">
       <div class="page-header recommendations-header">
-        <div class="recommendations-heading">
+        <div class="recommendations-heading recommendations-hero-heading">
           <span class="library-eyebrow">Local suggestions</span>
           <h1 class="page-title">Recommendations</h1>
           <p class="page-subtitle">Suggestions built from the books you’ve already saved in LibriQ.</p>
         </div>
       </div>
 
-      <section class="recommendations-intro">
+      <section class="recommendations-intro recommendations-hero">
         <div class="recommendations-intro-copy">
           <div class="recommendations-intro-kicker">Local suggestions</div>
           <div class="recommendations-intro-title">Built from your saved books, favorite authors, and reading shelves.</div>
@@ -2219,12 +2219,12 @@ function renderRecommendationsPage() {
       </section>
 
       ${recState.hasSignal ? `
-        <div class="recommendations-groups stagger">
+        <div class="recommendations-groups recommendations-sections stagger">
           ${recState.groups.map(group => buildRecommendationGroup(group)).join('')}
         </div>
         <div class="recommendations-helper-note">Add more favorites, finished books, and Want to Read titles to improve local suggestions.</div>
       ` : `
-        <div class="empty-state recommendations-empty-state">
+        <div class="empty-state recommendations-empty-state recommendations-empty">
           <div class="empty-state-icon"><i class="ph ph-sparkle"></i></div>
           <div class="empty-state-title">Save a few more books to unlock local suggestions.</div>
           <div class="empty-state-body">Recommendations are built from your saved library, including favorites, finished books, ratings, and Want to Read titles.</div>
@@ -2350,14 +2350,14 @@ function buildRecommendationGroup(group) {
   const cards = group.books.map(book => buildRecommendationCard(book, group.showCardReason === false ? '' : group.label)).join('');
   const groupClass = group.books.length === 1 ? 'recommendation-group recommendation-group-single' : 'recommendation-group';
   return `
-    <section class="goal-widget ${groupClass}">
-      <div class="goal-header">
+    <section class="goal-widget ${groupClass} recommendations-section">
+      <div class="goal-header recommendations-section-header">
         <div class="recommendation-group-heading">
           <div class="goal-title">${Utils.sanitize(group.title)}</div>
           <div class="stats-section-meta">${Utils.sanitize(group.label)}</div>
         </div>
       </div>
-      <div class="recommendation-card-grid">
+      <div class="recommendation-card-grid recommendations-item-grid">
         ${cards}
       </div>
     </section>`;
@@ -2367,9 +2367,9 @@ function buildRecommendationCard(book, reasonLabel) {
   const isSaved = !!Storage.getBookById(book.id);
   const statusLabel = isSaved ? Utils.statusLabel(book.status) : '';
   const statusClass = isSaved ? `badge ${Utils.statusBadgeClass(book.status)}` : '';
-  const reasonMarkup = reasonLabel ? `<div class="recommendation-card-reason">${Utils.sanitize(reasonLabel)}</div>` : '';
+  const reasonMarkup = reasonLabel ? `<div class="recommendation-card-reason recommendations-reason">${Utils.sanitize(reasonLabel)}</div>` : '';
   return `
-    <button type="button" class="recommendation-card" ${isSaved ? `onclick="Library.showDetailsModal('${book.id}')"` : 'aria-disabled="true"'}
+    <button type="button" class="recommendation-card recommendations-item" ${isSaved ? `onclick="Library.showDetailsModal('${book.id}')"` : 'aria-disabled="true"'}
       ${isSaved ? '' : 'disabled'}>
       <div class="recommendation-card-cover">
         ${Utils.buildCover(book, 'cover-sm')}
