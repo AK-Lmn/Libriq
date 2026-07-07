@@ -2214,7 +2214,11 @@ function renderRecommendationsPage() {
         <div class="recommendations-intro-copy">
           <div class="recommendations-intro-kicker">Local suggestions</div>
           <div class="recommendations-intro-title">Built from your saved books, favorite authors, and reading shelves.</div>
-          <div class="recommendations-intro-body">LibriQ is using the library data you already have, so the page stays honest until richer recommendations arrive later.</div>
+          <div class="recommendations-intro-body">This page stays local and grounded in your saved library data, so the suggestions reflect what you already read, rate, and keep close.</div>
+          <div class="recommendations-intro-meta">
+            <span class="badge badge-accent">Local only</span>
+            <span class="recommendations-intro-meta-text">Built from favorites, ratings, authors, and Want to Read shelves</span>
+          </div>
         </div>
       </section>
 
@@ -2367,7 +2371,6 @@ function buildRecommendationCard(book, reasonLabel) {
   const isSaved = !!Storage.getBookById(book.id);
   const statusLabel = isSaved ? Utils.statusLabel(book.status) : '';
   const statusClass = isSaved ? `badge ${Utils.statusBadgeClass(book.status)}` : '';
-  const reasonMarkup = reasonLabel ? `<div class="recommendation-card-reason recommendations-reason">${Utils.sanitize(reasonLabel)}</div>` : '';
   return `
     <button type="button" class="recommendation-card recommendations-item" ${isSaved ? `onclick="Library.showDetailsModal('${book.id}')"` : 'aria-disabled="true"'}
       ${isSaved ? '' : 'disabled'}>
@@ -2375,12 +2378,12 @@ function buildRecommendationCard(book, reasonLabel) {
         ${Utils.buildCover(book, 'cover-sm')}
       </div>
       <div class="recommendation-card-body">
-        ${reasonMarkup}
+        <div class="recommendation-card-topline">
+          ${reasonLabel ? `<div class="recommendation-card-reason recommendations-reason">${Utils.sanitize(reasonLabel)}</div>` : '<div class="recommendation-card-reason recommendations-reason">Local suggestion</div>'}
+          ${isSaved ? `<span class="${statusClass}">${statusLabel}</span>` : '<span class="badge badge-accent">Suggested</span>'}
+        </div>
         <div class="recommendation-card-title">${Utils.sanitize(book.title)}</div>
         <div class="recommendation-card-author">${Utils.sanitize(book.author)}</div>
-        <div class="recommendation-card-meta">
-          ${isSaved ? `<span class="${statusClass}">${statusLabel}</span>` : ''}
-        </div>
       </div>
     </button>`;
 }
