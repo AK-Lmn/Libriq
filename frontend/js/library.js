@@ -885,6 +885,7 @@ const Library = (() => {
     if (isReading) {
       const updateBtn = document.createElement('button');
       updateBtn.className = 'btn btn-primary';
+      updateBtn.dataset.detailsAction = 'primary';
       updateBtn.innerHTML = '<i class="ph ph-pencil"></i> Update Progress';
       updateBtn.addEventListener('click', () => {
         closeDetailsModal();
@@ -896,6 +897,7 @@ const Library = (() => {
     if (book.status !== LIBRIQ.STATUS.FINISHED) {
       const finishBtn = document.createElement('button');
       finishBtn.className = 'btn btn-secondary';
+      finishBtn.dataset.detailsAction = 'secondary';
       finishBtn.innerHTML = '<i class="ph ph-check"></i> Mark Finished';
       finishBtn.addEventListener('click', () => {
         Library.setStatus(book.id, LIBRIQ.STATUS.FINISHED);
@@ -907,6 +909,7 @@ const Library = (() => {
 
     const refreshBtn = document.createElement('button');
     refreshBtn.className = 'btn btn-secondary';
+    refreshBtn.dataset.detailsAction = 'secondary';
     refreshBtn.innerHTML = '<i class="ph ph-arrow-clockwise"></i> Refresh metadata';
     refreshBtn.addEventListener('click', async () => {
       refreshBtn.disabled = true;
@@ -935,6 +938,7 @@ const Library = (() => {
 
     const favBtn = document.createElement('button');
     favBtn.className = 'btn btn-ghost btn-icon';
+    favBtn.dataset.detailsAction = 'icon';
     favBtn.title = book.isFavorite ? 'Remove from favorites' : 'Add to favorites';
     const favIcon = document.createElement('i');
     favIcon.className = book.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart';
@@ -954,6 +958,7 @@ const Library = (() => {
 
     const removeBtn = document.createElement('button');
     removeBtn.className = 'btn btn-ghost';
+    removeBtn.dataset.detailsAction = 'destructive';
     removeBtn.innerHTML = '<i class="ph ph-trash"></i> Remove';
     removeBtn.addEventListener('click', () => {
       if (!confirm(`Remove "${book.title}" from your library?`)) return;
