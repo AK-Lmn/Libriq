@@ -4258,7 +4258,7 @@ body.session-choice-active .toast-container {
   .session-page {
     align-items: start;
     padding:
-      calc(var(--space-1) + env(safe-area-inset-top))
+      max(calc(env(safe-area-inset-top) + 8px), 8px)
       calc(var(--space-3) + env(safe-area-inset-right))
       calc(var(--space-3) + env(safe-area-inset-bottom))
       calc(var(--space-3) + env(safe-area-inset-left));
@@ -4390,7 +4390,7 @@ body.session-choice-active .toast-container {
 
 @media (max-width: 430px) {
   .session-page {
-    padding-top: calc(0.35rem + env(safe-area-inset-top));
+    padding-top: max(calc(env(safe-area-inset-top) + 4px), 6px);
   }
 
   .session-hero {
@@ -4433,7 +4433,7 @@ body.session-choice-active .toast-container {
 
 @media (max-width: 360px) {
   .session-page {
-    padding-top: calc(0.25rem + env(safe-area-inset-top));
+    padding-top: max(calc(env(safe-area-inset-top) + 2px), 4px);
   }
 
   .session-hero {
