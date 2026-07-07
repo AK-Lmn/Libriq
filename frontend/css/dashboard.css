@@ -1174,9 +1174,83 @@ html[data-theme="dark"] #dashboardPage .dashboard-goal-header::before {
 }
 
 @media (max-width: 520px) {
+  #dashboardPage {
+    overflow-x: clip;
+  }
+
   #dashboardPage.dashboard-page {
     padding-left: var(--space-4);
     padding-right: var(--space-4);
+    padding-top: var(--space-3);
+  }
+
+  #dashboardPage .dashboard-topbar {
+    margin-bottom: var(--space-4);
+  }
+
+  #dashboardPage .dashboard-sync {
+    gap: var(--space-1);
+    font-size: var(--text-xs);
+    line-height: 1.2;
+  }
+
+  #dashboardPage .dashboard-sync-dot {
+    width: 7px;
+    height: 7px;
+    box-shadow: 0 0 0 4px rgba(107, 170, 117, 0.12);
+  }
+
+  #dashboardPage .dashboard-actions {
+    width: 100%;
+  }
+
+  #dashboardPage .dashboard-add-book {
+    width: 100%;
+    min-height: 40px;
+    padding: 0 var(--space-4);
+    border-radius: 12px;
+    font-size: var(--text-sm);
+  }
+
+  #dashboardPage .dashboard-hero-shell {
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+  }
+
+  #dashboardPage .greeting-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+  }
+
+  #dashboardPage .greeting-title {
+    font-size: clamp(1.7rem, 7.5vw, 2.25rem);
+    line-height: 0.98;
+  }
+
+  #dashboardPage .greeting-subtitle {
+    font-size: var(--text-sm);
+    line-height: var(--leading-relaxed);
+  }
+
+  #dashboardPage .dashboard-micro-stats {
+    gap: var(--space-3);
+  }
+
+  #dashboardPage .dashboard-mini-card {
+    border-radius: 18px;
+    padding: var(--space-3) var(--space-4);
+  }
+
+  #dashboardPage .dashboard-mini-label {
+    margin-bottom: var(--space-1);
+  }
+
+  #dashboardPage .dashboard-mini-value {
+    font-size: clamp(1.05rem, 4.6vw, 1.45rem);
+  }
+
+  #dashboardPage .dashboard-layout {
+    gap: var(--space-4);
   }
 
   #dashboardPage .dashboard-panel,
@@ -1185,13 +1259,147 @@ html[data-theme="dark"] #dashboardPage .dashboard-goal-header::before {
     border-radius: 20px;
   }
 
+  #dashboardPage .dashboard-section-header {
+    margin-bottom: var(--space-3);
+  }
+
   #dashboardPage .dashboard-micro-stats,
   #dashboardPage .dashboard-compact-grid,
   #dashboardPage .dashboard-recent-row {
     grid-template-columns: 1fr;
   }
 
+  #dashboardPage .dashboard-hero-card {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  #dashboardPage .dashboard-hero-cover .book-cover {
+    aspect-ratio: 4 / 5;
+    max-height: 260px;
+    border-radius: 18px;
+  }
+
+  #dashboardPage .dashboard-pill {
+    padding: 5px 10px;
+  }
+
   #dashboardPage .dashboard-hero-title {
-    font-size: 2rem;
+    font-size: clamp(1.5rem, 7vw, 2rem);
+  }
+
+  #dashboardPage .dashboard-hero-author {
+    font-size: var(--text-sm);
+    margin-top: var(--space-2);
+  }
+
+  #dashboardPage .dashboard-progress-meta {
+    margin-top: var(--space-4);
+  }
+
+  #dashboardPage .dashboard-hero-quote {
+    margin-top: var(--space-4);
+    font-size: var(--text-sm);
+    line-height: 1.55;
+  }
+
+  #dashboardPage .dashboard-hero-actions {
+    margin-top: var(--space-4);
+    gap: var(--space-2);
+  }
+
+  #dashboardPage .dashboard-hero-actions .btn {
+    min-height: 40px;
+    padding: 0 var(--space-4);
+    font-size: var(--text-sm);
+  }
+
+  #dashboardPage .dashboard-hero-card-empty {
+    min-height: 0;
+  }
+
+  #dashboardPage .dashboard-recent-row {
+    gap: var(--space-3);
+  }
+
+  #dashboardPage .dashboard-recent-card .book-cover {
+    border-radius: 16px;
+  }
+
+  #dashboardPage .dashboard-compact-card {
+    padding: var(--space-3);
+    border-radius: 16px;
+  }
+
+  #dashboardPage .dashboard-compact-card strong {
+    font-size: 1.35rem;
+  }
+
+  #dashboardPage .dashboard-quick-note {
+    padding: var(--space-3);
+    border-radius: 16px;
+  }
+
+  #dashboardPage .dashboard-quick-note p {
+    font-size: 1.05rem;
+    line-height: 1.45;
+  }
+
+  #dashboardPage .dashboard-quick-meta {
+    margin: var(--space-3) 0;
+    gap: var(--space-1);
+    font-size: var(--text-xs);
+  }
+
+  #dashboardPage .dashboard-note-button {
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 390px) {
+  #dashboardPage.dashboard-page {
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
+  }
+
+  #dashboardPage .dashboard-add-book {
+    min-height: 38px;
+  }
+
+  #dashboardPage .dashboard-mini-card {
+    padding: var(--space-3);
+  }
+
+  #dashboardPage .dashboard-hero-cover .book-cover {
+    max-height: 240px;
+  }
+
+  #dashboardPage .dashboard-hero-actions .btn,
+  #dashboardPage .dashboard-note-button {
+    min-height: 38px;
+  }
+}
+
+@media (max-width: 360px) {
+  #dashboardPage.dashboard-page {
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
+    padding-top: calc(var(--space-2) + env(safe-area-inset-top));
+  }
+
+  #dashboardPage .greeting-title {
+    font-size: clamp(1.55rem, 7.2vw, 1.9rem);
+  }
+
+  #dashboardPage .dashboard-hero-cover .book-cover {
+    max-height: 220px;
+  }
+
+  #dashboardPage .dashboard-hero-quote {
+    font-size: 0.95rem;
+  }
+
+  #dashboardPage .dashboard-compact-card strong {
+    font-size: 1.25rem;
   }
 }
