@@ -685,7 +685,8 @@ html:not([data-theme="dark"]) .help-intro-icon {
 }
 
 .recommendations-header {
-  align-items: end;
+  align-items: flex-end;
+  margin-bottom: var(--space-5);
 }
 
 .recommendations-heading {
@@ -693,12 +694,14 @@ html:not([data-theme="dark"]) .help-intro-icon {
 }
 
 .recommendations-intro {
-  margin-top: var(--space-4);
+  margin-top: var(--space-3);
   padding: var(--space-5);
-  background: linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+  background:
+    radial-gradient(circle at top right, rgba(99, 102, 241, 0.06), transparent 28%),
+    linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: 24px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
 }
 
 .recommendations-intro-copy {
@@ -713,7 +716,7 @@ html:not([data-theme="dark"]) .help-intro-icon {
   font-weight: var(--weight-semi);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-accent);
+  color: var(--text-dim);
 }
 
 .recommendations-intro-title {
@@ -731,14 +734,16 @@ html:not([data-theme="dark"]) .help-intro-icon {
 }
 
 html:not([data-theme="dark"]) .recommendations-intro {
-  background: linear-gradient(180deg, #fffefb 0%, #f5efe7 100%);
-  border-color: rgba(193, 156, 88, 0.22);
+  background:
+    radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent 28%),
+    linear-gradient(180deg, #fffefb 0%, #f5f2ec 100%);
+  border-color: rgba(148, 163, 184, 0.22);
 }
 
 html:not([data-theme="dark"]) .recommendation-group,
 html:not([data-theme="dark"]) .recommendation-card,
 html:not([data-theme="dark"]) .recommendations-empty-state {
-  background: linear-gradient(180deg, #fffefb 0%, #f6f0e8 100%);
+  background: linear-gradient(180deg, #fffefb 0%, #f6f2ea 100%);
 }
 
 .recommendations-groups {
@@ -751,10 +756,12 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   padding: var(--space-5);
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-sm);
+  background:
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.05), transparent 30%),
+    linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: 24px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
 }
 
 .recommendation-group-single {
@@ -766,8 +773,8 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   position: absolute;
   inset: 0 auto 0 0;
   width: 4px;
-  background: var(--accent);
-  opacity: 0.55;
+  background: linear-gradient(180deg, transparent, rgba(99, 102, 241, 0.9), transparent);
+  opacity: 0.4;
 }
 
 .recommendation-group-heading {
@@ -805,9 +812,12 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   align-items: start;
   min-height: 118px;
   padding: var(--space-4);
-  background: linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)),
+    var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  border-radius: 20px;
+  box-shadow: var(--shadow-xs);
   text-align: left;
   transition: border-color var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out);
 }
@@ -815,7 +825,7 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
 .recommendation-card:hover {
   border-color: var(--border-default);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
 }
 
 .recommendation-card:not(:disabled):hover .recommendation-card-title {
@@ -835,7 +845,7 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
 .recommendation-card .book-cover {
   width: 64px;
   height: 92px;
-  border-radius: var(--radius-sm);
+  border-radius: 14px;
   box-shadow: var(--shadow-xs);
 }
 
@@ -849,7 +859,7 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
 
 .recommendation-card-reason {
   font-size: var(--text-xs);
-  color: var(--text-accent);
+  color: var(--text-dim);
   font-weight: var(--weight-medium);
 }
 
@@ -889,10 +899,12 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   text-align: left;
   padding: var(--space-6);
   max-width: 760px;
-  background: linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+  background:
+    radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent 32%),
+    linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: 24px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
 }
 
 .recommendations-empty-actions {
@@ -912,6 +924,7 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   margin-top: var(--space-3);
   font-size: var(--text-sm);
   color: var(--text-dim);
+  max-width: 760px;
 }
 
 @media (max-width: 430px) {
@@ -972,11 +985,6 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   #recommendationsPage .recommendations-empty-state {
     padding: var(--space-4);
     border-radius: 20px;
-    background:
-      radial-gradient(circle at top right, rgba(59, 130, 246, 0.06), transparent 32%),
-      linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
-    border-color: var(--border-subtle);
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
   }
 
   #recommendationsPage .recommendation-group .goal-header {
@@ -986,8 +994,8 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
 
   #recommendationsPage .recommendation-group::before {
     width: 3px;
-    background: linear-gradient(180deg, transparent, var(--accent), transparent);
-    opacity: 0.35;
+    background: linear-gradient(180deg, transparent, rgba(99, 102, 241, 0.9), transparent);
+    opacity: 0.3;
   }
 
   #recommendationsPage .recommendation-group-heading {
@@ -1004,11 +1012,6 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
     min-height: 92px;
     padding: var(--space-3);
     border-radius: 18px;
-    background:
-      linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)),
-      var(--bg-surface);
-    border-color: var(--border-subtle);
-    box-shadow: var(--shadow-xs);
   }
 
   #recommendationsPage .recommendation-card-cover {
@@ -1028,7 +1031,7 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   #recommendationsPage .recommendation-card-reason {
     font-size: 10px;
     line-height: 1.2;
-    color: var(--text-accent);
+    color: var(--text-dim);
   }
 
   #recommendationsPage .recommendation-card-title {
