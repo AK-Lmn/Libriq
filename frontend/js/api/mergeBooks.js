@@ -14,6 +14,16 @@
    ============================================ */
 
 const MergeBooks = (() => {
+  const Identity = window.BookIdentity || globalThis.BookIdentity || {
+    isSameBook: (left, right) => {
+      const clean = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+      const leftIsbn = clean(left?.isbn);
+      const rightIsbn = clean(right?.isbn);
+      if (leftIsbn && rightIsbn && leftIsbn === rightIsbn) return true;
+      return clean(left?.title) === clean(right?.title) && clean(left?.author) === clean(right?.author);
+    },
+    buildSourceBadgeData: () => ({ sourceIds: {}, sourceBadges: [], sources: [] }),
+  };
 
   /**
    * Merge two result arrays into one deduplicated list.
@@ -63,31 +73,7 @@ const MergeBooks = (() => {
    * Match strategy: ISBN first, then title+author similarity.
    */
   function _findMatch(list, candidate) {
-    // 1. ISBN match (most reliable)
-    if (candidate.isbn) {
-      const idx = list.findIndex(b => b.isbn && b.isbn === candidate.isbn);
-      if (idx !== -1) return idx;
-    }
-
-    // 2. Normalised title + author match
-    const candKey = _matchKey(candidate);
-    return list.findIndex(b => _matchKey(b) === candKey);
-  }
-
-  /**
-   * Produce a normalised string key for fuzzy deduplication.
-   * Lowercased, punctuation removed, whitespace collapsed.
-   */
-  function _matchKey(book) {
-    const clean = str => (str || '')
-      .toLowerCase()
-      .replace(/[^a-z0-9 ]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    // Use only the first author word to handle "Last, First" vs "First Last"
-    const authorWord = clean(book.author).split(' ')[0];
-    return `${clean(book.title)}|${authorWord}`;
+    return list.findIndex(book => Identity.isSameBook(book, candidate));
   }
 
   /**
@@ -95,6 +81,19 @@ const MergeBooks = (() => {
    * OL values win for all structural fields; GB fills gaps.
    */
   function _enrich(olBook, gbBook) {
+    const olBadges = Identity.buildSourceBadgeData(olBook);
+    const gbBadges = Identity.buildSourceBadgeData(gbBook);
+    const sourceBadgeSet = new Set([...(olBadges.sourceBadges || []), ...(gbBadges.sourceBadges || [])]);
+    const sourceIdMap = {
+      ...(olBook.sourceIds || {}),
+      ...(gbBook.sourceIds || {}),
+      ...olBadges.sourceIds,
+      ...gbBadges.sourceIds,
+    };
+    const identifiers = [
+      ...(Array.isArray(olBook.identifiers) ? olBook.identifiers : []),
+      ...(Array.isArray(gbBook.identifiers) ? gbBook.identifiers : []),
+    ].filter(Boolean);
     return {
       // ── OL wins unconditionally ────────────
       title:         olBook.title,
@@ -117,6 +116,10 @@ const MergeBooks = (() => {
       ratingsCount:  olBook.ratingsCount ?? gbBook.ratingsCount,
       previewLink:   olBook.previewLink  || gbBook.previewLink,
       googleBooksId: gbBook.googleBooksId || olBook.googleBooksId,
+      sourceIds: sourceIdMap,
+      identifiers: identifiers,
+      sourceBadges: Array.from(sourceBadgeSet),
+      sources: Array.from(sourceBadgeSet),
 
       // Cover: prefer OL large if it exists, else GB (already https)
       coverUrl: olBook.coverUrl || gbBook.coverUrl,

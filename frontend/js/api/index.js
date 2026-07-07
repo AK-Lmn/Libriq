@@ -18,6 +18,12 @@
    ============================================ */
 
 const BookAPI = (() => {
+  window.LibriqApiMeta = window.LibriqApiMeta || Object.freeze({
+    appName: 'LibriQ',
+    appVersion: '4.6',
+    contactEmail: 'klamano23@gmail.com',
+  });
+
   let _lastSearchMeta = {
     query: '',
     fromCache: false,

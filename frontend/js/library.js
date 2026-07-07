@@ -4,6 +4,10 @@
    ============================================ */
 
 const Library = (() => {
+  const Identity = window.BookIdentity || globalThis.BookIdentity || {
+    getSourceLabels: () => [],
+    normalizeSource: value => String(value || '').toLowerCase().trim(),
+  };
 
   function showAddModal(bookData, options = {}) {
     const isManual = options.manual === true;
@@ -186,6 +190,21 @@ const Library = (() => {
     if (gaps.includes('cover')) return { label: 'Missing cover', className: 'missing-cover' };
     if (gaps.includes('description')) return { label: 'No description yet', className: 'missing-description' };
     return { label: 'Missing details', className: 'missing-details' };
+  }
+
+  function _getSourceLabels(book) {
+    const labels = Identity.getSourceLabels(book);
+    if (labels.length > 0) return labels;
+    const fallback = [];
+    if (book?.source && book.source !== 'api') {
+      const normalized = Identity.normalizeSource(book.source);
+      const sourceLabelMap = {
+        openlibrary: 'Open Library',
+        google: 'Google Books',
+      };
+      if (sourceLabelMap[normalized]) fallback.push(sourceLabelMap[normalized]);
+    }
+    return fallback;
   }
 
   function submitAddBook(form, bookData) {
@@ -476,8 +495,14 @@ const Library = (() => {
     const current = Storage.getBookById(bookId);
     if (!current) return { status: 'error' };
 
-    const candidate = await _fetchMetadataCandidate(current);
+    let candidate = await _fetchMetadataCandidate(current);
     if (!candidate) return { status: 'no-new' };
+    if (candidate?.source === 'openlibrary' && typeof OpenLibraryAPI.enrichBook === 'function') {
+      candidate = await OpenLibraryAPI.enrichBook(candidate);
+    }
+    if (typeof InternetArchiveAPI?.enrichBookLinks === 'function') {
+      candidate = await InternetArchiveAPI.enrichBookLinks({ ...current, ...candidate });
+    }
 
     const updates = _buildMetadataUpdates(current, candidate);
     if (Object.keys(updates).length === 0) return { status: 'no-new' };
@@ -517,6 +542,57 @@ const Library = (() => {
       ? book.tags.map(tag => `<span class="badge badge-accent">${Utils.sanitize(tag)}</span>`).join('')
       : '';
     const metadataQuality = _getMetadataQuality(book);
+    const subjectList = Array.isArray(book?.subjects) && book.subjects.length > 0
+      ? book.subjects
+      : Array.isArray(book?.genres) ? book.genres : [];
+    const subjectBadges = subjectList.slice(0, 5)
+      .map(subject => `<span class="badge badge-accent">${Utils.sanitize(subject)}</span>`)
+      .join('');
+    const archiveLinks = Array.from(new Set((Array.isArray(book.readableSourceLinks) ? book.readableSourceLinks : [])
+      .filter(link => String(link || '').includes('archive.org'))));
+    const archiveUrl = book.archiveUrl || archiveLinks[0] || null;
+    const sourceLabels = (() => {
+      const identity = window.BookIdentity || globalThis.BookIdentity || {
+        getSourceLabels: () => [],
+        normalizeSource: value => String(value || '').toLowerCase().trim(),
+      };
+      const labels = identity.getSourceLabels(book);
+      if (labels.length > 0) return labels;
+      if (archiveUrl) return ['Internet Archive'];
+      if (book?.source && book.source !== 'api') {
+        const normalized = identity.normalizeSource(book.source);
+        const sourceLabelMap = {
+          openlibrary: 'Open Library',
+          google: 'Google Books',
+        };
+        return sourceLabelMap[normalized] ? [sourceLabelMap[normalized]] : [];
+      }
+      return [];
+    })();
+    const sourceBadges = sourceLabels.length
+      ? `<div class="book-details-source-badges">${sourceLabels.map(label => `<span class="badge badge-accent">${Utils.sanitize(label)}</span>`).join('')}</div>`
+      : '';
+    const sourceMeta = sourceLabels.length
+      ? `<div class="book-details-meta-row">
+              <dt>Sources</dt><dd>${sourceLabels.map(label => Utils.sanitize(label)).join(', ')}</dd>
+            </div>`
+      : '';
+    const archiveLinkBlock = archiveUrl
+      ? `
+      <div class="book-details-notes" id="bookArchiveLinksSection">
+        <h3 class="book-details-section-title">Read / Archive</h3>
+        <div class="book-details-link-list">
+          <a class="btn btn-secondary btn-sm" href="${Utils.sanitize(archiveUrl)}" target="_blank" rel="noopener noreferrer">
+            <i class="ph ph-archive"></i>
+            Read on Internet Archive
+          </a>
+          ${book.readableSourceLinks?.some(link => String(link || '').includes('archive.org')) ? `
+            <a class="btn btn-ghost btn-sm" href="${Utils.sanitize(archiveUrl)}" target="_blank" rel="noopener noreferrer">
+              Archive link
+            </a>` : ''}
+        </div>
+      </div>`
+      : '';
 
     body.innerHTML = `
       <div class="book-details-hero">
@@ -532,6 +608,8 @@ const Library = (() => {
             <span class="badge badge-metadata badge-metadata-${metadataQuality.className}">${metadataQuality.label}</span>
             ${genreBadges}
           </div>
+          ${sourceBadges}
+          ${subjectBadges ? `<div class="book-details-source-badges">${subjectBadges}</div>` : ''}
 
           ${shelfBadges ? `
           <div class="book-details-shelves">
@@ -566,6 +644,7 @@ const Library = (() => {
             ${book.dateFinished ? `<div class="book-details-meta-row">
               <dt>Finished</dt><dd>${Utils.formatDate(book.dateFinished)}</dd>
             </div>` : ''}
+            ${sourceMeta}
           </dl>
         </div>
       </div>
@@ -588,6 +667,8 @@ const Library = (() => {
         <h3 class="book-details-section-title">About this book</h3>
         <p class="book-details-desc-text">${Utils.sanitize(synopsis)}</p>
       </div>
+
+      ${archiveLinkBlock}
 
       <div class="book-details-notes" id="bookShelvesSection">
         <h3 class="book-details-section-title">Shelves</h3>
@@ -1017,7 +1098,7 @@ const Library = (() => {
 
   function _buildMetadataUpdates(current, candidate) {
     const updates = {};
-    const fields = ['description', 'pageCount', 'publisher', 'publishYear', 'coverUrl', 'genres', 'language', 'isbn', 'googleBooksId', 'openLibraryId'];
+    const fields = ['description', 'pageCount', 'publisher', 'publishYear', 'coverUrl', 'genres', 'language', 'isbn', 'googleBooksId', 'openLibraryId', 'gutendexId', 'gutenbergId', 'internetArchiveId', 'internetArchiveIds', 'archiveUrl', 'readableSourceLinks'];
 
     fields.forEach((field) => {
       const currentValue = current[field];

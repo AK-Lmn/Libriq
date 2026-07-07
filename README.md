@@ -2,9 +2,11 @@
 
 **LibriQ** is a cloud-first personal book-tracking web app designed to help readers organize their library, track reading progress, rate books, save favorites, write private notes, refresh book metadata, and view reading statistics in one calm and focused workspace.
 
-The app is built with **HTML, CSS, and Vanilla JavaScript**, with book data powered by **Open Library** and **Google Books**.
+The app is built with **HTML, CSS, and Vanilla JavaScript**, with book data powered by **Google Books** and **Open Library**.
 
 LibriQ now centers on signed-in account use with Google sign-in and email/password sign-in. When account services are unavailable, a fallback offline path can appear so the app remains usable on the current device. Saved library data, reading progress, ratings, favorites, and private notes are stored locally and can be backed up or synced through the signed-in account flow, with safer manual cloud restore previews, manual cloud merge previews, automatic Account Sync for signed-in devices, Sync Health diagnostics, and optional JSON export/import for manual safety copies.
+
+LibriQ 4.6 adds deeper metadata identity handling, subject-backed discovery, public-domain classics discovery, and Internet Archive readable/archive links without changing the normal search provider model.
 
 LibriQ also uses basic Google Analytics page-view tracking for anonymous traffic measurement only.
 
@@ -35,6 +37,9 @@ With LibriQ, users can:
 * Open the Help & Guide Center for app walkthroughs
 * Refine online searches with advanced filters
 * Discover local recommendations from saved library data
+* Hydrate subject-backed discovery rails from Open Library
+* Browse free classics discovery from Gutendex / Project Gutenberg
+* Open readable/archive links from Internet Archive when available
 * Read update highlights in the What's New modal
 * Use the PWA shell and app icons for offline-friendly access
 
@@ -42,16 +47,16 @@ The app is designed to feel like a focused digital reading space instead of a pl
 
 ---
 
-## What's New in v4.5.2
+## What's New in v4.6.0
 
-* Full Studio polish pass across Dashboard, Library, Book Details, Status pages, Statistics, Activity, Recommendations, Settings, and the guide screens
-* Cloud-first auth clarity with Google sign-in, email/password sign-in, and a fallback offline path only when account services are unavailable
-* Add Book, Book Details, modal, Settings, and destructive-action surfaces tuned for mobile and desktop
-* Recommendations visual redesign and light-mode polish
-* Statistics, Activity, Help & Guide, Profile, and Reading Goals visual alignment updates
-* Service worker stale-cache fix for local development
-* Strict destructive confirmations and account/data safety flows preserved
-* No Gemini recommendations and no v4.6 metadata expansion yet
+* Smarter book metadata identity and safer dedupe across ISBN, title, author, and source IDs
+* Source badges for Google Books, Open Library, Project Gutenberg, and Internet Archive
+* Open Library richer metadata scaffolding with works, editions, authors, subjects, and compact subject display in Book Details
+* Open Library subject-backed Discover rails that hydrate after local recommendations
+* Free Classics discovery from Gutendex / Project Gutenberg
+* Internet Archive readable/archive links only, with no change to main search behavior
+* Responsible API identity metadata prepared safely for future backend proxy use
+* Backward-compatible saved books with no destructive migration
 
 ## What's New in v4.2.0
 
@@ -122,7 +127,7 @@ A compact mobile layout that keeps the dashboard easy to scan on smaller screens
 
 ### Book Search
 
-LibriQ uses both **Open Library** and **Google Books** to search for book data.
+LibriQ uses both **Google Books** and **Open Library** to search for book data.
 
 Search features include:
 
@@ -133,6 +138,13 @@ Search features include:
 * Book covers, authors, page counts, genres, and descriptions when available
 * Add-to-library action from search results
 * Fallback handling when one source has limited data
+
+Discovery-only and link-only sources:
+
+* Open Library subjects power additional Discover rails
+* Gutendex / Project Gutenberg power a Free Classics Discover rail
+* Internet Archive provides readable/archive links only when metadata is available
+* Gutendex and Internet Archive do not replace Google Books or Open Library as the main search providers
 
 ### Manual Book Entry
 
@@ -242,6 +254,14 @@ It shows:
 In v3.0.2, the modal is delayed until after normal app entry so it no longer pops over the session picker or auth-loading state.
 
 In v4.0.0, the modal highlights the opt-in Realtime Sync Beta, the separate backup safety net, and conflict-safe behavior while keeping local export/import intact.
+
+### API Notes
+
+LibriQ's current public metadata usage does not require API keys for Open Library, Gutendex, or Internet Archive.
+
+Google Books search works best with a Google Books API key configured, and Firebase configuration is still required for auth and cloud sync.
+
+Gemini is not implemented yet.
 
 ---
 

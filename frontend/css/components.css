@@ -803,6 +803,24 @@ html:not([data-theme="dark"]) .recommendations-intro {
   margin-top: var(--space-5);
 }
 
+.recommendations-subject-discovery {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin-top: var(--space-5);
+}
+
+.recommendation-card-source-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.recommendation-card-source-badges .badge {
+  padding-inline: 8px;
+}
+
 .recommendation-group {
   padding: var(--space-5);
   position: relative;
@@ -950,6 +968,22 @@ html:not([data-theme="dark"]) .recommendations-intro {
   gap: var(--space-2);
   margin-top: var(--space-2);
   align-items: center;
+}
+
+.recommendations-subject-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.recommendations-subject-loading .spinner--inline {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+}
+
+.recommendations-subject-discovery .recommendations-helper-note {
+  max-width: 100%;
 }
 
 .recommendations-empty-state {
@@ -1136,6 +1170,11 @@ html:not([data-theme="dark"]) #recommendationsPage .recommendations-intro-meta .
     gap: var(--space-4);
   }
 
+  #recommendationsPage .recommendations-subject-discovery {
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+  }
+
   #recommendationsPage .recommendation-group,
   #recommendationsPage .recommendations-empty-state {
     padding: var(--space-4);
@@ -1199,6 +1238,15 @@ html:not([data-theme="dark"]) #recommendationsPage .recommendations-intro-meta .
   #recommendationsPage .recommendation-card-meta {
     margin-top: 4px;
     gap: 6px;
+  }
+
+  #recommendationsPage .recommendation-card-source-badges {
+    gap: 4px;
+    margin-top: 2px;
+  }
+
+  #recommendationsPage .recommendation-card-source-badges .badge {
+    padding-inline: 7px;
   }
 
   #recommendationsPage .recommendation-card-meta .badge {

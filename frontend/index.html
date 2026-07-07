@@ -289,8 +289,8 @@
     <div class="modal modal--centered whats-new-modal">
       <div class="modal-header">
         <div>
-          <h2 class="modal-title">What's New in LibriQ v4.5.2</h2>
-          <p class="whats-new-subtitle">A full Studio polish pass for the cloud-first LibriQ experience.</p>
+          <h2 class="modal-title">What's New in LibriQ v4.6.0</h2>
+          <p class="whats-new-subtitle">Smarter book metadata, better discovery, and safer source handling.</p>
         </div>
         <button class="modal-close" id="closeWhatsNew" aria-label="Close release notes">
           <i class="ph ph-x"></i>
@@ -299,20 +299,24 @@
       <div class="modal-body" id="whatsNewBody">
         <div class="whats-new-list">
           <section class="whats-new-item">
-            <div class="whats-new-item-title">Studio polish across the app</div>
-            <p>Desktop and mobile views now feel more consistent across Dashboard, Library, Book Details, Status pages, Statistics, Activity, Recommendations, Settings, and guides.</p>
+            <div class="whats-new-item-title">Better book metadata</div>
+            <p>Search results and saved books now carry richer identity signals so LibriQ can merge duplicate sources more safely.</p>
           </section>
           <section class="whats-new-item">
-            <div class="whats-new-item-title">Cloud-first account flow</div>
-            <p>Sign in with Google or email. Offline access appears only when account services are unavailable.</p>
+            <div class="whats-new-item-title">Source badges</div>
+            <p>Open Library, Google Books, Project Gutenberg, and Internet Archive badges make book origins easier to understand at a glance.</p>
           </section>
           <section class="whats-new-item">
-            <div class="whats-new-item-title">Safer account and data controls</div>
-            <p>Delete library data, delete account, backups, sync controls, and diagnostics remain clearly separated with strict confirmations.</p>
+            <div class="whats-new-item-title">Discover rails</div>
+            <p>Recommendations now use Open Library subjects and a free classics rail to surface more relevant books after local content loads.</p>
+          </section>
+          <section class="whats-new-item">
+            <div class="whats-new-item-title">Read and archive links</div>
+            <p>When available, Internet Archive links appear in Book Details without changing the normal search experience.</p>
           </section>
         </div>
         <div class="whats-new-note">
-          No AI recommendations or expanded metadata sources yet. Those are planned for later roadmap versions.
+          This release stays backward-compatible with older saved books and keeps search, sync, and library behavior intact.
         </div>
       </div>
       <div class="modal-footer whats-new-footer">
@@ -389,8 +393,11 @@
     }
   </script>
   <script type="module" src="js/firebase-client.js"></script>
+  <script src="js/api/bookIdentity.js"></script>
   <script src="js/api/normalizeBook.js"></script>
   <script src="js/api/openLibrary.js"></script>
+  <script src="js/api/gutendex.js"></script>
+  <script src="js/api/internetArchive.js"></script>
   <script src="js/api/googleBooks.js"></script>
   <script src="js/api/mergeBooks.js"></script>
   <script src="js/api/cache.js"></script>

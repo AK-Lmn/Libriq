@@ -79,6 +79,12 @@ function createBook(data) {
     source: data.source || 'api',
     googleBooksId: data.googleBooksId || null,
     openLibraryId: data.openLibraryId || null,
+    gutendexId: data.gutendexId || null,
+    gutenbergId: data.gutenbergId || null,
+    internetArchiveId: data.internetArchiveId || null,
+    internetArchiveIds: Array.isArray(data.internetArchiveIds) ? data.internetArchiveIds : [],
+    archiveUrl: data.archiveUrl || null,
+    readableSourceLinks: Array.isArray(data.readableSourceLinks) ? data.readableSourceLinks : [],
   };
 }
 

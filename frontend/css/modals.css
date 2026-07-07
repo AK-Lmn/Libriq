@@ -938,6 +938,17 @@ html[data-theme="dark"] .whats-new-footer {
   background: linear-gradient(180deg, var(--surface-2), rgba(201,168,76,0.03));
 }
 
+#bookDetailsModal .book-details-link-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+#bookDetailsModal .book-details-link-list .btn {
+  min-height: 38px;
+}
+
 #bookDetailsModal .book-details-notes {
   padding: var(--space-5);
   border: 1px solid var(--border-hairline);
