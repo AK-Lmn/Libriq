@@ -12,14 +12,15 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: "What's New in LibriQ v4.4.0",
-      subtitle: 'LibriQ v4.4.0 adds account and library deletion with careful confirmation.',
+      title: "What's New in LibriQ v4.5.2",
+      subtitle: 'A full Studio polish pass for the cloud-first LibriQ experience.',
       sections: [
-        ['Delete Library Data', 'Signed-in users can remove their cloud library data and backup without deleting the Firebase Auth account.'],
-        ['Delete Account', 'Signed-in users can delete the account itself after a strict confirmation step.'],
-        ['Safer Cleanup', 'Pending sync is cleared, local cache cleanup stays UID-scoped, and destructive actions remain isolated from local-only mode.'],
+        ['Studio polish across the app', 'Desktop and mobile views now feel more consistent across Dashboard, Library, Book Details, Status pages, Statistics, Activity, Recommendations, Settings, and guides.'],
+        ['Cloud-first account flow', 'Sign in with Google or email. Offline access appears only when account services are unavailable.'],
+        ['Safer account and data controls', 'Delete library data, delete account, backups, sync controls, and diagnostics remain clearly separated with strict confirmations.'],
+        ['Better mobile experience', 'Mobile navigation, cards, modals, settings, and reading pages were tuned for phone-sized screens.'],
       ],
-      note: 'Delete actions use strict typed confirmations, Firestore library and backup cleanup, and keep sync and backup paths unchanged.',
+      note: 'No AI recommendations or expanded metadata sources yet. Those are planned for later roadmap versions.',
     },
   };
 

@@ -876,7 +876,7 @@ function renderSessionChoicePage() {
           <span class="session-eyebrow">Welcome to LibriQ</span>
           <h1 class="session-title">Sign in to LibriQ</h1>
           <p class="session-subtitle">
-            Continue with an account so your reading life can move with you. If the connection drops, local-only mode is still available.
+            Continue with an account so your reading life can move with you. If the connection drops, an offline fallback may appear so you can keep using the app on this device.
           </p>
 
           <div class="session-points">
@@ -2077,8 +2077,8 @@ function renderHelpPage() {
     },
     {
       icon: 'ph-hard-drives',
-      title: 'Understanding Local-First Storage',
-      body: 'LibriQ stores your data in localStorage on this device only. Nothing is tied to an account, and nothing is uploaded to a cloud service.',
+      title: 'Understanding storage and backups',
+      body: 'LibriQ is designed around account-backed reading data. When account services are unavailable, an offline fallback may appear so you can keep using the app on this device.',
     },
     {
       icon: 'ph-arrows-clockwise',
@@ -2094,8 +2094,8 @@ function renderHelpPage() {
 
   const faqItems = [
     ['Why did my books disappear?', 'They may be stored in a different browser or device. Local-first storage stays with the browser profile that saved it.'],
-    ['Can I use LibriQ offline?', 'Yes, after the app loads. Search needs the book APIs online, but your saved library remains available locally.'],
-    ['Will notes sync across devices?', 'No. Notes stay local unless you export or restore a backup.'],
+    ['Can I use LibriQ offline?', 'If account services are unavailable, LibriQ may show an offline fallback so you can keep reading on this device.'],
+    ['Will notes sync across devices?', 'Private notes stay on the saved library data path and should be treated as account-backed data when synced or backed up.'],
     ['What if search returns no results?', 'Try a different title spelling, search by author, or use Manual Entry to add the book by hand.'],
   ];
 
