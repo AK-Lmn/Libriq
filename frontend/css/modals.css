@@ -1166,6 +1166,12 @@ html[data-theme="dark"] .whats-new-footer {
     opacity: 0.9;
   }
 
+  #bookDetailsModal .book-details-progress,
+  #bookDetailsModal .book-details-description,
+  #bookDetailsModal .book-details-notes {
+    border-radius: 18px;
+  }
+
   #bookDetailsModal .book-details-notes-actions .btn {
     flex: 1 1 100%;
     width: 100%;
@@ -1207,6 +1213,21 @@ html[data-theme="dark"] .whats-new-footer {
     min-height: 38px;
     width: 100%;
   }
+
+  #bookDetailsModal .book-details-actions {
+    gap: var(--space-1);
+  }
+
+  #bookDetailsModal .book-details-actions .btn {
+    min-height: 40px;
+    padding-inline: var(--space-3);
+  }
+
+  #bookDetailsModal .book-details-actions .btn-ghost.btn-icon {
+    width: 40px;
+    min-width: 40px;
+    flex-basis: 40px;
+  }
 }
 
 @media (max-width: 360px) {
@@ -1237,6 +1258,48 @@ html[data-theme="dark"] .whats-new-footer {
     flex-basis: 40px;
     width: 40px;
     min-width: 40px;
+  }
+}
+
+@media (max-width: 390px) {
+  #bookDetailsModal .book-details-modal {
+    max-height: 95dvh;
+  }
+
+  #bookDetailsModal .book-details-hero {
+    gap: var(--space-2);
+  }
+
+  #bookDetailsModal .book-details-actions .btn:not(.btn-icon) {
+    min-height: 38px;
+  }
+
+  #bookDetailsModal .book-details-notes-actions .btn {
+    min-height: 36px;
+  }
+
+  #bookDetailsModal .book-details-progress,
+  #bookDetailsModal .book-details-description,
+  #bookDetailsModal .book-details-notes {
+    padding: 11px;
+  }
+}
+
+@media (max-width: 360px) {
+  #bookDetailsModal .book-details-modal {
+    max-height: 96dvh;
+  }
+
+  #bookDetailsModal .book-details-actions {
+    gap: 6px;
+  }
+
+  #bookDetailsModal .book-details-actions .btn:not(.btn-icon) {
+    min-height: 36px;
+  }
+
+  #bookDetailsModal .book-details-notes-textarea {
+    min-height: 104px;
   }
 }
 
