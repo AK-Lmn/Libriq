@@ -2483,23 +2483,23 @@ html[data-theme="dark"] #settingsPage .btn-danger {
 
 html[data-theme="dark"] #goalsPage .goal-widget,
 html[data-theme="dark"] #profilePage .goal-widget {
-  background: rgba(15, 23, 42, 0.88);
-  border-color: rgba(148, 163, 184, 0.14);
-  box-shadow: 0 20px 50px rgba(2, 6, 23, 0.28);
+  background: rgba(15, 20, 30, 0.92);
+  border-color: rgba(123, 157, 201, 0.12);
+  box-shadow: 0 20px 50px rgba(2, 6, 23, 0.26);
 }
 
 #goalsPage .form-input,
 #profilePage .form-input,
 #profilePage .form-textarea {
   background: var(--surface-3);
-  border-color: var(--border-soft);
+  border-color: rgba(123, 157, 201, 0.12);
   color: var(--text-strong);
 }
 
 #goalsPage .form-input::placeholder,
 #profilePage .form-input::placeholder,
 #profilePage .form-textarea::placeholder {
-  color: var(--text-dim);
+  color: var(--text-muted);
 }
 
 #goalsPage .btn-secondary {
@@ -2510,8 +2510,8 @@ html[data-theme="dark"] #profilePage .goal-widget {
 
 #goalsPage .btn-secondary:hover,
 #goalsPage .btn-secondary:focus-visible {
-  background: var(--gold-08);
-  border-color: var(--gold-18);
+  background: rgba(123, 157, 201, 0.10);
+  border-color: rgba(123, 157, 201, 0.20);
   color: var(--text-strong);
 }
 
@@ -2530,34 +2530,248 @@ html[data-theme="dark"] #profilePage .goal-widget {
 html[data-theme="dark"] #goalsPage .form-input,
 html[data-theme="dark"] #profilePage .form-input,
 html[data-theme="dark"] #profilePage .form-textarea {
-  background: rgba(15, 23, 42, 0.92);
-  border-color: rgba(148, 163, 184, 0.16);
+  background: rgba(15, 20, 30, 0.95);
+  border-color: rgba(123, 157, 201, 0.14);
   color: #f8fafc;
 }
 
 html[data-theme="dark"] #goalsPage .form-input::placeholder,
 html[data-theme="dark"] #profilePage .form-input::placeholder,
 html[data-theme="dark"] #profilePage .form-textarea::placeholder {
-  color: #94a3b8;
+  color: #8ea0bb;
 }
 
 html[data-theme="dark"] #goalsPage .btn-secondary {
-  background: rgba(15, 23, 42, 0.92);
-  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(15, 20, 30, 0.95);
+  border-color: rgba(123, 157, 201, 0.14);
   color: #e2e8f0;
 }
 
 html[data-theme="dark"] #goalsPage .btn-secondary:hover,
 html[data-theme="dark"] #goalsPage .btn-secondary:focus-visible {
-  background: rgba(30, 41, 59, 0.96);
-  border-color: rgba(99, 102, 241, 0.34);
+  background: rgba(28, 38, 54, 0.96);
+  border-color: rgba(123, 157, 201, 0.24);
   color: #f8fafc;
 }
 
 html[data-theme="dark"] #profilePage .stat-card {
-  background: rgba(15, 23, 42, 0.9);
-  border-color: rgba(148, 163, 184, 0.14);
+  background: rgba(15, 20, 30, 0.92);
+  border-color: rgba(123, 157, 201, 0.12);
   box-shadow: 0 16px 38px rgba(2, 6, 23, 0.24);
+}
+
+#profilePage .goal-header,
+#goalsPage .goal-header {
+  align-items: center;
+  margin-bottom: var(--space-3);
+  gap: var(--space-2);
+}
+
+#profilePage .goal-header::before,
+#goalsPage .goal-header::before {
+  background: linear-gradient(180deg, rgba(123, 157, 201, 0.7), rgba(123, 157, 201, 0.18));
+  opacity: 0.7;
+}
+
+#profilePage .goal-title,
+#goalsPage .goal-title {
+  letter-spacing: -0.01em;
+}
+
+#profilePage .goal-widget .goal-title,
+#goalsPage .goal-widget .goal-title {
+  font-size: 1rem;
+}
+
+#profilePage .goal-widget .stats-section-meta,
+#goalsPage .goal-widget .stats-section-meta {
+  color: var(--text-muted);
+}
+
+@media (max-width: 430px) {
+  #profilePage,
+  #goalsPage {
+    overflow-x: clip;
+  }
+
+  #profilePage .page-header,
+  #goalsPage .page-header {
+    margin-bottom: var(--space-4);
+  }
+
+  #profilePage .page-title,
+  #goalsPage .page-title {
+    font-size: clamp(2rem, 8.5vw, 2.5rem);
+    line-height: 0.98;
+  }
+
+  #profilePage .page-subtitle,
+  #goalsPage .page-subtitle {
+    font-size: var(--text-sm);
+    line-height: var(--leading-snug);
+    letter-spacing: 0.08em;
+  }
+
+  #profilePage .goal-widget,
+  #goalsPage .goal-widget {
+    padding: var(--space-4);
+    border-radius: 22px;
+  }
+
+  #profilePage .goal-header,
+  #goalsPage .goal-header {
+    margin-bottom: var(--space-2);
+  }
+
+  #profilePage .goal-widget .goal-title,
+  #goalsPage .goal-widget .goal-title {
+    font-size: 0.95rem;
+  }
+
+  #profilePage .goal-widget {
+    margin-bottom: var(--space-4) !important;
+  }
+
+  #profilePage .form-input,
+  #profilePage .form-textarea,
+  #goalsPage .form-input {
+    min-height: 44px;
+    font-size: 0.96rem;
+  }
+
+  #profilePage .form-textarea {
+    min-height: 132px;
+    resize: vertical;
+  }
+
+  #profilePage .profile-stats-card {
+    padding: var(--space-4);
+  }
+
+  #profilePage .profile-stats-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  #profilePage .profile-stats-row .stat-card {
+    min-height: 96px;
+    padding: var(--space-3);
+    border-radius: 18px;
+  }
+
+  #profilePage .profile-stats-row .stat-card .stat-card-value {
+    font-size: 1.15rem;
+  }
+
+  #profilePage .profile-stats-row .stat-card .stat-card-label {
+    font-size: 0.72rem;
+  }
+
+  #goalsPage .add-book-form {
+    gap: var(--space-3);
+  }
+
+  #goalsPage .form-group {
+    gap: 6px;
+  }
+
+  #goalsPage .form-label {
+    font-size: 0.76rem;
+    letter-spacing: 0.08em;
+  }
+
+  #goalsPage .goal-widget .btn-secondary {
+    min-height: 40px;
+    padding: 0 var(--space-3);
+  }
+
+  #goalsPage .goal-widget form > div[style*="display:flex"] {
+    flex-wrap: wrap;
+    gap: 6px !important;
+  }
+
+  #goalsPage .goal-widget form > div[style*="display:flex"] .btn {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 0;
+  }
+
+  #goalsPage .goal-widget .btn-primary {
+    width: 100%;
+    min-height: 44px;
+    margin-top: var(--space-3) !important;
+  }
+
+  #goalsPage .activity-list {
+    gap: 6px;
+  }
+
+  #goalsPage .activity-item {
+    padding: 10px 12px;
+    border-radius: 16px;
+    align-items: center;
+  }
+
+  #goalsPage .activity-subtitle {
+    font-size: 0.76rem;
+  }
+
+  #goalsPage .activity-time {
+    font-size: 0.9rem;
+    line-height: 1.25;
+    text-align: right;
+  }
+}
+
+@media (max-width: 390px) {
+  #profilePage .profile-stats-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #profilePage .profile-stats-row .stat-card {
+    min-height: 92px;
+    padding: 10px;
+  }
+
+  #profilePage .profile-stats-row .stat-card .stat-card-value {
+    font-size: 1.05rem;
+  }
+
+  #goalsPage .goal-widget form > div[style*="display:flex"] .btn {
+    flex-basis: 100%;
+  }
+
+  #goalsPage .activity-item {
+    padding: 9px 11px;
+  }
+}
+
+@media (max-width: 360px) {
+  #profilePage .page-subtitle,
+  #goalsPage .page-subtitle {
+    font-size: 0.9rem;
+  }
+
+  #profilePage .goal-widget,
+  #goalsPage .goal-widget {
+    padding: 14px;
+  }
+
+  #profilePage .profile-stats-row {
+    gap: 8px;
+  }
+
+  #profilePage .profile-stats-row .stat-card {
+    min-height: 88px;
+  }
+
+  #profilePage .profile-stats-row .stat-card .stat-card-label {
+    font-size: 0.68rem;
+  }
+
+  #goalsPage .activity-time {
+    font-size: 0.85rem;
+  }
 }
 
 @media (max-width: 980px) {
