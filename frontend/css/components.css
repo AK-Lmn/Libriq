@@ -472,10 +472,12 @@
   align-items: flex-start;
   padding: var(--space-5);
   margin-bottom: var(--space-6);
-  background: linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
+  background:
+    radial-gradient(circle at top right, rgba(123, 157, 201, 0.08), transparent 28%),
+    linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-sm);
+  border-radius: 24px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
 }
 
 .help-intro-icon {
@@ -485,9 +487,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--surface-2);
-  color: var(--text-accent);
-  border: 1px solid var(--border-soft);
+  background: rgba(123, 157, 201, 0.08);
+  color: var(--color-info);
+  border: 1px solid rgba(123, 157, 201, 0.16);
   flex-shrink: 0;
   font-size: 1.35rem;
 }
@@ -512,16 +514,18 @@
 
 .help-card {
   padding: var(--space-5);
-  background: linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
+  background:
+    radial-gradient(circle at top right, rgba(123, 157, 201, 0.05), transparent 28%),
+    linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  border-radius: 22px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
   transition: border-color var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out);
 }
 
 .help-card:hover {
-  border-color: var(--border-default);
-  box-shadow: var(--shadow-md);
+  border-color: rgba(123, 157, 201, 0.18);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
   transform: translateY(-1px);
 }
 
@@ -533,9 +537,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--surface-2);
-  color: var(--text-accent);
-  border: 1px solid var(--border-soft);
+  background: rgba(123, 157, 201, 0.08);
+  color: var(--color-info);
+  border: 1px solid rgba(123, 157, 201, 0.14);
   font-size: 1.15rem;
 }
 
@@ -600,15 +604,52 @@ html:not([data-theme="dark"]) .help-intro-card,
 html:not([data-theme="dark"]) .help-card,
 html:not([data-theme="dark"]) .help-faq-card,
 html:not([data-theme="dark"]) .help-next-step-card {
-  background: linear-gradient(180deg, #fffefb 0%, #f8f4ee 100%);
+  background:
+    radial-gradient(circle at top right, rgba(123, 157, 201, 0.08), transparent 28%),
+    linear-gradient(180deg, #fcfcfe 0%, #f1f4f8 100%);
 }
 
 html:not([data-theme="dark"]) .help-card-icon {
-  background: rgba(193, 156, 88, 0.12);
+  background: rgba(123, 157, 201, 0.12);
 }
 
 html:not([data-theme="dark"]) .help-intro-icon {
-  background: rgba(193, 156, 88, 0.14);
+  background: rgba(123, 157, 201, 0.14);
+}
+
+html:not([data-theme="dark"]) .help-faq-item {
+  border-bottom-color: rgba(123, 157, 201, 0.14);
+}
+
+html:not([data-theme="dark"]) .help-faq-question {
+  color: var(--text-strong);
+}
+
+html:not([data-theme="dark"]) .help-faq-answer,
+html:not([data-theme="dark"]) .help-card-body,
+html:not([data-theme="dark"]) .help-next-step-text {
+  color: var(--text-body);
+}
+
+html[data-theme="dark"] .help-intro-card,
+html[data-theme="dark"] .help-card,
+html[data-theme="dark"] .help-faq-card,
+html[data-theme="dark"] .help-next-step-card {
+  background:
+    radial-gradient(circle at top right, rgba(123, 157, 201, 0.08), transparent 28%),
+    linear-gradient(180deg, #111622 0%, #0f141d 100%);
+  border-color: rgba(123, 157, 201, 0.10);
+}
+
+html[data-theme="dark"] .help-intro-icon,
+html[data-theme="dark"] .help-card-icon {
+  background: rgba(123, 157, 201, 0.10);
+  color: #cfe1ff;
+  border-color: rgba(123, 157, 201, 0.16);
+}
+
+html[data-theme="dark"] .help-faq-item {
+  border-bottom-color: rgba(123, 157, 201, 0.12);
 }
 
 .help-next-step-actions {
@@ -996,6 +1037,40 @@ html:not([data-theme="dark"]) .recommendations-intro {
 #recommendationsPage .recommendations-section .stats-section-meta,
 #recommendationsPage .recommendations-section .recommendation-card-reason {
   color: var(--text-dim);
+}
+
+html:not([data-theme="dark"]) #recommendationsPage .recommendations-intro,
+html:not([data-theme="dark"]) #recommendationsPage .recommendation-group,
+html:not([data-theme="dark"]) #recommendationsPage .recommendations-empty-state {
+  background:
+    radial-gradient(circle at top right, rgba(123, 157, 201, 0.10), transparent 28%),
+    linear-gradient(180deg, #fcfcfe 0%, #f1f4f8 100%);
+  border-color: rgba(123, 157, 201, 0.16);
+}
+
+html:not([data-theme="dark"]) #recommendationsPage .recommendations-item {
+  background:
+    radial-gradient(circle at top right, rgba(123, 157, 201, 0.08), transparent 28%),
+    linear-gradient(180deg, #ffffff 0%, #f3f6fb 100%);
+  border-color: rgba(123, 157, 201, 0.16);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+html:not([data-theme="dark"]) #recommendationsPage .recommendation-card-title {
+  color: #172033;
+}
+
+html:not([data-theme="dark"]) #recommendationsPage .recommendation-card-author,
+html:not([data-theme="dark"]) #recommendationsPage .recommendation-card-reason,
+html:not([data-theme="dark"]) #recommendationsPage .recommendations-section .stats-section-meta {
+  color: #5e6b84;
+}
+
+html:not([data-theme="dark"]) #recommendationsPage .recommendation-card-meta .badge,
+html:not([data-theme="dark"]) #recommendationsPage .recommendations-intro-meta .badge {
+  background: rgba(123, 157, 201, 0.10);
+  border-color: rgba(123, 157, 201, 0.16);
+  color: #395684;
 }
 
 #recommendationsPage .goal-widget,
