@@ -921,7 +921,7 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   }
 
   #recommendationsPage .recommendations-header {
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-3);
   }
 
   #recommendationsPage .recommendations-heading {
@@ -935,21 +935,27 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
 
   #recommendationsPage .recommendations-intro {
     padding: var(--space-4);
-    border-radius: 18px;
-    margin-bottom: var(--space-4);
+    border-radius: 20px;
+    margin-top: var(--space-3);
+    margin-bottom: var(--space-3);
+    background:
+      radial-gradient(circle at top right, rgba(99, 102, 241, 0.08), transparent 30%),
+      linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
+    border-color: var(--border-subtle);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
   }
 
   #recommendationsPage .recommendations-intro-copy {
-    gap: var(--space-2);
+    gap: 10px;
   }
 
   #recommendationsPage .recommendations-intro-kicker {
     font-size: 0.7rem;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
   }
 
   #recommendationsPage .recommendations-intro-title {
-    font-size: var(--text-lg);
+    font-size: 1rem;
     line-height: var(--leading-snug);
   }
 
@@ -965,7 +971,12 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   #recommendationsPage .recommendation-group,
   #recommendationsPage .recommendations-empty-state {
     padding: var(--space-4);
-    border-radius: 18px;
+    border-radius: 20px;
+    background:
+      radial-gradient(circle at top right, rgba(59, 130, 246, 0.06), transparent 32%),
+      linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
+    border-color: var(--border-subtle);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
   }
 
   #recommendationsPage .recommendation-group .goal-header {
@@ -975,6 +986,8 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
 
   #recommendationsPage .recommendation-group::before {
     width: 3px;
+    background: linear-gradient(180deg, transparent, var(--accent), transparent);
+    opacity: 0.35;
   }
 
   #recommendationsPage .recommendation-group-heading {
@@ -988,9 +1001,14 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   #recommendationsPage .recommendation-card {
     grid-template-columns: 48px minmax(0, 1fr);
     gap: var(--space-3);
-    min-height: 96px;
+    min-height: 92px;
     padding: var(--space-3);
-    border-radius: 16px;
+    border-radius: 18px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)),
+      var(--bg-surface);
+    border-color: var(--border-subtle);
+    box-shadow: var(--shadow-xs);
   }
 
   #recommendationsPage .recommendation-card-cover {
@@ -1004,16 +1022,17 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   }
 
   #recommendationsPage .recommendation-card-body {
-    gap: 3px;
+    gap: 4px;
   }
 
   #recommendationsPage .recommendation-card-reason {
     font-size: 10px;
     line-height: 1.2;
+    color: var(--text-accent);
   }
 
   #recommendationsPage .recommendation-card-title {
-    font-size: 0.96rem;
+    font-size: 0.95rem;
     line-height: 1.28;
   }
 
@@ -1024,6 +1043,12 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   #recommendationsPage .recommendation-card-meta {
     margin-top: 4px;
     gap: 6px;
+  }
+
+  #recommendationsPage .recommendation-card-meta .badge {
+    min-height: 22px;
+    padding: 0 8px;
+    font-size: 10px;
   }
 
   #recommendationsPage .recommendations-empty-state {
@@ -1049,8 +1074,9 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   #recommendationsPage .recommendation-card {
     grid-template-columns: 44px minmax(0, 1fr);
     gap: 10px;
-    min-height: 92px;
+    min-height: 90px;
     padding: 10px;
+    border-radius: 17px;
   }
 
   #recommendationsPage .recommendation-card .book-cover {
@@ -1063,7 +1089,7 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   }
 
   #recommendationsPage .recommendation-card-author {
-    font-size: 0.8rem;
+    font-size: 0.79rem;
   }
 
   #recommendationsPage .recommendation-card-reason {
@@ -1081,7 +1107,7 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   }
 
   #recommendationsPage .recommendations-intro-title {
-    font-size: 0.98rem;
+    font-size: 0.96rem;
   }
 
   #recommendationsPage .recommendation-card {
@@ -1097,7 +1123,7 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
   }
 
   #recommendationsPage .recommendation-card-title {
-    font-size: 0.9rem;
+    font-size: 0.89rem;
   }
 
   #recommendationsPage .recommendation-card-author,
@@ -1108,6 +1134,10 @@ html:not([data-theme="dark"]) .recommendations-empty-state {
 
   #recommendationsPage .recommendation-card-meta .badge {
     font-size: 10px;
+  }
+
+  #recommendationsPage .recommendation-group .stats-section-meta {
+    font-size: 0.7rem;
   }
 }
 
