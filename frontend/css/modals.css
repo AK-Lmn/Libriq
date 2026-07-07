@@ -465,6 +465,35 @@ html[data-theme="dark"] .whats-new-footer {
   max-width: 520px;
 }
 
+.add-book-modal .modal-header,
+.add-book-modal .modal-footer {
+  background: var(--surface-3);
+  border-color: var(--border-subtle);
+}
+
+.add-book-modal .modal-header {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.add-book-modal .modal-footer {
+  border-top: 1px solid var(--border-subtle);
+  gap: var(--space-3);
+}
+
+.add-book-modal .modal-title {
+  color: var(--text-strong);
+}
+
+.add-book-modal .modal-close {
+  color: var(--text-secondary);
+}
+
+.add-book-modal .modal-close:hover,
+.add-book-modal .modal-close:focus-visible {
+  background: var(--gold-06);
+  color: var(--text-strong);
+}
+
 .book-preview {
   display: flex;
   gap: var(--space-4);
@@ -533,6 +562,22 @@ html[data-theme="dark"] .whats-new-footer {
 .status-option.selected {
   border-color: var(--accent);
   background: var(--accent-dim);
+}
+
+.add-book-modal .form-label {
+  color: var(--text-strong);
+}
+
+.add-book-modal .form-input,
+.add-book-modal .form-select,
+.add-book-modal textarea.form-input {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.add-book-modal .form-input::placeholder,
+.add-book-modal textarea.form-input::placeholder {
+  color: var(--text-tertiary);
 }
 
 .status-option i {
@@ -1848,6 +1893,26 @@ html[data-theme="dark"] .add-book-modal .modal-body {
     linear-gradient(180deg, #0f172a, #111827);
 }
 
+html[data-theme="dark"] .add-book-modal .modal-header,
+html[data-theme="dark"] .add-book-modal .modal-footer {
+  background: rgba(15, 23, 42, 0.96);
+  border-color: rgba(148, 163, 184, 0.14);
+}
+
+html[data-theme="dark"] .add-book-modal .modal-title {
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] .add-book-modal .modal-close {
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] .add-book-modal .modal-close:hover,
+html[data-theme="dark"] .add-book-modal .modal-close:focus-visible {
+  background: rgba(99, 102, 241, 0.14);
+  color: #f8fafc;
+}
+
 html[data-theme="dark"] .add-book-modal .book-preview {
   background: rgba(15, 23, 42, 0.88);
   border-color: rgba(148, 163, 184, 0.14);
@@ -1908,6 +1973,66 @@ html[data-theme="dark"] .add-book-modal .btn-ghost {
 html[data-theme="dark"] .add-book-modal .btn-ghost:hover,
 html[data-theme="dark"] .add-book-modal .btn-ghost:focus-visible {
   color: #f8fafc;
+}
+
+@media (max-width: 640px) {
+  .add-book-modal {
+    max-width: 100%;
+  }
+
+  .add-book-modal .modal-header,
+  .add-book-modal .modal-footer {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .add-book-modal .modal-body {
+    padding-top: var(--space-4);
+    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  }
+
+  .add-book-modal .book-preview {
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .add-book-modal .book-preview .book-cover {
+    width: 88px;
+    flex: 0 0 88px;
+  }
+
+  .add-book-modal .book-preview-title {
+    font-size: var(--text-base);
+  }
+
+  .add-book-modal .status-select-group {
+    grid-template-columns: 1fr;
+  }
+
+  .add-book-modal .status-option {
+    min-height: 72px;
+    align-items: flex-start;
+    justify-content: center;
+    text-align: left;
+    padding-inline: var(--space-4);
+    gap: 6px;
+  }
+
+  .add-book-modal .status-option i {
+    font-size: 1.15rem;
+  }
+
+  .add-book-modal .modal-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .add-book-modal .modal-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 html[data-theme="dark"] #bookDetailsModal .book-details-actions .btn-secondary {
