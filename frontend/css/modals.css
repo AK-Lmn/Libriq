@@ -1220,6 +1220,8 @@ html[data-theme="dark"] .whats-new-footer {
     gap: var(--space-2);
     align-items: stretch;
     justify-content: stretch;
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
   }
 
   #bookDetailsModal .book-details-actions .btn {
@@ -1243,11 +1245,12 @@ html[data-theme="dark"] .whats-new-footer {
   }
 
   #bookDetailsModal .book-details-actions .btn[data-details-action="icon"] {
-    justify-self: start;
+    grid-column: 1 / 2;
+    justify-self: stretch;
   }
 
   #bookDetailsModal .book-details-actions .btn[data-details-action="destructive"] {
-    grid-column: span 1;
+    grid-column: 2 / 3;
   }
 }
 
@@ -1329,10 +1332,7 @@ html[data-theme="dark"] .whats-new-footer {
   }
 
   #bookDetailsModal .book-details-actions .btn[data-details-action="icon"] {
-    flex-basis: 40px;
-    width: 40px;
-    min-width: 40px;
-    justify-self: center;
+    min-height: 36px;
   }
 
   #bookDetailsModal .book-details-notes-textarea {
