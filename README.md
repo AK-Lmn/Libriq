@@ -1,10 +1,10 @@
 # LibriQ
 
-**LibriQ** is a personal book-tracking web app designed to help readers organize their library, track reading progress, rate books, save favorites, write private notes, refresh book metadata, and view reading statistics in one calm and focused workspace.
+**LibriQ** is a cloud-first personal book-tracking web app designed to help readers organize their library, track reading progress, rate books, save favorites, write private notes, refresh book metadata, and view reading statistics in one calm and focused workspace.
 
 The app is built with **HTML, CSS, and Vanilla JavaScript**, with book data powered by **Open Library** and **Google Books**.
 
-LibriQ is currently focused on being a polished local-first reading tracker. Saved library data, reading progress, ratings, favorites, and private notes are stored in the browser using `localStorage`, with automatic cloud backup for signed-in users, safer manual cloud restore previews, manual cloud merge previews, automatic Account Sync for signed-in account-mode devices, Sync Health diagnostics, and optional JSON export/import for manual safety copies.
+LibriQ now centers on signed-in account use with Google sign-in and email/password sign-in. When account services are unavailable, a fallback offline path can appear so the app remains usable on the current device. Saved library data, reading progress, ratings, favorites, and private notes are stored locally and can be backed up or synced through the signed-in account flow, with safer manual cloud restore previews, manual cloud merge previews, automatic Account Sync for signed-in devices, Sync Health diagnostics, and optional JSON export/import for manual safety copies.
 
 LibriQ also uses basic Google Analytics page-view tracking for anonymous traffic measurement only.
 
@@ -30,7 +30,7 @@ With LibriQ, users can:
 * Refresh missing book metadata
 * View reading statistics and progress summaries
 * Export and import local library backups
-* Manually back up private library data to Firestore when signed in
+* Back up library data to Firestore when signed in
 * Manually restore a cloud backup later
 * Open the Help & Guide Center for app walkthroughs
 * Refine online searches with advanced filters
@@ -42,22 +42,22 @@ The app is designed to feel like a focused digital reading space instead of a pl
 
 ---
 
-## What's New in v4.4.0
+## What's New in v4.5.2
 
-* Delete library data removes the current signed-in user's cloud library and backup data
-* Delete account removes cloud library data, backup data, and then deletes the Firebase Auth account
-* Strict typed confirmations protect both destructive actions
-* Clear local cache moved under Advanced diagnostics
-* UID-scoped cache cleanup keeps account-owned local data isolated
-* Pending sync is cleared so deleted data does not re-upload
-* Firestore library and backup cleanup stay on the existing paths
-* Local-only/offline mode remains separate from signed-in account mode
+* Full Studio polish pass across Dashboard, Library, Book Details, Status pages, Statistics, Activity, Recommendations, Settings, and the guide screens
+* Cloud-first auth clarity with Google sign-in, email/password sign-in, and a fallback offline path only when account services are unavailable
+* Add Book, Book Details, modal, Settings, and destructive-action surfaces tuned for mobile and desktop
+* Recommendations visual redesign and light-mode polish
+* Statistics, Activity, Help & Guide, Profile, and Reading Goals visual alignment updates
+* Service worker stale-cache fix for local development
+* Strict destructive confirmations and account/data safety flows preserved
+* No Gemini recommendations and no v4.6 metadata expansion yet
 
 ## What's New in v4.2.0
 
 * LibriQ now opens as a cloud-first account flow with Google, email sign-in, and account creation
 * Email/password auth shows friendly errors for invalid email, wrong password, weak password, duplicate accounts, and network issues
-* Continue offline moved into the no-internet fallback modal with Retry and local-only offline entry
+* Continue offline moved into the no-internet fallback modal with Retry and fallback offline entry
 * Firestore sync paths, tombstone behavior, backup paths, and book data models remain unchanged
 
 ---
@@ -177,7 +177,7 @@ Cloud backup features include:
 
 * Automatic backup to Firestore after local library changes when signed in
 * Manual restore from the saved cloud backup
-* Continued local-only use when no account is signed in
+* Offline fallback remains available when account services are unavailable
 * JSON export/import still available as an optional manual backup path
 * Account Sync remains separate from backup, restore, and merge
 
@@ -196,7 +196,7 @@ The guide includes:
 * Progress and notes walkthroughs
 * Backup guidance
 * Manual cloud merge preview guidance
-* Local-first storage explanations
+* Account-backed storage explanations
 
 ---
 
@@ -389,7 +389,7 @@ The reading goal view can show:
 
 ### Theme and Responsive Design
 
-LibriQ supports both dark and light themes, while the main visual direction is optimized around a warm dark interface.
+LibriQ supports both dark and light themes, with a Studio-style visual direction that uses cooler surfaces, clearer hierarchy, and strong mobile layouts.
 
 The app is responsive across:
 
@@ -403,12 +403,12 @@ The interface includes mobile-friendly spacing, touch targets, cards, modals, an
 
 ## Design Direction
 
-LibriQ uses a calm, reading-first visual direction.
+LibriQ uses a calm, reading-first Studio direction.
 
 The design focuses on:
 
-* Warm dark surfaces
-* Gold accent colors
+* Cooler surface cards
+* Blue-tinted neutrals with restrained accent use
 * Elegant serif headings
 * Clean sans-serif interface text
 * Cover-forward book cards
@@ -630,7 +630,7 @@ This section tracks notable LibriQ updates. New version logs can be added here a
 
 * Automatic cloud backup still writes to `users/{uid}/backups/current`
 * Manual restore and merge remain separate from sync
-* Continue offline pauses sync and leaves local data working
+* Continue offline pauses sync while keeping the current device usable
 
 **Notes**
 
@@ -648,7 +648,7 @@ This section tracks notable LibriQ updates. New version logs can be added here a
 **Changed**
 
 * Google sign-in now shows friendlier popup, unauthorized-domain, and disallowed-useragent guidance
-* Continue offline stays available as the primary fallback in every session flow
+* Continue offline stays available as the fallback when account services are unavailable
 * The What's New modal now waits until the app has entered cleanly instead of interrupting the session picker
 
 **Notes**
@@ -706,7 +706,7 @@ This section tracks notable LibriQ updates. New version logs can be added here a
 **Notes**
 
 * No backend, account, sync, or new analytics behavior was added
-* The patch stays local-only and keeps the existing privacy model intact
+* The patch keeps the existing privacy model intact
 
 ### v2.17.0 - Yearly Reading Recap
 
@@ -969,7 +969,7 @@ This section tracks notable LibriQ updates. New version logs can be added here a
 * Manual Entry action in the search modal and no-results state
 * Manual Book Entry form with required title and author fields
 * Optional cover URL, page count, genre/category, description, published year, publisher, language, and reading status fields
-* Reliable local-only IDs for manually created books
+* Reliable IDs for manually created books
 * `source: "manual"` metadata for manually entered books
 
 **Changed**
@@ -986,7 +986,7 @@ This section tracks notable LibriQ updates. New version logs can be added here a
 
 **Added**
 
-* Private, local-only notes for each saved book
+* Private notes for each saved book
 * Notes textarea inside the Book Details modal
 * Save Note and Clear Note actions
 * Last updated timestamp for saved notes
