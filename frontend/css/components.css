@@ -2476,6 +2476,187 @@ html[data-theme="dark"] #settingsPage .btn-danger {
   background: rgba(127, 29, 29, 0.88);
 }
 
+#settingsPage .settings-header-card {
+  background:
+    radial-gradient(circle at top right, rgba(123, 157, 201, 0.10), transparent 35%),
+    linear-gradient(180deg, var(--bg-surface), var(--bg-elevated));
+}
+
+#settingsPage .settings-panel {
+  background:
+    radial-gradient(circle at top right, rgba(123, 157, 201, 0.05), transparent 34%),
+    linear-gradient(180deg, var(--bg-surface), var(--bg-elevated));
+}
+
+#settingsPage .settings-callout {
+  background: rgba(123, 157, 201, 0.06);
+  border-color: rgba(123, 157, 201, 0.14);
+}
+
+#settingsPage .settings-diagnostics summary,
+#settingsPage .settings-diagnostics .sync-health-list .activity-subtitle {
+  color: var(--text-body);
+}
+
+#settingsPage .settings-diagnostics .sync-health-list .activity-subtitle {
+  background: var(--bg-surface);
+}
+
+html[data-theme="dark"] #settingsPage .settings-callout {
+  border-color: rgba(123, 157, 201, 0.18);
+}
+
+@media (max-width: 430px) {
+  #settingsPage {
+    overflow-x: clip;
+    padding-bottom: var(--space-6);
+  }
+
+  #settingsPage .settings-header {
+    grid-template-columns: 1fr;
+    margin-bottom: var(--space-4);
+  }
+
+  #settingsPage .settings-heading {
+    gap: var(--space-1);
+  }
+
+  #settingsPage .page-title {
+    font-size: clamp(2rem, 8.5vw, 2.5rem);
+    line-height: 0.98;
+  }
+
+  #settingsPage .page-subtitle {
+    font-size: var(--text-sm);
+    line-height: var(--leading-snug);
+    letter-spacing: 0.08em;
+  }
+
+  #settingsPage .settings-header-card,
+  #settingsPage .settings-panel {
+    padding: var(--space-4);
+    border-radius: 22px;
+  }
+
+  #settingsPage .settings-grid {
+    gap: var(--space-4);
+  }
+
+  #settingsPage .settings-panel .goal-header {
+    margin-bottom: var(--space-3);
+  }
+
+  #settingsPage .settings-row {
+    padding: var(--space-3) 0;
+    gap: var(--space-2);
+  }
+
+  #settingsPage .settings-row-action,
+  #settingsPage .settings-row-danger {
+    align-items: flex-start;
+  }
+
+  #settingsPage .settings-row .activity-title {
+    font-size: 0.96rem;
+  }
+
+  #settingsPage .settings-row .activity-subtitle {
+    font-size: 0.82rem;
+    line-height: var(--leading-snug);
+  }
+
+  #settingsPage .settings-session-actions,
+  #settingsPage .settings-cloud-actions,
+  #settingsPage .settings-diagnostics-actions,
+  #settingsPage .settings-danger-actions {
+    width: 100%;
+  }
+
+  #settingsPage .settings-session-actions .btn,
+  #settingsPage .settings-cloud-actions .btn,
+  #settingsPage .settings-diagnostics-actions .btn,
+  #settingsPage .settings-danger-actions .btn {
+    min-height: 42px;
+  }
+
+  #settingsPage .settings-cloud-actions,
+  #settingsPage .settings-diagnostics-actions {
+    flex-direction: column;
+  }
+
+  #settingsPage .settings-cloud-actions .btn,
+  #settingsPage .settings-diagnostics-actions .btn,
+  #settingsPage .settings-session-actions .btn,
+  #settingsPage .settings-danger-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  #settingsPage .settings-danger-actions {
+    justify-content: stretch;
+  }
+
+  #settingsPage .settings-danger-actions .btn {
+    flex: 1 1 100%;
+  }
+
+  #settingsPage .settings-diagnostics {
+    padding: var(--space-3);
+    border-radius: 18px;
+  }
+
+  #settingsPage .settings-diagnostics .sync-health-list {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  #settingsPage .settings-diagnostics .sync-health-list .activity-subtitle {
+    padding: 10px 12px;
+    border-radius: 14px;
+  }
+
+  #settingsPage .settings-row-danger {
+    padding-top: var(--space-3);
+  }
+
+  #settingsPage .settings-callout {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 390px) {
+  #settingsPage .settings-header-card,
+  #settingsPage .settings-panel {
+    padding: 14px;
+  }
+
+  #settingsPage .settings-row .activity-title {
+    font-size: 0.93rem;
+  }
+
+  #settingsPage .settings-row .activity-subtitle {
+    font-size: 0.79rem;
+  }
+}
+
+@media (max-width: 360px) {
+  #settingsPage .page-subtitle {
+    font-size: 0.9rem;
+  }
+
+  #settingsPage .settings-panel-subtitle {
+    font-size: 0.82rem;
+  }
+
+  #settingsPage .settings-row .activity-title {
+    font-size: 0.9rem;
+  }
+
+  #settingsPage .settings-row .activity-subtitle {
+    font-size: 0.77rem;
+  }
+}
+
 #goalsPage .goal-widget,
 #profilePage .goal-widget {
   background: var(--bg-surface);

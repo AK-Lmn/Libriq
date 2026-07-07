@@ -2052,6 +2052,18 @@ html[data-theme="dark"] #bookDetailsModal .book-details-actions .btn-secondary:f
   padding-top: var(--space-5);
 }
 
+#dangerConfirmModal .modal,
+#dangerConfirmModal .modal-header,
+#dangerConfirmModal .modal-body,
+#dangerConfirmModal .modal-footer {
+  background: var(--bg-surface);
+}
+
+#dangerConfirmModal .modal-header,
+#dangerConfirmModal .modal-footer {
+  border-color: var(--border-subtle);
+}
+
 #dangerConfirmModal .form-field {
   margin-top: var(--space-4);
 }
@@ -2086,6 +2098,72 @@ html[data-theme="dark"] #bookDetailsModal .book-details-actions .btn-secondary:f
   color: #991B1B;
   border: 1px solid rgba(220, 38, 38, 0.14);
   line-height: var(--leading-loose);
+}
+
+html[data-theme="dark"] #dangerConfirmModal .modal,
+html[data-theme="dark"] #dangerConfirmModal .modal-header,
+html[data-theme="dark"] #dangerConfirmModal .modal-body,
+html[data-theme="dark"] #dangerConfirmModal .modal-footer {
+  background: rgba(15, 23, 42, 0.98);
+}
+
+html[data-theme="dark"] #dangerConfirmModal .modal-header,
+html[data-theme="dark"] #dangerConfirmModal .modal-footer {
+  border-color: rgba(148, 163, 184, 0.14);
+}
+
+html[data-theme="dark"] #dangerConfirmModal .modal-danger-panel {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(148, 163, 184, 0.14);
+}
+
+html[data-theme="dark"] #dangerConfirmModal .modal-danger-copy,
+html[data-theme="dark"] #dangerConfirmModal .modal-warning-note,
+html[data-theme="dark"] #dangerConfirmModal .form-field > span {
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] #dangerConfirmModal .form-input {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(148, 163, 184, 0.16);
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] #dangerConfirmModal .form-input::placeholder {
+  color: #94a3b8;
+}
+
+@media (max-width: 640px) {
+  #dangerConfirmModal .modal {
+    max-height: 92dvh;
+  }
+
+  #dangerConfirmModal .modal-header {
+    padding: var(--space-4);
+  }
+
+  #dangerConfirmModal .modal-body {
+    padding: var(--space-4);
+  }
+
+  #dangerConfirmModal .modal-footer {
+    padding: var(--space-3) var(--space-4) calc(var(--space-4) + env(safe-area-inset-bottom));
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  #dangerConfirmModal .modal-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  #dangerConfirmModal .form-field {
+    margin-top: var(--space-3);
+  }
+
+  #dangerConfirmModal .form-input {
+    min-height: 44px;
+  }
 }
 
 #searchModal .search-modal {
