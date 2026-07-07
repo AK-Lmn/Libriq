@@ -1178,6 +1178,13 @@ html[data-theme="dark"] #dashboardPage .dashboard-goal-header::before {
     overflow-x: clip;
   }
 
+  #dashboardPage .dashboard-section-header::before,
+  #dashboardPage .dashboard-goal-header::before {
+    width: 2px;
+    min-height: 20px;
+    opacity: 0.45;
+  }
+
   #dashboardPage.dashboard-page {
     padding-left: var(--space-4);
     padding-right: var(--space-4);
@@ -1206,8 +1213,8 @@ html[data-theme="dark"] #dashboardPage .dashboard-goal-header::before {
 
   #dashboardPage .dashboard-add-book {
     width: 100%;
-    min-height: 40px;
-    padding: 0 var(--space-4);
+    min-height: 38px;
+    padding: 0 var(--space-3);
     border-radius: 12px;
     font-size: var(--text-sm);
   }
@@ -1223,13 +1230,13 @@ html[data-theme="dark"] #dashboardPage .dashboard-goal-header::before {
   }
 
   #dashboardPage .greeting-title {
-    font-size: clamp(1.7rem, 7.5vw, 2.25rem);
+    font-size: clamp(1.45rem, 6.2vw, 1.95rem);
     line-height: 0.98;
   }
 
   #dashboardPage .greeting-subtitle {
-    font-size: var(--text-sm);
-    line-height: var(--leading-relaxed);
+    font-size: var(--text-xs);
+    line-height: var(--leading-normal);
   }
 
   #dashboardPage .dashboard-micro-stats {
@@ -1238,7 +1245,8 @@ html[data-theme="dark"] #dashboardPage .dashboard-goal-header::before {
 
   #dashboardPage .dashboard-mini-card {
     border-radius: 18px;
-    padding: var(--space-3) var(--space-4);
+    padding: 10px var(--space-3);
+    min-height: 72px;
   }
 
   #dashboardPage .dashboard-mini-label {
@@ -1246,7 +1254,7 @@ html[data-theme="dark"] #dashboardPage .dashboard-goal-header::before {
   }
 
   #dashboardPage .dashboard-mini-value {
-    font-size: clamp(1.05rem, 4.6vw, 1.45rem);
+    font-size: clamp(0.98rem, 4vw, 1.25rem);
   }
 
   #dashboardPage .dashboard-layout {
@@ -1271,47 +1279,49 @@ html[data-theme="dark"] #dashboardPage .dashboard-goal-header::before {
 
   #dashboardPage .dashboard-hero-card {
     grid-template-columns: 1fr;
-    gap: var(--space-4);
+    gap: var(--space-3);
   }
 
   #dashboardPage .dashboard-hero-cover .book-cover {
     aspect-ratio: 4 / 5;
-    max-height: 260px;
-    border-radius: 18px;
+    width: min(42vw, 120px);
+    max-height: 170px;
+    border-radius: 16px;
   }
 
   #dashboardPage .dashboard-pill {
-    padding: 5px 10px;
+    padding: 4px 9px;
   }
 
   #dashboardPage .dashboard-hero-title {
-    font-size: clamp(1.5rem, 7vw, 2rem);
+    font-size: clamp(1.18rem, 5.4vw, 1.55rem);
   }
 
   #dashboardPage .dashboard-hero-author {
-    font-size: var(--text-sm);
-    margin-top: var(--space-2);
+    font-size: 0.9rem;
+    margin-top: var(--space-1);
   }
 
   #dashboardPage .dashboard-progress-meta {
-    margin-top: var(--space-4);
+    margin-top: var(--space-3);
+    font-size: 0.65rem;
   }
 
   #dashboardPage .dashboard-hero-quote {
-    margin-top: var(--space-4);
-    font-size: var(--text-sm);
-    line-height: 1.55;
+    margin-top: var(--space-3);
+    font-size: 0.9rem;
+    line-height: 1.45;
   }
 
   #dashboardPage .dashboard-hero-actions {
-    margin-top: var(--space-4);
+    margin-top: var(--space-3);
     gap: var(--space-2);
   }
 
   #dashboardPage .dashboard-hero-actions .btn {
-    min-height: 40px;
-    padding: 0 var(--space-4);
-    font-size: var(--text-sm);
+    min-height: 38px;
+    padding: 0 var(--space-3);
+    font-size: 0.9rem;
   }
 
   #dashboardPage .dashboard-hero-card-empty {
@@ -1327,12 +1337,12 @@ html[data-theme="dark"] #dashboardPage .dashboard-goal-header::before {
   }
 
   #dashboardPage .dashboard-compact-card {
-    padding: var(--space-3);
+    padding: 10px var(--space-3);
     border-radius: 16px;
   }
 
   #dashboardPage .dashboard-compact-card strong {
-    font-size: 1.35rem;
+    font-size: 1.2rem;
   }
 
   #dashboardPage .dashboard-quick-note {
@@ -1352,7 +1362,7 @@ html[data-theme="dark"] #dashboardPage .dashboard-goal-header::before {
   }
 
   #dashboardPage .dashboard-note-button {
-    min-height: 40px;
+    min-height: 38px;
   }
 }
 
@@ -1363,20 +1373,21 @@ html[data-theme="dark"] #dashboardPage .dashboard-goal-header::before {
   }
 
   #dashboardPage .dashboard-add-book {
-    min-height: 38px;
+    min-height: 36px;
   }
 
   #dashboardPage .dashboard-mini-card {
-    padding: var(--space-3);
+    padding: 9px var(--space-3);
   }
 
   #dashboardPage .dashboard-hero-cover .book-cover {
-    max-height: 240px;
+    width: min(40vw, 112px);
+    max-height: 160px;
   }
 
   #dashboardPage .dashboard-hero-actions .btn,
   #dashboardPage .dashboard-note-button {
-    min-height: 38px;
+    min-height: 36px;
   }
 }
 
@@ -1388,18 +1399,19 @@ html[data-theme="dark"] #dashboardPage .dashboard-goal-header::before {
   }
 
   #dashboardPage .greeting-title {
-    font-size: clamp(1.55rem, 7.2vw, 1.9rem);
+    font-size: clamp(1.35rem, 6.6vw, 1.75rem);
   }
 
   #dashboardPage .dashboard-hero-cover .book-cover {
-    max-height: 220px;
+    width: min(38vw, 104px);
+    max-height: 148px;
   }
 
   #dashboardPage .dashboard-hero-quote {
-    font-size: 0.95rem;
+    font-size: 0.86rem;
   }
 
   #dashboardPage .dashboard-compact-card strong {
-    font-size: 1.25rem;
+    font-size: 1.15rem;
   }
 }
