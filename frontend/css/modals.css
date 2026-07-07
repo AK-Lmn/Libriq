@@ -1112,23 +1112,58 @@ html[data-theme="dark"] .whats-new-footer {
 }
 
 @media (max-width: 430px) {
+  #bookDetailsModal {
+    padding-top: calc(var(--space-2) + env(safe-area-inset-top));
+  }
+
+  #bookDetailsModal .book-details-modal {
+    max-height: 94dvh;
+  }
+
+  #bookDetailsModal .modal-body {
+    gap: var(--space-2);
+    padding: var(--space-3);
+  }
+
   #bookDetailsModal .book-details-hero {
-    grid-template-columns: 88px minmax(0, 1fr);
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: var(--space-2);
     padding: var(--space-3);
   }
 
   #bookDetailsModal .book-details-hero > .book-cover {
-    width: 88px;
-    height: 132px;
+    width: 76px;
+    height: 114px;
   }
 
   #bookDetailsModal .book-details-title {
-    font-size: 1.35rem;
+    font-size: 1.2rem;
   }
 
   #bookDetailsModal .book-details-author,
   #bookDetailsModal .book-details-desc-text {
-    font-size: var(--text-sm);
+    font-size: 0.9rem;
+  }
+
+  #bookDetailsModal .book-details-badges {
+    gap: 6px;
+  }
+
+  #bookDetailsModal .book-details-rating-panel {
+    padding: 10px;
+  }
+
+  #bookDetailsModal .book-details-meta-row {
+    padding: 10px 12px;
+  }
+
+  #bookDetailsModal .book-details-description--empty {
+    padding-bottom: var(--space-3);
+  }
+
+  #bookDetailsModal .book-details-description--empty .book-details-desc-text {
+    color: var(--text-secondary);
+    opacity: 0.9;
   }
 
   #bookDetailsModal .book-details-notes-actions .btn {
@@ -1141,8 +1176,67 @@ html[data-theme="dark"] .whats-new-footer {
     flex-direction: column;
   }
 
-  #bookDetailsModal .book-details-meta-row {
-    padding: var(--space-2) var(--space-3);
+  #bookDetailsModal .book-details-progress,
+  #bookDetailsModal .book-details-description,
+  #bookDetailsModal .book-details-notes {
+    padding: var(--space-3);
+  }
+
+  #bookDetailsModal .book-details-progress-header {
+    gap: 2px;
+  }
+
+  #bookDetailsModal .book-details-progress-pages {
+    margin-top: var(--space-2);
+  }
+
+  #bookDetailsModal .book-details-notes-label {
+    margin-bottom: var(--space-1);
+  }
+
+  #bookDetailsModal .book-details-notes-textarea {
+    min-height: 112px;
+  }
+
+  #bookDetailsModal .book-details-notes-actions {
+    gap: 6px;
+    margin-top: var(--space-2);
+  }
+
+  #bookDetailsModal .book-details-notes-actions .btn {
+    min-height: 38px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  #bookDetailsModal .book-details-hero {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  #bookDetailsModal .book-details-hero > .book-cover {
+    width: 72px;
+    height: 108px;
+  }
+
+  #bookDetailsModal .book-details-title {
+    font-size: 1.1rem;
+  }
+
+  #bookDetailsModal .book-details-meta {
+    gap: var(--space-2);
+  }
+
+  #bookDetailsModal .book-details-progress,
+  #bookDetailsModal .book-details-description,
+  #bookDetailsModal .book-details-notes {
+    padding: var(--space-3);
+  }
+
+  #bookDetailsModal .book-details-actions .btn-ghost.btn-icon {
+    flex-basis: 40px;
+    width: 40px;
+    min-width: 40px;
   }
 }
 
