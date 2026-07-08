@@ -43,7 +43,14 @@ function createBook(data) {
     publisher:    data.publisher    || null,
     description:  data.description  || null,
     genres:       data.genres       || [],
+    subjects:     data.subjects     || [],
+    subjectPeople: data.subjectPeople || [],
+    subjectPlaces: data.subjectPlaces || [],
+    subjectTimes: data.subjectTimes || [],
     language:     data.language     || 'English',
+    firstPublishYear: data.firstPublishYear || null,
+    editionCount: data.editionCount || null,
+    coverId:      data.coverId      || null,
 
     // Library state
     status:       data.status       || LIBRIQ.STATUS.WISHLIST,
@@ -64,6 +71,7 @@ function createBook(data) {
     // Extras
     isFavorite:   data.isFavorite   || false,
     tags:         data.tags         || [],
+    shelves:      data.shelves      || [],
     notes:        data.notes        ?? '',
     notesUpdatedAt: data.notesUpdatedAt || null,
     quotes:       Array.isArray(data.quotes) ? data.quotes.map(q => ({
@@ -77,14 +85,23 @@ function createBook(data) {
 
     // Source metadata (from API search)
     source: data.source || 'api',
+    sources: Array.isArray(data.sources) ? data.sources : [],
+    sourceBadges: Array.isArray(data.sourceBadges) ? data.sourceBadges : [],
+    sourceIds: data.sourceIds && typeof data.sourceIds === 'object' ? data.sourceIds : {},
+    identifiers: Array.isArray(data.identifiers) ? data.identifiers : [],
+    isbns: Array.isArray(data.isbns) ? data.isbns : [],
     googleBooksId: data.googleBooksId || null,
     openLibraryId: data.openLibraryId || null,
+    openLibraryWorkKey: data.openLibraryWorkKey || null,
+    openLibraryEditionKey: data.openLibraryEditionKey || null,
+    openLibraryAuthorKeys: Array.isArray(data.openLibraryAuthorKeys) ? data.openLibraryAuthorKeys : [],
     gutendexId: data.gutendexId || null,
     gutenbergId: data.gutenbergId || null,
     internetArchiveId: data.internetArchiveId || null,
     internetArchiveIds: Array.isArray(data.internetArchiveIds) ? data.internetArchiveIds : [],
     archiveUrl: data.archiveUrl || null,
     readableSourceLinks: Array.isArray(data.readableSourceLinks) ? data.readableSourceLinks : [],
+    downloadLinks: data.downloadLinks && typeof data.downloadLinks === 'object' ? data.downloadLinks : {},
   };
 }
 

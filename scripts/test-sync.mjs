@@ -137,6 +137,109 @@ async function main() {
     await delay(6000);
     assert.equal(await pageB.evaluate((id) => window.LibriqE2E.getBooks().some((book) => book.id === id), bookId), true);
 
+    const richBookId = await pageA.evaluate(() => {
+      const book = window.LibriqE2E.addBook({
+        title: 'RICH SYNC TEST',
+        author: 'LibriQ',
+        status: 'finished',
+        currentPage: 320,
+        pageCount: 320,
+        rating: 5,
+        review: 'Excellent round-trip coverage.',
+        genres: ['Fantasy', 'Adventure'],
+        subjects: ['Adventure', 'Magic'],
+        subjectPeople: ['Wizard'],
+        subjectPlaces: ['Library'],
+        subjectTimes: ['2020s'],
+        publisher: 'LibriQ Press',
+        language: 'English',
+        description: 'A rich book used to verify sync coverage.',
+        dateAdded: '2024-01-01T00:00:00.000Z',
+        dateStarted: '2024-01-02T00:00:00.000Z',
+        dateFinished: '2024-01-03T00:00:00.000Z',
+        notesUpdatedAt: '2024-01-04T00:00:00.000Z',
+        isFavorite: true,
+        tags: ['Classics', 'Favorites'],
+        shelves: ['Classics Shelf'],
+        notes: 'Private notes that should sync.',
+        quotes: [{ id: 'q1', text: 'A memorable line.', page: 12, note: 'quoted', createdAt: '2024-01-05T00:00:00.000Z', updatedAt: '2024-01-05T00:00:00.000Z' }],
+        source: 'openlibrary',
+        sources: ['Open Library', 'Google Books'],
+        sourceBadges: ['Open Library', 'Google Books'],
+        sourceIds: { openlibrary: '/books/OL1M', google: 'gb-1' },
+        identifiers: [{ type: 'ISBN_13', identifier: '9780000000000' }],
+        isbns: ['9780000000000'],
+        googleBooksId: 'gb-1',
+        openLibraryId: '/books/OL1M',
+        openLibraryWorkKey: '/works/OL1W',
+        openLibraryEditionKey: '/books/OL1M',
+        openLibraryAuthorKeys: ['/authors/OL1A'],
+        gutendexId: '42',
+        gutenbergId: '4242',
+        internetArchiveId: 'ia-1',
+        internetArchiveIds: ['ia-1'],
+        archiveUrl: 'https://archive.org/details/rich-sync-test',
+        readableSourceLinks: ['https://archive.org/details/rich-sync-test'],
+        downloadLinks: { html: 'https://example.com/book.html' },
+        coverId: '12345',
+        firstPublishYear: 1984,
+        editionCount: 3,
+      });
+      return book.id;
+    });
+
+    await delay(6000);
+    const remoteRichDocs = await fetch(`http://127.0.0.1:${port}/__libriq_test_api/collection?path=${encodeURIComponent('users/test-user/sync/v1/books')}`).then(res => res.json());
+    const remoteRich = remoteRichDocs.find((book) => book.id === richBookId);
+    assert.ok(remoteRich);
+    assert.equal(remoteRich.review, 'Excellent round-trip coverage.');
+    assert.deepEqual(remoteRich.genres, ['Fantasy', 'Adventure']);
+    assert.deepEqual(remoteRich.subjects, ['Adventure', 'Magic']);
+    assert.deepEqual(remoteRich.subjectPeople, ['Wizard']);
+    assert.deepEqual(remoteRich.subjectPlaces, ['Library']);
+    assert.deepEqual(remoteRich.subjectTimes, ['2020s']);
+    assert.equal(remoteRich.publisher, 'LibriQ Press');
+    assert.equal(remoteRich.language, 'English');
+    assert.equal(remoteRich.description, 'A rich book used to verify sync coverage.');
+    assert.equal(remoteRich.dateAdded, '2024-01-01T00:00:00.000Z');
+    assert.equal(remoteRich.dateStarted, '2024-01-02T00:00:00.000Z');
+    assert.equal(remoteRich.dateFinished, '2024-01-03T00:00:00.000Z');
+    assert.equal(remoteRich.notesUpdatedAt, '2024-01-04T00:00:00.000Z');
+    assert.equal(remoteRich.source, 'openlibrary');
+    assert.deepEqual(remoteRich.sources, ['Open Library', 'Google Books']);
+    assert.deepEqual(remoteRich.sourceBadges, ['Open Library', 'Google Books']);
+    assert.deepEqual(remoteRich.sourceIds, { openlibrary: '/books/OL1M', google: 'gb-1' });
+    assert.deepEqual(remoteRich.identifiers, [{ type: 'ISBN_13', identifier: '9780000000000' }]);
+    assert.deepEqual(remoteRich.isbns, ['9780000000000']);
+    assert.equal(remoteRich.googleBooksId, 'gb-1');
+    assert.equal(remoteRich.openLibraryId, '/books/OL1M');
+    assert.equal(remoteRich.openLibraryWorkKey, '/works/OL1W');
+    assert.equal(remoteRich.openLibraryEditionKey, '/books/OL1M');
+    assert.deepEqual(remoteRich.openLibraryAuthorKeys, ['/authors/OL1A']);
+    assert.equal(remoteRich.gutendexId, '42');
+    assert.equal(remoteRich.gutenbergId, '4242');
+    assert.equal(remoteRich.internetArchiveId, 'ia-1');
+    assert.deepEqual(remoteRich.internetArchiveIds, ['ia-1']);
+    assert.equal(remoteRich.archiveUrl, 'https://archive.org/details/rich-sync-test');
+    assert.deepEqual(remoteRich.readableSourceLinks, ['https://archive.org/details/rich-sync-test']);
+    assert.deepEqual(remoteRich.downloadLinks, { html: 'https://example.com/book.html' });
+    assert.equal(remoteRich.coverId, '12345');
+    assert.equal(remoteRich.firstPublishYear, 1984);
+    assert.equal(remoteRich.editionCount, 3);
+
+    const richContext = await browser.newContext();
+    const richPage = await setupPage(richContext, sharedUid, 'a@example.com');
+    await delay(6000);
+    const loadedRich = await richPage.evaluate((id) => window.LibriqE2E.getBooks().find((book) => book.id === id), richBookId);
+    assert.ok(loadedRich);
+    assert.equal(loadedRich.review, 'Excellent round-trip coverage.');
+    assert.deepEqual(loadedRich.genres, ['Fantasy', 'Adventure']);
+    assert.deepEqual(loadedRich.subjects, ['Adventure', 'Magic']);
+    assert.equal(loadedRich.publisher, 'LibriQ Press');
+    assert.equal(loadedRich.archiveUrl, 'https://archive.org/details/rich-sync-test');
+    await richPage.close();
+    await richContext.close();
+
     const contextFresh = await browser.newContext();
     const pageFresh = await setupPage(contextFresh, sharedUid, 'a@example.com');
     await delay(6000);

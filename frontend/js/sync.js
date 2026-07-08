@@ -519,6 +519,10 @@ const LibriqSyncBeta = (() => {
     const cover = book.cover ?? book.coverUrl ?? book.imageLinks ?? null;
     const currentPage = book.currentPage ?? 0;
     const pageCount = book.pageCount ?? book.pages ?? 0;
+    const sourceIds = _normalizeSourceIds(book.sourceIds);
+    const identifiers = _normalizeIdentifiers(book.identifiers);
+    const readableSourceLinks = _normalizeStringArray(book.readableSourceLinks);
+    const downloadLinks = _normalizeObject(book.downloadLinks);
     return {
       id: book.id,
       title: book.title || '',
@@ -527,24 +531,117 @@ const LibriqSyncBeta = (() => {
       coverUrl: cover,
       imageLinks: book.imageLinks ?? null,
       isbn: book.isbn || null,
-      identifiers: Array.isArray(book.identifiers) ? book.identifiers : (Array.isArray(book.industryIdentifiers) ? book.industryIdentifiers : []),
+      isbns: _normalizeStringArray(book.isbns),
+      identifiers: identifiers.length ? identifiers : (Array.isArray(book.industryIdentifiers) ? book.industryIdentifiers : []),
+      source: book.source || 'api',
+      sources: _normalizeStringArray(book.sources),
+      sourceBadges: _normalizeStringArray(book.sourceBadges),
+      sourceIds,
       status: book.status || LIBRIQ.STATUS.WISHLIST,
       currentPage,
       pages: pageCount,
       pageCount,
+      description: _normalizeStringValue(book.description),
+      genres: _normalizeStringArray(book.genres),
+      subjects: _normalizeStringArray(book.subjects),
+      subjectPeople: _normalizeStringArray(book.subjectPeople),
+      subjectPlaces: _normalizeStringArray(book.subjectPlaces),
+      subjectTimes: _normalizeStringArray(book.subjectTimes),
+      language: _normalizeStringValue(book.language, null),
+      publisher: _normalizeStringValue(book.publisher, null),
+      publishYear: _normalizeNumberOrNull(book.publishYear),
+      firstPublishYear: _normalizeNumberOrNull(book.firstPublishYear),
+      editionCount: _normalizeNumberOrNull(book.editionCount),
+      coverId: _normalizeStringValue(book.coverId, null),
       rating: book.rating ?? null,
+      review: typeof book.review === 'string' ? book.review : null,
       isFavorite: Boolean(book.isFavorite),
       shelves: Array.isArray(book.shelves) ? book.shelves : [],
       tags: Array.isArray(book.tags) ? book.tags : [],
       notes: typeof book.notes === 'string' ? book.notes : '',
+      notesUpdatedAt: book.notesUpdatedAt || null,
       quotes: Array.isArray(book.quotes) ? book.quotes : [],
       createdAt: book.createdAt || book.dateAdded || null,
+      dateAdded: book.dateAdded || book.createdAt || null,
+      dateStarted: book.dateStarted || null,
+      dateFinished: book.dateFinished || null,
       updatedAt: book.updatedAt || book.createdAt || book.dateAdded || null,
       deletedAt: book.deletedAt ?? null,
+      googleBooksId: _normalizeStringValue(book.googleBooksId, null),
+      openLibraryId: _normalizeStringValue(book.openLibraryId, null),
+      openLibraryWorkKey: _normalizeStringValue(book.openLibraryWorkKey, null),
+      openLibraryEditionKey: _normalizeStringValue(book.openLibraryEditionKey, null),
+      openLibraryAuthorKeys: _normalizeStringArray(book.openLibraryAuthorKeys),
+      gutendexId: _normalizeStringValue(book.gutendexId, null),
+      gutenbergId: _normalizeStringValue(book.gutenbergId, null),
+      internetArchiveId: _normalizeStringValue(book.internetArchiveId, null),
+      internetArchiveIds: _normalizeStringArray(book.internetArchiveIds),
+      archiveUrl: _normalizeStringValue(book.archiveUrl, null),
+      readableSourceLinks,
+      downloadLinks,
       deviceId: getDeviceId(),
       sourceDeviceId: getDeviceId(),
       appVersion: LIBRIQ.VERSION,
     };
+  }
+
+  function _normalizeStringValue(value, fallback = '') {
+    const text = String(value ?? '').trim();
+    if (text) return text;
+    return fallback;
+  }
+
+  function _normalizeNumberOrNull(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  function _normalizeStringArray(value) {
+    return Array.isArray(value)
+      ? value.map(item => String(item || '').trim()).filter(Boolean)
+      : [];
+  }
+
+  function _normalizeIdentifiers(value) {
+    if (!Array.isArray(value)) return [];
+    return value
+      .map(item => {
+        if (!item || typeof item !== 'object') return null;
+        const identifier = String(item.identifier ?? item.value ?? item.id ?? '').trim();
+        if (!identifier) return null;
+        const type = String(item.type ?? item.source ?? 'UNKNOWN').trim() || 'UNKNOWN';
+        return {
+          type,
+          identifier,
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function _normalizeSourceIds(value) {
+    if (!value) return {};
+    if (Array.isArray(value)) {
+      return value.reduce((acc, item) => {
+        if (!item || typeof item !== 'object') return acc;
+        const source = String(item.source || '').trim();
+        const id = String(item.id || '').trim();
+        if (source && id) acc[source] = id;
+        return acc;
+      }, {});
+    }
+    if (typeof value === 'object') {
+      return Object.entries(value).reduce((acc, [source, id]) => {
+        const key = String(source || '').trim();
+        const nextId = String(id || '').trim();
+        if (key && nextId) acc[key] = nextId;
+        return acc;
+      }, {});
+    }
+    return {};
+  }
+
+  function _normalizeObject(value) {
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   }
 
   async function uploadLocalBooks(reason = 'local-change') {
@@ -742,19 +839,85 @@ const LibriqSyncBeta = (() => {
     });
   }
 
+  function _mergeOptionalField(localValue, remoteValue, options = {}) {
+    const mode = options.mode || 'scalar';
+    if (mode === 'array') {
+      return Array.isArray(remoteValue) && remoteValue.length > 0
+        ? remoteValue
+        : (Array.isArray(localValue) ? localValue : []);
+    }
+    if (mode === 'object') {
+      return remoteValue && typeof remoteValue === 'object' && !Array.isArray(remoteValue) && Object.keys(remoteValue).length > 0
+        ? remoteValue
+        : (localValue && typeof localValue === 'object' && !Array.isArray(localValue) ? localValue : {});
+    }
+    if (mode === 'number') {
+      return Number.isFinite(Number(remoteValue)) ? Number(remoteValue) : (Number.isFinite(Number(localValue)) ? Number(localValue) : null);
+    }
+    if (mode === 'string') {
+      const remoteText = String(remoteValue ?? '').trim();
+      if (remoteText) return remoteText;
+      const localText = String(localValue ?? '').trim();
+      return localText || null;
+    }
+    if (mode === 'boolean') {
+      return typeof remoteValue === 'boolean' ? remoteValue : Boolean(localValue);
+    }
+    return remoteValue ?? localValue ?? null;
+  }
+
   function _mergeRemoteIntoLocal(local, remote) {
+    const remoteSourceIds = _normalizeSourceIds(remote.sourceIds);
+    const localSourceIds = _normalizeSourceIds(local.sourceIds);
+    const mergedSourceIds = Object.keys(remoteSourceIds).length > 0 ? remoteSourceIds : localSourceIds;
     return createBook({
       ...local,
       ...remote,
       coverUrl: remote.cover || remote.coverUrl || local.coverUrl || null,
       pageCount: remote.pages ?? remote.pageCount ?? local.pageCount ?? 0,
       currentPage: remote.currentPage ?? local.currentPage ?? 0,
-      isFavorite: typeof remote.isFavorite === 'boolean' ? remote.isFavorite : Boolean(local.isFavorite),
-      notes: typeof remote.notes === 'string' ? remote.notes : local.notes,
-      quotes: Array.isArray(remote.quotes) ? remote.quotes : local.quotes,
+      isFavorite: _mergeOptionalField(local.isFavorite, remote.isFavorite, { mode: 'boolean' }),
+      rating: _mergeOptionalField(local.rating, remote.rating, { mode: 'number' }),
+      review: _mergeOptionalField(local.review, remote.review, { mode: 'string' }),
+      description: _mergeOptionalField(local.description, remote.description, { mode: 'string' }),
+      genres: _mergeOptionalField(local.genres, remote.genres, { mode: 'array' }),
+      subjects: _mergeOptionalField(local.subjects, remote.subjects, { mode: 'array' }),
+      subjectPeople: _mergeOptionalField(local.subjectPeople, remote.subjectPeople, { mode: 'array' }),
+      subjectPlaces: _mergeOptionalField(local.subjectPlaces, remote.subjectPlaces, { mode: 'array' }),
+      subjectTimes: _mergeOptionalField(local.subjectTimes, remote.subjectTimes, { mode: 'array' }),
+      language: _mergeOptionalField(local.language, remote.language, { mode: 'string' }),
+      publisher: _mergeOptionalField(local.publisher, remote.publisher, { mode: 'string' }),
+      publishYear: _mergeOptionalField(local.publishYear, remote.publishYear, { mode: 'number' }),
+      firstPublishYear: _mergeOptionalField(local.firstPublishYear, remote.firstPublishYear, { mode: 'number' }),
+      editionCount: _mergeOptionalField(local.editionCount, remote.editionCount, { mode: 'number' }),
+      coverId: _mergeOptionalField(local.coverId, remote.coverId, { mode: 'string' }),
+      notes: _mergeOptionalField(local.notes, remote.notes, { mode: 'string' }) || '',
+      notesUpdatedAt: _mergeOptionalField(local.notesUpdatedAt, remote.notesUpdatedAt, { mode: 'string' }),
+      quotes: Array.isArray(remote.quotes) && remote.quotes.length > 0 ? remote.quotes : (Array.isArray(local.quotes) ? local.quotes : []),
       updatedAt: remote.updatedAt || local.updatedAt || new Date().toISOString(),
       createdAt: remote.createdAt || local.createdAt || new Date().toISOString(),
       deletedAt: remote.deletedAt ?? local.deletedAt ?? null,
+      dateAdded: _mergeOptionalField(local.dateAdded, remote.dateAdded, { mode: 'string' }),
+      dateStarted: _mergeOptionalField(local.dateStarted, remote.dateStarted, { mode: 'string' }),
+      dateFinished: _mergeOptionalField(local.dateFinished, remote.dateFinished, { mode: 'string' }),
+      source: _mergeOptionalField(local.source, remote.source, { mode: 'string' }) || 'api',
+      sources: _mergeOptionalField(local.sources, remote.sources, { mode: 'array' }),
+      sourceBadges: _mergeOptionalField(local.sourceBadges, remote.sourceBadges, { mode: 'array' }),
+      sourceIds: mergedSourceIds,
+      identifiers: _mergeOptionalField(local.identifiers, remote.identifiers, { mode: 'array' }),
+      isbns: _mergeOptionalField(local.isbns, remote.isbns, { mode: 'array' }),
+      googleBooksId: _mergeOptionalField(local.googleBooksId, remote.googleBooksId, { mode: 'string' }),
+      openLibraryId: _mergeOptionalField(local.openLibraryId, remote.openLibraryId, { mode: 'string' }),
+      openLibraryWorkKey: _mergeOptionalField(local.openLibraryWorkKey, remote.openLibraryWorkKey, { mode: 'string' }),
+      openLibraryEditionKey: _mergeOptionalField(local.openLibraryEditionKey, remote.openLibraryEditionKey, { mode: 'string' }),
+      openLibraryAuthorKeys: _mergeOptionalField(local.openLibraryAuthorKeys, remote.openLibraryAuthorKeys, { mode: 'array' }),
+      gutendexId: _mergeOptionalField(local.gutendexId, remote.gutendexId, { mode: 'string' }),
+      gutenbergId: _mergeOptionalField(local.gutenbergId, remote.gutenbergId, { mode: 'string' }),
+      internetArchiveId: _mergeOptionalField(local.internetArchiveId, remote.internetArchiveId, { mode: 'string' }),
+      internetArchiveIds: _mergeOptionalField(local.internetArchiveIds, remote.internetArchiveIds, { mode: 'array' }),
+      archiveUrl: _mergeOptionalField(local.archiveUrl, remote.archiveUrl, { mode: 'string' }),
+      readableSourceLinks: _mergeOptionalField(local.readableSourceLinks, remote.readableSourceLinks, { mode: 'array' }),
+      downloadLinks: _mergeOptionalField(local.downloadLinks, remote.downloadLinks, { mode: 'object' }),
     });
   }
 
