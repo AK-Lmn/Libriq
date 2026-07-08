@@ -417,7 +417,8 @@ const Storage = (() => {
       _write(_key('PROFILE'), fresh);
       return fresh;
     }
-    return { ...DEFAULTS.profile(), ...data };
+    const displayName = data.displayName || data.name || DEFAULTS.profile().name;
+    return { ...DEFAULTS.profile(), ...data, name: displayName, displayName };
   }
 
   function getBackupMeta() {
@@ -456,7 +457,17 @@ const Storage = (() => {
 
   function saveProfile(updates) {
     const current = getProfile();
-    const updated = { ...current, ...updates };
+    const next = updates && typeof updates === 'object' ? updates : {};
+    const displayName = next.displayName || next.name || current.displayName || current.name;
+    const updated = {
+      ...current,
+      ...next,
+      name: displayName,
+      displayName,
+      updatedAt: new Date().toISOString(),
+      createdAt: current.createdAt || current.joinDate || new Date().toISOString(),
+      joinDate: current.joinDate || current.createdAt || new Date().toISOString(),
+    };
     _write(_key('PROFILE'), updated);
     _dispatchChange('profile:updated', updated);
     return updated;

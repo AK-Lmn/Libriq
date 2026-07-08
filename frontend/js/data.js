@@ -119,10 +119,14 @@ function createBookPatch(data = {}) {
  * User profile model
  */
 function createProfile(data = {}) {
+  const displayName = data.displayName || data.name || 'Reader';
   return {
-    name:          data.name          || 'Reader',
+    name:          displayName,
+    displayName,
     avatar:        data.avatar        || null,
     bio:           data.bio           || null,
+    createdAt:     data.createdAt     || data.joinDate || new Date().toISOString(),
+    updatedAt:     data.updatedAt     || data.createdAt || data.joinDate || new Date().toISOString(),
     joinDate:      data.joinDate      || new Date().toISOString(),
     yearlyGoal:    data.yearlyGoal    || 12,
     preferredGenres: data.preferredGenres || [],

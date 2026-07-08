@@ -52,9 +52,11 @@ const INIT_RETRY_TIMEOUT_MS = 3500;
 const INIT_RETRY_INTERVAL_MS = 75;
 const AUTH_READY_TIMEOUT_MS = 1500;
 const ACTIVITY_SYNC_QUEUE_KEY = 'libriq_pending_activity_sync';
+const PROFILE_SYNC_QUEUE_KEY = 'libriq_pending_profile_sync';
 const AUTH_SIGN_OUT_GRACE_MS = 2500;
 let activityOnlineListenerAttached = false;
 let authNullTimer = null;
+let profileSyncHydrating = false;
 
 function getTestApiBase() {
   return `${location.origin}/__libriq_test_api`;
@@ -203,10 +205,10 @@ function init() {
     state.ready = false;
     state.error = null;
 
-    if (!authListener) {
-      authListener = onAuthStateChanged(auth, (user) => {
-        if (user?.uid) {
-          window.LibriqStorage?.setActiveAccountUid?.(user.uid);
+  if (!authListener) {
+    authListener = onAuthStateChanged(auth, (user) => {
+      if (user?.uid) {
+        window.LibriqStorage?.setActiveAccountUid?.(user.uid);
           if (authNullTimer) {
             window.clearTimeout(authNullTimer);
             authNullTimer = null;
@@ -235,6 +237,7 @@ function init() {
         } : (state.restoringSession ? state.user : null) });
         if (user?.uid) {
           syncActivityFromCloud(user.uid);
+          syncProfileFromCloud(user.uid);
         }
       });
     }
@@ -242,7 +245,19 @@ function init() {
       activityOnlineListenerAttached = true;
       window.addEventListener?.('online', () => {
         const current = getCurrentUser();
-        if (current?.uid) syncActivityFromCloud(current.uid);
+        if (current?.uid) {
+          syncActivityFromCloud(current.uid);
+          syncProfileFromCloud(current.uid);
+        }
+      });
+    }
+    if (!window.__libriqProfileSyncListenerAttached) {
+      window.__libriqProfileSyncListenerAttached = true;
+      window.addEventListener?.('libriq:profile:updated', (event) => {
+        if (profileSyncHydrating) return;
+        const current = getCurrentUser();
+        if (!current?.uid) return;
+        queueProfileSync(event?.detail || window.LibriqStorage?.getProfile?.());
       });
     }
   } catch (err) {
@@ -390,6 +405,10 @@ function getActivityCollectionPath(uid) {
   return uid ? `users/${uid}/activity` : null;
 }
 
+function getProfileDocPath(uid) {
+  return uid ? `users/${uid}/profile/current` : null;
+}
+
 function logActivityDebug(message, details = {}) {
   if (!TEST_MODE && !window.location?.hostname?.includes('localhost') && !window.location?.hostname?.includes('127.0.0.1')) return;
   try {
@@ -407,6 +426,29 @@ function getPendingActivityQueue() {
   } catch (err) {
     console.warn('[LibriQ] Activity pending queue read failed:', err);
     return [];
+  }
+}
+
+function getPendingProfileQueue() {
+  try {
+    const raw = localStorage.getItem(PROFILE_SYNC_QUEUE_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch (err) {
+    console.warn('[LibriQ] Profile pending queue read failed:', err);
+    return null;
+  }
+}
+
+function setPendingProfileQueue(profile) {
+  try {
+    if (!profile || typeof profile !== 'object') {
+      localStorage.removeItem(PROFILE_SYNC_QUEUE_KEY);
+      return;
+    }
+    localStorage.setItem(PROFILE_SYNC_QUEUE_KEY, JSON.stringify(profile));
+  } catch (err) {
+    console.warn('[LibriQ] Profile pending queue write failed:', err);
   }
 }
 
@@ -456,6 +498,23 @@ function sanitizeActivityEvent(event) {
     payload: event.payload && typeof event.payload === 'object' ? event.payload : {},
     sourceDeviceId: event.sourceDeviceId || event.deviceId || null,
     pending: Boolean(event.pending),
+  };
+}
+
+function sanitizeProfile(profile) {
+  if (!profile || typeof profile !== 'object') return null;
+  const displayName = String(profile.displayName || profile.name || '').trim() || 'Reader';
+  const bio = String(profile.bio || '').trim();
+  const avatar = String(profile.avatar || profile.photoURL || '').trim();
+  const createdAt = profile.createdAt || profile.joinDate || null;
+  const updatedAt = profile.updatedAt || createdAt || null;
+  return {
+    displayName,
+    name: displayName,
+    bio: bio || null,
+    avatar: avatar || null,
+    createdAt,
+    updatedAt,
   };
 }
 
@@ -551,6 +610,118 @@ async function syncActivityFromCloud(uid = null) {
     console.warn('[LibriQ] Activity cloud load failed:', err);
     return window.LibriqStorage?.getActivityLog?.() || [];
   }
+}
+
+async function writeProfileDoc(uid, profile) {
+  const profileUid = uid || getCurrentUser()?.uid || null;
+  const normalized = sanitizeProfile(profile);
+  if (!profileUid || !normalized) {
+    logActivityDebug('Profile write skipped: missing uid or payload', { uid: profileUid ? `${String(profileUid).slice(0, 6)}…` : null });
+    return false;
+  }
+  if (!firestore || !hasActiveUser()) {
+    logActivityDebug('Profile write skipped: firestore unavailable or auth not ready', {
+      uid: `${String(profileUid).slice(0, 6)}…`,
+      path: getProfileDocPath(profileUid),
+    });
+    return false;
+  }
+  const path = getProfileDocPath(profileUid);
+  logActivityDebug('Profile write start', { uid: `${String(profileUid).slice(0, 6)}…`, path });
+  const ref = TEST_MODE ? testFirestore.doc('users', profileUid, 'profile', 'current') : doc(firestore, 'users', profileUid, 'profile', 'current');
+  await (TEST_MODE ? testFirestore.setDoc(ref, normalized) : setDoc(ref, normalized, { merge: true }));
+  logActivityDebug('Profile write success', { uid: `${String(profileUid).slice(0, 6)}…`, path });
+  return true;
+}
+
+async function readProfileDoc(uid = null) {
+  const profileUid = uid || getCurrentUser()?.uid || null;
+  if (!profileUid || !firestore || !hasActiveUser()) return null;
+  const path = getProfileDocPath(profileUid);
+  logActivityDebug('Profile read start', { uid: `${String(profileUid).slice(0, 6)}…`, path });
+  const ref = TEST_MODE ? testFirestore.doc('users', profileUid, 'profile', 'current') : doc(firestore, 'users', profileUid, 'profile', 'current');
+  const snap = TEST_MODE ? await testFirestore.getDoc(ref) : await getDoc(ref);
+  const data = snap?.data ? snap.data() : null;
+  if (!data || typeof data !== 'object') {
+    logActivityDebug('Profile read empty', { uid: `${String(profileUid).slice(0, 6)}…`, path });
+    return null;
+  }
+  logActivityDebug('Profile read success', { uid: `${String(profileUid).slice(0, 6)}…`, path });
+  return sanitizeProfile(data);
+}
+
+async function syncProfileFromCloud(uid = null) {
+  const profileUid = uid || getCurrentUser()?.uid || null;
+  if (!profileUid) return null;
+  if (!firestore || !hasActiveUser()) return null;
+  try {
+    logActivityDebug('Profile sync start', { uid: `${String(profileUid).slice(0, 6)}…`, path: getProfileDocPath(profileUid) });
+    const remote = await readProfileDoc(profileUid);
+    const local = sanitizeProfile(window.LibriqStorage?.getProfile?.());
+    if (!remote && local) {
+      await writeProfileDoc(profileUid, local);
+      setPendingProfileQueue(null);
+      logActivityDebug('Profile migration uploaded', { uid: `${String(profileUid).slice(0, 6)}…` });
+      return local;
+    }
+    if (!remote) return local;
+    const merged = {
+      ...window.LibriqStorage?.getProfile?.(),
+      displayName: remote.displayName || remote.name || local?.displayName || local?.name || 'Reader',
+      name: remote.displayName || remote.name || local?.displayName || local?.name || 'Reader',
+      bio: typeof remote.bio === 'string' ? remote.bio : local?.bio || null,
+      avatar: remote.avatar || local?.avatar || null,
+      createdAt: remote.createdAt || remote.joinDate || local?.createdAt || local?.joinDate || null,
+      updatedAt: remote.updatedAt || local?.updatedAt || remote.createdAt || remote.joinDate || local?.createdAt || null,
+    };
+    profileSyncHydrating = true;
+    try {
+      window.LibriqStorage?.saveProfile?.(merged);
+    } finally {
+      profileSyncHydrating = false;
+    }
+    const pending = getPendingProfileQueue();
+    if (pending) {
+      const pendingTime = new Date(pending.updatedAt || pending.createdAt || 0).getTime();
+      const remoteTime = new Date(merged.updatedAt || merged.createdAt || 0).getTime();
+      if (pendingTime > remoteTime) {
+        await writeProfileDoc(profileUid, pending);
+        setPendingProfileQueue(null);
+      }
+    }
+    window.dispatchEvent?.(new CustomEvent('libriq:profile:updated', { detail: { uid: profileUid } }));
+    logActivityDebug('Profile sync success', { uid: `${String(profileUid).slice(0, 6)}…` });
+    return merged;
+  } catch (err) {
+    console.warn('[LibriQ] Profile cloud sync failed:', err);
+    return window.LibriqStorage?.getProfile?.() || null;
+  }
+}
+
+function queueProfileSync(profile) {
+  const user = getCurrentUser();
+  const normalized = sanitizeProfile(profile);
+  if (!normalized) return false;
+  logActivityDebug('Profile queue requested', {
+    hasUser: Boolean(user?.uid),
+    path: getProfileDocPath(user?.uid || null),
+  });
+  if (!user?.uid || !firestore || !hasActiveUser()) {
+    setPendingProfileQueue(normalized);
+    logActivityDebug('Profile queued locally pending auth/firestore', { uid: user?.uid ? `${String(user.uid).slice(0, 6)}…` : null });
+    return false;
+  }
+  Promise.resolve().then(async () => {
+    try {
+      const ok = await writeProfileDoc(user.uid, normalized);
+      if (!ok) setPendingProfileQueue(normalized);
+      else setPendingProfileQueue(null);
+    } catch (err) {
+      console.warn('[LibriQ] Profile cloud write failed:', err);
+      setPendingProfileQueue(normalized);
+    }
+  });
+  return true;
 }
 
 function queueActivitySync(event) {
@@ -711,7 +882,6 @@ async function deleteCurrentUserLibraryData() {
   if (!user?.uid) throw new Error('Firebase is unavailable.');
   await deleteFirestoreCollectionDocs(['users', user.uid, 'sync', 'v1', 'books']);
   await deleteFirestoreCollectionDocs(['users', user.uid, 'activity']);
-  await deleteFirestoreDocPath(['users', user.uid, 'backups', 'current']);
   return true;
 }
 
@@ -719,6 +889,8 @@ async function deleteCurrentUserAccount() {
   const user = getCurrentUser();
   if (!user?.uid) throw new Error('Firebase is unavailable.');
   await deleteCurrentUserLibraryData();
+  await deleteFirestoreDocPath(['users', user.uid, 'profile', 'current']);
+  await deleteFirestoreDocPath(['users', user.uid, 'backups', 'current']);
   if (TEST_MODE) {
     await signOutUser();
     return true;
@@ -760,11 +932,17 @@ window.LibriqFirebase = {
   getCurrentAuthUser,
   getCurrentUserIdToken,
   getActivityCollectionPath,
+  getProfileDocPath,
   sanitizeActivityEvent,
+  sanitizeProfile,
   writeActivityEvent,
   replaceActivityCollection,
   readActivityCollection,
   syncActivityFromCloud,
+  writeProfileDoc,
+  readProfileDoc,
+  syncProfileFromCloud,
+  queueProfileSync,
   queueActivitySync,
   writeBackupDoc,
   readBackupDoc,
