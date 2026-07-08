@@ -16,6 +16,7 @@ function makeClassList(initial = []) {
 }
 
 function createNode(id) {
+  const listeners = new Map();
   const node = {
     id,
     hidden: false,
@@ -26,12 +27,20 @@ function createNode(id) {
     querySelector: () => null,
     querySelectorAll: () => [],
     closest: () => null,
-    addEventListener: () => {},
+    addEventListener: (event, handler) => {
+      listeners.set(event, handler);
+      if (event === 'click') node.onclick = handler;
+    },
     appendChild: child => child,
     prepend: () => {},
     setAttribute: () => {},
     removeAttribute: () => {},
+    hasAttribute: (name) => name === 'hidden' ? node.hidden : false,
     replaceChildren: () => {},
+    click: () => {
+      node.onclick?.({ target: node, currentTarget: node });
+      listeners.get('click')?.({ target: node, currentTarget: node });
+    },
   };
   createdNodes.set(id, node);
   return node;
@@ -124,6 +133,8 @@ globalThis.Utils = {
   sanitize: value => String(value ?? ''),
   debounce: fn => fn,
   toast: () => {},
+  show: (node) => { if (node) node.hidden = false; },
+  hide: (node) => { if (node) node.hidden = true; },
   formatDate: value => String(value ?? ''),
   timeAgo: value => String(value ?? ''),
   formatNumber: value => String(value ?? 0),
@@ -153,6 +164,7 @@ globalThis.LIBRIQ = {
   MONTHS: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
 };
 globalThis.Storage = {
+  bootstrap: () => {},
   getStats: () => ({ total: 0, reading: 0, finishedThisYear: 0, finished: 0, totalPages: 0, avgRating: null, monthlyData: [], pagesByMonth: [], topGenres: [], favorites: 0, wishlist: 0, ratedCount: 0 }),
   getStreak: () => ({ current: 0, longest: 0 }),
   getGoals: () => ({ yearly: 12 }),
@@ -261,6 +273,8 @@ Storage.getBookById = (id) => recommendationBooks.find(book => book.id === id) |
 await import('../frontend/js/dashboard.js');
 await import('../frontend/js/library.js');
 await import('../frontend/js/navigation.js');
+globalThis.Navigation = globalThis.LibriqNavigation;
+await import('../frontend/js/app.js');
 
 const nav = globalThis.LibriqNavigation;
 const main = document.getElementById('mainContent');
@@ -346,8 +360,13 @@ firebaseState.ready = true;
 firebaseState.user = null;
 firebaseState.restoringSession = true;
 nav.routeAfterAuthReady();
-if (!main.innerHTML.includes('dashboardPage')) {
-  throw new Error('restoring session should keep the app on the dashboard');
+await Promise.resolve();
+await Promise.resolve();
+if (nav.currentPage === 'session') {
+  throw new Error('restoring session should not route to the sign-in screen');
+}
+if (main.innerHTML.includes('session-page')) {
+  throw new Error('restoring session should not leave the sign-in screen behind');
 }
 
 firebaseState.restoringSession = false;
@@ -433,6 +452,24 @@ if (main.innerHTML.includes('changeEmailBtn')) {
 }
 if (!main.innerHTML.includes('Signed in with Google')) {
   throw new Error('google-only users should show Google sign-in context');
+}
+
+const whatsNewModal = document.getElementById('whatsNewModal');
+const whatsNewContinue = document.getElementById('whatsNewContinue');
+if (!whatsNewModal || !whatsNewContinue) {
+  throw new Error('What\'s New modal test fixtures were not initialized');
+}
+whatsNewModal.removeAttribute('hidden');
+main.innerHTML = '<div class="session-page"><h1 class="session-title">Sign in to LibriQ</h1></div>';
+nav.goTo('settings');
+whatsNewContinue.click();
+await Promise.resolve();
+await Promise.resolve();
+if (main.innerHTML.includes('session-page')) {
+  throw new Error('What\'s New dismiss after login should not leave the sign-in screen visible');
+}
+if (nav.currentPage === 'session') {
+  throw new Error('What\'s New dismiss after login should correct away from session screen');
 }
 
 firebaseState.user = { ...firebaseState.user, emailVerified: false };

@@ -104,6 +104,10 @@
     localStorage.setItem(RELEASE_KEY, WHATS_NEW_VERSION);
     closeWhatsNew();
     document.body.style.overflow = '';
+    window.LibriqNavigation?.routeAfterAuthReady?.();
+    if (window.LibriqNavigation?.currentPage === 'session') {
+      window.LibriqNavigation?.renderCurrentPage?.();
+    }
   }
 
   function wireGlobalEvents() {
