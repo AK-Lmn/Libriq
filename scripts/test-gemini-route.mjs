@@ -37,13 +37,20 @@ async function main() {
   assert.equal(lib.normalizeGeminiModelName(' models/gemini-2.5-flash '), 'gemini-2.5-flash');
   assert.equal(lib.normalizeGeminiApiMode(' interactions '), 'interactions');
   assert.equal(lib.normalizeGeminiApiMode('generateContent'), 'generatecontent');
+  assert.equal(lib.getDefaultGeminiModel('generatecontent'), 'gemini-2.5-flash-lite');
+  assert.equal(lib.getDefaultGeminiModel('interactions'), 'gemini-3.1-flash-lite');
+  assert.notEqual(lib.getDefaultGeminiModel('generatecontent'), 'gemini-2.0-flash');
+  assert.notEqual(lib.getDefaultGeminiModel('generatecontent'), 'gemini-2.0-flash-lite');
   assert.ok(lib.buildGeminiApiUrl('https://generativelanguage.googleapis.com/v1beta', 'models/gemini-2.0-flash', 'abc').includes('/models/gemini-2.0-flash:generateContent?key=abc'));
   const originalApiMode = process.env.GEMINI_API_MODE;
   process.env.GEMINI_API_MODE = 'interactions';
   assert.equal(lib.buildGeminiApiUrl('https://generativelanguage.googleapis.com/v1beta', 'models/gemini-2.0-flash', 'abc'), 'https://generativelanguage.googleapis.com/v1beta/interactions');
   const interactionBody = lib.buildGeminiRequestBody({ mode: 'home', books: [{ title: 'A', author: 'B' }] }, 'interactions');
-  assert.equal(interactionBody.model, 'gemini-2.0-flash');
+  assert.equal(interactionBody.model, 'gemini-3.1-flash-lite');
   assert.equal(typeof interactionBody.input, 'string');
+  const generateBody = lib.buildGeminiRequestBody({ mode: 'home', books: [{ title: 'A', author: 'B' }] }, 'generatecontent');
+  assert.equal(Array.isArray(generateBody.contents), true);
+  assert.equal(generateBody.contents[0].parts[0].text.includes('"mode":"home"'), true);
   process.env.GEMINI_API_MODE = originalApiMode;
 
   const originalApiKey = process.env.GEMINI_API_KEY;
@@ -76,7 +83,7 @@ async function main() {
   });
   await assert.rejects(
     () => lib.callGemini({ mode: 'home', books: [{ title: 'A', author: 'B' }] }),
-    (err) => err.code === lib.SAFE_ERROR_CODES.GEMINI_API_ERROR && err.statusCode === 400
+    (err) => err.code === lib.SAFE_ERROR_CODES.GEMINI_BAD_REQUEST && err.statusCode === 400
   );
 
   globalThis.fetch = async () => ({
@@ -89,6 +96,16 @@ async function main() {
   });
   const parsedGemini = await lib.callGemini({ mode: 'home', books: [{ title: 'A', author: 'B' }] });
   assert.equal(parsedGemini.recommendations.length, 1);
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    headers: { get: () => 'application/json' },
+    async text() {
+      return JSON.stringify({ output: { text: '{"recommendations":[{"title":"C","author":"D","reason":"ok"}]}' } });
+    },
+  });
+  const interactionsParsed = lib.parseGeminiRecommendations(JSON.stringify({ output: { text: '{"recommendations":[{"title":"C","author":"D","reason":"ok"}]}' } }));
+  assert.equal(interactionsParsed.recommendations.length, 1);
   globalThis.fetch = originalFetch;
 
   const missingAuth = await lib.handleGeminiRequest({
@@ -355,6 +372,28 @@ async function main() {
   assert.equal(providerQuota.body.code, 'GEMINI_PROVIDER_QUOTA_EXHAUSTED');
   assert.equal(providerQuota.body.geminiStatus, 429);
   assert.equal(providerQuotaStore.quotaCalls, 0);
+
+  const badRequest = await lib.handleGeminiRequest({
+    authHeader: 'Bearer valid-token',
+    body: { mode: 'home', books: [{ title: 'Book', author: 'Author' }] },
+    auth: quotaAuth,
+    store: {
+      async getQuota() { return { count: 0 }; },
+      async getCache() { return null; },
+      async consumeQuota() { return { count: 1 }; },
+      async setCache() { return null; },
+    },
+    callGeminiFn: async () => {
+      const error = new Error('bad request');
+      error.statusCode = 400;
+      error.code = lib.SAFE_ERROR_CODES.GEMINI_BAD_REQUEST;
+      error.geminiStatus = 400;
+      throw error;
+    },
+  });
+  assert.equal(badRequest.statusCode, 400);
+  assert.equal(badRequest.body.code, 'GEMINI_BAD_REQUEST');
+  assert.equal(badRequest.body.geminiStatus, 400);
 
   const malformedStore = {
     quotaCalls: 0,

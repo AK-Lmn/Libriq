@@ -1,7 +1,7 @@
 const MAX_BOOKS = 15;
 const MAX_RECOMMENDATIONS = 8;
 const MAX_BODY_BYTES = 24 * 1024;
-const DEFAULT_MODEL = 'gemini-2.0-flash';
+const DEFAULT_MODEL = 'gemini-2.5-flash-lite';
 const DEFAULT_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const DEFAULT_QUOTA = 5;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -9,6 +9,7 @@ const SAFE_ERROR_CODES = {
   FIREBASE_ADMIN_CONFIG_ERROR: 'FIREBASE_ADMIN_CONFIG_ERROR',
   FIRESTORE_CACHE_ERROR: 'FIRESTORE_CACHE_ERROR',
   FIRESTORE_QUOTA_ERROR: 'FIRESTORE_QUOTA_ERROR',
+  GEMINI_BAD_REQUEST: 'GEMINI_BAD_REQUEST',
   GEMINI_API_ERROR: 'GEMINI_API_ERROR',
   GEMINI_PROVIDER_QUOTA_EXHAUSTED: 'GEMINI_PROVIDER_QUOTA_EXHAUSTED',
   GEMINI_RESPONSE_INVALID: 'GEMINI_RESPONSE_INVALID',
@@ -17,17 +18,22 @@ const SAFE_ERROR_CODES = {
 let _adminDepsPromise = null;
 
 export function getGeminiEnv() {
+  const mode = normalizeGeminiApiMode(process.env.GEMINI_API_MODE || 'generateContent');
   return {
     apiKey: String(process.env.GEMINI_API_KEY || '').trim(),
-    model: normalizeGeminiModelName(process.env.GEMINI_MODEL || DEFAULT_MODEL),
+    model: normalizeGeminiModelName(process.env.GEMINI_MODEL || getDefaultGeminiModel(mode)),
     apiBase: String(process.env.GEMINI_API_BASE || DEFAULT_API_BASE).trim() || DEFAULT_API_BASE,
-    mode: normalizeGeminiApiMode(process.env.GEMINI_API_MODE || 'generateContent'),
+    mode,
   };
 }
 
 export function normalizeGeminiApiMode(value) {
   const clean = cleanText(value, 32).toLowerCase();
   return clean === 'interactions' ? 'interactions' : 'generatecontent';
+}
+
+export function getDefaultGeminiModel(mode = 'generatecontent') {
+  return normalizeGeminiApiMode(mode) === 'interactions' ? 'gemini-3.1-flash-lite' : 'gemini-2.5-flash-lite';
 }
 
 export function normalizeGeminiModelName(value) {
@@ -131,7 +137,7 @@ export function buildGeminiRequestBody(payload, mode = 'generatecontent') {
   const prompt = buildGeminiPrompt(payload);
   if (normalizeGeminiApiMode(mode) === 'interactions') {
     return {
-      model: normalizeGeminiModelName(getGeminiEnv().model),
+      model: normalizeGeminiModelName(getDefaultGeminiModel('interactions')),
       input: prompt.contents?.[0]?.parts?.[0]?.text || '',
     };
   }
@@ -140,13 +146,53 @@ export function buildGeminiRequestBody(payload, mode = 'generatecontent') {
 
 export function parseGeminiRecommendations(responseText) {
   const parsed = safeJsonParse(responseText);
-  const recommendations = Array.isArray(parsed?.recommendations) ? parsed.recommendations : [];
+  const recommendations = normalizeGeminiResponseShape(parsed)?.recommendations
+    || normalizeGeminiResponseShape(safeJsonParse(extractGeminiResponseText(parsed, responseText)))?.recommendations
+    || [];
   return {
     recommendations: recommendations
       .map(normalizeRecommendation)
       .filter(Boolean)
       .slice(0, MAX_RECOMMENDATIONS),
   };
+}
+
+export function normalizeGeminiResponseShape(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
+  const recommendations = [];
+  const pushList = (list) => {
+    if (!Array.isArray(list)) return;
+    list.forEach((item) => {
+      if (item && typeof item === 'object') recommendations.push(item);
+    });
+  };
+  const pushFromText = (value) => {
+    const text = String(value || '').trim();
+    if (!text) return;
+    const parsed = safeJsonParse(text);
+    if (parsed && typeof parsed === 'object') {
+      const nested = normalizeGeminiResponseShape(parsed);
+      if (nested?.recommendations?.length) recommendations.push(...nested.recommendations);
+    }
+  };
+  pushList(payload.recommendations);
+  pushList(payload.output?.recommendations);
+  pushList(payload.data?.recommendations);
+  pushList(payload.response?.recommendations);
+  pushList(payload.results);
+  pushFromText(payload.output?.text);
+  pushFromText(payload.output?.output);
+  pushFromText(payload.output?.response);
+  pushFromText(payload.text);
+  if (recommendations.length) return { recommendations };
+  const text = extractGeminiResponseText(payload, '');
+  if (!text) return null;
+  const parsedText = safeJsonParse(text);
+  if (parsedText && typeof parsedText === 'object') {
+    const nested = normalizeGeminiResponseShape(parsedText);
+    if (nested?.recommendations?.length) return nested;
+  }
+  return null;
 }
 
 export function normalizeRecommendation(entry) {
@@ -339,13 +385,14 @@ export async function callGemini(payload) {
     throw error;
   }
 
+  const requestBody = buildGeminiRequestBody(payload, env.mode);
   const response = await fetch(buildGeminiApiUrl(env.apiBase, env.model, env.apiKey), {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
       ...(env.mode === 'interactions' ? { 'x-goog-api-key': env.apiKey } : {}),
     },
-    body: JSON.stringify(buildGeminiRequestBody(payload, env.mode)),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
@@ -354,10 +401,12 @@ export async function callGemini(payload) {
     error.statusCode = response.status;
     error.code = response.status === 429
       ? SAFE_ERROR_CODES.GEMINI_PROVIDER_QUOTA_EXHAUSTED
-      : SAFE_ERROR_CODES.GEMINI_API_ERROR;
+      : response.status === 400
+        ? SAFE_ERROR_CODES.GEMINI_BAD_REQUEST
+        : SAFE_ERROR_CODES.GEMINI_API_ERROR;
     error.geminiStatus = response.status;
     error.bodyKind = bodyKind;
-    logGeminiApiEvent(response.status === 429 ? 'gemini-provider-quota' : 'gemini-api-non-2xx', {
+    logGeminiApiEvent(response.status === 429 ? 'gemini-provider-quota' : response.status === 400 ? 'gemini-bad-request' : 'gemini-api-non-2xx', {
       status: response.status,
       model: env.model,
       bodyKind,
@@ -605,6 +654,17 @@ export async function handleGeminiRequest({
       return { statusCode: 502, body: { error: 'server_error', code: SAFE_ERROR_CODES.GEMINI_RESPONSE_INVALID } };
     }
     const statusCode = Number(err?.statusCode || err?.status || 500);
+    if (err?.code === SAFE_ERROR_CODES.GEMINI_BAD_REQUEST || statusCode === 400) {
+      logGeminiRoute('gemini-bad-request', { code: SAFE_ERROR_CODES.GEMINI_BAD_REQUEST, uid, status: 400 });
+      return {
+        statusCode: 400,
+        body: {
+          error: 'server_error',
+          code: SAFE_ERROR_CODES.GEMINI_BAD_REQUEST,
+          geminiStatus: 400,
+        },
+      };
+    }
     if (err?.code === SAFE_ERROR_CODES.GEMINI_PROVIDER_QUOTA_EXHAUSTED || statusCode === 429) {
       logGeminiRoute('gemini-provider-quota', { code: SAFE_ERROR_CODES.GEMINI_PROVIDER_QUOTA_EXHAUSTED, uid, status: 429 });
       return {
