@@ -3138,12 +3138,20 @@ function _buildAccountSection(firebase) {
   }
 
   const user = firebase.user;
+  const emailInfo = window.LibriqFirebase?.getUserEmailAuthInfo?.(user) || {
+    email: String(user.email || '').trim(),
+    emailVerified: false,
+    hasPasswordProvider: false,
+    hasEmail: Boolean(String(user.email || '').trim()),
+  };
   const avatar = user.photoURL
     ? `<img src="${Utils.sanitize(user.photoURL)}" alt="" aria-hidden="true" style="width:40px;height:40px;border-radius:999px;object-fit:cover;" />`
     : `<div style="width:40px;height:40px;border-radius:999px;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-weight:700;">${Utils.sanitize((user.displayName || user.email || 'U').slice(0,1).toUpperCase())}</div>`;
   const cloudState = window.LibriqCloudBackup?.getState?.() || {};
   const hasFirestore = Boolean(window.LibriqFirebase?.hasFirestore?.());
   const offlineMode = Navigation.getSessionPreference?.() === 'offline';
+  const canEmailActions = emailInfo.hasEmail;
+  const showVerificationNotice = canEmailActions && !emailInfo.emailVerified;
   const cloudLabel = cloudState.status === 'paused' || offlineMode
     ? 'Cloud backup is paused while you’re using offline mode.'
     : hasFirestore
@@ -3162,8 +3170,51 @@ function _buildAccountSection(firebase) {
           <div class="activity-subtitle">${Utils.sanitize(user.email || '')}</div>
           <div class="activity-subtitle" id="settingsAccountCloudCopy">${Utils.sanitize(cloudLabel)}</div>
           ${cloudState.lastSavedAt ? `<div class="activity-subtitle" id="settingsAccountCloudBackupCopy">${Utils.sanitize(backupLabel)}</div>` : ''}
+          ${showVerificationNotice ? `<div class="settings-callout" id="emailVerificationNotice">Your email isn’t verified yet.</div>` : ''}
         </div>
       </div>
+      ${(canEmailActions && emailInfo.hasPasswordProvider) ? `
+      <div class="settings-account-actions">
+        <div class="settings-row settings-row-action">
+          <div class="activity-text">
+            <div class="activity-title">Email verification</div>
+            <div class="activity-subtitle">Send a verification email to your address.</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" type="button" id="sendVerificationEmailBtn">
+            Send verification email
+          </button>
+        </div>
+        <div class="settings-row settings-row-action">
+          <div class="activity-text">
+            <div class="activity-title">Check verification</div>
+            <div class="activity-subtitle">Reload your account after you confirm the message.</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" type="button" id="refreshEmailStatusBtn">
+            I’ve verified my email
+          </button>
+        </div>
+        <div class="settings-row settings-row-action">
+          <div class="activity-text">
+            <div class="activity-title">Password reset</div>
+            <div class="activity-subtitle">Send a reset link to the email on this account.</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" type="button" id="resetPasswordBtn">
+            Reset password
+          </button>
+        </div>
+        <div class="settings-row settings-row-action">
+          <div class="activity-text">
+            <div class="activity-title">Change email address</div>
+            <div class="activity-subtitle">We’ll send a confirmation link to your new address.</div>
+          </div>
+          <div style="display:flex; gap: var(--space-2); flex-wrap: wrap; justify-content: flex-end; align-items:center;">
+            <input class="form-input" id="changeEmailInput" type="email" value="${Utils.sanitize(emailInfo.email)}" placeholder="New email address" style="min-width: 240px;" />
+            <button class="btn btn-secondary btn-sm" type="button" id="changeEmailBtn">
+              Change email address
+            </button>
+          </div>
+        </div>
+      </div>` : ''}
       <button class="btn btn-secondary btn-sm" id="accountActionBtn" type="button" data-account-action="signout">
         Sign out
       </button>
@@ -3363,6 +3414,53 @@ function _wireAccountControls() {
     }
   };
 
+  const firebase = window.LibriqFirebase;
+
+  const verificationBtn = document.getElementById('sendVerificationEmailBtn');
+  if (verificationBtn) verificationBtn.onclick = async () => {
+    try {
+      await firebase?.sendVerificationEmailToCurrentUser?.();
+      Utils.toast('Verification email sent. Check your inbox.', 'success');
+      await firebase?.refreshCurrentUser?.();
+      Navigation.renderCurrentPage?.();
+    } catch (err) {
+      Utils.toast(_friendlyAuthMessage(err), 'error');
+    }
+  };
+
+  const refreshEmailStatusBtn = document.getElementById('refreshEmailStatusBtn');
+  if (refreshEmailStatusBtn) refreshEmailStatusBtn.onclick = async () => {
+    try {
+      await firebase?.refreshCurrentUser?.();
+      Utils.toast('Account status refreshed.', 'info');
+      Navigation.renderCurrentPage?.();
+    } catch (err) {
+      Utils.toast(_friendlyAuthMessage(err), 'error');
+    }
+  };
+
+  const resetPasswordBtn = document.getElementById('resetPasswordBtn');
+  if (resetPasswordBtn) resetPasswordBtn.onclick = async () => {
+    try {
+      await firebase?.sendPasswordResetToEmail?.(firebase?.getState?.()?.user?.email || '');
+      Utils.toast('Password reset email sent if an account exists for that address.', 'success');
+    } catch (err) {
+      Utils.toast(_friendlyAuthMessage(err), 'error');
+    }
+  };
+
+  const changeEmailBtn = document.getElementById('changeEmailBtn');
+  if (changeEmailBtn) changeEmailBtn.onclick = async () => {
+    const input = document.getElementById('changeEmailInput');
+    const nextEmail = String(input?.value || '').trim();
+    try {
+      await firebase?.requestEmailChange?.(nextEmail);
+      Utils.toast('We sent a confirmation link to your new email. Your email will update after you confirm it.', 'success');
+    } catch (err) {
+      Utils.toast(_friendlyAuthMessage(err), 'error');
+    }
+  };
+
   const saveBtn = document.getElementById('cloudBackupSaveBtn');
   if (saveBtn) saveBtn.onclick = backupToCloud;
 
@@ -3407,6 +3505,19 @@ function _wireAccountControls() {
     window.setTimeout(() => Navigation.renderCurrentPage?.(), 150);
   };
 
+}
+
+function _friendlyAuthMessage(err) {
+  const code = String(err?.code || '').trim();
+  const map = {
+    'auth/too-many-requests': 'Please wait before trying again.',
+    'auth/requires-recent-login': 'For security, please sign in again and retry.',
+    'auth/invalid-email': 'Enter a valid email address.',
+    'auth/user-disabled': 'This account is disabled.',
+    'auth/network-request-failed': 'Check your connection and try again.',
+  };
+  try { console.warn('[LibriQ] Auth action failed:', code || 'unknown'); } catch {}
+  return map[code] || 'Something went wrong. Please try again.';
 }
 
 function _countRecords(list, filterFn) {

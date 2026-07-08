@@ -171,7 +171,16 @@ globalThis.Storage = {
 globalThis.Library = { renderBookCard: () => document.createElement ? document.createElement('div') : ({}) };
 globalThis.Search = { open: () => {}, close: () => {}, init: () => {} };
 const firebaseState = { available: false, ready: true, user: null, restoringSession: false };
-globalThis.LibriqFirebase = { getState: () => firebaseState, onChange: () => () => {} };
+globalThis.LibriqFirebase = {
+  getState: () => firebaseState,
+  onChange: () => () => {},
+  getUserEmailAuthInfo: (user) => ({
+    email: String(user?.email || ''),
+    emailVerified: Boolean(user?.emailVerified),
+    hasPasswordProvider: Array.isArray(user?.providerData) && user.providerData.some(provider => provider?.providerId === 'password'),
+    hasEmail: Boolean(String(user?.email || '').trim()),
+  }),
+};
 globalThis.LibriqSyncBeta = { refresh: () => {}, pauseForOffline: () => {}, maybeAutoEnable: () => {}, getState: () => ({ enabled: false, status: 'off' }) };
 globalThis.LibriqCloudBackup = { refresh: () => {}, scheduleIfAllowed: () => {}, pause: () => {} };
 globalThis.LibriqConfig = { enableAiRecommendations: false };
@@ -369,6 +378,57 @@ if (nav.currentPage !== 'dashboard') {
 
 if (main.hidden) {
   throw new Error('mainContent ended hidden');
+}
+
+firebaseState.user = {
+  uid: 'email-user',
+  displayName: 'Email Reader',
+  email: 'reader@example.com',
+  emailVerified: false,
+  providerData: [{ providerId: 'password' }],
+};
+firebaseState.available = true;
+firebaseState.initialized = true;
+nav.goTo('dashboard');
+nav.goTo('settings');
+nav.renderCurrentPage();
+await Promise.resolve();
+await Promise.resolve();
+if (!main.innerHTML.includes('emailVerificationNotice')) {
+  throw new Error('settings should show email verification notice for unverified email/password users');
+}
+if (!main.innerHTML.includes('sendVerificationEmailBtn')) {
+  throw new Error('settings should expose send verification email action');
+}
+if (!main.innerHTML.includes('resetPasswordBtn')) {
+  throw new Error('settings should expose reset password action for email/password users');
+}
+if (!main.innerHTML.includes('changeEmailBtn')) {
+  throw new Error('settings should expose change email action for email/password users');
+}
+
+firebaseState.user = {
+  uid: 'google-user',
+  displayName: 'Google Reader',
+  email: 'google@example.com',
+  emailVerified: true,
+  providerData: [{ providerId: 'google.com' }],
+};
+firebaseState.available = true;
+firebaseState.initialized = true;
+nav.goTo('dashboard');
+nav.goTo('settings');
+nav.renderCurrentPage();
+await Promise.resolve();
+await Promise.resolve();
+if (main.innerHTML.includes('emailVerificationNotice')) {
+  throw new Error('google users should not see email verification notice when verified');
+}
+if (main.innerHTML.includes('resetPasswordBtn')) {
+  throw new Error('google-only users should not see password reset actions');
+}
+if (main.innerHTML.includes('changeEmailBtn')) {
+  throw new Error('google-only users should not see change email actions');
 }
 
 const sampleBooks = [
