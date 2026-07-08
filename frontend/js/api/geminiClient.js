@@ -188,6 +188,11 @@ const GeminiRecommendationsAPI = (() => {
       }
       return;
     }
+    if (status === 400) {
+      const safeCode = String(code || payload?.code || '');
+      console.warn('[Libriq/Gemini] Gemini bad request.', safeCode ? { code: safeCode } : undefined);
+      return;
+    }
     if (status >= 500) {
       console.warn('[Libriq/Gemini] Backend error:', status, code || 'UNKNOWN_SERVER_ERROR');
       return;

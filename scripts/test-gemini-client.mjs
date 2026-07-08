@@ -126,6 +126,32 @@ async function main() {
   }, (err) => err.status === 429);
   assert.ok(warnLines.some(line => line.includes('Gemini provider quota exhausted.')));
 
+  warnLines.length = 0;
+  context.fetch = async () => ({
+    ok: false,
+    status: 400,
+    async json() {
+      return { error: 'server_error', code: 'GEMINI_BAD_REQUEST', geminiStatus: 400 };
+    },
+  });
+  await assert.rejects(async () => {
+    await vm.runInNewContext(`GeminiRecommendationsAPI.generateRecommendations({ mode: 'recommendations', books: [] })`, context);
+  }, (err) => err.status === 400);
+  assert.ok(warnLines.some(line => line.includes('Gemini bad request.')));
+
+  warnLines.length = 0;
+  context.fetch = async () => ({
+    ok: false,
+    status: 502,
+    async json() {
+      return { error: 'server_error', code: 'GEMINI_RESPONSE_INVALID' };
+    },
+  });
+  await assert.rejects(async () => {
+    await vm.runInNewContext(`GeminiRecommendationsAPI.generateRecommendations({ mode: 'recommendations', books: [] })`, context);
+  }, (err) => err.status === 502);
+  assert.ok(warnLines.some(line => line.includes('GEMINI_RESPONSE_INVALID')) || warnLines.some(line => line.includes('Backend error')));
+
   console.log('gemini client test passed');
 }
 

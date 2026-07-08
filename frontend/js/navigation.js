@@ -2353,6 +2353,12 @@ function _wireGeminiRecommendations() {
       } else if (code === 'auth' || code === 'auth-expired' || status === 401) {
         console.debug('[Libriq/Gemini] Missing or expired Firebase session.', { code, status });
         stateNode.textContent = 'Please sign in again to use AI recommendations.';
+      } else if (code === 'gemini_bad_request' || (status === 400 && code !== 'gemini_provider_quota_exhausted')) {
+        console.debug('[Libriq/Gemini] Gemini bad request.', { code, status });
+        stateNode.textContent = 'AI recommendations need a quick setup fix. Your local recommendations are still available.';
+      } else if (code === 'gemini_response_invalid' || (status === 502 && code !== 'gemini_provider_quota_exhausted')) {
+        console.debug('[Libriq/Gemini] Gemini response invalid.', { code, status });
+        stateNode.textContent = 'AI gave an unexpected response. Your local recommendations are still available.';
       } else if (status === 429) {
         if (code === 'gemini_provider_quota_exhausted') {
           console.debug('[Libriq/Gemini] Gemini provider quota exhausted.');
