@@ -179,6 +179,7 @@ globalThis.LibriqFirebase = {
     emailVerified: Boolean(user?.emailVerified),
     hasPasswordProvider: Array.isArray(user?.providerData) && user.providerData.some(provider => provider?.providerId === 'password'),
     hasEmail: Boolean(String(user?.email || '').trim()),
+    providerData: Array.isArray(user?.providerData) ? user.providerData : [],
   }),
 };
 globalThis.LibriqSyncBeta = { refresh: () => {}, pauseForOffline: () => {}, maybeAutoEnable: () => {}, getState: () => ({ enabled: false, status: 'off' }) };
@@ -429,6 +430,30 @@ if (main.innerHTML.includes('resetPasswordBtn')) {
 }
 if (main.innerHTML.includes('changeEmailBtn')) {
   throw new Error('google-only users should not see change email actions');
+}
+if (!main.innerHTML.includes('Signed in with Google')) {
+  throw new Error('google-only users should show Google sign-in context');
+}
+
+firebaseState.user = { ...firebaseState.user, emailVerified: false };
+nav.renderCurrentPage();
+await Promise.resolve();
+if (main.innerHTML.includes('emailVerificationNotice')) {
+  throw new Error('google-only users should not surface an unverified email notice without actions');
+}
+
+firebaseState.user = null;
+firebaseState.restoringSession = true;
+nav.routeAfterAuthReady();
+if (nav.currentPage === 'session') {
+  throw new Error('restoring session should not route to sign-in screen');
+}
+
+firebaseState.restoringSession = false;
+firebaseState.signedOutConfirmed = true;
+nav.routeAfterAuthReady();
+if (!main.innerHTML.includes('session-page')) {
+  throw new Error('confirmed signed-out state should render the sign-in screen');
 }
 
 const sampleBooks = [

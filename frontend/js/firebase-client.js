@@ -33,6 +33,7 @@ const state = {
   user: null,
   error: null,
   restoringSession: false,
+  signedOutConfirmed: false,
 };
 
 const listeners = new Set();
@@ -155,6 +156,8 @@ function init() {
         displayName: localStorage.getItem('libriq_e2e_test_display_name') || storedUid,
         email: localStorage.getItem('libriq_e2e_test_email') || `${storedUid}@example.com`,
         photoURL: '',
+        providerData: [{ providerId: 'password' }],
+        emailVerified: false,
       };
       window.LibriqStorage?.setActiveAccountUid?.(testUser.uid);
     } else {
@@ -215,42 +218,67 @@ function init() {
 
   if (!authListener) {
     authListener = onAuthStateChanged(auth, (user) => {
+      const nextUser = user?.uid ? {
+        uid: user.uid,
+        displayName: user.displayName || '',
+        email: user.email || '',
+        photoURL: user.photoURL || '',
+        emailVerified: Boolean(user.emailVerified),
+        providerData: Array.isArray(user.providerData) ? user.providerData.map(provider => ({
+          providerId: provider?.providerId || '',
+          email: provider?.email || '',
+          displayName: provider?.displayName || '',
+          photoURL: provider?.photoURL || '',
+        })) : [],
+      } : null;
+
       if (user?.uid) {
         window.LibriqStorage?.setActiveAccountUid?.(user.uid);
-          if (authNullTimer) {
-            window.clearTimeout(authNullTimer);
-            authNullTimer = null;
-          }
+        if (authNullTimer) {
+          window.clearTimeout(authNullTimer);
+          authNullTimer = null;
+        }
+        setState({
+          ready: true,
+          restoringSession: false,
+          signedOutConfirmed: false,
+          user: nextUser,
+        });
+        syncActivityFromCloud(user.uid);
+        syncProfileFromCloud(user.uid);
+        syncGoalsFromCloud(user.uid);
+        syncStreakFromCloud(user.uid);
+        return;
+      }
+
+      const hasVisibleUser = Boolean(state.user?.uid);
+      if (hasVisibleUser) {
+        state.restoringSession = true;
+        state.signedOutConfirmed = false;
+        if (authNullTimer) window.clearTimeout(authNullTimer);
+        authNullTimer = window.setTimeout(() => {
+          authNullTimer = null;
+          if (auth?.currentUser?.uid) return;
           state.restoringSession = false;
-        } else {
-          if (!state.restoringSession && state.user) {
-            state.restoringSession = true;
-            if (authNullTimer) window.clearTimeout(authNullTimer);
-            authNullTimer = window.setTimeout(() => {
-              authNullTimer = null;
-              if (auth?.currentUser?.uid) return;
-              state.restoringSession = false;
-              setState({ user: null, ready: true, available: true });
-              window.LibriqStorage?.clearActiveAccountScope?.();
-            }, AUTH_SIGN_OUT_GRACE_MS);
-          } else if (!state.user) {
-            window.LibriqStorage?.clearActiveAccountScope?.();
-          }
-        }
-        setState({ ready: true, user: user ? {
-          uid: user.uid,
-          displayName: user.displayName || '',
-          email: user.email || '',
-          photoURL: user.photoURL || '',
-        } : (state.restoringSession ? state.user : null) });
-        if (user?.uid) {
-          syncActivityFromCloud(user.uid);
-          syncProfileFromCloud(user.uid);
-          syncGoalsFromCloud(user.uid);
-          syncStreakFromCloud(user.uid);
-        }
-      });
-    }
+          state.signedOutConfirmed = true;
+          setState({ ready: true, available: true, user: null, restoringSession: false, signedOutConfirmed: true });
+          window.LibriqStorage?.clearActiveAccountScope?.();
+        }, AUTH_SIGN_OUT_GRACE_MS);
+        setState({
+          ready: true,
+          restoringSession: true,
+          signedOutConfirmed: false,
+          user: state.user,
+        });
+        return;
+      }
+
+      state.restoringSession = false;
+      state.signedOutConfirmed = true;
+      window.LibriqStorage?.clearActiveAccountScope?.();
+      setState({ ready: true, user: null, restoringSession: false, signedOutConfirmed: true });
+    });
+  }
     if (!activityOnlineListenerAttached) {
       activityOnlineListenerAttached = true;
       window.addEventListener?.('online', () => {
@@ -305,9 +333,11 @@ async function signInWithGoogle() {
       displayName: localStorage.getItem('libriq_e2e_test_display_name') || 'E2E Reader',
       email: localStorage.getItem('libriq_e2e_test_email') || 'e2e@example.com',
       photoURL: '',
+      providerData: [{ providerId: 'google.com' }],
+      emailVerified: false,
     };
     window.LibriqStorage?.setActiveAccountUid?.(testUser.uid);
-    setState({ ready: true, user: testUser, available: true });
+      setState({ ready: true, user: testUser, available: true });
     return { user: testUser };
   }
   if (!state.available || !auth) {
@@ -335,6 +365,8 @@ async function signInWithEmail(email, password) {
       displayName: normalizedEmail.split('@')[0] || 'Reader',
       email: normalizedEmail,
       photoURL: '',
+      providerData: [{ providerId: 'password', email: normalizedEmail }],
+      emailVerified: false,
     };
     window.LibriqStorage?.setActiveAccountUid?.(testUser.uid);
     setState({ ready: true, user: testUser, available: true });
@@ -429,13 +461,15 @@ async function signOutUser() {
     localStorage.removeItem('libriq_e2e_test_email');
     localStorage.removeItem('libriq_e2e_test_display_name');
     window.LibriqStorage?.clearActiveAccountScope?.();
-    setState({ user: null, ready: true, available: true });
+  setState({ user: null, ready: true, available: true });
+  state.signedOutConfirmed = true;
     return;
   }
   if (!state.available || !auth) {
     throw new Error('Firebase is unavailable.');
   }
   state.restoringSession = false;
+  state.signedOutConfirmed = true;
   if (authNullTimer) {
     window.clearTimeout(authNullTimer);
     authNullTimer = null;
@@ -455,6 +489,13 @@ function getCurrentUser() {
     displayName: current.displayName || '',
     email: current.email || '',
     photoURL: current.photoURL || '',
+    emailVerified: Boolean(current.emailVerified),
+    providerData: Array.isArray(current.providerData) ? current.providerData.map(provider => ({
+      providerId: provider?.providerId || '',
+      email: provider?.email || '',
+      displayName: provider?.displayName || '',
+      photoURL: provider?.photoURL || '',
+    })) : [],
   } : null;
 }
 
@@ -1342,7 +1383,7 @@ if (TEST_MODE) {
       localStorage.setItem('libriq_e2e_test_uid', uid);
       localStorage.setItem('libriq_e2e_test_email', email || `${uid}@example.com`);
       localStorage.setItem('libriq_e2e_test_display_name', displayName || uid);
-      testUser = { uid, email: email || `${uid}@example.com`, displayName: displayName || uid, photoURL: '' };
+      testUser = { uid, email: email || `${uid}@example.com`, displayName: displayName || uid, photoURL: '', emailVerified: false, providerData: [{ providerId: 'password', email: email || `${uid}@example.com` }] };
       window.LibriqStorage?.setActiveAccountUid?.(uid);
       setState({ user: testUser, ready: true, available: true });
       return testUser;

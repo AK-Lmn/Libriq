@@ -339,7 +339,7 @@ const Navigation = (() => {
         window.LibriqSyncBeta?.detachForAccountSwitch?.('navigation-auth-change');
         Navigation.updateBadges?.();
       }
-      if (!firebase.user && !firebase.restoringSession) {
+      if (!firebase.user && firebase.signedOutConfirmed) {
         clearAccountResume();
         if (getCurrentSessionMode() !== 'offline' && getSessionPreference() !== 'offline') {
           if (_currentPage !== 'session') goTo('session');
@@ -353,6 +353,8 @@ const Navigation = (() => {
         routeAfterAuthReady();
       } else if (firebase.restoringSession && _currentPage === 'session') {
         renderSessionChoicePage();
+      } else if (firebase.restoringSession && firebase.user && _currentPage !== 'session') {
+        renderCurrentPage?.();
       } else if (_currentPage === 'settings') renderSettingsPage();
       if (_currentPage === 'session') renderSessionChoicePage();
       window.LibriqCloudBackup?.refresh?.();
@@ -430,6 +432,14 @@ function routeAfterAuthReady() {
     Navigation.goTo('dashboard');
     window.LibriqSyncBeta?.maybeAutoEnable?.('auth-ready');
     return true;
+  }
+  if (!firebase.signedOutConfirmed && firebase.available) {
+    debugSync('auth ready preserved while session restores', {
+      restoringSession: Boolean(firebase.restoringSession),
+      signedOutConfirmed: Boolean(firebase.signedOutConfirmed),
+      hasUser: Boolean(firebase.user),
+    });
+    if (Navigation.currentPage !== 'boot') return true;
   }
   window.LibriqStorage?.clearActiveAccountScope?.();
   if (Navigation.getCurrentSessionMode?.() === 'offline' || Navigation.getSessionPreference?.() === 'offline') {
@@ -3150,7 +3160,8 @@ function _buildAccountSection(firebase) {
   const cloudState = window.LibriqCloudBackup?.getState?.() || {};
   const hasFirestore = Boolean(window.LibriqFirebase?.hasFirestore?.());
   const offlineMode = Navigation.getSessionPreference?.() === 'offline';
-  const canEmailActions = emailInfo.hasEmail;
+  const isGoogleOnly = Array.isArray(emailInfo.providerData) && emailInfo.providerData.length > 0 && emailInfo.providerData.every(provider => provider.providerId === 'google.com');
+  const canEmailActions = emailInfo.hasEmail && emailInfo.hasPasswordProvider;
   const showVerificationNotice = canEmailActions && !emailInfo.emailVerified;
   const cloudLabel = cloudState.status === 'paused' || offlineMode
     ? 'Cloud backup is paused while you’re using offline mode.'
@@ -3168,12 +3179,16 @@ function _buildAccountSection(firebase) {
         <div>
           <div class="activity-title">${Utils.sanitize(getDisplayNameForAccount(user) || 'Signed in')}</div>
           <div class="activity-subtitle">${Utils.sanitize(user.email || '')}</div>
+          ${isGoogleOnly ? `
+            <div class="activity-subtitle">Signed in with Google</div>
+            <div class="activity-subtitle">Your email is managed by Google.</div>
+          ` : ''}
           <div class="activity-subtitle" id="settingsAccountCloudCopy">${Utils.sanitize(cloudLabel)}</div>
           ${cloudState.lastSavedAt ? `<div class="activity-subtitle" id="settingsAccountCloudBackupCopy">${Utils.sanitize(backupLabel)}</div>` : ''}
           ${showVerificationNotice ? `<div class="settings-callout" id="emailVerificationNotice">Your email isn’t verified yet.</div>` : ''}
         </div>
       </div>
-      ${(canEmailActions && emailInfo.hasPasswordProvider) ? `
+      ${canEmailActions ? `
       <div class="settings-account-actions">
         <div class="settings-row settings-row-action">
           <div class="activity-text">
@@ -3214,7 +3229,7 @@ function _buildAccountSection(firebase) {
             </button>
           </div>
         </div>
-      </div>` : ''}
+      </div>` : (isGoogleOnly ? `<div class="settings-callout">Your email is managed by Google.</div>` : '')}
       <button class="btn btn-secondary btn-sm" id="accountActionBtn" type="button" data-account-action="signout">
         Sign out
       </button>
