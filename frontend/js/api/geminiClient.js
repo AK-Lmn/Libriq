@@ -180,7 +180,12 @@ const GeminiRecommendationsAPI = (() => {
       return;
     }
     if (status === 429) {
-      console.warn('[Libriq/Gemini] Daily Gemini quota exhausted.', code ? { code } : undefined);
+      const safeCode = String(code || payload?.code || '');
+      if (safeCode === 'GEMINI_PROVIDER_QUOTA_EXHAUSTED') {
+        console.warn('[Libriq/Gemini] Gemini provider quota exhausted.', { code: safeCode });
+      } else {
+        console.warn('[Libriq/Gemini] Daily Gemini quota exhausted.', safeCode ? { code: safeCode } : undefined);
+      }
       return;
     }
     if (status >= 500) {

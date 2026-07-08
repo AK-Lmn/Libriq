@@ -35,7 +35,16 @@ async function main() {
   assert.equal(parsedCred.privateKey, 'abc\n123');
   assert.equal(parsedCred.projectId, 'proj');
   assert.equal(lib.normalizeGeminiModelName(' models/gemini-2.5-flash '), 'gemini-2.5-flash');
+  assert.equal(lib.normalizeGeminiApiMode(' interactions '), 'interactions');
+  assert.equal(lib.normalizeGeminiApiMode('generateContent'), 'generatecontent');
   assert.ok(lib.buildGeminiApiUrl('https://generativelanguage.googleapis.com/v1beta', 'models/gemini-2.0-flash', 'abc').includes('/models/gemini-2.0-flash:generateContent?key=abc'));
+  const originalApiMode = process.env.GEMINI_API_MODE;
+  process.env.GEMINI_API_MODE = 'interactions';
+  assert.equal(lib.buildGeminiApiUrl('https://generativelanguage.googleapis.com/v1beta', 'models/gemini-2.0-flash', 'abc'), 'https://generativelanguage.googleapis.com/v1beta/interactions');
+  const interactionBody = lib.buildGeminiRequestBody({ mode: 'home', books: [{ title: 'A', author: 'B' }] }, 'interactions');
+  assert.equal(interactionBody.model, 'gemini-2.0-flash');
+  assert.equal(typeof interactionBody.input, 'string');
+  process.env.GEMINI_API_MODE = originalApiMode;
 
   const originalApiKey = process.env.GEMINI_API_KEY;
   process.env.GEMINI_API_KEY = '';
@@ -312,6 +321,40 @@ async function main() {
   assert.equal(cacheMissStore.saved.uid, 'user-1');
   assert.equal(cacheMissStore.quotaCalls, 1);
   assert.equal(cacheMissStore.cacheCalls, 1);
+
+  const providerQuotaStore = {
+    quotaCalls: 0,
+    async getQuota() {
+      return { count: 0 };
+    },
+    async consumeQuota() {
+      this.quotaCalls += 1;
+      return { count: 1 };
+    },
+    async getCache() {
+      return null;
+    },
+    async setCache() {
+      return null;
+    },
+  };
+  const providerQuota = await lib.handleGeminiRequest({
+    authHeader: 'Bearer valid-token',
+    body: { mode: 'home', books: [{ title: 'Book', author: 'Author' }] },
+    auth: quotaAuth,
+    store: providerQuotaStore,
+    callGeminiFn: async () => {
+      const error = new Error('provider quota');
+      error.statusCode = 429;
+      error.code = lib.SAFE_ERROR_CODES.GEMINI_PROVIDER_QUOTA_EXHAUSTED;
+      error.geminiStatus = 429;
+      throw error;
+    },
+  });
+  assert.equal(providerQuota.statusCode, 429);
+  assert.equal(providerQuota.body.code, 'GEMINI_PROVIDER_QUOTA_EXHAUSTED');
+  assert.equal(providerQuota.body.geminiStatus, 429);
+  assert.equal(providerQuotaStore.quotaCalls, 0);
 
   const malformedStore = {
     quotaCalls: 0,

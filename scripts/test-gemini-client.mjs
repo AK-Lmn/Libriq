@@ -113,6 +113,19 @@ async function main() {
   assert.ok(warnLines.some(line => line.includes('FIRESTORE_CACHE_ERROR')));
   assert.equal(warnLines.some(line => line.includes('token-abc')), false);
 
+  warnLines.length = 0;
+  context.fetch = async () => ({
+    ok: false,
+    status: 429,
+    async json() {
+      return { error: 'server_error', code: 'GEMINI_PROVIDER_QUOTA_EXHAUSTED', geminiStatus: 429 };
+    },
+  });
+  await assert.rejects(async () => {
+    await vm.runInNewContext(`GeminiRecommendationsAPI.generateRecommendations({ mode: 'recommendations', books: [] })`, context);
+  }, (err) => err.status === 429);
+  assert.ok(warnLines.some(line => line.includes('Gemini provider quota exhausted.')));
+
   console.log('gemini client test passed');
 }
 
