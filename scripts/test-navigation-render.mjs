@@ -159,7 +159,10 @@ globalThis.Storage = {
   getProfile: () => ({ name: 'Reader', theme: 'dark' }),
   getBooks: () => [],
   getBooksByStatus: () => [],
-  getActivityLog: () => [],
+  getActivityLog: () => [
+    { id: 'act-1', type: 'book_added', timestamp: '2026-07-08T09:00:00Z', bookTitle: 'Dashboard Book', bookAuthor: 'Author One' },
+    { id: 'act-2', type: 'mystery_type', timestamp: '2026-07-08T10:00:00Z', bookTitle: 'Mystery Event', bookAuthor: 'Author Two' },
+  ],
   getCloudBackupMeta: () => ({}),
   getSyncReadiness: () => ({ syncReady: false, hasDeviceId: true, hasUpdatedAtCoverage: true, hasDeletedAtSupport: true, hasBackupMetadata: true }),
   saveProfile: () => {},
@@ -239,11 +242,23 @@ nav.goTo('dashboard');
 if (!main.innerHTML.includes('dashboard-recent-card')) {
   throw new Error('dashboard did not render recently updated cards');
 }
-if (!main.innerHTML.includes('Library.showDetailsModal')) {
-  throw new Error('dashboard recently updated cards should open book details');
+if (!main.innerHTML.includes('Dashboard Book')) {
+  throw new Error('dashboard recent activity did not use the canonical activity list');
 }
-if (main.innerHTML.includes('Library.showAddModal')) {
-  throw new Error('dashboard recently updated cards should not open add modal');
+if (!main.innerHTML.includes('Mystery Event')) {
+  throw new Error('dashboard recent activity should retain unknown activity types');
+}
+
+main.innerHTML = '';
+nav.goTo('activity');
+if (!main.innerHTML.includes('Dashboard Book')) {
+  throw new Error('activity page did not render canonical activity items');
+}
+if (!main.innerHTML.includes('Mystery Event')) {
+  throw new Error('activity page should show unknown activity types in All');
+}
+if (!main.innerHTML.includes('2 event')) {
+  throw new Error('activity page header count did not reflect activity events');
 }
 
 const mainStyle = String(document.getElementById('mainContent')?.style?.cssText || '');

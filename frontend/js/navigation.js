@@ -357,6 +357,11 @@ const Navigation = (() => {
       updateDesktopStatusPill();
       maybeShowNewDeviceCloudPrompt();
     });
+    window.addEventListener('libriq:activity:updated', () => {
+      if (['dashboard', 'activity'].includes(_currentPage)) {
+        Navigation.renderCurrentPage?.();
+      }
+    });
     if (DEBUG_SYNC()) {
       debugSync('init state', {
         currentPage: _currentPage,
@@ -4548,8 +4553,9 @@ function _filterActivityEvents(events, filter) {
     metadata: ['metadata_refreshed'],
   };
   const list = Array.isArray(events) ? events.slice() : [];
-  if (!map[filter]) return list.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
-  return list.filter(event => map[filter].includes(event.type)).sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+  if (!map[filter]) return list.sort((a, b) => new Date(b.timestamp || b.createdAt || 0) - new Date(a.timestamp || a.createdAt || 0));
+  return list.filter(event => map[filter].includes(String(event.type || '')))
+    .sort((a, b) => new Date(b.timestamp || b.createdAt || 0) - new Date(a.timestamp || a.createdAt || 0));
 }
 
 function _countActivityEvents(events, types) {
@@ -4562,7 +4568,7 @@ function _groupActivityByDate(events) {
   const yesterday = new Date(Date.now() - 86400000).toDateString();
 
   (events || []).forEach(event => {
-    const key = new Date(event.timestamp || Date.now()).toDateString();
+    const key = new Date(event.timestamp || event.createdAt || Date.now()).toDateString();
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(event);
   });
@@ -4604,7 +4610,7 @@ function _normalizeActivityForView(event) {
     iconBg: entry[2],
     iconColor: entry[3],
     payloadText: _getActivityDetailText(event, statusLabel),
-    date: event.timestamp,
+    date: event.timestamp || event.createdAt,
   };
 }
 

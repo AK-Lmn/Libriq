@@ -24,7 +24,7 @@ const Dashboard = {
     const books = Storage.getBooks();
     const featuredBook = pickFeaturedReadingBook(reading, books);
     const recentBooks = buildRecentBooks(books);
-    const recentActivity = buildRecentActivity(books);
+    const recentActivity = buildRecentActivity();
     const topGenres = stats.topGenres || [];
     const accountName = getDashboardAccountName();
     const syncState = window.LibriqSyncBeta?.getState?.() || { status: 'off', message: 'Account sync off', pending: false };
@@ -490,52 +490,12 @@ function buildPagesChart(monthlyPages) {
     </div>`;
 }
 
-function buildRecentActivity(books) {
-  const activityLog = Storage.getActivityLog?.() || [];
-  if (activityLog.length > 0) {
-    return activityLog
-      .slice()
-      .reverse()
-      .slice(0, 5)
-      .map(buildActivityFromEvent);
-  }
-
-  const activities = [];
-
-  books.forEach(b => {
-    if (b.dateFinished) {
-      activities.push({
-        type: 'finished',
-        title: b.title,
-        date: b.dateFinished,
-        icon: 'ph-check-circle',
-        iconBg: 'var(--color-success-dim)',
-        iconColor: 'var(--color-success)',
-      });
-    }
-    if (b.dateStarted && b.status === LIBRIQ.STATUS.READING) {
-      activities.push({
-        type: 'started',
-        title: b.title,
-        date: b.dateStarted,
-        icon: 'ph-book-open',
-        iconBg: 'var(--color-info-dim)',
-        iconColor: 'var(--color-info)',
-      });
-    }
-    if (b.dateAdded && !b.dateStarted) {
-      activities.push({
-        type: 'added',
-        title: b.title,
-        date: b.dateAdded,
-        icon: 'ph-bookmark',
-        iconBg: 'var(--accent-dim)',
-        iconColor: 'var(--accent)',
-      });
-    }
-  });
-
-  return activities.sort((a, b) => new Date(b.date) - new Date(a.date));
+function buildRecentActivity() {
+  return (Storage.getActivityLog?.() || [])
+    .slice()
+    .sort((a, b) => new Date(b.timestamp || b.createdAt || 0) - new Date(a.timestamp || a.createdAt || 0))
+    .slice(0, 5)
+    .map(buildActivityFromEvent);
 }
 
 function buildActivityItem(activity) {
