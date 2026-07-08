@@ -125,6 +125,7 @@ globalThis.Utils = {
   debounce: fn => fn,
   toast: () => {},
   formatDate: value => String(value ?? ''),
+  timeAgo: value => String(value ?? ''),
   formatNumber: value => String(value ?? 0),
   readingProgress: () => 0,
   formatDisplayName: value => String(value ?? ''),
@@ -170,6 +171,20 @@ globalThis.LibriqFirebase = { getState: () => ({ available: false, ready: true, 
 globalThis.LibriqSyncBeta = { refresh: () => {}, pauseForOffline: () => {}, maybeAutoEnable: () => {}, getState: () => ({ enabled: false, status: 'off' }) };
 globalThis.LibriqCloudBackup = { refresh: () => {}, scheduleIfAllowed: () => {}, pause: () => {} };
 globalThis.LibriqConfig = { enableAiRecommendations: false };
+
+const dashboardRecentBook = {
+  id: 'dashboard-recent-1',
+  title: 'Recent Library Book',
+  author: 'Sample Author',
+  status: LIBRIQ.STATUS.READING,
+  currentPage: 80,
+  pageCount: 240,
+  dateUpdated: '2026-07-08T10:00:00Z',
+  dateStarted: '2026-07-01T10:00:00Z',
+  dateAdded: '2026-06-20T10:00:00Z',
+};
+Storage.getBooks = () => [dashboardRecentBook];
+Storage.getBooksByStatus = (status) => (status === LIBRIQ.STATUS.READING ? [dashboardRecentBook] : []);
 
 await import('../frontend/js/dashboard.js');
 await import('../frontend/js/library.js');
@@ -217,6 +232,18 @@ if (!main.innerHTML.toLowerCase().includes('ai recommendations are being tuned a
 }
 if (main.innerHTML.includes('id="geminiRecommendationsBtn"')) {
   throw new Error('recommendations page still exposed an AI button while disabled');
+}
+
+main.innerHTML = '';
+nav.goTo('dashboard');
+if (!main.innerHTML.includes('dashboard-recent-card')) {
+  throw new Error('dashboard did not render recently updated cards');
+}
+if (!main.innerHTML.includes('Library.showDetailsModal')) {
+  throw new Error('dashboard recently updated cards should open book details');
+}
+if (main.innerHTML.includes('Library.showAddModal')) {
+  throw new Error('dashboard recently updated cards should not open add modal');
 }
 
 const mainStyle = String(document.getElementById('mainContent')?.style?.cssText || '');
