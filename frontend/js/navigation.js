@@ -2209,10 +2209,12 @@ function renderRecommendationsPage() {
             <div class="recommendations-ai-title">Generate a focused reading nudge from your saved library.</div>
             <div class="recommendations-ai-copy">Uses your reading history to suggest books. Notes, quotes, and reviews are not sent.</div>
           </div>
-          <button class="btn btn-primary" id="geminiRecommendationsBtn" type="button" ${aiState.disabled ? 'disabled' : ''}>
-            <i class="ph ph-sparkle"></i>
-            Generate AI Recommendations
-          </button>
+          ${aiState.comingSoon ? '' : `
+            <button class="btn btn-primary" id="geminiRecommendationsBtn" type="button" ${aiState.disabled ? 'disabled' : ''}>
+              <i class="ph ph-sparkle"></i>
+              Generate AI Recommendations
+            </button>
+          `}
         </div>
         <div class="recommendations-ai-state" id="geminiRecommendationsState">${Utils.sanitize(aiState.message)}</div>
         <div class="recommendations-ai-results" id="geminiRecommendationsResults" hidden></div>
@@ -2276,6 +2278,16 @@ function _getGeminiRecommendationsUiState() {
   const firebase = window.LibriqFirebase?.getState?.() || { available: false, ready: false, user: null };
   const online = navigator.onLine !== false;
   const offlineMode = Navigation.getSessionPreference?.() === 'offline' || Navigation.getCurrentSessionMode?.() === 'offline';
+  const aiEnabled = Boolean(window.LibriqConfig?.enableAiRecommendations);
+  if (!aiEnabled) {
+    return {
+      visible: true,
+      disabled: true,
+      activeSession: false,
+      message: 'AI recommendations are being tuned and will be available soon.',
+      comingSoon: true,
+    };
+  }
   if (!firebase.ready) {
     return {
       visible: true,
@@ -2286,7 +2298,7 @@ function _getGeminiRecommendationsUiState() {
   }
   const activeSession = Boolean(firebase.user && online && !offlineMode);
   if (!firebase.user) {
-    return { visible: false, disabled: true, activeSession: false, message: '' };
+    return { visible: true, disabled: true, activeSession: false, message: 'AI recommendations are being tuned and will be available soon.', comingSoon: true };
   }
   if (!online || offlineMode) {
     return {
@@ -2311,6 +2323,14 @@ function _wireGeminiRecommendations() {
   if (!btn || !results || !stateNode) return;
 
   const books = Storage.getBooks();
+  const initialState = _getGeminiRecommendationsUiState();
+  if (initialState.comingSoon) {
+    stateNode.textContent = initialState.message;
+    btn.disabled = true;
+    results.hidden = true;
+    results.innerHTML = '';
+    return;
+  }
   btn.onclick = async () => {
     const state = _getGeminiRecommendationsUiState();
     if (!state.activeSession) {
@@ -2425,7 +2445,7 @@ function buildGeminiRecommendationCard(rec) {
 async function _hydrateSubjectDiscovery(books) {
   const root = document.getElementById('subjectDiscoveryRoot');
   if (!root) return;
-  if (!navigator.onLine || !OpenLibraryAPI?.searchBySubject) {
+  if (!navigator.onLine || typeof OpenLibraryAPI === 'undefined' || !OpenLibraryAPI?.searchBySubject) {
     root.innerHTML = '';
     return;
   }
@@ -2532,7 +2552,7 @@ function buildSubjectDiscoveryRail(rail) {
 async function _hydrateGutendexDiscovery(books) {
   const root = document.getElementById('gutenbergDiscoveryRoot');
   if (!root) return;
-  if (!navigator.onLine || !GutendexAPI?.searchCuratedClassics) {
+  if (!navigator.onLine || typeof GutendexAPI === 'undefined' || !GutendexAPI?.searchCuratedClassics) {
     root.innerHTML = '';
     return;
   }

@@ -169,6 +169,7 @@ globalThis.Search = { open: () => {}, close: () => {}, init: () => {} };
 globalThis.LibriqFirebase = { getState: () => ({ available: false, ready: true, user: null }), onChange: () => () => {} };
 globalThis.LibriqSyncBeta = { refresh: () => {}, pauseForOffline: () => {}, maybeAutoEnable: () => {}, getState: () => ({ enabled: false, status: 'off' }) };
 globalThis.LibriqCloudBackup = { refresh: () => {}, scheduleIfAllowed: () => {}, pause: () => {} };
+globalThis.LibriqConfig = { enableAiRecommendations: false };
 
 await import('../frontend/js/dashboard.js');
 await import('../frontend/js/library.js');
@@ -207,6 +208,15 @@ for (const [name, expectedToken, expectedClass, visibleTokens, run] of checks) {
   if (main.innerHTML.includes('dashboardPage') && name === 'settings') {
     throw new Error('settings render left stale dashboardPage content');
   }
+}
+
+main.innerHTML = '';
+nav.goTo('recommendations');
+if (!main.innerHTML.toLowerCase().includes('ai recommendations are being tuned and will be available soon.')) {
+  throw new Error('recommendations page did not show the AI coming-soon note');
+}
+if (main.innerHTML.includes('id="geminiRecommendationsBtn"')) {
+  throw new Error('recommendations page still exposed an AI button while disabled');
 }
 
 const mainStyle = String(document.getElementById('mainContent')?.style?.cssText || '');
