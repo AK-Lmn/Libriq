@@ -50,6 +50,7 @@ const TEST_MODE = Boolean(
 const INIT_RETRY_TIMEOUT_MS = 3500;
 const INIT_RETRY_INTERVAL_MS = 75;
 const AUTH_READY_TIMEOUT_MS = 1500;
+const ACTIVITY_SYNC_QUEUE_KEY = 'libriq_pending_activity_sync';
 let activityOnlineListenerAttached = false;
 
 function getTestApiBase() {
@@ -359,6 +360,50 @@ function getActivityCollectionPath(uid) {
   return uid ? `users/${uid}/activity` : null;
 }
 
+function logActivityDebug(message, details = {}) {
+  if (!TEST_MODE && !window.location?.hostname?.includes('localhost') && !window.location?.hostname?.includes('127.0.0.1')) return;
+  try {
+    console.debug(`[LibriQ] ${message}`, details);
+  } catch {
+    console.debug(`[LibriQ] ${message}`);
+  }
+}
+
+function getPendingActivityQueue() {
+  try {
+    const raw = localStorage.getItem(ACTIVITY_SYNC_QUEUE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+  } catch (err) {
+    console.warn('[LibriQ] Activity pending queue read failed:', err);
+    return [];
+  }
+}
+
+function setPendingActivityQueue(events) {
+  try {
+    localStorage.setItem(ACTIVITY_SYNC_QUEUE_KEY, JSON.stringify(Array.isArray(events) ? events.slice(-100) : []));
+  } catch (err) {
+    console.warn('[LibriQ] Activity pending queue write failed:', err);
+  }
+}
+
+function addPendingActivityEvent(event) {
+  const normalized = sanitizeActivityEvent(event);
+  if (!normalized) return false;
+  const queue = getPendingActivityQueue();
+  if (queue.some(item => item?.id === normalized.id)) return true;
+  queue.push(normalized);
+  setPendingActivityQueue(queue);
+  return true;
+}
+
+function clearPendingActivityEvent(id) {
+  if (!id) return;
+  const queue = getPendingActivityQueue().filter(event => event?.id !== id);
+  setPendingActivityQueue(queue);
+}
+
 function hasActiveUser() {
   return TEST_MODE ? Boolean(testUser?.uid) : Boolean(auth?.currentUser?.uid);
 }
@@ -386,12 +431,26 @@ function sanitizeActivityEvent(event) {
 
 async function writeActivityEvent(uid, event) {
   const activityUid = uid || getCurrentUser()?.uid || null;
-  if (!activityUid) return false;
-  if (!firestore || !hasActiveUser()) return false;
   const normalized = sanitizeActivityEvent(event);
   if (!normalized) return false;
+  if (!activityUid) {
+    logActivityDebug('Activity write skipped: no uid', { eventId: normalized.id, type: normalized.type });
+    return false;
+  }
+  if (!firestore || !hasActiveUser()) {
+    logActivityDebug('Activity write skipped: firestore unavailable or auth not ready', {
+      uid: `${String(activityUid).slice(0, 6)}…`,
+      eventId: normalized.id,
+      type: normalized.type,
+      path: getActivityCollectionPath(activityUid),
+    });
+    return false;
+  }
+  const path = getActivityCollectionPath(activityUid);
+  logActivityDebug('Activity write start', { uid: `${String(activityUid).slice(0, 6)}…`, eventId: normalized.id, type: normalized.type, path });
   const ref = TEST_MODE ? testFirestore.doc('users', activityUid, 'activity', normalized.id) : doc(firestore, 'users', activityUid, 'activity', normalized.id);
   await (TEST_MODE ? testFirestore.setDoc(ref, { ...normalized, pending: false }) : setDoc(ref, { ...normalized, pending: false }, { merge: true }));
+  logActivityDebug('Activity write success', { uid: `${String(activityUid).slice(0, 6)}…`, eventId: normalized.id, type: normalized.type, path });
   return true;
 }
 
@@ -411,6 +470,8 @@ async function readActivityCollection(uid) {
   const activityUid = uid || getCurrentUser()?.uid || null;
   if (!activityUid) return [];
   if (!firestore || !hasActiveUser()) return [];
+  const path = getActivityCollectionPath(activityUid);
+  logActivityDebug('Activity read start', { uid: `${String(activityUid).slice(0, 6)}…`, path });
   const ref = TEST_MODE ? testFirestore.collection('users', activityUid, 'activity') : collection(firestore, 'users', activityUid, 'activity');
   const q = TEST_MODE ? testFirestore.query(ref, testFirestore.orderBy('timestamp', 'desc')) : query(ref, orderBy('timestamp', 'desc'));
   const snap = TEST_MODE ? await testFirestore.getDocs(q) : await getDocs(q);
@@ -419,6 +480,7 @@ async function readActivityCollection(uid) {
     const data = docSnap.data();
     if (data) items.push({ id: docSnap.id, ...data });
   });
+  logActivityDebug('Activity read success', { uid: `${String(activityUid).slice(0, 6)}…`, path, count: items.length });
   return items;
 }
 
@@ -427,6 +489,7 @@ async function syncActivityFromCloud(uid = null) {
   if (!activityUid) return [];
   if (!firestore || !hasActiveUser()) return [];
   try {
+    logActivityDebug('Activity sync start', { uid: `${String(activityUid).slice(0, 6)}…`, path: getActivityCollectionPath(activityUid) });
     const remote = await readActivityCollection(activityUid);
     const local = Array.isArray(window.LibriqStorage?.getActivityLog?.()) ? window.LibriqStorage.getActivityLog() : [];
     const byId = new Map();
@@ -437,6 +500,22 @@ async function syncActivityFromCloud(uid = null) {
     });
     const merged = Array.from(byId.values()).sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
     window.LibriqStorage?.replaceActivityLog?.(merged);
+    const pendingQueue = getPendingActivityQueue();
+    if (pendingQueue.length && activityUid) {
+      const remaining = [];
+      for (const event of pendingQueue) {
+        try {
+          const ok = await writeActivityEvent(activityUid, event);
+          if (!ok) remaining.push(event);
+        } catch (err) {
+          console.warn('[LibriQ] Activity pending write flush failed:', err);
+          remaining.push(event);
+        }
+      }
+      setPendingActivityQueue(remaining);
+    }
+    window.dispatchEvent?.(new CustomEvent('libriq:activity:updated', { detail: { count: merged.length } }));
+    logActivityDebug('Activity sync success', { uid: `${String(activityUid).slice(0, 6)}…`, count: merged.length });
     return merged;
   } catch (err) {
     console.warn('[LibriQ] Activity cloud load failed:', err);
@@ -446,14 +525,26 @@ async function syncActivityFromCloud(uid = null) {
 
 function queueActivitySync(event) {
   const user = getCurrentUser();
-  if (!user?.uid || !firestore || !hasActiveUser()) return false;
   const normalized = sanitizeActivityEvent(event);
   if (!normalized) return false;
+  logActivityDebug('Activity queue requested', {
+    hasUser: Boolean(user?.uid),
+    eventId: normalized.id,
+    type: normalized.type,
+    path: getActivityCollectionPath(user?.uid || null),
+  });
+  if (!user?.uid || !firestore || !hasActiveUser()) {
+    addPendingActivityEvent(normalized);
+    logActivityDebug('Activity queued locally pending auth/firestore', { eventId: normalized.id, type: normalized.type });
+    return false;
+  }
   Promise.resolve().then(async () => {
     try {
-      await writeActivityEvent(user.uid, normalized);
+      const ok = await writeActivityEvent(user.uid, normalized);
+      if (!ok) addPendingActivityEvent(normalized);
     } catch (err) {
       console.warn('[LibriQ] Activity cloud write failed:', err);
+      addPendingActivityEvent(normalized);
     }
   });
   return true;
