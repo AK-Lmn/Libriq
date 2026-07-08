@@ -4,10 +4,14 @@ import {
   getAuth,
   GoogleAuthProvider,
   onAuthStateChanged,
+  reload,
   signInWithEmailAndPassword,
   signInWithPopup,
   deleteUser,
   signOut,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  verifyBeforeUpdateEmail,
 } from '../vendor/firebase-auth.js';
 import {
   getFirestore,
@@ -352,6 +356,70 @@ async function createAccountWithEmail(email, password) {
     throw error;
   }
   return createUserWithEmailAndPassword(auth, String(email || '').trim(), password);
+}
+
+function getUserEmailAuthInfo(user = null) {
+  const providers = Array.isArray(user?.providerData) ? user.providerData : [];
+  const hasPasswordProvider = providers.some(provider => provider?.providerId === 'password');
+  return {
+    email: String(user?.email || '').trim(),
+    emailVerified: Boolean(user?.emailVerified),
+    hasPasswordProvider,
+    hasEmail: Boolean(String(user?.email || '').trim()),
+  };
+}
+
+async function refreshCurrentUser() {
+  const current = auth?.currentUser || (await getCurrentAuthUser({ waitForReady: true }));
+  if (!current) return null;
+  await reload(current);
+  setState({
+    user: current ? {
+      uid: current.uid,
+      displayName: current.displayName || '',
+      email: current.email || '',
+      photoURL: current.photoURL || '',
+    } : null,
+  });
+  return getCurrentUser();
+}
+
+async function sendVerificationEmailToCurrentUser() {
+  const current = auth?.currentUser || (await getCurrentAuthUser({ waitForReady: true }));
+  if (!current?.email) {
+    const error = new Error('No email address is available for this account.');
+    error.code = 'auth/invalid-email';
+    throw error;
+  }
+  await sendEmailVerification(current);
+  return true;
+}
+
+async function sendPasswordResetToEmail(email) {
+  const normalizedEmail = String(email || '').trim();
+  if (!normalizedEmail) {
+    const error = new Error('Enter a valid email address.');
+    error.code = 'auth/invalid-email';
+    throw error;
+  }
+  await sendPasswordResetEmail(auth, normalizedEmail);
+  return true;
+}
+
+async function requestEmailChange(newEmail) {
+  const current = auth?.currentUser || (await getCurrentAuthUser({ waitForReady: true }));
+  const normalizedEmail = String(newEmail || '').trim();
+  if (!normalizedEmail) {
+    const error = new Error('Enter a valid email address.');
+    error.code = 'auth/invalid-email';
+    throw error;
+  }
+  if (!current) {
+    const error = new Error('Firebase is unavailable.');
+    error.code = 'auth/network-request-failed';
+    throw error;
+  }
+  return verifyBeforeUpdateEmail(current, normalizedEmail);
 }
 
 async function signOutUser() {
@@ -1227,7 +1295,12 @@ window.LibriqFirebase = {
   signInWithGoogle,
   signInWithEmail,
   createAccountWithEmail,
+  getUserEmailAuthInfo,
   signOut: signOutUser,
+  refreshCurrentUser,
+  sendVerificationEmailToCurrentUser,
+  sendPasswordResetToEmail,
+  requestEmailChange,
   isAvailable: () => state.available,
   hasFirestore,
   getFirestoreClient,
