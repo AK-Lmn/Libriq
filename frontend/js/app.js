@@ -12,13 +12,15 @@
 
   const RELEASE_NOTES = {
     [WHATS_NEW_VERSION]: {
-      title: "What's New in LibriQ v4.6.0",
-      subtitle: 'Smarter book metadata, better discovery, and safer source handling.',
+      title: "What's New in LibriQ v4.7.0",
+      subtitle: 'Better discovery, synced activity, and a smoother cloud-first experience.',
       sections: [
-        ['Better book metadata', 'Search results and saved books now carry richer identity signals so LibriQ can merge duplicate sources more safely.'],
-        ['Source badges', 'Open Library, Google Books, Project Gutenberg, and Internet Archive badges make book origins easier to understand at a glance.'],
-        ['Discover rails', 'Recommendations now use Open Library subjects and a free classics rail to surface more relevant books after local content loads.'],
+        ['Better book discovery', 'Search results and saved books now carry richer identity signals so LibriQ can merge duplicate sources more safely.'],
+        ['Source badges and richer metadata', 'Open Library, Google Books, Project Gutenberg, and Internet Archive badges make book origins easier to understand at a glance.'],
+        ['Clickable recommendations', 'Recommendations, Open Library subject rails, and free classics cards now open details and add flows more naturally.'],
+        ['Synced activity history', 'Activity now syncs with your account so Dashboard and Activity stay aligned after reloads and site-data clears.'],
         ['Read and archive links', 'When available, Internet Archive links appear in Book Details without changing the normal search experience.'],
+        ['AI recommendations', 'Gemini-backed recommendations are present as an experimental foundation and remain safely parked while provider compatibility is tuned.'],
       ],
       note: 'This release stays backward-compatible with older saved books and keeps search, sync, and library behavior intact.',
     },

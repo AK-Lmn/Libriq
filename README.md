@@ -6,7 +6,7 @@ The app is built with **HTML, CSS, and Vanilla JavaScript**, with book data powe
 
 LibriQ now centers on signed-in account use with Google sign-in and email/password sign-in. When account services are unavailable, a fallback offline path can appear so the app remains usable on the current device. Saved library data, reading progress, ratings, favorites, and private notes are stored locally and can be backed up or synced through the signed-in account flow, with safer manual cloud restore previews, manual cloud merge previews, automatic Account Sync for signed-in devices, Sync Health diagnostics, and optional JSON export/import for manual safety copies.
 
-LibriQ 4.6 adds deeper metadata identity handling, subject-backed discovery, public-domain classics discovery, and Internet Archive readable/archive links without changing the normal search provider model.
+LibriQ 4.7 keeps the v4.6 metadata/discovery work, adds synced activity history, clickable recommendations, smoother session restore, and keeps Gemini recommendations parked as an experimental foundation while provider compatibility is tuned.
 
 LibriQ also uses basic Google Analytics page-view tracking for anonymous traffic measurement only.
 
@@ -36,10 +36,12 @@ With LibriQ, users can:
 * Manually restore a cloud backup later
 * Open the Help & Guide Center for app walkthroughs
 * Refine online searches with advanced filters
-* Discover local recommendations from saved library data
+* Discover library-based recommendations from saved library data
+* Open recommendation cards to view details or add a new book
 * Hydrate subject-backed discovery rails from Open Library
 * Browse free classics discovery from Gutendex / Project Gutenberg
 * Open readable/archive links from Internet Archive when available
+* Sync Activity history through the signed-in account
 * Read update highlights in the What's New modal
 * Use the PWA shell and app icons for offline-friendly access
 
@@ -47,15 +49,17 @@ The app is designed to feel like a focused digital reading space instead of a pl
 
 ---
 
-## What's New in v4.6.0
+## What's New in v4.7.0
 
 * Smarter book metadata identity and safer dedupe across ISBN, title, author, and source IDs
 * Source badges for Google Books, Open Library, Project Gutenberg, and Internet Archive
 * Open Library richer metadata scaffolding with works, editions, authors, subjects, and compact subject display in Book Details
-* Open Library subject-backed Discover rails that hydrate after local recommendations
-* Free Classics discovery from Gutendex / Project Gutenberg
+* Open Library subject-backed Discover rails and Gutendex / Project Gutenberg free classics discovery
 * Internet Archive readable/archive links only, with no change to main search behavior
-* Responsible API identity metadata prepared safely for future backend proxy use
+* Clickable recommendation cards that open details and add flows more naturally
+* Firebase-backed activity history so Dashboard and Activity stay aligned after reloads and site-data clears
+* Session restore is smoother and no longer flashes the sign-in screen during temporary auth rehydration
+* Gemini AI recommendations remain experimental/parked until provider compatibility is fully resolved
 * Backward-compatible saved books with no destructive migration
 
 ## What's New in v4.2.0
@@ -227,7 +231,7 @@ Filters include:
 
 ---
 
-### Local Recommendations
+### Library-Based Recommendations
 
 LibriQ includes recommendations based on the user's saved library.
 
@@ -238,6 +242,7 @@ Recommendations are derived locally from:
 * Ratings
 * Reading status
 * Saved reading patterns
+* Saved library identity signals
 
 ---
 
@@ -259,22 +264,30 @@ In v4.0.0, the modal highlights the opt-in Realtime Sync Beta, the separate back
 
 LibriQ's current public metadata usage does not require API keys for Open Library, Gutendex, or Internet Archive.
 
-Google Books search works best with a Google Books API key configured, and Firebase configuration is still required for auth and cloud sync.
+Google Books search works best with a Google Books API key configured, and Firebase client configuration is still required for auth and cloud sync.
 
-Gemini is now routed through a backend/serverless foundation at `/api/gemini/recommendations`, which expects `GEMINI_API_KEY` in the deployment environment and keeps that key out of frontend JavaScript.
+Firebase Admin credentials are only needed for serverless/private backend features such as Gemini recommendations. Use either:
 
-Gemini is not exposed in the browser yet, and the AI recommendations UI still comes later.
+* `FIREBASE_SERVICE_ACCOUNT_JSON`, or
+* `FIREBASE_ADMIN_PROJECT_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL`, and `FIREBASE_ADMIN_PRIVATE_KEY`
 
-Recommended Gemini environment variables:
+The private key env var may need literal `\n` normalization depending on your deployment platform.
 
-* `GEMINI_API_KEY` for the serverless route
-* `GEMINI_MODEL` to override the default flash model
-* `GEMINI_API_BASE` only if the deployment needs a different Gemini endpoint
-* `FIREBASE_SERVICE_ACCOUNT_JSON` for Firebase Admin auth and Firestore access
-* or `FIREBASE_ADMIN_PROJECT_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL`, and `FIREBASE_ADMIN_PRIVATE_KEY` as separate env vars
-* `FIREBASE_PRIVATE_KEY` is also supported as a fallback for the private key value
+Gemini AI recommendations use a backend/serverless foundation and expect `GEMINI_API_KEY` in the deployment environment only when the experimental AI feature flag is enabled. Gemini stays parked/experimental until provider compatibility is fully resolved.
 
-Quota and cache enforcement are now server-side and stored in Firestore for verified Firebase UIDs.
+Optional Gemini env vars:
+
+* `GEMINI_API_KEY`
+* `GEMINI_MODEL`
+* `GEMINI_API_BASE`
+
+Firestore rules for cloud-backed activity:
+
+```rules
+match /users/{uid}/activity/{activityId} {
+  allow read, write: if request.auth != null && request.auth.uid == uid;
+}
+```
 
 The route never trusts a frontend-provided UID, and Firebase Admin credentials stay in deployment environment variables only.
 

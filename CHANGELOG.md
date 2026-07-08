@@ -1,5 +1,28 @@
 # Changelog
 
+## v4.7.0
+
+LibriQ 4.7 stabilizes the cloud-first experience with richer discovery, synced activity history, clickable recommendation cards, and smoother session restore.
+
+### Highlights
+
+* Smarter book discovery and richer metadata identity across ISBN, title, author, and source IDs
+* Source badges and richer book metadata across Google Books, Open Library, Project Gutenberg, and Internet Archive
+* Open Library subject-backed discovery rails and Gutendex / Project Gutenberg free classics discovery
+* Internet Archive readable/archive links only
+* Clickable recommendation cards that open saved details or add flows more naturally
+* Firebase-backed activity history with Dashboard and Activity staying in sync after reloads and site-data clears
+* Session restore now avoids a false sign-in screen during temporary auth rehydration
+* Gemini AI recommendations remain parked/experimental while provider compatibility is tuned
+
+### Notes
+
+* Search still uses Google Books and Open Library as the main providers
+* Gutendex remains discovery-only
+* Internet Archive remains link enrichment only
+* Older saved books continue to render normally without new source fields
+* No destructive saved-library migration was introduced
+
 ## v4.6.0
 
 LibriQ 4.6 focuses on smarter metadata, better discovery, and safer source identity handling while staying backward-compatible with older saved libraries.
