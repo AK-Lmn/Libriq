@@ -37,6 +37,24 @@ const Navigation = (() => {
     else console.debug(prefix, message);
   }
 
+  function isConfirmedSignedOut(firebase = window.LibriqFirebase?.getState?.() || {}) {
+    return Boolean(firebase.ready && !firebase.user && firebase.signedOutConfirmed && !firebase.restoringSession);
+  }
+
+  function shouldRenderSessionScreen(firebase = window.LibriqFirebase?.getState?.() || {}) {
+    if (!firebase.ready) return false;
+    if (firebase.user || firebase.restoringSession) return false;
+    return Boolean(firebase.signedOutConfirmed);
+  }
+
+  function getSessionScreenSuppressionReason(firebase = window.LibriqFirebase?.getState?.() || {}) {
+    if (!firebase.ready) return 'auth not ready';
+    if (firebase.user) return 'signed-in user exists';
+    if (firebase.restoringSession) return 'restoring session';
+    if (!firebase.signedOutConfirmed) return 'signed out not confirmed';
+    return 'confirmed signed out';
+  }
+
   const pages = {
     boot:      () => renderBootPage(),
     session:   () => renderSessionChoicePage(),
@@ -392,6 +410,8 @@ const Navigation = (() => {
     clearLocalCache,
     confirmDeleteLibraryData,
     confirmDeleteAccount,
+    shouldRenderSessionScreen,
+    isConfirmedSignedOut,
     get currentPage() { return _currentPage; },
   };
 })();
@@ -429,7 +449,11 @@ function routeAfterAuthReady() {
     window.LibriqStorage?.setActiveAccountUid?.(firebase.user.uid);
     Navigation.setSessionPreference?.('account');
     }
-    Navigation.goTo('dashboard');
+    if (Navigation.currentPage === 'session') {
+      Navigation.goTo('dashboard');
+    } else if (Navigation.currentPage === 'boot') {
+      Navigation.goTo('dashboard');
+    }
     window.LibriqSyncBeta?.maybeAutoEnable?.('auth-ready');
     return true;
   }
@@ -446,7 +470,8 @@ function routeAfterAuthReady() {
     Navigation.goTo('dashboard');
     return true;
   }
-  Navigation.goTo('session');
+  if (Navigation.currentPage !== 'session') Navigation.goTo('session');
+  else renderSessionChoicePage();
   return true;
 }
 
@@ -859,6 +884,26 @@ function renderSessionChoicePage() {
   }
   main.hidden = false;
   const firebase = window.LibriqFirebase?.getState?.() || { available: false, initialized: false, ready: false, user: null };
+  if (!Navigation.shouldRenderSessionScreen?.(firebase)) {
+    if (localStorage.getItem('libriq_debug_sync') === '1') {
+      console.debug('[LibriQ][SyncDebug][Nav] session screen blocked', {
+        reason: Navigation.isConfirmedSignedOut?.(firebase) ? 'not on session screen' : getSessionScreenSuppressionReason(firebase),
+        hasUser: Boolean(firebase.user),
+        restoringSession: Boolean(firebase.restoringSession),
+        signedOutConfirmed: Boolean(firebase.signedOutConfirmed),
+        ready: Boolean(firebase.ready),
+        currentPage: Navigation.currentPage,
+      });
+    }
+    if (firebase.user || firebase.restoringSession) {
+      Navigation.goTo('dashboard');
+      return;
+    }
+    if (Navigation.currentPage !== 'session') {
+      Navigation.goTo('dashboard');
+      return;
+    }
+  }
   const sessionContext = window.LibriqFirebase?.getSessionContext?.() || { isInAppBrowser: false, hints: [] };
   const hasUser = Boolean(firebase.user);
   const accountName = getDisplayNameForAccount(firebase.user);
