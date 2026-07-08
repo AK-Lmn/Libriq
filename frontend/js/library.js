@@ -53,6 +53,8 @@ const Library = (() => {
 
   function buildAddForm(book) {
     const genres = (book.genres || []).slice(0, 3);
+    const sourceBadges = _getSourceLabels(book);
+    const description = book.description ? String(book.description).replace(/<[^>]*>/g, '').trim() : '';
 
     return `
       <div class="book-preview">
@@ -65,6 +67,8 @@ const Library = (() => {
             ${book.pageCount ? `<span class="badge">${Utils.formatPages(book.pageCount)}</span>` : ''}
             ${genres.map(g => `<span class="badge badge-accent">${Utils.sanitize(g)}</span>`).join('')}
           </div>
+          ${sourceBadges.length ? `<div class="book-preview-meta">${sourceBadges.map(label => `<span class="badge badge-accent">${Utils.sanitize(label)}</span>`).join('')}</div>` : ''}
+          ${description ? `<div class="book-preview-description">${Utils.sanitize(description)}</div>` : '<div class="book-preview-description book-preview-description--empty">No description available yet.</div>'}
         </div>
       </div>
 

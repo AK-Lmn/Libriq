@@ -2757,22 +2757,37 @@ function buildRecommendationCard(book, reasonLabel) {
   const sourceBadges = Array.isArray(book.sourceBadges) && book.sourceBadges.length
     ? `<div class="recommendation-card-source-badges">${book.sourceBadges.map(label => `<span class="badge badge-accent">${Utils.sanitize(label)}</span>`).join('')}</div>`
     : '';
+  const modalAction = isSaved ? `Library.showDetailsModal('${book.id}')` : `Library.showAddModal(${JSON.stringify(_prepareRecommendationBook(book))})`;
+  const actionLabel = isSaved ? `Open details for ${book.title}` : `Open details and add ${book.title} to your library`;
   return `
-    <button type="button" class="recommendation-card recommendations-item" ${isSaved ? `onclick="Library.showDetailsModal('${book.id}')"` : 'aria-disabled="true"'}
-      ${isSaved ? '' : 'disabled'}>
+    <button type="button" class="recommendation-card recommendations-item" onclick="${modalAction.replace(/"/g, '&quot;')}" aria-label="${Utils.sanitize(actionLabel)}">
       <div class="recommendation-card-cover">
         ${Utils.buildCover(book, 'cover-sm')}
       </div>
       <div class="recommendation-card-body">
         <div class="recommendation-card-topline">
           ${reasonLabel ? `<div class="recommendation-card-reason recommendations-reason">${Utils.sanitize(reasonLabel)}</div>` : '<div class="recommendation-card-reason recommendations-reason">Library-based match</div>'}
-          ${isSaved ? `<span class="${statusClass}">${statusLabel}</span>` : '<span class="badge badge-accent">Suggested</span>'}
+          ${isSaved ? `<span class="${statusClass}">${statusLabel}</span><span class="badge badge-accent">Already in Library</span>` : '<span class="badge badge-accent">Add to Library</span>'}
         </div>
         <div class="recommendation-card-title">${Utils.sanitize(book.title)}</div>
         <div class="recommendation-card-author">${Utils.sanitize(book.author)}</div>
         ${sourceBadges}
       </div>
     </button>`;
+}
+
+function _prepareRecommendationBook(book) {
+  const identity = window.BookIdentity || globalThis.BookIdentity;
+  const sourceData = identity?.buildSourceBadgeData?.(book) || {};
+  return {
+    ...book,
+    ...sourceData,
+    description: book.description || 'No description available yet.',
+    genres: Array.isArray(book.genres) ? book.genres : [],
+    subjects: Array.isArray(book.subjects) ? book.subjects : [],
+    sourceBadges: Array.isArray(book.sourceBadges) ? book.sourceBadges : Array.isArray(sourceData.sourceBadges) ? sourceData.sourceBadges : [],
+    sources: Array.isArray(book.sources) ? book.sources : Array.isArray(sourceData.sources) ? sourceData.sources : [],
+  };
 }
 
 function _recommendationScore(book) {

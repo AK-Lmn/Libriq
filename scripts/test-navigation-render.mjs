@@ -175,6 +175,38 @@ globalThis.LibriqFirebase = { getState: () => firebaseState, onChange: () => () 
 globalThis.LibriqSyncBeta = { refresh: () => {}, pauseForOffline: () => {}, maybeAutoEnable: () => {}, getState: () => ({ enabled: false, status: 'off' }) };
 globalThis.LibriqCloudBackup = { refresh: () => {}, scheduleIfAllowed: () => {}, pause: () => {} };
 globalThis.LibriqConfig = { enableAiRecommendations: false };
+globalThis.OpenLibraryAPI = {
+  searchBySubject: async () => [
+    {
+      id: 'ol-1',
+      title: 'Open Library Card',
+      author: 'Open Author',
+      coverUrl: 'https://example.com/cover.jpg',
+      description: 'Open Library description',
+      subjects: ['Fiction'],
+      genres: ['Fiction'],
+      sourceBadges: ['Open Library'],
+      publishYear: 2022,
+      pageCount: 222,
+    },
+  ],
+};
+globalThis.GutendexAPI = {
+  searchCuratedClassics: async () => [
+    {
+      id: 'gd-1',
+      title: 'Gutendex Card',
+      author: 'Guten Author',
+      coverUrl: 'https://example.com/guten.jpg',
+      description: 'Gutendex description',
+      subjects: ['Classics'],
+      genres: ['Classics'],
+      sourceBadges: ['Project Gutenberg'],
+      publishYear: 1920,
+      pageCount: 320,
+    },
+  ],
+};
 
 const dashboardRecentBook = {
   id: 'dashboard-recent-1',
@@ -187,8 +219,34 @@ const dashboardRecentBook = {
   dateStarted: '2026-07-01T10:00:00Z',
   dateAdded: '2026-06-20T10:00:00Z',
 };
-Storage.getBooks = () => [dashboardRecentBook];
-Storage.getBooksByStatus = (status) => (status === LIBRIQ.STATUS.READING ? [dashboardRecentBook] : []);
+const recommendationBooks = [
+  dashboardRecentBook,
+  {
+    id: 'recommendation-2',
+    title: 'Gamma Sample',
+    author: 'Author Four',
+    status: LIBRIQ.STATUS.WISHLIST,
+    currentPage: 0,
+    pageCount: 180,
+    rating: null,
+    genres: ['Fiction'],
+    isFavorite: false,
+  },
+  {
+    id: 'recommendation-3',
+    title: 'Epsilon Sample',
+    author: 'Author Five',
+    status: LIBRIQ.STATUS.FINISHED,
+    currentPage: 220,
+    pageCount: 220,
+    rating: 4,
+    genres: ['Fiction'],
+    isFavorite: true,
+  },
+];
+Storage.getBooks = () => recommendationBooks;
+Storage.getBooksByStatus = (status) => recommendationBooks.filter(book => book.status === status);
+Storage.getBookById = (id) => recommendationBooks.find(book => book.id === id) || null;
 
 await import('../frontend/js/dashboard.js');
 await import('../frontend/js/library.js');
@@ -236,6 +294,18 @@ if (!main.innerHTML.toLowerCase().includes('ai recommendations are being tuned a
 }
 if (main.innerHTML.includes('id="geminiRecommendationsBtn"')) {
   throw new Error('recommendations page still exposed an AI button while disabled');
+}
+Storage.getBooks = () => recommendationBooks;
+Storage.getBooksByStatus = (status) => recommendationBooks.filter(book => book.status === status);
+Storage.getBookById = (id) => recommendationBooks.find(book => book.id === id) || null;
+nav.renderCurrentPage();
+await new Promise(resolve => setTimeout(resolve, 0));
+await new Promise(resolve => setTimeout(resolve, 0));
+if (!main.innerHTML.includes('Library.showDetailsModal')) {
+  throw new Error('saved recommendation cards should open saved book details');
+}
+if (!main.innerHTML.includes('Already in Library')) {
+  throw new Error('saved recommendation cards should show already-in-library state');
 }
 
 main.innerHTML = '';
