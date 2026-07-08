@@ -50,6 +50,7 @@ const TEST_MODE = Boolean(
 const INIT_RETRY_TIMEOUT_MS = 3500;
 const INIT_RETRY_INTERVAL_MS = 75;
 const AUTH_READY_TIMEOUT_MS = 1500;
+let activityOnlineListenerAttached = false;
 
 function getTestApiBase() {
   return `${location.origin}/__libriq_test_api`;
@@ -206,6 +207,16 @@ function init() {
           email: user.email || '',
           photoURL: user.photoURL || '',
         } : null });
+        if (user?.uid) {
+          syncActivityFromCloud(user.uid);
+        }
+      });
+    }
+    if (!activityOnlineListenerAttached) {
+      activityOnlineListenerAttached = true;
+      window.addEventListener?.('online', () => {
+        const current = getCurrentUser();
+        if (current?.uid) syncActivityFromCloud(current.uid);
       });
     }
   } catch (err) {
@@ -344,6 +355,110 @@ async function getCurrentUserIdToken(forceRefresh = false) {
   }
 }
 
+function getActivityCollectionPath(uid) {
+  return uid ? `users/${uid}/activity` : null;
+}
+
+function hasActiveUser() {
+  return TEST_MODE ? Boolean(testUser?.uid) : Boolean(auth?.currentUser?.uid);
+}
+
+function sanitizeActivityEvent(event) {
+  if (!event || typeof event !== 'object') return null;
+  const timestamp = event.createdAt || event.timestamp || new Date().toISOString();
+  return {
+    id: String(event.id || `act_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`),
+    type: String(event.type || 'unknown'),
+    timestamp,
+    createdAt: event.createdAt || timestamp,
+    updatedAt: event.updatedAt || event.timestamp || timestamp,
+    bookId: event.bookId || null,
+    bookTitle: event.bookTitle || null,
+    bookAuthor: event.bookAuthor || null,
+    coverUrl: event.coverUrl || null,
+    status: event.status || null,
+    message: event.message || event.label || null,
+    payload: event.payload && typeof event.payload === 'object' ? event.payload : {},
+    sourceDeviceId: event.sourceDeviceId || event.deviceId || null,
+    pending: Boolean(event.pending),
+  };
+}
+
+async function writeActivityEvent(uid, event) {
+  const activityUid = uid || getCurrentUser()?.uid || null;
+  if (!activityUid) return false;
+  if (!firestore || !hasActiveUser()) return false;
+  const normalized = sanitizeActivityEvent(event);
+  if (!normalized) return false;
+  const ref = TEST_MODE ? testFirestore.doc('users', activityUid, 'activity', normalized.id) : doc(firestore, 'users', activityUid, 'activity', normalized.id);
+  await (TEST_MODE ? testFirestore.setDoc(ref, { ...normalized, pending: false }) : setDoc(ref, { ...normalized, pending: false }, { merge: true }));
+  return true;
+}
+
+async function replaceActivityCollection(uid, events = []) {
+  const activityUid = uid || getCurrentUser()?.uid || null;
+  if (!activityUid) return false;
+  if (!firestore || !hasActiveUser()) return false;
+  const list = Array.isArray(events) ? events.map(sanitizeActivityEvent).filter(Boolean) : [];
+  await Promise.all(list.map(event => {
+    const ref = TEST_MODE ? testFirestore.doc('users', activityUid, 'activity', event.id) : doc(firestore, 'users', activityUid, 'activity', event.id);
+    return TEST_MODE ? testFirestore.setDoc(ref, { ...event, pending: false }) : setDoc(ref, { ...event, pending: false }, { merge: true });
+  }));
+  return true;
+}
+
+async function readActivityCollection(uid) {
+  const activityUid = uid || getCurrentUser()?.uid || null;
+  if (!activityUid) return [];
+  if (!firestore || !hasActiveUser()) return [];
+  const ref = TEST_MODE ? testFirestore.collection('users', activityUid, 'activity') : collection(firestore, 'users', activityUid, 'activity');
+  const q = TEST_MODE ? testFirestore.query(ref, testFirestore.orderBy('timestamp', 'desc')) : query(ref, orderBy('timestamp', 'desc'));
+  const snap = TEST_MODE ? await testFirestore.getDocs(q) : await getDocs(q);
+  const items = [];
+  snap.forEach((docSnap) => {
+    const data = docSnap.data();
+    if (data) items.push({ id: docSnap.id, ...data });
+  });
+  return items;
+}
+
+async function syncActivityFromCloud(uid = null) {
+  const activityUid = uid || getCurrentUser()?.uid || null;
+  if (!activityUid) return [];
+  if (!firestore || !hasActiveUser()) return [];
+  try {
+    const remote = await readActivityCollection(activityUid);
+    const local = Array.isArray(window.LibriqStorage?.getActivityLog?.()) ? window.LibriqStorage.getActivityLog() : [];
+    const byId = new Map();
+    [...remote, ...local].forEach((event) => {
+      const normalized = sanitizeActivityEvent(event);
+      if (!normalized) return;
+      byId.set(normalized.id, normalized);
+    });
+    const merged = Array.from(byId.values()).sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+    window.LibriqStorage?.replaceActivityLog?.(merged);
+    return merged;
+  } catch (err) {
+    console.warn('[LibriQ] Activity cloud load failed:', err);
+    return window.LibriqStorage?.getActivityLog?.() || [];
+  }
+}
+
+function queueActivitySync(event) {
+  const user = getCurrentUser();
+  if (!user?.uid || !firestore || !hasActiveUser()) return false;
+  const normalized = sanitizeActivityEvent(event);
+  if (!normalized) return false;
+  Promise.resolve().then(async () => {
+    try {
+      await writeActivityEvent(user.uid, normalized);
+    } catch (err) {
+      console.warn('[LibriQ] Activity cloud write failed:', err);
+    }
+  });
+  return true;
+}
+
 function hasFirestore() {
   return Boolean(state.available && firestore);
 }
@@ -474,6 +589,7 @@ async function deleteCurrentUserLibraryData() {
   const user = getCurrentUser();
   if (!user?.uid) throw new Error('Firebase is unavailable.');
   await deleteFirestoreCollectionDocs(['users', user.uid, 'sync', 'v1', 'books']);
+  await deleteFirestoreCollectionDocs(['users', user.uid, 'activity']);
   await deleteFirestoreDocPath(['users', user.uid, 'backups', 'current']);
   return true;
 }
@@ -522,6 +638,13 @@ window.LibriqFirebase = {
   getCurrentUser,
   getCurrentAuthUser,
   getCurrentUserIdToken,
+  getActivityCollectionPath,
+  sanitizeActivityEvent,
+  writeActivityEvent,
+  replaceActivityCollection,
+  readActivityCollection,
+  syncActivityFromCloud,
+  queueActivitySync,
   writeBackupDoc,
   readBackupDoc,
   deleteCurrentUserLibraryData,

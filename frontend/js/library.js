@@ -159,7 +159,10 @@ const Library = (() => {
 
   function _logActivity(type, book, payload = {}, source = null) {
     const event = Storage.buildActivityEvent(type, book, payload, source);
-    if (event) Storage.addActivityEvent(event);
+    if (event) {
+      Storage.addActivityEvent(event);
+      window.LibriqFirebase?.queueActivitySync?.(event);
+    }
   }
 
   function _parseShelfInput(value) {
