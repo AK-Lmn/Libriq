@@ -2235,7 +2235,7 @@ function renderRecommendationsPage() {
     <div class="page recommendations-page" id="recommendationsPage">
       <div class="page-header recommendations-header">
         <div class="recommendations-heading recommendations-hero-heading">
-          <span class="library-eyebrow">Local suggestions</span>
+          <span class="library-eyebrow">Library-based suggestions</span>
           <h1 class="page-title">Recommendations</h1>
           <p class="page-subtitle">Suggestions built from the books you’ve already saved in LibriQ.</p>
         </div>
@@ -2243,11 +2243,11 @@ function renderRecommendationsPage() {
 
       <section class="recommendations-intro recommendations-hero">
         <div class="recommendations-intro-copy">
-          <div class="recommendations-intro-kicker">Local suggestions</div>
+          <div class="recommendations-intro-kicker">From your library</div>
           <div class="recommendations-intro-title">Built from your saved books, favorite authors, and reading shelves.</div>
-          <div class="recommendations-intro-body">This page stays local and grounded in your saved library data, so the suggestions reflect what you already read, rate, and keep close.</div>
+          <div class="recommendations-intro-body">Suggestions are grounded in your saved books, favorites, ratings, and reading shelves so they reflect what you already read, rate, and keep close.</div>
           <div class="recommendations-intro-meta">
-            <span class="badge badge-accent">Local only</span>
+            <span class="badge badge-accent">Library-based</span>
             <span class="recommendations-intro-meta-text">Built from favorites, ratings, authors, and Want to Read shelves</span>
           </div>
         </div>
@@ -2257,12 +2257,12 @@ function renderRecommendationsPage() {
         <div class="recommendations-groups recommendations-sections stagger">
           ${recState.groups.map(group => buildRecommendationGroup(group)).join('')}
         </div>
-        <div class="recommendations-helper-note">Add more favorites, finished books, and Want to Read titles to improve local suggestions.</div>
+        <div class="recommendations-helper-note">Add more favorites, finished books, and Want to Read titles to improve your library-based suggestions.</div>
       ` : `
         <div class="empty-state recommendations-empty-state recommendations-empty">
           <div class="empty-state-icon"><i class="ph ph-sparkle"></i></div>
-          <div class="empty-state-title">Save a few more books to unlock local suggestions.</div>
-          <div class="empty-state-body">Recommendations are built from your saved library, including favorites, finished books, ratings, and Want to Read titles.</div>
+          <div class="empty-state-title">Save a few more books to improve your library-based suggestions.</div>
+          <div class="empty-state-body">Recommendations are built from your saved books, favorites, ratings, and Want to Read titles.</div>
           <div class="recommendations-empty-actions">
             <button class="btn btn-primary" onclick="Search.open()">
               <i class="ph ph-magnifying-glass"></i> Search Books
@@ -2478,7 +2478,7 @@ async function _hydrateSubjectDiscovery(books) {
     const booksForRail = await OpenLibraryAPI.searchBySubject(subjectKey, { limit });
     const filtered = _filterSubjectDiscoveryBooks(booksForRail, books, limit);
     if (!filtered.length) {
-      node.innerHTML = `<div class="recommendations-helper-note">We couldn’t load this subject right now. The local recommendations above are still here.</div>`;
+      node.innerHTML = `<div class="recommendations-helper-note">This subject is unavailable right now.</div>`;
       return;
     }
     node.querySelector('.recommendation-card-grid').innerHTML = filtered.map(book => buildRecommendationCard(book, 'Open Library subject')).join('');
@@ -2546,8 +2546,8 @@ function buildSubjectDiscoveryRail(rail) {
     <section class="goal-widget recommendations-section" data-subject-key="${Utils.sanitize(rail.subjectKey)}" data-limit="${rail.limit}">
       <div class="goal-header recommendations-section-header">
         <div class="recommendation-group-heading">
-          <div class="goal-title">Open Library: ${Utils.sanitize(rail.label)}</div>
-          <div class="stats-section-meta">Subject-backed discovery</div>
+          <div class="goal-title">Explore ${Utils.sanitize(rail.label)}</div>
+          <div class="stats-section-meta">Powered by Open Library subjects</div>
         </div>
       </div>
       <div class="recommendation-card-grid recommendations-item-grid">
@@ -2581,7 +2581,7 @@ async function _hydrateGutendexDiscovery(books) {
   const booksForRail = await GutendexAPI.searchCuratedClassics({ limit: rail.limit, topic: rail.topic });
   const filtered = _filterDiscoveryBooks(booksForRail, books, rail.limit);
   if (!filtered.length) {
-    cardsNode.innerHTML = `<div class="recommendations-helper-note">We couldn’t load free classics right now. Your local recommendations are still shown above.</div>`;
+    cardsNode.innerHTML = `<div class="recommendations-helper-note">Free classics are unavailable right now.</div>`;
     return;
   }
   cardsNode.querySelector('.recommendation-card-grid').innerHTML = filtered.map(book => buildRecommendationCard(book, 'Project Gutenberg')).join('');
@@ -2617,7 +2617,7 @@ function buildGutendexDiscoveryRail(rail) {
       <div class="goal-header recommendations-section-header">
         <div class="recommendation-group-heading">
           <div class="goal-title">Free Classics</div>
-          <div class="stats-section-meta">Project Gutenberg picks from Gutendex</div>
+          <div class="stats-section-meta">Public-domain picks through Project Gutenberg metadata</div>
         </div>
       </div>
       <div class="recommendation-card-grid recommendations-item-grid">
@@ -2765,7 +2765,7 @@ function buildRecommendationCard(book, reasonLabel) {
       </div>
       <div class="recommendation-card-body">
         <div class="recommendation-card-topline">
-          ${reasonLabel ? `<div class="recommendation-card-reason recommendations-reason">${Utils.sanitize(reasonLabel)}</div>` : '<div class="recommendation-card-reason recommendations-reason">Local suggestion</div>'}
+          ${reasonLabel ? `<div class="recommendation-card-reason recommendations-reason">${Utils.sanitize(reasonLabel)}</div>` : '<div class="recommendation-card-reason recommendations-reason">Library-based match</div>'}
           ${isSaved ? `<span class="${statusClass}">${statusLabel}</span>` : '<span class="badge badge-accent">Suggested</span>'}
         </div>
         <div class="recommendation-card-title">${Utils.sanitize(book.title)}</div>
