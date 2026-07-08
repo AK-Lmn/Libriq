@@ -103,7 +103,7 @@ const GeminiRecommendationsAPI = (() => {
       const error = new Error(data?.error || 'request failed');
       error.status = response.status;
       error.payload = data;
-      _logResponseFailure(response.status, data);
+      _logResponseFailure(response.status, data?.code || '', data);
       throw error;
     }
 
@@ -174,20 +174,20 @@ const GeminiRecommendationsAPI = (() => {
     };
   }
 
-  function _logResponseFailure(status, payload) {
+  function _logResponseFailure(status, code, payload) {
     if (status === 401) {
-      console.warn('[Libriq/Gemini] Backend rejected the Firebase session.');
+      console.warn('[Libriq/Gemini] Backend rejected the Firebase session.', code ? { code } : undefined);
       return;
     }
     if (status === 429) {
-      console.warn('[Libriq/Gemini] Daily Gemini quota exhausted.');
+      console.warn('[Libriq/Gemini] Daily Gemini quota exhausted.', code ? { code } : undefined);
       return;
     }
     if (status >= 500) {
-      console.warn('[Libriq/Gemini] Backend error:', status, Boolean(payload?.error));
+      console.warn('[Libriq/Gemini] Backend error:', status, code || 'UNKNOWN_SERVER_ERROR');
       return;
     }
-    console.warn('[Libriq/Gemini] Request failed:', status);
+    console.warn('[Libriq/Gemini] Request failed:', status, code || '');
   }
 
   return {
