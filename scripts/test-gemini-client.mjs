@@ -93,6 +93,26 @@ async function main() {
     await vm.runInNewContext(`GeminiRecommendationsAPI.generateRecommendations({ mode: 'recommendations', books: [] })`, context);
   }, (err) => err.code === 'auth-expired');
 
+  const warnLines = [];
+  context.console = {
+    ...console,
+    warn: (...args) => warnLines.push(args.map(String).join(' ')),
+  };
+  context.LibriqFirebase.getState = () => ({ user: { uid: 'firebase-uid' }, ready: true });
+  context.LibriqFirebase.getCurrentUserIdToken = async () => 'token-abc';
+  context.fetch = async () => ({
+    ok: false,
+    status: 503,
+    async json() {
+      return { error: 'server_error', code: 'FIRESTORE_CACHE_ERROR' };
+    },
+  });
+  await assert.rejects(async () => {
+    await vm.runInNewContext(`GeminiRecommendationsAPI.generateRecommendations({ mode: 'recommendations', books: [] })`, context);
+  }, (err) => err.status === 503);
+  assert.ok(warnLines.some(line => line.includes('FIRESTORE_CACHE_ERROR')));
+  assert.equal(warnLines.some(line => line.includes('token-abc')), false);
+
   console.log('gemini client test passed');
 }
 

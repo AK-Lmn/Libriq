@@ -26,6 +26,25 @@ async function main() {
   assert.equal(Object.prototype.hasOwnProperty.call(validation.value.books[0], 'notes'), false);
   assert.equal(Object.prototype.hasOwnProperty.call(validation.value.books[0], 'uid'), false);
 
+  assert.equal(lib.normalizePrivateKey('"line1\\nline2",'), 'line1\nline2');
+  const parsedCred = lib.parseServiceAccountJson(JSON.stringify({
+    project_id: 'proj',
+    client_email: 'reader@example.com',
+    private_key: '"abc\\n123"',
+  }));
+  assert.equal(parsedCred.privateKey, 'abc\n123');
+  assert.equal(parsedCred.projectId, 'proj');
+  assert.equal(lib.normalizeGeminiModelName(' models/gemini-2.5-flash '), 'gemini-2.5-flash');
+  assert.ok(lib.buildGeminiApiUrl('https://generativelanguage.googleapis.com/v1beta', 'models/gemini-2.0-flash', 'abc').includes('/models/gemini-2.0-flash:generateContent?key=abc'));
+
+  const originalApiKey = process.env.GEMINI_API_KEY;
+  process.env.GEMINI_API_KEY = '';
+  await assert.rejects(
+    () => lib.callGemini({ mode: 'home', books: [{ title: 'A', author: 'B' }] }),
+    (err) => err.code === lib.SAFE_ERROR_CODES.FIREBASE_ADMIN_CONFIG_ERROR && err.statusCode === 503
+  );
+  process.env.GEMINI_API_KEY = originalApiKey;
+
   const tooMany = lib.validateRequestBody({
     mode: 'home',
     books: Array.from({ length: 16 }, (_, i) => ({ title: `T${i}`, author: 'A' })),
@@ -36,6 +55,32 @@ async function main() {
   assert.equal(invalid.recommendations.length, 1);
   assert.equal(invalid.recommendations[0].title, 'Good');
   assert.equal(Object.prototype.hasOwnProperty.call(invalid.recommendations[0], 'confidence'), false);
+
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: false,
+    status: 400,
+    headers: { get: () => 'application/json' },
+    async text() {
+      return JSON.stringify({ error: { message: 'bad request' } });
+    },
+  });
+  await assert.rejects(
+    () => lib.callGemini({ mode: 'home', books: [{ title: 'A', author: 'B' }] }),
+    (err) => err.code === lib.SAFE_ERROR_CODES.GEMINI_API_ERROR && err.statusCode === 400
+  );
+
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    headers: { get: () => 'application/json' },
+    async text() {
+      return JSON.stringify({ candidates: [{ content: { parts: [{ text: '```json\n{"recommendations":[{"title":"A","author":"B","reason":"ok"}]}\n```' }] } }] });
+    },
+  });
+  const parsedGemini = await lib.callGemini({ mode: 'home', books: [{ title: 'A', author: 'B' }] });
+  assert.equal(parsedGemini.recommendations.length, 1);
+  globalThis.fetch = originalFetch;
 
   const missingAuth = await lib.handleGeminiRequest({
     body: { mode: 'home', books: [] },

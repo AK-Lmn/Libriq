@@ -5,6 +5,7 @@ import {
   getFirebaseAdminDependencies,
   handleGeminiRequest,
   DEFAULT_QUOTA,
+  SAFE_ERROR_CODES,
 } from './_lib.js';
 
 export default async function handler(req, res) {
@@ -25,7 +26,7 @@ export default async function handler(req, res) {
     const adminDeps = await getFirebaseAdminDependencies();
     if (!adminDeps?.auth || !adminDeps?.firestore) {
       res.statusCode = 503;
-      res.end(JSON.stringify({ error: 'Gemini backend is not configured yet.' }));
+      res.end(JSON.stringify({ error: 'server_error', code: SAFE_ERROR_CODES.FIREBASE_ADMIN_CONFIG_ERROR }));
       return;
     }
 
@@ -47,12 +48,10 @@ export default async function handler(req, res) {
   } catch (err) {
     const statusCode = Number(err?.statusCode || 500);
     res.statusCode = statusCode;
+    const code = err?.code || SAFE_ERROR_CODES.UNKNOWN_SERVER_ERROR;
     res.end(JSON.stringify({
-      error: statusCode === 503
-        ? 'Gemini recommendations are not available right now.'
-        : statusCode === 413
-          ? 'Request body too large.'
-          : 'Unable to generate recommendations right now.',
+      error: 'server_error',
+      code,
     }));
   }
 }

@@ -5,14 +5,28 @@ const DEFAULT_MODEL = 'gemini-2.0-flash';
 const DEFAULT_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const DEFAULT_QUOTA = 5;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const SAFE_ERROR_CODES = {
+  FIREBASE_ADMIN_CONFIG_ERROR: 'FIREBASE_ADMIN_CONFIG_ERROR',
+  FIRESTORE_CACHE_ERROR: 'FIRESTORE_CACHE_ERROR',
+  FIRESTORE_QUOTA_ERROR: 'FIRESTORE_QUOTA_ERROR',
+  GEMINI_API_ERROR: 'GEMINI_API_ERROR',
+  GEMINI_RESPONSE_INVALID: 'GEMINI_RESPONSE_INVALID',
+  UNKNOWN_SERVER_ERROR: 'UNKNOWN_SERVER_ERROR',
+};
 let _adminDepsPromise = null;
 
 export function getGeminiEnv() {
   return {
     apiKey: String(process.env.GEMINI_API_KEY || '').trim(),
-    model: String(process.env.GEMINI_MODEL || DEFAULT_MODEL).trim() || DEFAULT_MODEL,
+    model: normalizeGeminiModelName(process.env.GEMINI_MODEL || DEFAULT_MODEL),
     apiBase: String(process.env.GEMINI_API_BASE || DEFAULT_API_BASE).trim() || DEFAULT_API_BASE,
   };
+}
+
+export function normalizeGeminiModelName(value) {
+  const clean = cleanText(value, 128);
+  if (!clean) return DEFAULT_MODEL;
+  return clean.replace(/^models\//i, '');
 }
 
 export function getFirebaseAdminEnv() {
@@ -102,7 +116,6 @@ export function buildGeminiPrompt(payload) {
     generationConfig: {
       temperature: 0.7,
       maxOutputTokens: 1200,
-      responseMimeType: 'application/json',
     },
   };
 }
@@ -173,10 +186,47 @@ export function safeJsonParse(text) {
   }
 }
 
+export function buildGeminiApiUrl(apiBase, model, apiKey) {
+  const base = String(apiBase || DEFAULT_API_BASE).trim() || DEFAULT_API_BASE;
+  const cleanModel = normalizeGeminiModelName(model);
+  const safeApiKey = String(apiKey || '').trim();
+  return `${base}/models/${encodeURIComponent(cleanModel)}:generateContent?key=${encodeURIComponent(safeApiKey)}`;
+}
+
+export function extractGeminiResponseText(data, fallbackText = '') {
+  const parts = data?.candidates?.[0]?.content?.parts;
+  const direct = Array.isArray(parts)
+    ? parts.map((part) => String(part?.text || '')).join('')
+    : '';
+  const candidates = [direct, data?.text, data?.output, data?.response].map(value => String(value || '').trim()).filter(Boolean);
+  if (candidates.length) return candidates[0];
+  const fallback = String(fallbackText || '').trim();
+  if (!fallback) return '';
+  const fenced = fallback.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenced?.[1]) return String(fenced[1]).trim();
+  return fallback;
+}
+
+export function logGeminiApiEvent(step, details = {}) {
+  const safe = {
+    step: String(step || '').trim(),
+    status: Number.isFinite(Number(details.status)) ? Number(details.status) : undefined,
+    model: normalizeGeminiModelName(details.model || ''),
+    bodyKind: details.bodyKind ? String(details.bodyKind).trim() : undefined,
+    code: details.code ? String(details.code).trim() : undefined,
+  };
+  const compact = Object.fromEntries(Object.entries(safe).filter(([, value]) => value !== undefined && value !== ''));
+  if (Object.keys(compact).length) {
+    console.warn('[Libriq/Gemini API]', compact);
+  }
+}
+
 export function normalizePrivateKey(value) {
-  return String(value || '')
-    .trim()
-    .replace(/\\n/g, '\n');
+  let text = String(value || '').trim();
+  text = text.replace(/^["']/, '').replace(/["']$/, '');
+  text = text.replace(/,\s*$/, '');
+  text = text.replace(/^["']/, '').replace(/["']$/, '');
+  return text.replace(/\\n/g, '\n');
 }
 
 export function parseServiceAccountJson(raw) {
@@ -193,6 +243,21 @@ export function parseServiceAccountJson(raw) {
     };
   } catch {
     return null;
+  }
+}
+
+export function logGeminiRoute(step, details = {}) {
+  const safe = {
+    step: String(step || '').trim(),
+    code: String(details.code || '').trim(),
+    status: Number.isFinite(Number(details.status)) ? Number(details.status) : undefined,
+    cache: details.cache ? String(details.cache).trim() : undefined,
+    quota: details.quota ? String(details.quota).trim() : undefined,
+    uid: details.uid ? String(details.uid).slice(0, 6) : undefined,
+  };
+  const compact = Object.fromEntries(Object.entries(safe).filter(([, value]) => value !== undefined && value !== ''));
+  if (Object.keys(compact).length) {
+    console.warn('[Libriq/Gemini]', compact);
   }
 }
 
@@ -248,10 +313,11 @@ export async function callGemini(payload) {
   if (!env.apiKey) {
     const error = new Error('Gemini API key is not configured.');
     error.statusCode = 503;
+    error.code = SAFE_ERROR_CODES.FIREBASE_ADMIN_CONFIG_ERROR;
     throw error;
   }
 
-  const response = await fetch(`${env.apiBase}/models/${encodeURIComponent(env.model)}:generateContent?key=${encodeURIComponent(env.apiKey)}`, {
+  const response = await fetch(buildGeminiApiUrl(env.apiBase, env.model, env.apiKey), {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -260,14 +326,37 @@ export async function callGemini(payload) {
   });
 
   if (!response.ok) {
+    const bodyKind = String(response.headers?.get?.('content-type') || '').toLowerCase().includes('json') ? 'json' : 'text';
     const error = new Error(`Gemini request failed with HTTP ${response.status}.`);
     error.statusCode = response.status;
+    error.code = SAFE_ERROR_CODES.GEMINI_API_ERROR;
+    error.geminiStatus = response.status;
+    error.bodyKind = bodyKind;
+    logGeminiApiEvent('gemini-api-non-2xx', {
+      status: response.status,
+      model: env.model,
+      bodyKind,
+      code: SAFE_ERROR_CODES.GEMINI_API_ERROR,
+    });
     throw error;
   }
 
-  const data = await response.json();
-  const text = data?.candidates?.[0]?.content?.parts?.map((part) => part?.text || '').join('') || data?.text || '';
-  return parseGeminiRecommendations(text);
+  const responseText = await response.text().catch(() => '');
+  const data = safeJsonParse(responseText) || null;
+  const text = extractGeminiResponseText(data, responseText);
+  const parsed = parseGeminiRecommendations(text);
+  if (!parsed.recommendations.length) {
+    const error = new Error('Gemini response was invalid.');
+    error.statusCode = 502;
+    error.code = SAFE_ERROR_CODES.GEMINI_RESPONSE_INVALID;
+    logGeminiApiEvent('gemini-response-invalid', {
+      model: env.model,
+      bodyKind: data ? 'json' : 'text',
+      code: SAFE_ERROR_CODES.GEMINI_RESPONSE_INVALID,
+    });
+    throw error;
+  }
+  return parsed;
 }
 
 export function createQuotaStub(uid) {
@@ -372,6 +461,10 @@ export async function createFirestoreGeminiStore(firestore) {
   };
 }
 
+function safeModeKey(value) {
+  return cleanText(value, 32).replace(/[^a-z0-9_-]/gi, '_') || 'default';
+}
+
 export async function getFirebaseAdminDependencies() {
   if (_adminDepsPromise) return _adminDepsPromise;
   _adminDepsPromise = (async () => {
@@ -440,19 +533,39 @@ export async function handleGeminiRequest({
   }
 
   const dateKey = getQuotaDateKey(now());
-  const cacheRecord = await store.getCache(uid, validation.value.mode).catch(() => null);
+  const cacheMode = safeModeKey(validation.value.mode);
+  let cacheRecord = null;
+  try {
+    cacheRecord = await store.getCache(uid, cacheMode);
+  } catch {
+    logGeminiRoute('cache-read-failed', { code: SAFE_ERROR_CODES.FIRESTORE_CACHE_ERROR, uid });
+    return { statusCode: 503, body: { error: 'server_error', code: SAFE_ERROR_CODES.FIRESTORE_CACHE_ERROR } };
+  }
   if (cacheRecord && isCacheRecordValid(cacheRecord, now())) {
+    logGeminiRoute('cache-hit', { cache: 'hit', uid });
+    const cached = normalizeGeminiResponsePayload(cacheRecord.payload);
+    if (!cached.recommendations.length) {
+      logGeminiRoute('cache-invalid', { code: SAFE_ERROR_CODES.GEMINI_RESPONSE_INVALID, uid });
+      return { statusCode: 502, body: { error: 'server_error', code: SAFE_ERROR_CODES.GEMINI_RESPONSE_INVALID } };
+    }
     return {
       statusCode: 200,
       body: {
-        recommendations: normalizeGeminiResponsePayload(cacheRecord.payload).recommendations,
+        recommendations: cached.recommendations,
         meta: buildMeta({ uid, mode: validation.value.mode, fromCache: true, implemented: true }),
       },
     };
   }
 
-  const quotaRecord = await store.getQuota(uid, dateKey).catch(() => null);
+  let quotaRecord = null;
+  try {
+    quotaRecord = await store.getQuota(uid, dateKey);
+  } catch {
+    logGeminiRoute('quota-read-failed', { code: SAFE_ERROR_CODES.FIRESTORE_QUOTA_ERROR, uid });
+    return { statusCode: 503, body: { error: 'server_error', code: SAFE_ERROR_CODES.FIRESTORE_QUOTA_ERROR } };
+  }
   const currentCount = Number(quotaRecord?.count || 0) || 0;
+  logGeminiRoute('quota-check', { quota: `count:${currentCount}`, uid });
   if (currentCount >= quotaLimit) {
     return { statusCode: 429, body: { error: 'Daily Gemini recommendation limit reached. Try again tomorrow.' } };
   }
@@ -461,20 +574,49 @@ export async function handleGeminiRequest({
   let geminiResult;
   try {
     geminiResult = await callGeminiFn(geminiPayload);
-  } catch {
-    return { statusCode: 500, body: { error: 'Gemini request failed.' } };
+  } catch (err) {
+    if (err?.code === SAFE_ERROR_CODES.GEMINI_RESPONSE_INVALID) {
+      logGeminiRoute('gemini-invalid-response', { code: SAFE_ERROR_CODES.GEMINI_RESPONSE_INVALID, uid, status: err?.statusCode || err?.status });
+      return { statusCode: 502, body: { error: 'server_error', code: SAFE_ERROR_CODES.GEMINI_RESPONSE_INVALID } };
+    }
+    const statusCode = Number(err?.statusCode || err?.status || 500);
+    if (statusCode === 503 && err?.code === SAFE_ERROR_CODES.FIREBASE_ADMIN_CONFIG_ERROR) {
+      logGeminiRoute('config-missing', { code: SAFE_ERROR_CODES.FIREBASE_ADMIN_CONFIG_ERROR });
+      return { statusCode: 503, body: { error: 'server_error', code: SAFE_ERROR_CODES.FIREBASE_ADMIN_CONFIG_ERROR } };
+    }
+    logGeminiRoute('gemini-api-failed', { code: SAFE_ERROR_CODES.GEMINI_API_ERROR, uid, status: statusCode });
+    return {
+      statusCode: statusCode >= 400 && statusCode < 600 ? statusCode : 500,
+      body: {
+        error: 'server_error',
+        code: SAFE_ERROR_CODES.GEMINI_API_ERROR,
+        geminiStatus: Number.isFinite(statusCode) ? statusCode : undefined,
+      },
+    };
   }
   const cleaned = normalizeGeminiResponsePayload(geminiResult);
   if (!cleaned.recommendations.length) {
-    return { statusCode: 502, body: { error: 'Gemini returned no valid recommendations.' } };
+    logGeminiRoute('gemini-invalid-response', { code: SAFE_ERROR_CODES.GEMINI_RESPONSE_INVALID, uid });
+    return { statusCode: 502, body: { error: 'server_error', code: SAFE_ERROR_CODES.GEMINI_RESPONSE_INVALID } };
   }
 
-  await store.setCache(uid, validation.value.mode, cleaned).catch(() => null);
+  let cacheSaved = false;
+  try {
+    await store.setCache(uid, cacheMode, cleaned);
+    cacheSaved = true;
+  } catch {
+    logGeminiRoute('cache-write-failed', { code: SAFE_ERROR_CODES.FIRESTORE_CACHE_ERROR, uid });
+    return { statusCode: 503, body: { error: 'server_error', code: SAFE_ERROR_CODES.FIRESTORE_CACHE_ERROR } };
+  }
 
   try {
     await consumeQuotaRecord(store, uid, dateKey);
   } catch {
-    return { statusCode: 503, body: { error: 'Unable to update Gemini quota right now.' } };
+    logGeminiRoute('quota-write-failed', { code: SAFE_ERROR_CODES.FIRESTORE_QUOTA_ERROR, uid });
+    return {
+      statusCode: 503,
+      body: { error: 'server_error', code: SAFE_ERROR_CODES.FIRESTORE_QUOTA_ERROR, cacheSaved: cacheSaved || undefined },
+    };
   }
 
   return {
@@ -505,6 +647,14 @@ export async function consumeQuotaRecord(store, uid, dateKey) {
   if (typeof store.consumeQuota === 'function') return store.consumeQuota(uid, dateKey);
   if (typeof store.incrementQuota === 'function') return store.incrementQuota(uid, dateKey);
   throw new Error('Gemini storage cannot consume quota.');
+}
+
+export function createSafeServerError(code = SAFE_ERROR_CODES.UNKNOWN_SERVER_ERROR, statusCode = 500, step = '') {
+  const error = new Error('server_error');
+  error.code = code || SAFE_ERROR_CODES.UNKNOWN_SERVER_ERROR;
+  error.statusCode = statusCode;
+  error.step = step || '';
+  return error;
 }
 
 // Dev/test reset note:
@@ -542,4 +692,5 @@ export {
   DEFAULT_MODEL,
   DEFAULT_API_BASE,
   DEFAULT_QUOTA,
+  SAFE_ERROR_CODES,
 };
