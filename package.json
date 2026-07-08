@@ -10,6 +10,7 @@
     "test:subject-discovery": "node scripts/test-subject-discovery.mjs",
     "test:gutendex": "node scripts/test-gutendex.mjs",
     "test:internet-archive": "node scripts/test-internet-archive.mjs",
+    "test:activity": "node scripts/test-activity.mjs",
     "test:gemini": "node scripts/test-gemini-route.mjs",
     "test:gemini-client": "node scripts/test-gemini-client.mjs",
     "screenshots": "node scripts/screenshots.mjs",
