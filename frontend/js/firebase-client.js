@@ -53,10 +53,14 @@ const INIT_RETRY_INTERVAL_MS = 75;
 const AUTH_READY_TIMEOUT_MS = 1500;
 const ACTIVITY_SYNC_QUEUE_KEY = 'libriq_pending_activity_sync';
 const PROFILE_SYNC_QUEUE_KEY = 'libriq_pending_profile_sync';
+const GOALS_SYNC_QUEUE_KEY = 'libriq_pending_goals_sync';
+const STREAK_SYNC_QUEUE_KEY = 'libriq_pending_streak_sync';
 const AUTH_SIGN_OUT_GRACE_MS = 2500;
 let activityOnlineListenerAttached = false;
 let authNullTimer = null;
 let profileSyncHydrating = false;
+let goalsSyncHydrating = false;
+let streakSyncHydrating = false;
 
 function getTestApiBase() {
   return `${location.origin}/__libriq_test_api`;
@@ -238,6 +242,8 @@ function init() {
         if (user?.uid) {
           syncActivityFromCloud(user.uid);
           syncProfileFromCloud(user.uid);
+          syncGoalsFromCloud(user.uid);
+          syncStreakFromCloud(user.uid);
         }
       });
     }
@@ -248,6 +254,8 @@ function init() {
         if (current?.uid) {
           syncActivityFromCloud(current.uid);
           syncProfileFromCloud(current.uid);
+          syncGoalsFromCloud(current.uid);
+          syncStreakFromCloud(current.uid);
         }
       });
     }
@@ -258,6 +266,24 @@ function init() {
         const current = getCurrentUser();
         if (!current?.uid) return;
         queueProfileSync(event?.detail || window.LibriqStorage?.getProfile?.());
+      });
+    }
+    if (!window.__libriqGoalsSyncListenerAttached) {
+      window.__libriqGoalsSyncListenerAttached = true;
+      window.addEventListener?.('libriq:goals:updated', (event) => {
+        if (goalsSyncHydrating) return;
+        const current = getCurrentUser();
+        if (!current?.uid) return;
+        queueGoalsSync(event?.detail || window.LibriqStorage?.getGoals?.());
+      });
+    }
+    if (!window.__libriqStreakSyncListenerAttached) {
+      window.__libriqStreakSyncListenerAttached = true;
+      window.addEventListener?.('libriq:streak:updated', (event) => {
+        if (streakSyncHydrating) return;
+        const current = getCurrentUser();
+        if (!current?.uid) return;
+        queueStreakSync(event?.detail || window.LibriqStorage?.getStreak?.());
       });
     }
   } catch (err) {
@@ -409,6 +435,14 @@ function getProfileDocPath(uid) {
   return uid ? `users/${uid}/profile/current` : null;
 }
 
+function getGoalsDocPath(uid) {
+  return uid ? `users/${uid}/goals/current` : null;
+}
+
+function getStreakDocPath(uid) {
+  return uid ? `users/${uid}/streak/current` : null;
+}
+
 function logActivityDebug(message, details = {}) {
   if (!TEST_MODE && !window.location?.hostname?.includes('localhost') && !window.location?.hostname?.includes('127.0.0.1')) return;
   try {
@@ -449,6 +483,52 @@ function setPendingProfileQueue(profile) {
     localStorage.setItem(PROFILE_SYNC_QUEUE_KEY, JSON.stringify(profile));
   } catch (err) {
     console.warn('[LibriQ] Profile pending queue write failed:', err);
+  }
+}
+
+function getPendingGoalsQueue() {
+  try {
+    const raw = localStorage.getItem(GOALS_SYNC_QUEUE_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch (err) {
+    console.warn('[LibriQ] Goals pending queue read failed:', err);
+    return null;
+  }
+}
+
+function setPendingGoalsQueue(payload) {
+  try {
+    if (!payload || typeof payload !== 'object') {
+      localStorage.removeItem(GOALS_SYNC_QUEUE_KEY);
+      return;
+    }
+    localStorage.setItem(GOALS_SYNC_QUEUE_KEY, JSON.stringify(payload));
+  } catch (err) {
+    console.warn('[LibriQ] Goals pending queue write failed:', err);
+  }
+}
+
+function getPendingStreakQueue() {
+  try {
+    const raw = localStorage.getItem(STREAK_SYNC_QUEUE_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch (err) {
+    console.warn('[LibriQ] Streak pending queue read failed:', err);
+    return null;
+  }
+}
+
+function setPendingStreakQueue(payload) {
+  try {
+    if (!payload || typeof payload !== 'object') {
+      localStorage.removeItem(STREAK_SYNC_QUEUE_KEY);
+      return;
+    }
+    localStorage.setItem(STREAK_SYNC_QUEUE_KEY, JSON.stringify(payload));
+  } catch (err) {
+    console.warn('[LibriQ] Streak pending queue write failed:', err);
   }
 }
 
@@ -515,6 +595,36 @@ function sanitizeProfile(profile) {
     avatar: avatar || null,
     createdAt,
     updatedAt,
+  };
+}
+
+function sanitizeGoals(goals) {
+  if (!goals || typeof goals !== 'object') return null;
+  const year = Number(goals.year ?? goals.targetYear ?? new Date().getFullYear());
+  const yearly = Number(goals.yearly ?? goals.target ?? goals.count ?? 12);
+  const now = new Date().toISOString();
+  return {
+    year: Number.isFinite(year) ? year : new Date().getFullYear(),
+    yearly: Number.isFinite(yearly) && yearly > 0 ? yearly : 12,
+    target: Number.isFinite(yearly) && yearly > 0 ? yearly : 12,
+    completed: Number.isFinite(Number(goals.completed)) ? Number(goals.completed) : null,
+    createdAt: goals.createdAt || goals.joinDate || now,
+    updatedAt: goals.updatedAt || goals.createdAt || goals.joinDate || now,
+  };
+}
+
+function sanitizeStreak(streak) {
+  if (!streak || typeof streak !== 'object') return null;
+  const current = Number(streak.currentStreak ?? streak.current ?? 0);
+  const longest = Number(streak.longestStreak ?? streak.longest ?? 0);
+  const lastReadDate = streak.lastReadDate || streak.lastRead || null;
+  const now = new Date().toISOString();
+  return {
+    currentStreak: Number.isFinite(current) ? current : 0,
+    longestStreak: Number.isFinite(longest) ? longest : 0,
+    lastReadDate,
+    createdAt: streak.createdAt || now,
+    updatedAt: streak.updatedAt || streak.createdAt || now,
   };
 }
 
@@ -696,6 +806,197 @@ async function syncProfileFromCloud(uid = null) {
     console.warn('[LibriQ] Profile cloud sync failed:', err);
     return window.LibriqStorage?.getProfile?.() || null;
   }
+}
+
+async function writeGoalsDoc(uid, goals) {
+  const goalsUid = uid || getCurrentUser()?.uid || null;
+  const normalized = sanitizeGoals(goals);
+  if (!goalsUid || !normalized) return false;
+  if (!firestore || !hasActiveUser()) {
+    logActivityDebug('Goals write skipped: firestore unavailable or auth not ready', { uid: `${String(goalsUid).slice(0, 6)}…`, path: getGoalsDocPath(goalsUid) });
+    return false;
+  }
+  const path = getGoalsDocPath(goalsUid);
+  logActivityDebug('Goals write start', { uid: `${String(goalsUid).slice(0, 6)}…`, path });
+  const ref = TEST_MODE ? testFirestore.doc('users', goalsUid, 'goals', 'current') : doc(firestore, 'users', goalsUid, 'goals', 'current');
+  await (TEST_MODE ? testFirestore.setDoc(ref, normalized) : setDoc(ref, normalized, { merge: true }));
+  logActivityDebug('Goals write success', { uid: `${String(goalsUid).slice(0, 6)}…`, path });
+  return true;
+}
+
+async function readGoalsDoc(uid = null) {
+  const goalsUid = uid || getCurrentUser()?.uid || null;
+  if (!goalsUid || !firestore || !hasActiveUser()) return null;
+  const path = getGoalsDocPath(goalsUid);
+  logActivityDebug('Goals read start', { uid: `${String(goalsUid).slice(0, 6)}…`, path });
+  const ref = TEST_MODE ? testFirestore.doc('users', goalsUid, 'goals', 'current') : doc(firestore, 'users', goalsUid, 'goals', 'current');
+  const snap = TEST_MODE ? await testFirestore.getDoc(ref) : await getDoc(ref);
+  const data = snap?.data ? snap.data() : null;
+  if (!data || typeof data !== 'object') return null;
+  logActivityDebug('Goals read success', { uid: `${String(goalsUid).slice(0, 6)}…`, path });
+  return sanitizeGoals(data);
+}
+
+async function syncGoalsFromCloud(uid = null) {
+  const goalsUid = uid || getCurrentUser()?.uid || null;
+  if (!goalsUid || !firestore || !hasActiveUser()) return null;
+  try {
+    logActivityDebug('Goals sync start', { uid: `${String(goalsUid).slice(0, 6)}…`, path: getGoalsDocPath(goalsUid) });
+    const remote = await readGoalsDoc(goalsUid);
+    const local = sanitizeGoals(window.LibriqStorage?.getGoals?.());
+    if (!remote && local) {
+      await writeGoalsDoc(goalsUid, local);
+      setPendingGoalsQueue(null);
+      logActivityDebug('Goals migration uploaded', { uid: `${String(goalsUid).slice(0, 6)}…` });
+      return local;
+    }
+    if (!remote) return local;
+    const merged = {
+      year: Number.isFinite(Number(remote.year)) ? Number(remote.year) : (Number.isFinite(Number(remote.targetYear)) ? Number(remote.targetYear) : (local?.year || new Date().getFullYear())),
+      yearly: Number.isFinite(Number(remote.yearly)) ? Number(remote.yearly) : (Number.isFinite(Number(remote.target)) ? Number(remote.target) : (local?.yearly || 12)),
+      target: Number.isFinite(Number(remote.target)) ? Number(remote.target) : (Number.isFinite(Number(remote.yearly)) ? Number(remote.yearly) : (local?.target || local?.yearly || 12)),
+      completed: Number.isFinite(Number(remote.completed)) ? Number(remote.completed) : (Number.isFinite(Number(local?.completed)) ? Number(local.completed) : null),
+      createdAt: remote.createdAt || local?.createdAt || null,
+      updatedAt: remote.updatedAt || local?.updatedAt || remote.createdAt || local?.createdAt || null,
+    };
+    goalsSyncHydrating = true;
+    try {
+      window.LibriqStorage?.saveGoals?.(merged);
+    } finally {
+      goalsSyncHydrating = false;
+    }
+    const pending = getPendingGoalsQueue();
+    if (pending) {
+      const pendingTime = new Date(pending.updatedAt || pending.createdAt || 0).getTime();
+      const remoteTime = new Date(merged.updatedAt || merged.createdAt || 0).getTime();
+      if (pendingTime > remoteTime) {
+        await writeGoalsDoc(goalsUid, pending);
+        setPendingGoalsQueue(null);
+      }
+    }
+    window.dispatchEvent?.(new CustomEvent('libriq:goals:hydrated', { detail: { uid: goalsUid } }));
+    logActivityDebug('Goals sync success', { uid: `${String(goalsUid).slice(0, 6)}…` });
+    return merged;
+  } catch (err) {
+    console.warn('[LibriQ] Goals cloud sync failed:', err);
+    return window.LibriqStorage?.getGoals?.() || null;
+  }
+}
+
+function queueGoalsSync(goals) {
+  const user = getCurrentUser();
+  const normalized = sanitizeGoals(goals);
+  if (!normalized) return false;
+  if (!user?.uid || !firestore || !hasActiveUser()) {
+    setPendingGoalsQueue(normalized);
+    return false;
+  }
+  Promise.resolve().then(async () => {
+    try {
+      const ok = await writeGoalsDoc(user.uid, normalized);
+      if (!ok) setPendingGoalsQueue(normalized);
+      else setPendingGoalsQueue(null);
+    } catch (err) {
+      console.warn('[LibriQ] Goals cloud write failed:', err);
+      setPendingGoalsQueue(normalized);
+    }
+  });
+  return true;
+}
+
+async function writeStreakDoc(uid, streak) {
+  const streakUid = uid || getCurrentUser()?.uid || null;
+  const normalized = sanitizeStreak(streak);
+  if (!streakUid || !normalized) return false;
+  if (!firestore || !hasActiveUser()) {
+    logActivityDebug('Streak write skipped: firestore unavailable or auth not ready', { uid: `${String(streakUid).slice(0, 6)}…`, path: getStreakDocPath(streakUid) });
+    return false;
+  }
+  const path = getStreakDocPath(streakUid);
+  logActivityDebug('Streak write start', { uid: `${String(streakUid).slice(0, 6)}…`, path });
+  const ref = TEST_MODE ? testFirestore.doc('users', streakUid, 'streak', 'current') : doc(firestore, 'users', streakUid, 'streak', 'current');
+  await (TEST_MODE ? testFirestore.setDoc(ref, normalized) : setDoc(ref, normalized, { merge: true }));
+  logActivityDebug('Streak write success', { uid: `${String(streakUid).slice(0, 6)}…`, path });
+  return true;
+}
+
+async function readStreakDoc(uid = null) {
+  const streakUid = uid || getCurrentUser()?.uid || null;
+  if (!streakUid || !firestore || !hasActiveUser()) return null;
+  const path = getStreakDocPath(streakUid);
+  logActivityDebug('Streak read start', { uid: `${String(streakUid).slice(0, 6)}…`, path });
+  const ref = TEST_MODE ? testFirestore.doc('users', streakUid, 'streak', 'current') : doc(firestore, 'users', streakUid, 'streak', 'current');
+  const snap = TEST_MODE ? await testFirestore.getDoc(ref) : await getDoc(ref);
+  const data = snap?.data ? snap.data() : null;
+  if (!data || typeof data !== 'object') return null;
+  logActivityDebug('Streak read success', { uid: `${String(streakUid).slice(0, 6)}…`, path });
+  return sanitizeStreak(data);
+}
+
+async function syncStreakFromCloud(uid = null) {
+  const streakUid = uid || getCurrentUser()?.uid || null;
+  if (!streakUid || !firestore || !hasActiveUser()) return null;
+  try {
+    logActivityDebug('Streak sync start', { uid: `${String(streakUid).slice(0, 6)}…`, path: getStreakDocPath(streakUid) });
+    const remote = await readStreakDoc(streakUid);
+    const local = sanitizeStreak(window.LibriqStorage?.getStreak?.());
+    if (!remote && local) {
+      await writeStreakDoc(streakUid, local);
+      setPendingStreakQueue(null);
+      logActivityDebug('Streak migration uploaded', { uid: `${String(streakUid).slice(0, 6)}…` });
+      return local;
+    }
+    if (!remote) return local;
+    const merged = {
+      current: Number.isFinite(Number(remote.currentStreak)) ? Number(remote.currentStreak) : (Number.isFinite(Number(remote.current)) ? Number(remote.current) : (local?.current || local?.currentStreak || 0)),
+      longest: Number.isFinite(Number(remote.longestStreak)) ? Number(remote.longestStreak) : (Number.isFinite(Number(remote.longest)) ? Number(remote.longest) : (local?.longest || local?.longestStreak || 0)),
+      lastRead: remote.lastReadDate || remote.lastRead || local?.lastRead || local?.lastReadDate || null,
+      createdAt: remote.createdAt || local?.createdAt || null,
+      updatedAt: remote.updatedAt || local?.updatedAt || remote.createdAt || local?.createdAt || null,
+    };
+    streakSyncHydrating = true;
+    try {
+      window.LibriqStorage?.saveStreak?.(merged);
+    } finally {
+      streakSyncHydrating = false;
+    }
+    const pending = getPendingStreakQueue();
+    if (pending) {
+      const pendingTime = new Date(pending.updatedAt || pending.createdAt || 0).getTime();
+      const remoteTime = new Date(merged.updatedAt || merged.createdAt || 0).getTime();
+      if (pendingTime > remoteTime) {
+        await writeStreakDoc(streakUid, pending);
+        setPendingStreakQueue(null);
+      }
+    }
+    window.dispatchEvent?.(new CustomEvent('libriq:streak:hydrated', { detail: { uid: streakUid } }));
+    logActivityDebug('Streak sync success', { uid: `${String(streakUid).slice(0, 6)}…` });
+    return merged;
+  } catch (err) {
+    console.warn('[LibriQ] Streak cloud sync failed:', err);
+    return window.LibriqStorage?.getStreak?.() || null;
+  }
+}
+
+function queueStreakSync(streak) {
+  const user = getCurrentUser();
+  const normalized = sanitizeStreak(streak);
+  if (!normalized) return false;
+  if (!user?.uid || !firestore || !hasActiveUser()) {
+    setPendingStreakQueue(normalized);
+    return false;
+  }
+  Promise.resolve().then(async () => {
+    try {
+      const ok = await writeStreakDoc(user.uid, normalized);
+      if (!ok) setPendingStreakQueue(normalized);
+      else setPendingStreakQueue(null);
+    } catch (err) {
+      console.warn('[LibriQ] Streak cloud write failed:', err);
+      setPendingStreakQueue(normalized);
+    }
+  });
+  return true;
 }
 
 function queueProfileSync(profile) {
@@ -882,6 +1183,8 @@ async function deleteCurrentUserLibraryData() {
   if (!user?.uid) throw new Error('Firebase is unavailable.');
   await deleteFirestoreCollectionDocs(['users', user.uid, 'sync', 'v1', 'books']);
   await deleteFirestoreCollectionDocs(['users', user.uid, 'activity']);
+  await deleteFirestoreDocPath(['users', user.uid, 'goals', 'current']);
+  await deleteFirestoreDocPath(['users', user.uid, 'streak', 'current']);
   return true;
 }
 

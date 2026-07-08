@@ -13,6 +13,7 @@
     "test:activity": "node scripts/test-activity.mjs",
     "test:activity-sync": "node scripts/test-activity-sync.mjs",
     "test:profile-sync": "node scripts/test-profile-sync.mjs",
+    "test:goals-streak-sync": "node scripts/test-goals-streak-sync.mjs",
     "test:gemini": "node scripts/test-gemini-route.mjs",
     "test:gemini-client": "node scripts/test-gemini-client.mjs",
     "screenshots": "node scripts/screenshots.mjs",
