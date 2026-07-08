@@ -24,6 +24,7 @@ function createNode(id) {
     scrollTop: 0,
     style: {},
     classList: makeClassList(),
+    dataset: {},
     querySelector: () => null,
     querySelectorAll: () => [],
     closest: () => null,
@@ -33,8 +34,13 @@ function createNode(id) {
     },
     appendChild: child => child,
     prepend: () => {},
-    setAttribute: () => {},
-    removeAttribute: () => {},
+    setAttribute: (name, value) => {
+      if (name === 'hidden') node.hidden = true;
+      if (name === 'data-auth-mode') node.dataset.authMode = String(value || '');
+    },
+    removeAttribute: (name) => {
+      if (name === 'hidden') node.hidden = false;
+    },
     hasAttribute: (name) => name === 'hidden' ? node.hidden : false,
     replaceChildren: () => {},
     click: () => {
@@ -485,6 +491,14 @@ if (!String(main.innerHTML || '').includes('Forgot password?')) {
 }
 if (!String(main.innerHTML || '').includes('session-signin-mode')) {
   throw new Error('forgot password should live inside the sign-in panel');
+}
+nav.setEmailAuthMode?.('signup');
+if (!document.getElementById('forgotPasswordLink')?.hidden) {
+  throw new Error('forgot password should be hidden in create account mode');
+}
+nav.setEmailAuthMode?.('signin');
+if (document.getElementById('forgotPasswordLink')?.hidden) {
+  throw new Error('forgot password should return in sign-in mode');
 }
 
 firebaseState.user = null;
