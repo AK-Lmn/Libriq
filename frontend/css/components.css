@@ -5661,11 +5661,28 @@ html[data-theme="dark"] #activityPage .activity-day-label {
 .session-email-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-4);
+  margin-top: var(--space-1);
 }
 
 .session-email-form .btn {
   justify-content: center;
+}
+
+.session-signin-mode,
+.session-reset-mode {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.session-reset-mode .btn {
+  width: 100%;
+}
+
+.session-reset-mode .session-link-btn,
+.session-link-btn {
+  align-self: flex-start;
 }
 
 .session-auth-error {
@@ -5881,6 +5898,11 @@ body.session-choice-active .toast-container {
     gap: var(--space-2);
   }
 
+  .session-signin-mode,
+  .session-reset-mode {
+    gap: var(--space-2);
+  }
+
   .session-email-form .form-input {
     min-height: 42px;
     padding: 0.7rem var(--space-3);
@@ -5890,6 +5912,10 @@ body.session-choice-active .toast-container {
   .session-email-form .btn {
     min-height: 44px;
     padding-inline: var(--space-4);
+  }
+
+  .session-link-btn {
+    margin-top: 0;
   }
 
   .session-help-callout {

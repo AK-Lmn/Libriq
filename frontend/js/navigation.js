@@ -55,6 +55,29 @@ const Navigation = (() => {
     return 'confirmed signed out';
   }
 
+  function setEmailAuthMode(mode) {
+    const nextMode = mode === 'signup' ? 'signup' : 'signin';
+    const form = document.getElementById('emailAuthForm');
+    const password = document.getElementById('sessionPasswordInput');
+    const submit = document.getElementById('emailAuthSubmit');
+    const forgot = document.getElementById('forgotPasswordLink');
+    const resetMode = document.getElementById('sessionResetMode');
+    const signinMode = document.getElementById('sessionSigninMode');
+    form?.setAttribute('data-auth-mode', nextMode);
+    password?.setAttribute('autocomplete', nextMode === 'signup' ? 'new-password' : 'current-password');
+    if (submit) {
+      const label = submit.querySelector('span');
+      if (label) label.textContent = nextMode === 'signup' ? 'Create account' : 'Sign in with Email';
+    }
+    if (forgot) forgot.hidden = nextMode !== 'signin';
+    if (resetMode) resetMode.hidden = true;
+    if (signinMode) signinMode.hidden = false;
+    Utils.$$('.session-auth-tab').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.authMode === nextMode);
+    });
+    return nextMode;
+  }
+
   const pages = {
     boot:      () => renderBootPage(),
     session:   () => renderSessionChoicePage(),
@@ -410,6 +433,7 @@ const Navigation = (() => {
     clearLocalCache,
     confirmDeleteLibraryData,
     confirmDeleteAccount,
+    setEmailAuthMode,
     shouldRenderSessionScreen,
     isConfirmedSignedOut,
     get currentPage() { return _currentPage; },
@@ -1121,18 +1145,6 @@ function renderSessionChoicePage() {
     }
     scheduleFallback('recheck');
   };
-  const setEmailMode = (mode) => {
-    const nextMode = mode === 'signup' ? 'signup' : 'signin';
-    const form = document.getElementById('emailAuthForm');
-    const password = document.getElementById('sessionPasswordInput');
-    const submit = document.getElementById('emailAuthSubmit');
-    form?.setAttribute('data-auth-mode', nextMode);
-    password?.setAttribute('autocomplete', nextMode === 'signup' ? 'new-password' : 'current-password');
-    if (submit) submit.querySelector('span').textContent = nextMode === 'signup' ? 'Create account' : 'Sign in with Email';
-    Utils.$$('.session-auth-tab').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.authMode === nextMode);
-    });
-  };
   const showAuthError = (message) => {
     const errorEl = document.getElementById('sessionAuthError');
     if (!errorEl) return;
@@ -1157,17 +1169,21 @@ function renderSessionChoicePage() {
     const signinMode = document.getElementById('sessionSigninMode');
     const resetMode = document.getElementById('sessionResetMode');
     const resetEmail = document.getElementById('sessionResetEmailInput');
+    const forgot = document.getElementById('forgotPasswordLink');
     const currentEmail = getCurrentEmail();
     clearAuthError();
     if (resetEmail && currentEmail) resetEmail.value = currentEmail;
     signinMode?.setAttribute('hidden', '');
     resetMode?.removeAttribute('hidden');
+    if (forgot) forgot.hidden = true;
   };
   const showSigninMode = () => {
     const signinMode = document.getElementById('sessionSigninMode');
     const resetMode = document.getElementById('sessionResetMode');
+    const forgot = document.getElementById('forgotPasswordLink');
     signinMode?.removeAttribute('hidden');
     resetMode?.setAttribute('hidden', '');
+    if (forgot) forgot.hidden = false;
     clearAuthError();
   };
 
@@ -1214,8 +1230,16 @@ function renderSessionChoicePage() {
   Utils.$$('.session-auth-tab').forEach(btn => {
     btn.addEventListener('click', () => {
       clearAuthError();
-      setEmailMode(btn.dataset.authMode);
-      showSigninMode();
+      setEmailAuthMode(btn.dataset.authMode);
+      if (btn.dataset.authMode === 'signin') showSigninMode();
+      else {
+        const signinMode = document.getElementById('sessionSigninMode');
+        const resetMode = document.getElementById('sessionResetMode');
+        signinMode?.removeAttribute('hidden');
+        resetMode?.setAttribute('hidden', '');
+        const forgot = document.getElementById('forgotPasswordLink');
+        if (forgot) forgot.hidden = true;
+      }
     });
   });
 
