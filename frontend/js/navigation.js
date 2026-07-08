@@ -2354,8 +2354,13 @@ function _wireGeminiRecommendations() {
         console.debug('[Libriq/Gemini] Missing or expired Firebase session.', { code, status });
         stateNode.textContent = 'Please sign in again to use AI recommendations.';
       } else if (status === 429) {
-        console.debug('[Libriq/Gemini] Gemini quota exhausted.');
-        stateNode.textContent = "You've used today's AI recommendations. Try again tomorrow.";
+        if (code === 'gemini_provider_quota_exhausted') {
+          console.debug('[Libriq/Gemini] Gemini provider quota exhausted.');
+          stateNode.textContent = 'AI is temporarily busy or over its provider limit. Try again later. Your local recommendations are still available.';
+        } else {
+          console.debug('[Libriq/Gemini] Gemini quota exhausted.');
+          stateNode.textContent = "You've used today's AI recommendations. Try again tomorrow.";
+        }
       } else if (status === 503) {
         console.debug('[Libriq/Gemini] Gemini backend unavailable.');
         stateNode.textContent = 'AI recommendations could not load right now. Your local recommendations are still available.';

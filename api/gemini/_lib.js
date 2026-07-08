@@ -10,6 +10,7 @@ const SAFE_ERROR_CODES = {
   FIRESTORE_CACHE_ERROR: 'FIRESTORE_CACHE_ERROR',
   FIRESTORE_QUOTA_ERROR: 'FIRESTORE_QUOTA_ERROR',
   GEMINI_API_ERROR: 'GEMINI_API_ERROR',
+  GEMINI_PROVIDER_QUOTA_EXHAUSTED: 'GEMINI_PROVIDER_QUOTA_EXHAUSTED',
   GEMINI_RESPONSE_INVALID: 'GEMINI_RESPONSE_INVALID',
   UNKNOWN_SERVER_ERROR: 'UNKNOWN_SERVER_ERROR',
 };
@@ -20,7 +21,13 @@ export function getGeminiEnv() {
     apiKey: String(process.env.GEMINI_API_KEY || '').trim(),
     model: normalizeGeminiModelName(process.env.GEMINI_MODEL || DEFAULT_MODEL),
     apiBase: String(process.env.GEMINI_API_BASE || DEFAULT_API_BASE).trim() || DEFAULT_API_BASE,
+    mode: normalizeGeminiApiMode(process.env.GEMINI_API_MODE || 'generateContent'),
   };
+}
+
+export function normalizeGeminiApiMode(value) {
+  const clean = cleanText(value, 32).toLowerCase();
+  return clean === 'interactions' ? 'interactions' : 'generatecontent';
 }
 
 export function normalizeGeminiModelName(value) {
@@ -120,6 +127,17 @@ export function buildGeminiPrompt(payload) {
   };
 }
 
+export function buildGeminiRequestBody(payload, mode = 'generatecontent') {
+  const prompt = buildGeminiPrompt(payload);
+  if (normalizeGeminiApiMode(mode) === 'interactions') {
+    return {
+      model: normalizeGeminiModelName(getGeminiEnv().model),
+      input: prompt.contents?.[0]?.parts?.[0]?.text || '',
+    };
+  }
+  return prompt;
+}
+
 export function parseGeminiRecommendations(responseText) {
   const parsed = safeJsonParse(responseText);
   const recommendations = Array.isArray(parsed?.recommendations) ? parsed.recommendations : [];
@@ -190,6 +208,10 @@ export function buildGeminiApiUrl(apiBase, model, apiKey) {
   const base = String(apiBase || DEFAULT_API_BASE).trim() || DEFAULT_API_BASE;
   const cleanModel = normalizeGeminiModelName(model);
   const safeApiKey = String(apiKey || '').trim();
+  const mode = normalizeGeminiApiMode(process.env.GEMINI_API_MODE || 'generateContent');
+  if (mode === 'interactions') {
+    return `${base}/interactions`;
+  }
   return `${base}/models/${encodeURIComponent(cleanModel)}:generateContent?key=${encodeURIComponent(safeApiKey)}`;
 }
 
@@ -321,22 +343,25 @@ export async function callGemini(payload) {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
+      ...(env.mode === 'interactions' ? { 'x-goog-api-key': env.apiKey } : {}),
     },
-    body: JSON.stringify(buildGeminiPrompt(payload)),
+    body: JSON.stringify(buildGeminiRequestBody(payload, env.mode)),
   });
 
   if (!response.ok) {
     const bodyKind = String(response.headers?.get?.('content-type') || '').toLowerCase().includes('json') ? 'json' : 'text';
     const error = new Error(`Gemini request failed with HTTP ${response.status}.`);
     error.statusCode = response.status;
-    error.code = SAFE_ERROR_CODES.GEMINI_API_ERROR;
+    error.code = response.status === 429
+      ? SAFE_ERROR_CODES.GEMINI_PROVIDER_QUOTA_EXHAUSTED
+      : SAFE_ERROR_CODES.GEMINI_API_ERROR;
     error.geminiStatus = response.status;
     error.bodyKind = bodyKind;
-    logGeminiApiEvent('gemini-api-non-2xx', {
+    logGeminiApiEvent(response.status === 429 ? 'gemini-provider-quota' : 'gemini-api-non-2xx', {
       status: response.status,
       model: env.model,
       bodyKind,
-      code: SAFE_ERROR_CODES.GEMINI_API_ERROR,
+      code: error.code,
     });
     throw error;
   }
@@ -580,6 +605,17 @@ export async function handleGeminiRequest({
       return { statusCode: 502, body: { error: 'server_error', code: SAFE_ERROR_CODES.GEMINI_RESPONSE_INVALID } };
     }
     const statusCode = Number(err?.statusCode || err?.status || 500);
+    if (err?.code === SAFE_ERROR_CODES.GEMINI_PROVIDER_QUOTA_EXHAUSTED || statusCode === 429) {
+      logGeminiRoute('gemini-provider-quota', { code: SAFE_ERROR_CODES.GEMINI_PROVIDER_QUOTA_EXHAUSTED, uid, status: 429 });
+      return {
+        statusCode: 429,
+        body: {
+          error: 'server_error',
+          code: SAFE_ERROR_CODES.GEMINI_PROVIDER_QUOTA_EXHAUSTED,
+          geminiStatus: 429,
+        },
+      };
+    }
     if (statusCode === 503 && err?.code === SAFE_ERROR_CODES.FIREBASE_ADMIN_CONFIG_ERROR) {
       logGeminiRoute('config-missing', { code: SAFE_ERROR_CODES.FIREBASE_ADMIN_CONFIG_ERROR });
       return { statusCode: 503, body: { error: 'server_error', code: SAFE_ERROR_CODES.FIREBASE_ADMIN_CONFIG_ERROR } };
