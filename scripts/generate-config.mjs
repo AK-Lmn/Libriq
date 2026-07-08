@@ -17,6 +17,7 @@ const firebaseConfig = {
   messagingSenderId: String(process.env.FIREBASE_MESSAGING_SENDER_ID || '').trim(),
   appId: String(process.env.FIREBASE_APP_ID || '').trim(),
 };
+const enableAiRecommendations = String(process.env.LIBRIQ_ENABLE_AI_RECOMMENDATIONS || '').trim().toLowerCase() === 'true';
 
 const hasFirebaseConfig = Object.values(firebaseConfig).every(Boolean);
 const isVercelBuild = Boolean(String(process.env.VERCEL || process.env.VERCEL_ENV || '').trim());
@@ -24,6 +25,7 @@ const isVercelBuild = Boolean(String(process.env.VERCEL || process.env.VERCEL_EN
 const configLines = [];
 if (envKey) configLines.push(`  googleBooksApiKey: ${JSON.stringify(envKey)}`);
 if (hasFirebaseConfig) configLines.push(`  firebase: ${JSON.stringify(firebaseConfig, null, 2).replace(/\n/g, '\n  ')}`);
+configLines.push(`  enableAiRecommendations: ${JSON.stringify(enableAiRecommendations)}`);
 const contents = `window.LibriqConfig = {\n${configLines.join(',\n')}${configLines.length ? '\n' : ''}};\n`;
 
 await mkdir(vendorDir, { recursive: true });
