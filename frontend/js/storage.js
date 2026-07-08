@@ -125,7 +125,11 @@ const Storage = (() => {
   function setActiveAccountUid(uid) {
     const nextUid = uid ? String(uid) : null;
     const changed = activeUid !== nextUid;
+    const previousUid = activeUid;
     activeUid = nextUid;
+    if (changed && nextUid) {
+      _migrateLegacyScopedData(previousUid, nextUid);
+    }
     if (activeUid) localStorage.setItem(ACTIVE_UID_KEY, activeUid);
     else localStorage.removeItem(ACTIVE_UID_KEY);
     _writeDefaults();
@@ -181,6 +185,51 @@ const Storage = (() => {
     if (localStorage.getItem(scopedKey) !== null) return;
     const legacyValue = localStorage.getItem(DATA_KEYS[name]);
     if (legacyValue !== null) localStorage.setItem(scopedKey, legacyValue);
+  }
+
+  function _mergeActivityEvents(currentEvents, incomingEvents) {
+    const byId = new Map();
+    const pushEvent = (event, fallbackPrefix) => {
+      if (!event || typeof event !== 'object') return;
+      const normalized = {
+        ...event,
+        id: String(event.id || `${fallbackPrefix}_${event.timestamp || new Date().toISOString()}_${Math.random().toString(36).slice(2, 8)}`),
+        type: String(event.type || 'unknown'),
+        timestamp: event.timestamp || event.createdAt || new Date().toISOString(),
+        createdAt: event.createdAt || event.timestamp || new Date().toISOString(),
+        updatedAt: event.updatedAt || event.timestamp || event.createdAt || new Date().toISOString(),
+        sourceDeviceId: event.sourceDeviceId || event.deviceId || null,
+      };
+      byId.set(normalized.id, normalized);
+    };
+    (Array.isArray(currentEvents) ? currentEvents : []).forEach(event => pushEvent(event, 'current'));
+    (Array.isArray(incomingEvents) ? incomingEvents : []).forEach(event => pushEvent(event, 'incoming'));
+    return Array.from(byId.values()).sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+  }
+
+  function _migrateLegacyScopedData(previousUid, nextUid) {
+    if (!nextUid) return;
+    const migrateNames = ['ACTIVITY', 'BOOKS', 'PROFILE', 'STREAK', 'GOALS', 'BACKUP', 'CLOUD_BACKUP', 'SYNC_META', 'SYNC_TOMBSTONES'];
+    migrateNames.forEach((name) => {
+      const targetKey = _userKey(nextUid, DATA_KEYS[name]);
+      const localKey = _localKey(DATA_KEYS[name]);
+      const legacyValue = _read(localKey);
+      if (legacyValue === null || legacyValue === undefined) return;
+      const currentTarget = _read(targetKey);
+
+      if (name === 'ACTIVITY') {
+        const merged = _mergeActivityEvents(Array.isArray(currentTarget) ? currentTarget : [], Array.isArray(legacyValue) ? legacyValue : []);
+        _write(targetKey, merged);
+        return;
+      }
+
+      if (currentTarget === null || currentTarget === undefined || (Array.isArray(currentTarget) && currentTarget.length === 0) || (typeof currentTarget === 'object' && Object.keys(currentTarget).length === 0)) {
+        _write(targetKey, legacyValue);
+      }
+    });
+    if (previousUid !== nextUid) {
+      _write(_userKey(nextUid, DATA_KEYS.ACTIVITY), _mergeActivityEvents(_read(_userKey(nextUid, DATA_KEYS.ACTIVITY)) || [], _read(_localKey(DATA_KEYS.ACTIVITY)) || []));
+    }
   }
 
   function getSyncReadiness() {
@@ -310,11 +359,14 @@ const Storage = (() => {
       id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       type,
       timestamp,
+      createdAt: timestamp,
+      updatedAt: timestamp,
       bookId: book?.id || null,
       bookTitle: book?.title || null,
       bookAuthor: book?.author || null,
       payload: payload && typeof payload === 'object' ? payload : {},
       source: source || book?.source || 'system',
+      sourceDeviceId: getDeviceId(),
     };
   }
 
@@ -325,12 +377,18 @@ const Storage = (() => {
       id: event.id || `act_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       type: String(event.type || 'unknown'),
       timestamp: event.timestamp || new Date().toISOString(),
+      createdAt: event.createdAt || event.timestamp || new Date().toISOString(),
+      updatedAt: event.updatedAt || event.timestamp || event.createdAt || new Date().toISOString(),
       bookId: event.bookId || null,
       bookTitle: event.bookTitle || null,
       bookAuthor: event.bookAuthor || null,
       payload: event.payload && typeof event.payload === 'object' ? event.payload : {},
       source: ['api', 'manual', 'import', 'system'].includes(event.source) ? event.source : 'system',
+      sourceDeviceId: event.sourceDeviceId || event.deviceId || null,
     };
+    if (current.some(existing => existing?.id === normalized.id)) {
+      return current.find(existing => existing?.id === normalized.id) || normalized;
+    }
     current.push(normalized);
     saveActivityLog(current);
     return normalized;
