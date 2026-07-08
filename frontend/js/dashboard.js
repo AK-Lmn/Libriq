@@ -313,7 +313,7 @@ function buildRecentBooksRow(books) {
   return `
     <div class="dashboard-recent-row">
       ${books.slice(0, 4).map(book => `
-        <button class="dashboard-recent-card" onclick="Library.showAddModal(${JSON.stringify(book).replace(/"/g, '&quot;')})" type="button">
+        <button class="dashboard-recent-card" onclick="Library.showDetailsModal('${String(book.id || '').replace(/'/g, "\\'")}')" type="button">
           ${Utils.buildCover(book, 'cover-md')}
           <div class="dashboard-recent-copy">
             <strong>${Utils.sanitize(book.title)}</strong>
