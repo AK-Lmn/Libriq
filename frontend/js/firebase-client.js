@@ -28,6 +28,7 @@ const state = {
   ready: false,
   user: null,
   error: null,
+  restoringSession: false,
 };
 
 const listeners = new Set();
@@ -51,7 +52,9 @@ const INIT_RETRY_TIMEOUT_MS = 3500;
 const INIT_RETRY_INTERVAL_MS = 75;
 const AUTH_READY_TIMEOUT_MS = 1500;
 const ACTIVITY_SYNC_QUEUE_KEY = 'libriq_pending_activity_sync';
+const AUTH_SIGN_OUT_GRACE_MS = 2500;
 let activityOnlineListenerAttached = false;
+let authNullTimer = null;
 
 function getTestApiBase() {
   return `${location.origin}/__libriq_test_api`;
@@ -123,6 +126,11 @@ function emit() {
 function setState(next) {
   Object.assign(state, next);
   emit();
+}
+
+function getVisibleUser() {
+  if (TEST_MODE) return testUser;
+  return auth?.currentUser || (state.restoringSession ? state.user : null);
 }
 
 function init() {
@@ -199,15 +207,32 @@ function init() {
       authListener = onAuthStateChanged(auth, (user) => {
         if (user?.uid) {
           window.LibriqStorage?.setActiveAccountUid?.(user.uid);
+          if (authNullTimer) {
+            window.clearTimeout(authNullTimer);
+            authNullTimer = null;
+          }
+          state.restoringSession = false;
         } else {
-          window.LibriqStorage?.clearActiveAccountScope?.();
+          if (!state.restoringSession && state.user) {
+            state.restoringSession = true;
+            if (authNullTimer) window.clearTimeout(authNullTimer);
+            authNullTimer = window.setTimeout(() => {
+              authNullTimer = null;
+              if (auth?.currentUser?.uid) return;
+              state.restoringSession = false;
+              setState({ user: null, ready: true, available: true });
+              window.LibriqStorage?.clearActiveAccountScope?.();
+            }, AUTH_SIGN_OUT_GRACE_MS);
+          } else if (!state.user) {
+            window.LibriqStorage?.clearActiveAccountScope?.();
+          }
         }
         setState({ ready: true, user: user ? {
           uid: user.uid,
           displayName: user.displayName || '',
           email: user.email || '',
           photoURL: user.photoURL || '',
-        } : null });
+        } : (state.restoringSession ? state.user : null) });
         if (user?.uid) {
           syncActivityFromCloud(user.uid);
         }
@@ -301,6 +326,11 @@ async function signOutUser() {
   if (!state.available || !auth) {
     throw new Error('Firebase is unavailable.');
   }
+  state.restoringSession = false;
+  if (authNullTimer) {
+    window.clearTimeout(authNullTimer);
+    authNullTimer = null;
+  }
   return signOut(auth);
 }
 
@@ -310,7 +340,7 @@ function getFirestoreClient() {
 
 function getCurrentUser() {
   if (TEST_MODE) return testUser;
-  const current = auth?.currentUser || null;
+  const current = getVisibleUser();
   return current ? {
     uid: current.uid,
     displayName: current.displayName || '',
@@ -341,7 +371,7 @@ async function getCurrentAuthUser(options = {}) {
     await _waitForAuthReady(options?.timeoutMs);
   }
   if (TEST_MODE) return testUser;
-  return auth?.currentUser || null;
+  return getVisibleUser();
 }
 
 async function getCurrentUserIdToken(forceRefresh = false) {
@@ -405,7 +435,7 @@ function clearPendingActivityEvent(id) {
 }
 
 function hasActiveUser() {
-  return TEST_MODE ? Boolean(testUser?.uid) : Boolean(auth?.currentUser?.uid);
+  return TEST_MODE ? Boolean(testUser?.uid) : Boolean(getVisibleUser()?.uid);
 }
 
 function sanitizeActivityEvent(event) {

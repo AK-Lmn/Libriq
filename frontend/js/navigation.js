@@ -330,6 +330,7 @@ const Navigation = (() => {
         uid: firebase.user?.uid || null,
         ready: firebase.ready,
         hasUser: Boolean(firebase.user),
+        restoringSession: Boolean(firebase.restoringSession),
         currentSessionMode: getCurrentSessionMode(),
         preferredSessionMode: localStorage.getItem(PREFERRED_SESSION_MODE_KEY) || null,
         sessionPref: getSessionPreference(),
@@ -338,7 +339,7 @@ const Navigation = (() => {
         window.LibriqSyncBeta?.detachForAccountSwitch?.('navigation-auth-change');
         Navigation.updateBadges?.();
       }
-      if (!firebase.user) {
+      if (!firebase.user && !firebase.restoringSession) {
         clearAccountResume();
         if (getCurrentSessionMode() !== 'offline' && getSessionPreference() !== 'offline') {
           if (_currentPage !== 'session') goTo('session');
@@ -350,6 +351,8 @@ const Navigation = (() => {
         resumeAccountModeIfAllowed();
       } else if (firebase.ready && _currentPage === 'boot') {
         routeAfterAuthReady();
+      } else if (firebase.restoringSession && _currentPage === 'session') {
+        renderSessionChoicePage();
       } else if (_currentPage === 'settings') renderSettingsPage();
       if (_currentPage === 'session') renderSessionChoicePage();
       window.LibriqCloudBackup?.refresh?.();
@@ -419,9 +422,11 @@ function routeAfterAuthReady() {
     Navigation.goTo('boot');
     return false;
   }
-  if (firebase.user) {
+  if (firebase.user || firebase.restoringSession) {
+    if (firebase.user) {
     window.LibriqStorage?.setActiveAccountUid?.(firebase.user.uid);
     Navigation.setSessionPreference?.('account');
+    }
     Navigation.goTo('dashboard');
     window.LibriqSyncBeta?.maybeAutoEnable?.('auth-ready');
     return true;

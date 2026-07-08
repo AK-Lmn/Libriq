@@ -170,7 +170,8 @@ globalThis.Storage = {
 };
 globalThis.Library = { renderBookCard: () => document.createElement ? document.createElement('div') : ({}) };
 globalThis.Search = { open: () => {}, close: () => {}, init: () => {} };
-globalThis.LibriqFirebase = { getState: () => ({ available: false, ready: true, user: null }), onChange: () => () => {} };
+const firebaseState = { available: false, ready: true, user: null, restoringSession: false };
+globalThis.LibriqFirebase = { getState: () => firebaseState, onChange: () => () => {} };
 globalThis.LibriqSyncBeta = { refresh: () => {}, pauseForOffline: () => {}, maybeAutoEnable: () => {}, getState: () => ({ enabled: false, status: 'off' }) };
 globalThis.LibriqCloudBackup = { refresh: () => {}, scheduleIfAllowed: () => {}, pause: () => {} };
 globalThis.LibriqConfig = { enableAiRecommendations: false };
@@ -259,6 +260,21 @@ if (!main.innerHTML.includes('Mystery Event')) {
 }
 if (!main.innerHTML.includes('2 event')) {
   throw new Error('activity page header count did not reflect activity events');
+}
+
+firebaseState.ready = true;
+firebaseState.user = null;
+firebaseState.restoringSession = true;
+nav.routeAfterAuthReady();
+if (!main.innerHTML.includes('dashboardPage')) {
+  throw new Error('restoring session should keep the app on the dashboard');
+}
+
+firebaseState.restoringSession = false;
+firebaseState.user = null;
+nav.routeAfterAuthReady();
+if (!main.innerHTML.includes('session-page')) {
+  throw new Error('confirmed signed-out state should render the session screen');
 }
 
 const mainStyle = String(document.getElementById('mainContent')?.style?.cssText || '');
