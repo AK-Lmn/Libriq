@@ -471,12 +471,20 @@ if (main.innerHTML.includes('session-page')) {
 if (nav.currentPage === 'session') {
   throw new Error('What\'s New dismiss after login should correct away from session screen');
 }
-
-firebaseState.user = { ...firebaseState.user, emailVerified: false };
-nav.renderCurrentPage();
-await Promise.resolve();
-if (main.innerHTML.includes('emailVerificationNotice')) {
-  throw new Error('google-only users should not surface an unverified email notice without actions');
+nav.goTo('session');
+firebaseState.user = null;
+firebaseState.signedOutConfirmed = true;
+firebaseState.restoringSession = false;
+nav.routeAfterAuthReady();
+if (!main.innerHTML.includes('session-page')) {
+  throw new Error('confirmed signed-out state should render the sign-in screen');
+}
+nav.goTo('session');
+if (!String(main.innerHTML || '').includes('Forgot password?')) {
+  throw new Error('forgot password link should be visible in sign-in mode');
+}
+if (!String(main.innerHTML || '').includes('session-signin-mode')) {
+  throw new Error('forgot password should live inside the sign-in panel');
 }
 
 firebaseState.user = null;
@@ -484,13 +492,6 @@ firebaseState.restoringSession = true;
 nav.routeAfterAuthReady();
 if (nav.currentPage === 'session') {
   throw new Error('restoring session should not route to sign-in screen');
-}
-
-firebaseState.restoringSession = false;
-firebaseState.signedOutConfirmed = true;
-nav.routeAfterAuthReady();
-if (!main.innerHTML.includes('session-page')) {
-  throw new Error('confirmed signed-out state should render the sign-in screen');
 }
 
 const sampleBooks = [

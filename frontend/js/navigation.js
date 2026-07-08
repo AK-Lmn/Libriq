@@ -1006,13 +1006,26 @@ function renderSessionChoicePage() {
               <button class="session-auth-tab" type="button" data-auth-mode="signup">Create account</button>
             </div>
             <form class="session-email-form" id="emailAuthForm" novalidate>
-              <input class="form-input" id="sessionEmailInput" type="email" placeholder="Email address" autocomplete="email" required />
-              <input class="form-input" id="sessionPasswordInput" type="password" placeholder="Password" autocomplete="current-password" required />
-              <p class="session-auth-error" id="sessionAuthError" role="alert" hidden></p>
-              <button class="btn btn-primary" id="emailAuthSubmit" type="submit">
-                <i class="ph ph-envelope-simple"></i>
-                <span>Sign in with Email</span>
-              </button>
+              <div class="session-reset-mode" id="sessionResetMode" hidden>
+                <input class="form-input" id="sessionResetEmailInput" type="email" placeholder="Email address" autocomplete="email" />
+                <button class="btn btn-primary" id="sessionResetSubmit" type="button">
+                  <i class="ph ph-envelope-simple"></i>
+                  <span>Send reset email</span>
+                </button>
+                <button class="btn btn-secondary" id="sessionResetBackBtn" type="button">
+                  Back to sign in
+                </button>
+              </div>
+              <div class="session-signin-mode" id="sessionSigninMode">
+                <input class="form-input" id="sessionEmailInput" type="email" placeholder="Email address" autocomplete="email" required />
+                <input class="form-input" id="sessionPasswordInput" type="password" placeholder="Password" autocomplete="current-password" required />
+                <p class="session-auth-error" id="sessionAuthError" role="alert" hidden></p>
+                <button class="btn btn-primary" id="emailAuthSubmit" type="submit">
+                  <i class="ph ph-envelope-simple"></i>
+                  <span>Sign in with Email</span>
+                </button>
+                <button class="session-link-btn" id="forgotPasswordLink" type="button">Forgot password?</button>
+              </div>
             </form>
           ` : ''}
 
@@ -1139,6 +1152,24 @@ function renderSessionChoicePage() {
     }
     renderSessionChoicePage();
   };
+  const getCurrentEmail = () => String(document.getElementById('sessionEmailInput')?.value || document.getElementById('sessionResetEmailInput')?.value || '').trim();
+  const showResetMode = () => {
+    const signinMode = document.getElementById('sessionSigninMode');
+    const resetMode = document.getElementById('sessionResetMode');
+    const resetEmail = document.getElementById('sessionResetEmailInput');
+    const currentEmail = getCurrentEmail();
+    clearAuthError();
+    if (resetEmail && currentEmail) resetEmail.value = currentEmail;
+    signinMode?.setAttribute('hidden', '');
+    resetMode?.removeAttribute('hidden');
+  };
+  const showSigninMode = () => {
+    const signinMode = document.getElementById('sessionSigninMode');
+    const resetMode = document.getElementById('sessionResetMode');
+    signinMode?.removeAttribute('hidden');
+    resetMode?.setAttribute('hidden', '');
+    clearAuthError();
+  };
 
   if (!firebase.initialized) {
     hideFallback();
@@ -1184,7 +1215,42 @@ function renderSessionChoicePage() {
     btn.addEventListener('click', () => {
       clearAuthError();
       setEmailMode(btn.dataset.authMode);
+      showSigninMode();
     });
+  });
+
+  document.getElementById('forgotPasswordLink')?.addEventListener('click', () => {
+    const email = String(document.getElementById('sessionEmailInput')?.value || '').trim();
+    if (email && document.getElementById('sessionResetEmailInput')) {
+      document.getElementById('sessionResetEmailInput').value = email;
+    }
+    showResetMode();
+  });
+
+  document.getElementById('sessionResetBackBtn')?.addEventListener('click', () => {
+    showSigninMode();
+  });
+
+  document.getElementById('sessionResetSubmit')?.addEventListener('click', async () => {
+    const email = String(document.getElementById('sessionResetEmailInput')?.value || '').trim();
+    try {
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        throw Object.assign(new Error('Enter a valid email address.'), { code: 'auth/invalid-email' });
+      }
+      await window.LibriqFirebase?.sendPasswordResetToEmail?.(email);
+      Utils.toast('Password reset email sent if an account exists for that address.', 'success');
+      showSigninMode();
+    } catch (err) {
+      const code = String(err?.code || '').toLowerCase();
+      const message = code.includes('invalid-email')
+        ? 'Enter a valid email address.'
+        : code.includes('too-many-requests')
+          ? 'Please wait before trying again.'
+          : code.includes('network-request-failed')
+            ? 'Check your connection and try again.'
+            : 'Something went wrong. Please try again.';
+      showAuthError(message);
+    }
   });
 
   document.getElementById('emailAuthForm')?.addEventListener('submit', async (event) => {
