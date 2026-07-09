@@ -56,7 +56,7 @@ const Navigation = (() => {
   }
 
   function setEmailAuthMode(mode) {
-    const nextMode = mode === 'signup' ? 'signup' : 'signin';
+    const nextMode = mode === 'signup' ? 'signup' : mode === 'reset' ? 'reset' : 'signin';
     const form = document.getElementById('emailAuthForm');
     const password = document.getElementById('sessionPasswordInput');
     const submit = document.getElementById('emailAuthSubmit');
@@ -69,11 +69,13 @@ const Navigation = (() => {
       const label = submit.querySelector('span');
       if (label) label.textContent = nextMode === 'signup' ? 'Create account' : 'Sign in with Email';
     }
+    if (signinMode) signinMode.hidden = nextMode === 'reset';
+    if (resetMode) resetMode.hidden = nextMode !== 'reset';
     if (forgot) forgot.hidden = nextMode !== 'signin';
-    if (resetMode) resetMode.hidden = true;
-    if (signinMode) signinMode.hidden = false;
     Utils.$$('.session-auth-tab').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.authMode === nextMode);
+      const active = btn.dataset.authMode === nextMode || (nextMode === 'reset' && btn.dataset.authMode === 'signin');
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
     });
     return nextMode;
   }
@@ -1026,8 +1028,8 @@ function renderSessionChoicePage() {
 
           ${!loading && !hasUser && firebase.initialized && firebase.available ? `
             <div class="session-auth-tabs" role="tablist" aria-label="Email account options">
-              <button class="session-auth-tab active" type="button" data-auth-mode="signin">Sign in with Email</button>
-              <button class="session-auth-tab" type="button" data-auth-mode="signup">Create account</button>
+              <button class="session-auth-tab active" type="button" data-auth-mode="signin" aria-selected="true">Sign in with Email</button>
+              <button class="session-auth-tab" type="button" data-auth-mode="signup" aria-selected="false">Create account</button>
             </div>
             <form class="session-email-form" id="emailAuthForm" novalidate>
               <div class="session-reset-mode" id="sessionResetMode" hidden>
@@ -1166,24 +1168,14 @@ function renderSessionChoicePage() {
   };
   const getCurrentEmail = () => String(document.getElementById('sessionEmailInput')?.value || document.getElementById('sessionResetEmailInput')?.value || '').trim();
   const showResetMode = () => {
-    const signinMode = document.getElementById('sessionSigninMode');
-    const resetMode = document.getElementById('sessionResetMode');
     const resetEmail = document.getElementById('sessionResetEmailInput');
-    const forgot = document.getElementById('forgotPasswordLink');
     const currentEmail = getCurrentEmail();
     clearAuthError();
     if (resetEmail && currentEmail) resetEmail.value = currentEmail;
-    signinMode?.setAttribute('hidden', '');
-    resetMode?.removeAttribute('hidden');
-    if (forgot) forgot.hidden = true;
+    Navigation.setEmailAuthMode?.('reset');
   };
   const showSigninMode = () => {
-    const signinMode = document.getElementById('sessionSigninMode');
-    const resetMode = document.getElementById('sessionResetMode');
-    const forgot = document.getElementById('forgotPasswordLink');
-    signinMode?.removeAttribute('hidden');
-    resetMode?.setAttribute('hidden', '');
-    if (forgot) forgot.hidden = false;
+    Navigation.setEmailAuthMode?.('signin');
     clearAuthError();
   };
 
@@ -1230,16 +1222,7 @@ function renderSessionChoicePage() {
   Utils.$$('.session-auth-tab').forEach(btn => {
     btn.addEventListener('click', () => {
       clearAuthError();
-      setEmailAuthMode(btn.dataset.authMode);
-      if (btn.dataset.authMode === 'signin') showSigninMode();
-      else {
-        const signinMode = document.getElementById('sessionSigninMode');
-        const resetMode = document.getElementById('sessionResetMode');
-        signinMode?.removeAttribute('hidden');
-        resetMode?.setAttribute('hidden', '');
-        const forgot = document.getElementById('forgotPasswordLink');
-        if (forgot) forgot.hidden = true;
-      }
+      Navigation.setEmailAuthMode?.(btn.dataset.authMode);
     });
   });
 
