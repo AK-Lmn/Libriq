@@ -3291,10 +3291,10 @@ function _buildAccountSection(firebase) {
     : 'Your library is backed up to your account on this device.';
 
   return `
-    <div class="activity-item" style="cursor:default; padding: var(--space-3) 0; align-items: center;">
-      <div class="activity-text" style="display:flex; flex-direction:row; align-items:center; gap: var(--space-3);">
+    <div class="settings-account-card">
+      <div class="settings-account-identity">
         ${avatar}
-        <div>
+        <div class="settings-account-copy">
           <div class="activity-title">${Utils.sanitize(getDisplayNameForAccount(user) || 'Signed in')}</div>
           <div class="activity-subtitle">${Utils.sanitize(user.email || '')}</div>
           ${isGoogleOnly ? `
@@ -3308,7 +3308,7 @@ function _buildAccountSection(firebase) {
       </div>
       ${canEmailActions ? `
       <div class="settings-account-actions">
-        <div class="settings-row settings-row-action">
+        <div class="settings-account-row">
           <div class="activity-text">
             <div class="activity-title">Email verification</div>
             <div class="activity-subtitle">Send a verification email to your address.</div>
@@ -3317,7 +3317,7 @@ function _buildAccountSection(firebase) {
             Send verification email
           </button>
         </div>
-        <div class="settings-row settings-row-action">
+        <div class="settings-account-row">
           <div class="activity-text">
             <div class="activity-title">Check verification</div>
             <div class="activity-subtitle">Reload your account after you confirm the message.</div>
@@ -3326,7 +3326,7 @@ function _buildAccountSection(firebase) {
             I’ve verified my email
           </button>
         </div>
-        <div class="settings-row settings-row-action">
+        <div class="settings-account-row">
           <div class="activity-text">
             <div class="activity-title">Password reset</div>
             <div class="activity-subtitle">Send a reset link to the email on this account.</div>
@@ -3335,22 +3335,28 @@ function _buildAccountSection(firebase) {
             Reset password
           </button>
         </div>
-        <div class="settings-row settings-row-action">
+        <div class="settings-account-row settings-account-row-change-email">
           <div class="activity-text">
             <div class="activity-title">Change email address</div>
             <div class="activity-subtitle">We’ll send a confirmation link to your new address.</div>
           </div>
-          <div style="display:flex; gap: var(--space-2); flex-wrap: wrap; justify-content: flex-end; align-items:center;">
-            <input class="form-input" id="changeEmailInput" type="email" value="${Utils.sanitize(emailInfo.email)}" placeholder="New email address" style="min-width: 240px;" />
+          <div class="settings-account-email-controls">
+            <input class="form-input" id="changeEmailInput" type="email" value="${Utils.sanitize(emailInfo.email)}" placeholder="New email address" />
             <button class="btn btn-secondary btn-sm" type="button" id="changeEmailBtn">
               Change email address
             </button>
           </div>
         </div>
       </div>` : (isGoogleOnly ? `<div class="settings-callout">Your email is managed by Google.</div>` : '')}
-      <button class="btn btn-secondary btn-sm" id="accountActionBtn" type="button" data-account-action="signout">
-        Sign out
-      </button>
+      <div class="settings-account-row settings-account-signout-row">
+        <div class="activity-text">
+          <div class="activity-title">Sign out</div>
+          <div class="activity-subtitle">Return to the session screen on this device.</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="accountActionBtn" type="button" data-account-action="signout">
+          Sign out
+        </button>
+      </div>
     </div>`;
 }
 
