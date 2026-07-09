@@ -54,7 +54,7 @@ const Library = (() => {
   function buildAddForm(book) {
     const genres = (book.genres || []).slice(0, 3);
     const sourceBadges = _getSourceLabels(book);
-    const description = book.description ? String(book.description).replace(/<[^>]*>/g, '').trim() : '';
+    const description = (book.description || book.shortDescription) ? String(book.description || book.shortDescription).replace(/<[^>]*>/g, '').trim() : '';
 
     return `
       <div class="book-preview">
@@ -1105,7 +1105,7 @@ const Library = (() => {
 
   function _buildMetadataUpdates(current, candidate) {
     const updates = {};
-    const fields = ['description', 'pageCount', 'publisher', 'publishYear', 'coverUrl', 'genres', 'language', 'isbn', 'googleBooksId', 'openLibraryId', 'gutendexId', 'gutenbergId', 'internetArchiveId', 'internetArchiveIds', 'archiveUrl', 'readableSourceLinks'];
+    const fields = ['pageCount', 'publisher', 'publishYear', 'coverUrl', 'genres', 'language', 'isbn', 'googleBooksId', 'openLibraryId', 'gutendexId', 'gutenbergId', 'internetArchiveId', 'internetArchiveIds', 'archiveUrl', 'readableSourceLinks'];
 
     fields.forEach((field) => {
       const currentValue = current[field];
@@ -1127,6 +1127,30 @@ const Library = (() => {
         updates[field] = candidateValue;
       }
     });
+
+    const helper = typeof NormalizeBook !== 'undefined' ? NormalizeBook : null;
+    const currentDescriptionUseful = helper?.isUsefulDescription?.(current.description);
+    const bestDescription = currentDescriptionUseful
+      ? helper?.normalizeDescriptionText?.(current.description)
+      : helper?.chooseBestDescription?.([
+          { text: candidate.description, source: candidate.source || 'candidate', language: candidate.language, full: true },
+          { text: candidate.shortDescription, source: candidate.source || 'candidate-snippet', language: candidate.language, snippet: true },
+          { text: current.description, source: current.source || 'saved', language: current.language, full: true },
+        ]);
+    if (!currentDescriptionUseful && bestDescription && bestDescription !== helper?.normalizeDescriptionText?.(current.description)) {
+      updates.description = bestDescription;
+    } else if (!helper && !current.description && candidate.description) {
+      updates.description = candidate.description;
+    }
+
+    const bestShortDescription = helper?.chooseBestDescription?.([
+      { text: current.shortDescription, source: current.source || 'saved-snippet', language: current.language, snippet: true },
+      { text: candidate.shortDescription, source: candidate.source || 'candidate-snippet', language: candidate.language, snippet: true },
+      { text: bestDescription || candidate.description, source: candidate.source || 'candidate', language: candidate.language, full: true },
+    ], { preferShort: true });
+    if (bestShortDescription && bestShortDescription !== helper?.normalizeDescriptionText?.(current.shortDescription)) {
+      updates.shortDescription = bestShortDescription;
+    }
 
     return updates;
   }
