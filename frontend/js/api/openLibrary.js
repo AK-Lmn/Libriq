@@ -368,6 +368,18 @@ const OpenLibraryAPI = (() => {
     if (!next.firstPublishYear) next.firstPublishYear = workRecord.first_publish_year || next.publishYear || null;
     if (!next.openLibraryId && workRecord.key) next.openLibraryId = workRecord.key;
     if (!next.readableSourceLinks || next.readableSourceLinks.length === 0) next.readableSourceLinks = sourceLinks;
+    const description = NormalizeBook?.chooseBestDescription?.([
+      { text: next.description, source: next.source || 'existing', language: next.language, full: true },
+      { text: workRecord.description, source: 'openlibrary-work', language: next.language, full: true },
+      { text: editionDocs.find(edition => edition?.description)?.description, source: 'openlibrary-edition', language: next.language, full: true },
+    ]);
+    if (description) {
+      next.description = description;
+      next.shortDescription = NormalizeBook?.chooseBestDescription?.([
+        { text: next.shortDescription, source: next.source || 'existing', language: next.language, snippet: true },
+        { text: description, source: 'openlibrary-work', language: next.language, full: true },
+      ], { preferShort: true }) || description;
+    }
 
     return next;
   }

@@ -24,6 +24,15 @@ const MergeBooks = (() => {
     },
     buildSourceBadgeData: () => ({ sourceIds: {}, sourceBadges: [], sources: [] }),
   };
+  const Description = window.NormalizeBook || globalThis.NormalizeBook || {
+    chooseBestDescription: (candidates) => {
+      const list = (Array.isArray(candidates) ? candidates : [candidates])
+        .map(item => String((item && typeof item === 'object' ? item.text : item) || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim())
+        .filter(Boolean);
+      return list.sort((a, b) => b.length - a.length)[0] || null;
+    },
+    normalizeDescriptionText: value => String(value || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || null,
+  };
 
   /**
    * Merge two result arrays into one deduplicated list.
@@ -109,7 +118,8 @@ const MergeBooks = (() => {
         : gbBook.genres,
 
       // ── GB fills missing fields ────────────
-      description:   _pickBestDescription(olBook.description, gbBook.description),
+      description:   _pickBestDescription(olBook, gbBook),
+      shortDescription: _pickBestShortDescription(olBook, gbBook),
       publisher:     olBook.publisher    || gbBook.publisher,
       language:      olBook.language     || gbBook.language,
       rating:        olBook.rating       ?? gbBook.rating,
@@ -128,21 +138,22 @@ const MergeBooks = (() => {
     };
   }
 
-  function _pickBestDescription(primary, secondary) {
-    const a = _cleanDescription(primary);
-    const b = _cleanDescription(secondary);
-
-    if (a && b) return b.length > a.length ? b : a;
-    return a || b || null;
+  function _pickBestDescription(olBook, gbBook) {
+    return Description.chooseBestDescription([
+      { text: gbBook.description, source: 'google-description', language: gbBook.language, full: true },
+      { text: gbBook.shortDescription, source: 'google-snippet', language: gbBook.language, snippet: true },
+      { text: olBook.description, source: 'openlibrary', language: olBook.language, full: true },
+      { text: olBook.shortDescription, source: 'openlibrary-snippet', language: olBook.language, snippet: true },
+    ]);
   }
 
-  function _cleanDescription(value) {
-    if (!value || typeof value !== 'string') return null;
-    const cleaned = value
-      .replace(/<[^>]*>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    return cleaned || null;
+  function _pickBestShortDescription(olBook, gbBook) {
+    return Description.chooseBestDescription([
+      { text: gbBook.shortDescription, source: 'google-snippet', language: gbBook.language, snippet: true },
+      { text: gbBook.description, source: 'google-description', language: gbBook.language, full: true },
+      { text: olBook.shortDescription, source: 'openlibrary-snippet', language: olBook.language, snippet: true },
+      { text: olBook.description, source: 'openlibrary', language: olBook.language, full: true },
+    ], { preferShort: true });
   }
 
   return { merge, mergeOne };

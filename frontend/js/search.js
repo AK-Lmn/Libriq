@@ -221,7 +221,7 @@ const Search = (() => {
             ${Utils.statusLabel(book.status)}
           </span>
         </div>
-        <div class="search-result-description">${Utils.sanitize(book.description || 'No description available.')}</div>
+        <div class="search-result-description">${Utils.sanitize(_previewDescription(book))}</div>
       </div>
       <div class="search-result-add">
         <button class="btn btn-ghost btn-sm" onclick="Navigation.goTo('library')">
@@ -267,7 +267,7 @@ const Search = (() => {
 
     const desc = document.createElement('div');
     desc.className = 'search-result-description';
-    desc.textContent = book.description || 'No description available.';
+    desc.textContent = _previewDescription(book);
     el.querySelector('.search-result-info')?.appendChild(desc);
 
     const addBtn = el.querySelector('[data-add-book]');
@@ -317,6 +317,14 @@ const Search = (() => {
   function openAddModal(bookData) {
     close();
     Library.showAddModal(bookData);
+  }
+
+  function _previewDescription(book) {
+    const helper = typeof NormalizeBook !== 'undefined' ? NormalizeBook : null;
+    return helper?.chooseBestDescription?.([
+      { text: book?.shortDescription, source: book?.source || 'search-snippet', language: book?.language, snippet: true },
+      { text: book?.description, source: book?.source || 'search-description', language: book?.language, full: true },
+    ], { preferShort: true }) || 'No description available yet.';
   }
 
   function readFiltersFromUI() {

@@ -93,6 +93,11 @@ const GutendexAPI = (() => {
         })
       : { sourceIds: {}, sourceBadges: ['Project Gutenberg'], sources: ['Project Gutenberg'] };
 
+    const description = NormalizeBook?.chooseBestDescription?.([
+      { text: item.summaries?.[0], source: 'gutendex', language: Array.isArray(item.languages) ? item.languages[0] : 'en', full: true },
+      { text: item.subjects?.[0], source: 'gutendex-subject', language: Array.isArray(item.languages) ? item.languages[0] : 'en', snippet: true },
+    ]) || null;
+
     return {
       title: item.title,
       author: authorNames[0] || 'Unknown Author',
@@ -104,7 +109,8 @@ const GutendexAPI = (() => {
       publishYear: _extractYear(item.authors),
       firstPublishYear: _extractYear(item.authors),
       publisher: 'Project Gutenberg',
-      description: item.summaries?.[0] || item.subjects?.[0] || null,
+      description,
+      shortDescription: description,
       genres: subjects.slice(0, 5),
       subjects: subjects,
       subjectPlaces: [],

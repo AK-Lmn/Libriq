@@ -27,6 +27,7 @@ const NormalizeBook = (() => {
   };
 
   const OL_COVER = 'https://covers.openlibrary.org/b/id';
+  const DESCRIPTION_FALLBACK = 'No description available yet.';
 
   // ── Open Library ──────────────────────────
   // Input: one doc from /search.json response
@@ -53,6 +54,7 @@ const NormalizeBook = (() => {
       firstPublishYear: doc.first_publish_year || null,
       publisher:     _firstOf(doc.publisher) || null,
       description:   null,           // OL search doesn't return descriptions
+      shortDescription: null,
       genres:        _cleanSubjects(doc.subject),
       language:      _olLanguage(doc.language),
       openLibraryId: doc.key || null,
@@ -111,6 +113,15 @@ const NormalizeBook = (() => {
           || null)
       : null;
 
+    const description = chooseBestDescription([
+      { text: v.description, source: 'google-description', language: v.language, full: true },
+      { text: item.searchInfo?.textSnippet, source: 'google-snippet', language: v.language, snippet: true },
+    ]);
+    const shortDescription = chooseBestDescription([
+      { text: item.searchInfo?.textSnippet, source: 'google-snippet', language: v.language, snippet: true },
+      { text: description, source: 'google-description', language: v.language, full: true },
+    ], { preferShort: true });
+
     return {
       title:         v.title,
       author:        _firstOf(v.authors) || 'Unknown Author',
@@ -122,7 +133,8 @@ const NormalizeBook = (() => {
       pageCount:     v.pageCount || 0,
       publishYear:   _gbYear(v.publishedDate),
       publisher:     v.publisher || null,
-      description:   v.description || null,
+      description,
+      shortDescription,
       genres:        Array.isArray(v.categories) ? v.categories.slice(0, 5) : [],
       language:      v.language || null,
       openLibraryId: null,
@@ -150,6 +162,97 @@ const NormalizeBook = (() => {
   }
 
   // ── Helpers ───────────────────────────────
+
+  function normalizeDescriptionText(value) {
+    if (value && typeof value === 'object') {
+      value = value.value || value.text || '';
+    }
+    const raw = String(value || '').trim();
+    if (!raw) return null;
+    const cleaned = raw
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&rsquo;/gi, "'")
+      .replace(/&ldquo;|&rdquo;/gi, '"')
+      .replace(/&mdash;|&ndash;/gi, '-')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return cleaned || null;
+  }
+
+  function isUsefulDescription(value) {
+    const text = normalizeDescriptionText(value);
+    if (!text) return false;
+    if (text.length < 30) return false;
+    const lower = text.toLowerCase();
+    if (lower === DESCRIPTION_FALLBACK.toLowerCase()) return false;
+    if (/^(no description|description unavailable|unknown|n\/a)\b/.test(lower)) return false;
+    if (/^(fiction|classic|self-help|business|psychology|non-fiction)\.?$/i.test(text)) return false;
+    if (_englishLikelihood(text) < 0.18) return false;
+    return true;
+  }
+
+  function chooseBestDescription(candidates, options = {}) {
+    const list = (Array.isArray(candidates) ? candidates : [candidates])
+      .map(candidate => {
+        const item = typeof candidate === 'object' && candidate !== null ? candidate : { text: candidate };
+        const text = normalizeDescriptionText(item.text ?? item.description ?? item.value);
+        if (!isUsefulDescription(text)) return null;
+        return {
+          ...item,
+          text,
+          score: _scoreDescription(text, item, options),
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.score - a.score || b.text.length - a.text.length);
+    return list[0]?.text || null;
+  }
+
+  function _scoreDescription(text, item = {}, options = {}) {
+    const source = String(item.source || '').toLowerCase();
+    const language = String(item.language || '').toLowerCase();
+    let score = 0;
+    if (source.includes('google-description')) score += 80;
+    else if (source.includes('google-snippet')) score += 60;
+    else if (source.includes('gutendex') || source.includes('gutenberg')) score += 54;
+    else if (source.includes('openlibrary')) score += 50;
+    else score += 35;
+
+    if (language === 'en' || language === 'eng' || language === 'english') score += 24;
+    else if (language && !['und', 'unknown'].includes(language)) score -= 18;
+
+    const langScore = _englishLikelihood(text);
+    score += langScore * 28;
+    if (langScore < 0.24) score -= 35;
+
+    const length = text.length;
+    if (length >= 120) score += 14;
+    else if (length >= 70) score += 8;
+    else score -= 6;
+    if (length > 1800) score -= 8;
+    if (options.preferShort && length <= 360) score += 12;
+    if (item.snippet) score -= options.preferShort ? 0 : 10;
+    if (item.full) score += options.preferShort ? 0 : 8;
+    return score;
+  }
+
+  function _englishLikelihood(text) {
+    const lower = ` ${String(text || '').toLowerCase()} `;
+    const letters = lower.replace(/[^a-z\u00c0-\u024f\u0400-\u04ff\u4e00-\u9fff]/gi, '');
+    const asciiLetters = lower.replace(/[^a-z]/gi, '');
+    const asciiRatio = letters.length ? asciiLetters.length / letters.length : 1;
+    const common = [' the ', ' and ', ' of ', ' to ', ' in ', ' is ', ' for ', ' with ', ' that ', ' this ', ' a ', ' an ', ' as ', ' by ', ' from ', ' on ', ' are ', ' into ', ' your ', ' their '];
+    const hits = common.reduce((count, token) => count + (lower.includes(token) ? 1 : 0), 0);
+    const foreign = [' der ', ' die ', ' und ', ' des ', ' pour ', ' avec ', ' une ', ' les ', ' que ', ' para ', ' uma ', ' los ', ' las ', ' não ', ' sobre ', ' della ', ' una ', ' gli '];
+    const foreignHits = foreign.reduce((count, token) => count + (lower.includes(token) ? 1 : 0), 0);
+    return Math.max(0, Math.min(1, (asciiRatio * 0.45) + (Math.min(hits, 8) / 8 * 0.55) - (Math.min(foreignHits, 5) / 5 * 0.45)));
+  }
 
   function _firstOf(arr) {
     return Array.isArray(arr) && arr.length > 0 ? arr[0] : null;
@@ -205,6 +308,12 @@ const NormalizeBook = (() => {
     return null;
   }
 
-  return { fromOpenLibrary, fromGoogleBooks };
+  return {
+    fromOpenLibrary,
+    fromGoogleBooks,
+    normalizeDescriptionText,
+    isUsefulDescription,
+    chooseBestDescription,
+  };
 
 })();

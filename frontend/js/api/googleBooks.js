@@ -30,7 +30,7 @@ const GoogleBooksAPI = (() => {
       q:          query.trim(),
       maxResults: '12',
       printType:  'books',
-      fields:     'items(id,volumeInfo(title,authors,description,publisher,publishedDate,pageCount,categories,language,imageLinks,averageRating,ratingsCount,previewLink,industryIdentifiers))',
+      fields:     'items(id,searchInfo(textSnippet),volumeInfo(title,authors,description,publisher,publishedDate,pageCount,categories,language,imageLinks,averageRating,ratingsCount,previewLink,industryIdentifiers))',
     });
     const apiKey = _getApiKey();
     if (apiKey) {

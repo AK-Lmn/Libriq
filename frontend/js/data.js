@@ -42,6 +42,7 @@ function createBook(data) {
     publishYear:  data.publishYear  || null,
     publisher:    data.publisher    || null,
     description:  data.description  || null,
+    shortDescription: data.shortDescription || data.description || null,
     genres:       data.genres       || [],
     subjects:     data.subjects     || [],
     subjectPeople: data.subjectPeople || [],

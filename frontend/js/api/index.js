@@ -73,6 +73,8 @@ const BookAPI = (() => {
       results = [];
     }
 
+    results = await _enrichSearchDescriptions(results);
+
     if (results.length === 0 && hadNetworkFailure) {
       _lastSearchMeta.offline = true;
       _lastSearchMeta.networkFailure = true;
@@ -98,7 +100,16 @@ const BookAPI = (() => {
       GoogleBooksAPI.lookupISBN(isbn),
     ]);
 
-    const result = MergeBooks.mergeOne(olBook, gbBook);
+    let result = MergeBooks.mergeOne(olBook, gbBook);
+    const descriptionHelper = typeof NormalizeBook !== 'undefined' ? NormalizeBook : null;
+    if (
+      result &&
+      !descriptionHelper?.isUsefulDescription?.(result.description) &&
+      typeof OpenLibraryAPI.enrichBook === 'function' &&
+      (result.openLibraryWorkKey || String(result.openLibraryId || '').includes('/works/'))
+    ) {
+      result = await OpenLibraryAPI.enrichBook(result);
+    }
 
     if (result) {
       BookCache.set(cacheKey, [result]);
@@ -113,6 +124,27 @@ const BookAPI = (() => {
 
   async function searchGoogleBooks(query) {
     return GoogleBooksAPI.search(query);
+  }
+
+  async function _enrichSearchDescriptions(results) {
+    if (!Array.isArray(results) || results.length === 0) return [];
+    if (typeof OpenLibraryAPI.enrichBook !== 'function') return results;
+    const descriptionHelper = typeof NormalizeBook !== 'undefined' ? NormalizeBook : null;
+    const needsDescription = results
+      .map((book, index) => ({ book, index }))
+      .filter(({ book }) => (
+        !descriptionHelper?.isUsefulDescription?.(book.description) &&
+        (book.openLibraryWorkKey || String(book.openLibraryId || '').includes('/works/'))
+      ))
+      .slice(0, 6);
+    if (needsDescription.length === 0) return results;
+
+    const enriched = await Promise.all(needsDescription.map(({ book }) => OpenLibraryAPI.enrichBook(book)));
+    const next = results.slice();
+    enriched.forEach((book, idx) => {
+      if (book) next[needsDescription[idx].index] = book;
+    });
+    return next;
   }
 
   return {
