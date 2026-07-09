@@ -5676,6 +5676,11 @@ html[data-theme="dark"] #activityPage .activity-day-label {
   gap: var(--space-3);
 }
 
+.session-signin-mode[hidden],
+.session-reset-mode[hidden] {
+  display: none;
+}
+
 .session-reset-mode .btn {
   width: 100%;
 }
