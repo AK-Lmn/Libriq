@@ -49,6 +49,7 @@ let testUser = null;
 let testFirestore = null;
 let initRetryTimer = null;
 let initRetryStartedAt = 0;
+let manualSignOutPending = false;
 const TEST_MODE = Boolean(
   (location.hostname === 'localhost' || location.hostname === '127.0.0.1') &&
   (new URLSearchParams(location.search).get('libriq_e2e_test_mode') === '1' || localStorage.getItem('libriq_e2e_test_mode') === '1')
@@ -168,6 +169,8 @@ function init() {
     state.ready = true;
     state.error = null;
     state.user = testUser;
+    state.restoringSession = false;
+    state.signedOutConfirmed = !testUser;
     return state;
   }
 
@@ -233,6 +236,7 @@ function init() {
       } : null;
 
       if (user?.uid) {
+        manualSignOutPending = false;
         window.LibriqStorage?.setActiveAccountUid?.(user.uid);
         if (authNullTimer) {
           window.clearTimeout(authNullTimer);
@@ -252,6 +256,19 @@ function init() {
       }
 
       const hasVisibleUser = Boolean(state.user?.uid);
+      if (manualSignOutPending) {
+        manualSignOutPending = false;
+        state.restoringSession = false;
+        state.signedOutConfirmed = true;
+        if (authNullTimer) {
+          window.clearTimeout(authNullTimer);
+          authNullTimer = null;
+        }
+        window.LibriqStorage?.clearActiveAccountScope?.();
+        setState({ ready: true, available: true, user: null, restoringSession: false, signedOutConfirmed: true });
+        return;
+      }
+
       if (hasVisibleUser) {
         state.restoringSession = true;
         state.signedOutConfirmed = false;
@@ -461,13 +478,13 @@ async function signOutUser() {
     localStorage.removeItem('libriq_e2e_test_email');
     localStorage.removeItem('libriq_e2e_test_display_name');
     window.LibriqStorage?.clearActiveAccountScope?.();
-  setState({ user: null, ready: true, available: true });
-  state.signedOutConfirmed = true;
+    setState({ user: null, ready: true, available: true, restoringSession: false, signedOutConfirmed: true });
     return;
   }
   if (!state.available || !auth) {
     throw new Error('Firebase is unavailable.');
   }
+  manualSignOutPending = true;
   state.restoringSession = false;
   state.signedOutConfirmed = true;
   if (authNullTimer) {
@@ -1294,6 +1311,7 @@ async function deleteCurrentUserLibraryData() {
   await deleteFirestoreCollectionDocs(['users', user.uid, 'activity']);
   await deleteFirestoreDocPath(['users', user.uid, 'goals', 'current']);
   await deleteFirestoreDocPath(['users', user.uid, 'streak', 'current']);
+  await deleteFirestoreDocPath(['users', user.uid, 'backups', 'current']);
   return true;
 }
 
