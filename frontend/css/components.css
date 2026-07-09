@@ -2431,6 +2431,71 @@ html:not([data-theme="dark"]) #recommendationsPage .recommendations-intro-meta .
   margin-top: var(--space-3);
 }
 
+.settings-account-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.settings-account-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+  padding-bottom: var(--space-3);
+}
+
+.settings-account-copy {
+  min-width: 0;
+}
+
+.settings-account-actions {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-account-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--border-divider);
+}
+
+.settings-account-row .activity-text {
+  min-width: 0;
+}
+
+.settings-account-row .btn {
+  justify-self: end;
+  min-height: 44px;
+  max-width: 100%;
+  white-space: normal;
+}
+
+.settings-account-email-controls {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.settings-account-email-controls .form-input {
+  min-width: 0;
+  width: 100%;
+}
+
+.settings-account-row-change-email {
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+.settings-account-signout-row {
+  margin-top: var(--space-1);
+}
+
 .settings-list {
   display: flex;
   flex-direction: column;
@@ -2582,6 +2647,7 @@ html:not([data-theme="dark"]) #recommendationsPage .recommendations-intro-meta .
 }
 
 #settingsPage .settings-row-action .btn,
+#settingsPage .settings-account-row .btn,
 #settingsPage .settings-session-actions .btn,
 #settingsPage .settings-danger-actions .btn,
 #settingsPage .settings-cloud-actions .btn,
@@ -2785,6 +2851,7 @@ html[data-theme="dark"] #settingsPage .settings-callout {
   }
 
   #settingsPage .settings-session-actions,
+  #settingsPage .settings-account-email-controls,
   #settingsPage .settings-cloud-actions,
   #settingsPage .settings-diagnostics-actions,
   #settingsPage .settings-danger-actions {
@@ -2792,10 +2859,22 @@ html[data-theme="dark"] #settingsPage .settings-callout {
   }
 
   #settingsPage .settings-session-actions .btn,
+  #settingsPage .settings-account-row .btn,
   #settingsPage .settings-cloud-actions .btn,
   #settingsPage .settings-diagnostics-actions .btn,
   #settingsPage .settings-danger-actions .btn {
     min-height: 42px;
+  }
+
+  #settingsPage .settings-account-row,
+  #settingsPage .settings-account-email-controls {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+
+  #settingsPage .settings-account-row .btn,
+  #settingsPage .settings-account-email-controls .btn {
+    justify-self: stretch;
   }
 
   #settingsPage .settings-cloud-actions,
@@ -3186,6 +3265,23 @@ html[data-theme="dark"] #profilePage .stat-card {
   .settings-row-danger {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .settings-account-identity {
+    flex-direction: column;
+  }
+
+  .settings-account-row,
+  .settings-account-email-controls {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+
+  .settings-account-row .btn,
+  .settings-account-email-controls .btn {
+    width: 100%;
+    justify-self: stretch;
+    justify-content: center;
   }
 
   .settings-session-actions,
