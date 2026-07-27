@@ -264,7 +264,7 @@ assert.doesNotMatch(source, /let activeUid\s*=\s*localStorage/);
 assert.match(appSource, /import\s*\{\s*Storage\s*\}\s*from\s*['"]\.\/storage\.js['"]/);
 assert.match(appSource, /Storage\.bootstrap\(\)/);
 assert.doesNotMatch(appModulesSource, /loadClassicScript\(['"]\.\/storage\.js['"]\)/);
-assert.match(appModulesSource, /loadClassicScript\(['"]\.\/utils\.js['"]\)/);
+assert.doesNotMatch(appModulesSource, /loadClassicScript\(['"]\.\/utils\.js['"]\)/);
 assert.match(appModulesSource, /window\.LibriqStorage\s*=\s*Storage/);
 assert.doesNotMatch(indexSource, /<script[^>]+src=["']js\/storage\.js["']/);
 

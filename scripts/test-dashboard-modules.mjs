@@ -38,6 +38,8 @@ globalThis.Utils = {
   genreColor: () => '#000',
   timeAgo: () => 'now',
 };
+const { Utils } = await import('../frontend/js/utils.js');
+Object.assign(Utils, globalThis.Utils);
 globalThis.LibriqSyncBeta = { getState: () => ({ status: 'synced', enabled: true }) };
 globalThis.LibriqFirebase = { getState: () => ({ user: null }) };
 

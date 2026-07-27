@@ -49,6 +49,8 @@ globalThis.LIBRIQ = {
   MONTHS: [],
 };
 globalThis.Utils = { $$: () => [], hide() {}, show() {}, sanitize: value => String(value ?? '') };
+const { Utils } = await import('../frontend/js/utils.js');
+Object.assign(Utils, globalThis.Utils);
 
 let storageBoots = 0;
 globalThis.Storage = new Proxy({ bootstrap: () => { storageBoots += 1; } }, {

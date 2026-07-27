@@ -21,6 +21,8 @@ Object.defineProperty(globalThis, 'navigator', { value: { onLine: true }, config
 globalThis.localStorage = { getItem: () => null };
 globalThis.LIBRIQ = { VERSION: 'test' };
 globalThis.Utils = { formatDate: value => String(value), toast() {} };
+const { Utils } = await import('../frontend/js/utils.js');
+Object.assign(Utils, globalThis.Utils);
 globalThis.createProfile = () => ({ name: '' });
 globalThis.createBook = book => ({ ...book });
 const saved = {

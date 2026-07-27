@@ -6,21 +6,10 @@ import {
   SEED_BOOKS,
 } from './data.js';
 import { Storage } from './storage.js';
+import { Utils } from './utils.js';
 
-function loadClassicScript(src) {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = new URL(src, import.meta.url).href;
-    script.onload = resolve;
-    script.onerror = () => reject(new Error(`Failed to load classic application dependency: ${src}`));
-    document.head.appendChild(script);
-  });
-}
-
-// Temporary data bridge for the still-classic Utils boundary.
-window.LIBRIQ = LIBRIQ;
-
-if (typeof Utils === 'undefined') await loadClassicScript('./utils.js');
+// Compatibility for the generated cover-image fallback handler.
+window.Utils = Utils;
 
 const [
   { BookAPI },
@@ -69,6 +58,7 @@ export {
   createProfile,
   SEED_BOOKS,
   Storage,
+  Utils,
   BookAPI,
   Library,
   Search,

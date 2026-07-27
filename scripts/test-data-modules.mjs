@@ -142,9 +142,9 @@ for (const [file, names] of directImports) {
   for (const name of names) assert.match(source, new RegExp(`\\b${name}\\b`));
 }
 
-assert.match(appModulesSource, /window\.LIBRIQ\s*=\s*LIBRIQ/);
+assert.doesNotMatch(appModulesSource, /window\.LIBRIQ\s*=/);
 assert.doesNotMatch(appModulesSource, /loadClassicScript\(['"]\.\/storage\.js['"]\)/);
-assert.ok(appModulesSource.indexOf("from './data.js'") < appModulesSource.indexOf("loadClassicScript('./utils.js')"));
+assert.doesNotMatch(appModulesSource, /loadClassicScript\(['"]\.\/utils\.js['"]\)/);
 assert.doesNotMatch(indexSource, /<script(?:\s+type=["']text\/javascript["'])?\s+src=["']js\/data\.js["']/);
 assert.doesNotMatch(indexSource, /<script(?:\s+type=["']text\/javascript["'])?\s+src=["']js\/(?:storage|utils)\.js["']/);
 assert.equal((indexSource.match(/<script\s+type=["']module["']/g) || []).length, 1);

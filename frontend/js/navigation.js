@@ -6,6 +6,7 @@
 import { BookAPI } from './api/index.js';
 import { LIBRIQ, createBook } from './data.js';
 import { Storage } from './storage.js';
+import { Utils } from './utils.js';
 import { Library } from './library.js';
 import { Search } from './search.js';
 import { Dashboard } from './dashboard.js';

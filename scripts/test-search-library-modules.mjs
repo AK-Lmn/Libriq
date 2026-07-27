@@ -42,6 +42,8 @@ globalThis.Utils = {
   isApplePlatform: () => false,
   getSearchShortcutLabel: () => 'Ctrl K',
 };
+const { Utils } = await import('../frontend/js/utils.js');
+Object.assign(Utils, globalThis.Utils);
 
 const { Library } = await import('../frontend/js/library.js');
 const { Search } = await import('../frontend/js/search.js');

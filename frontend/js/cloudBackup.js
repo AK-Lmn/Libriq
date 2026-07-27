@@ -1,6 +1,7 @@
 import { LibriqFirebase } from './firebase-client.js';
 import { LIBRIQ, createBook, createProfile } from './data.js';
 import { Storage } from './storage.js';
+import { Utils } from './utils.js';
 
 const STATUS = {
   IDLE: 'idle',

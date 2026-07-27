@@ -141,6 +141,8 @@ globalThis.Utils = {
   debounce: fn => fn,
   $$: () => [],
 };
+const { Utils } = await import('../frontend/js/utils.js');
+Object.assign(Utils, globalThis.Utils);
 globalThis.Navigation = {
   updateBadges() {},
   renderCurrentPage() {},
