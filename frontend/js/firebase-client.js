@@ -13,6 +13,7 @@ import {
   sendPasswordResetEmail,
   verifyBeforeUpdateEmail,
 } from '../vendor/firebase-auth.js';
+import { Storage } from './storage.js';
 import {
   getFirestore,
   doc,
@@ -173,9 +174,9 @@ function init() {
         providerData: [{ providerId: 'password' }],
         emailVerified: false,
       };
-      window.LibriqStorage?.setActiveAccountUid?.(testUser.uid);
+      Storage.setActiveAccountUid?.(testUser.uid);
     } else {
-      window.LibriqStorage?.clearActiveAccountScope?.();
+      Storage.clearActiveAccountScope?.();
     }
     state.available = true;
     state.initialized = true;
@@ -255,7 +256,7 @@ function init() {
 
       if (user?.uid) {
         manualSignOutPending = false;
-        window.LibriqStorage?.setActiveAccountUid?.(user.uid);
+        Storage.setActiveAccountUid?.(user.uid);
         if (authNullTimer) {
           window.clearTimeout(authNullTimer);
           authNullTimer = null;
@@ -282,7 +283,7 @@ function init() {
           window.clearTimeout(authNullTimer);
           authNullTimer = null;
         }
-        window.LibriqStorage?.clearActiveAccountScope?.();
+        Storage.clearActiveAccountScope?.();
         setState({ ready: true, available: true, user: null, restoringSession: false, signedOutConfirmed: true });
         return;
       }
@@ -297,7 +298,7 @@ function init() {
           state.restoringSession = false;
           state.signedOutConfirmed = true;
           setState({ ready: true, available: true, user: null, restoringSession: false, signedOutConfirmed: true });
-          window.LibriqStorage?.clearActiveAccountScope?.();
+          Storage.clearActiveAccountScope?.();
         }, AUTH_SIGN_OUT_GRACE_MS);
         setState({
           ready: true,
@@ -310,7 +311,7 @@ function init() {
 
       state.restoringSession = false;
       state.signedOutConfirmed = true;
-      window.LibriqStorage?.clearActiveAccountScope?.();
+      Storage.clearActiveAccountScope?.();
       setState({ ready: true, user: null, restoringSession: false, signedOutConfirmed: true });
     });
   }
@@ -332,7 +333,7 @@ function init() {
         if (profileSyncHydrating) return;
         const current = getCurrentUser();
         if (!current?.uid) return;
-        queueProfileSync(event?.detail || window.LibriqStorage?.getProfile?.());
+        queueProfileSync(event?.detail || Storage.getProfile?.());
       });
     }
     if (!window.__libriqGoalsSyncListenerAttached) {
@@ -341,7 +342,7 @@ function init() {
         if (goalsSyncHydrating) return;
         const current = getCurrentUser();
         if (!current?.uid) return;
-        queueGoalsSync(event?.detail || window.LibriqStorage?.getGoals?.());
+        queueGoalsSync(event?.detail || Storage.getGoals?.());
       });
     }
     if (!window.__libriqStreakSyncListenerAttached) {
@@ -350,7 +351,7 @@ function init() {
         if (streakSyncHydrating) return;
         const current = getCurrentUser();
         if (!current?.uid) return;
-        queueStreakSync(event?.detail || window.LibriqStorage?.getStreak?.());
+        queueStreakSync(event?.detail || Storage.getStreak?.());
       });
     }
   } catch (err) {
@@ -367,15 +368,15 @@ function attachTestModeSyncListeners() {
 
   window.addEventListener?.('libriq:profile:updated', event => {
     if (profileSyncHydrating || !getCurrentUser()?.uid) return;
-    queueProfileSync(event?.detail || window.LibriqStorage?.getProfile?.());
+    queueProfileSync(event?.detail || Storage.getProfile?.());
   });
   window.addEventListener?.('libriq:goals:updated', event => {
     if (goalsSyncHydrating || !getCurrentUser()?.uid) return;
-    queueGoalsSync(event?.detail || window.LibriqStorage?.getGoals?.());
+    queueGoalsSync(event?.detail || Storage.getGoals?.());
   });
   window.addEventListener?.('libriq:streak:updated', event => {
     if (streakSyncHydrating || !getCurrentUser()?.uid) return;
-    queueStreakSync(event?.detail || window.LibriqStorage?.getStreak?.());
+    queueStreakSync(event?.detail || Storage.getStreak?.());
   });
   window.addEventListener?.('online', () => {
     const current = getCurrentUser();
@@ -397,7 +398,7 @@ async function signInWithGoogle() {
       providerData: [{ providerId: 'google.com' }],
       emailVerified: false,
     };
-    window.LibriqStorage?.setActiveAccountUid?.(testUser.uid);
+    Storage.setActiveAccountUid?.(testUser.uid);
       setState({ ready: true, user: testUser, available: true });
     return { user: testUser };
   }
@@ -429,7 +430,7 @@ async function signInWithEmail(email, password) {
       providerData: [{ providerId: 'password', email: normalizedEmail }],
       emailVerified: false,
     };
-    window.LibriqStorage?.setActiveAccountUid?.(testUser.uid);
+    Storage.setActiveAccountUid?.(testUser.uid);
     setState({ ready: true, user: testUser, available: true });
     return { user: testUser };
   }
@@ -533,7 +534,7 @@ async function signOutUser() {
     localStorage.removeItem('libriq_e2e_test_uid');
     localStorage.removeItem('libriq_e2e_test_email');
     localStorage.removeItem('libriq_e2e_test_display_name');
-    window.LibriqStorage?.clearActiveAccountScope?.();
+    Storage.clearActiveAccountScope?.();
     setState({ user: null, ready: true, available: true, restoringSession: false, signedOutConfirmed: true });
     return;
   }
@@ -872,7 +873,7 @@ async function syncActivityFromCloud(uid = null) {
   try {
     logActivityDebug('Activity sync start', { uid: `${String(activityUid).slice(0, 6)}…`, path: getActivityCollectionPath(activityUid) });
     const remote = await readActivityCollection(activityUid);
-    const local = Array.isArray(window.LibriqStorage?.getActivityLog?.()) ? window.LibriqStorage.getActivityLog() : [];
+    const local = Array.isArray(Storage.getActivityLog?.()) ? Storage.getActivityLog() : [];
     const byId = new Map();
     [...remote, ...local].forEach((event) => {
       const normalized = sanitizeActivityEvent(event);
@@ -880,7 +881,7 @@ async function syncActivityFromCloud(uid = null) {
       byId.set(normalized.id, normalized);
     });
     const merged = Array.from(byId.values()).sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
-    window.LibriqStorage?.replaceActivityLog?.(merged);
+    Storage.replaceActivityLog?.(merged);
     const pendingQueue = getPendingActivityQueue();
     if (pendingQueue.length && activityUid) {
       const remaining = [];
@@ -900,7 +901,7 @@ async function syncActivityFromCloud(uid = null) {
     return merged;
   } catch (err) {
     console.warn('[LibriQ] Activity cloud load failed:', err);
-    return window.LibriqStorage?.getActivityLog?.() || [];
+    return Storage.getActivityLog?.() || [];
   }
 }
 
@@ -949,7 +950,7 @@ async function syncProfileFromCloud(uid = null) {
   try {
     logActivityDebug('Profile sync start', { uid: `${String(profileUid).slice(0, 6)}…`, path: getProfileDocPath(profileUid) });
     const remote = await readProfileDoc(profileUid);
-    const local = sanitizeProfile(window.LibriqStorage?.getProfile?.());
+    const local = sanitizeProfile(Storage.getProfile?.());
     if (!remote && local) {
       await writeProfileDoc(profileUid, local);
       setPendingProfileQueue(null);
@@ -958,7 +959,7 @@ async function syncProfileFromCloud(uid = null) {
     }
     if (!remote) return local;
     const merged = {
-      ...window.LibriqStorage?.getProfile?.(),
+      ...Storage.getProfile?.(),
       displayName: remote.displayName || remote.name || local?.displayName || local?.name || 'Reader',
       name: remote.displayName || remote.name || local?.displayName || local?.name || 'Reader',
       bio: typeof remote.bio === 'string' ? remote.bio : local?.bio || null,
@@ -968,7 +969,7 @@ async function syncProfileFromCloud(uid = null) {
     };
     profileSyncHydrating = true;
     try {
-      window.LibriqStorage?.saveProfile?.(merged);
+      Storage.saveProfile?.(merged);
     } finally {
       profileSyncHydrating = false;
     }
@@ -985,7 +986,7 @@ async function syncProfileFromCloud(uid = null) {
     return merged;
   } catch (err) {
     console.warn('[LibriQ] Profile cloud sync failed:', err);
-    return window.LibriqStorage?.getProfile?.() || null;
+    return Storage.getProfile?.() || null;
   }
 }
 
@@ -1024,7 +1025,7 @@ async function syncGoalsFromCloud(uid = null) {
   try {
     logActivityDebug('Goals sync start', { uid: `${String(goalsUid).slice(0, 6)}…`, path: getGoalsDocPath(goalsUid) });
     const remote = await readGoalsDoc(goalsUid);
-    const local = sanitizeGoals(window.LibriqStorage?.getGoals?.());
+    const local = sanitizeGoals(Storage.getGoals?.());
     if (!remote && local) {
       await writeGoalsDoc(goalsUid, local);
       setPendingGoalsQueue(null);
@@ -1042,7 +1043,7 @@ async function syncGoalsFromCloud(uid = null) {
     };
     goalsSyncHydrating = true;
     try {
-      window.LibriqStorage?.saveGoals?.(merged);
+      Storage.saveGoals?.(merged);
     } finally {
       goalsSyncHydrating = false;
     }
@@ -1060,7 +1061,7 @@ async function syncGoalsFromCloud(uid = null) {
     return merged;
   } catch (err) {
     console.warn('[LibriQ] Goals cloud sync failed:', err);
-    return window.LibriqStorage?.getGoals?.() || null;
+    return Storage.getGoals?.() || null;
   }
 }
 
@@ -1120,7 +1121,7 @@ async function syncStreakFromCloud(uid = null) {
   try {
     logActivityDebug('Streak sync start', { uid: `${String(streakUid).slice(0, 6)}…`, path: getStreakDocPath(streakUid) });
     const remote = await readStreakDoc(streakUid);
-    const local = sanitizeStreak(window.LibriqStorage?.getStreak?.());
+    const local = sanitizeStreak(Storage.getStreak?.());
     if (!remote && local) {
       await writeStreakDoc(streakUid, local);
       setPendingStreakQueue(null);
@@ -1137,7 +1138,7 @@ async function syncStreakFromCloud(uid = null) {
     };
     streakSyncHydrating = true;
     try {
-      window.LibriqStorage?.saveStreak?.(merged);
+      Storage.saveStreak?.(merged);
     } finally {
       streakSyncHydrating = false;
     }
@@ -1155,7 +1156,7 @@ async function syncStreakFromCloud(uid = null) {
     return merged;
   } catch (err) {
     console.warn('[LibriQ] Streak cloud sync failed:', err);
-    return window.LibriqStorage?.getStreak?.() || null;
+    return Storage.getStreak?.() || null;
   }
 }
 
@@ -1457,7 +1458,7 @@ function installTestHooks() {
       localStorage.setItem('libriq_e2e_test_email', email || `${uid}@example.com`);
       localStorage.setItem('libriq_e2e_test_display_name', displayName || uid);
       testUser = { uid, email: email || `${uid}@example.com`, displayName: displayName || uid, photoURL: '', emailVerified: false, providerData: [{ providerId: 'password', email: email || `${uid}@example.com` }] };
-      window.LibriqStorage?.setActiveAccountUid?.(uid);
+      Storage.setActiveAccountUid?.(uid);
       setState({ user: testUser, ready: true, available: true });
       return testUser;
     },

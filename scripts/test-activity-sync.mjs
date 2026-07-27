@@ -151,12 +151,11 @@ localStorage.setItem('libriq_e2e_test_uid', 'sync-user');
 localStorage.setItem('libriq_e2e_test_email', 'sync@example.com');
 localStorage.setItem('libriq_e2e_test_display_name', 'Sync User');
 
-await import('../frontend/js/storage.js');
+const { Storage } = await import('../frontend/js/storage.js');
 const { LibriqFirebase } = await import('../frontend/js/firebase-client.js');
-globalThis.Storage = globalThis.LibriqStorage;
+globalThis.Storage = Storage;
 await import('../frontend/js/library.js');
 
-const Storage = globalThis.LibriqStorage;
 const Firebase = LibriqFirebase;
 const Library = globalThis.Library;
 

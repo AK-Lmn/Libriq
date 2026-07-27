@@ -78,6 +78,8 @@ globalThis.Storage = {
   getGoals: () => ({}),
   getStreak: () => ({}),
 };
+const { Storage } = await import('../frontend/js/storage.js');
+Object.assign(Storage, globalThis.Storage);
 
 LibriqFirebase.init();
 const initializedListenerCount = browserListenerCount;

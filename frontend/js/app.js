@@ -6,6 +6,8 @@
 import { Navigation } from './navigation.js';
 import { Library } from './library.js';
 import { Search } from './search.js';
+import { LIBRIQ } from './data.js';
+import { Storage } from './storage.js';
 import { LibriqSyncBeta } from './sync.js';
 import { LibriqFirebase } from './firebase-client.js';
 import { LibriqCloudBackup } from './cloudBackup.js';

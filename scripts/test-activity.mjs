@@ -38,9 +38,7 @@ globalThis.createProfile = (data = {}) => ({
   streakData: data.streakData || { current: 0, longest: 0, lastRead: null },
 });
 
-await import('../frontend/js/storage.js');
-
-const Storage = globalThis.LibriqStorage;
+const { Storage } = await import('../frontend/js/storage.js');
 assert.equal(typeof Storage.setActiveAccountUid, 'function');
 assert.equal(typeof Storage.addActivityEvent, 'function');
 

@@ -45,6 +45,8 @@ globalThis.Storage = {
   getSyncMeta: () => ({}),
   getSyncTombstones: () => ({}),
 };
+const { Storage } = await import('../frontend/js/storage.js');
+Object.assign(Storage, globalThis.Storage);
 globalThis.Utils = { formatDate: value => String(value) };
 globalThis.LIBRIQ = { VERSION: 'test' };
 globalThis.LibriqFirebase = {

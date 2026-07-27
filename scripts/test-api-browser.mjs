@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { startE2EServer, waitForServer, stopE2EServer, closePlaywright } from './e2e-test-utils.mjs';
 
 const testName = 'api-browser-smoke';
 const port = 4174;
 const baseUrl = `http://127.0.0.1:${port}`;
+const { version: appVersion } = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
 const server = startE2EServer({ port, testName });
 let browser;
 let context;
@@ -13,13 +15,13 @@ try {
   await waitForServer(baseUrl, { testName });
   browser = await chromium.launch({ headless: true });
   context = await browser.newContext();
-  await context.addInitScript(() => {
-    localStorage.setItem('libriq_seen_version', '4.4.0');
+  await context.addInitScript((version) => {
+    localStorage.setItem('libriq_seen_version', version);
     window.__libriqAppReadyCount = 0;
     window.addEventListener('libriq:app-ready', () => {
       window.__libriqAppReadyCount += 1;
     });
-  });
+  }, appVersion);
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -69,6 +71,11 @@ try {
   await page.waitForFunction(() => Boolean(window.Navigation && window.LibriqNavigation));
   assert.equal(await page.evaluate(() => window.__libriqAppReadyCount), 1);
   assert.equal(await page.evaluate(() => window.__LIBRIQ_APP_READY__), true);
+  assert.equal(await page.evaluate(() => window.LIBRIQ.VERSION), appVersion);
+  assert.equal(await page.evaluate(() => typeof window.LibriqStorage?.bootstrap), 'function');
+  assert.equal(await page.evaluate(() => window.createBook), undefined);
+  assert.equal(await page.evaluate(() => window.createProfile), undefined);
+  assert.equal(await page.evaluate(() => window.SEED_BOOKS), undefined);
   assert.equal(await page.evaluate(() => typeof window.LibriqSyncBeta?.getState === 'function'), true);
   assert.equal(await page.evaluate(() => window.BookAPI), undefined);
   assert.equal(await page.evaluate(() => window.Dashboard), undefined);
@@ -100,9 +107,9 @@ try {
   await page.locator('[data-add-book]').first().click();
   await page.waitForFunction(() => !document.querySelector('#addBookModal')?.hasAttribute('hidden'));
   await page.locator('#addBookForm').evaluate(form => form.requestSubmit());
-  await page.waitForFunction(() => Storage.getBooks().some(book => book.title === 'Smoke Test Book'));
+  await page.waitForFunction(() => window.LibriqStorage.getBooks().some(book => book.title === 'Smoke Test Book'));
   await page.evaluate(() => {
-    const book = Storage.getBooks().find(candidate => candidate.title === 'Smoke Test Book');
+    const book = window.LibriqStorage.getBooks().find(candidate => candidate.title === 'Smoke Test Book');
     Library.setStatus(book.id, LIBRIQ.STATUS.READING);
     Navigation.goTo('dashboard');
   });
@@ -111,9 +118,9 @@ try {
   await page.waitForFunction(() => !document.querySelector('#addBookModal')?.hasAttribute('hidden'));
   await page.evaluate(() => Library.closeAddModal());
   assert.equal(await page.evaluate(() => {
-    const book = Storage.getBooks().find(candidate => candidate.title === 'Smoke Test Book');
+    const book = window.LibriqStorage.getBooks().find(candidate => candidate.title === 'Smoke Test Book');
     Library.toggleFavorite(book.id);
-    return Storage.getBookById(book.id).isFavorite;
+    return window.LibriqStorage.getBookById(book.id).isFavorite;
   }), true);
   await page.evaluate(() => document.querySelector('.dashboard-recent-card')?.click());
   await page.waitForFunction(() => !document.querySelector('#bookDetailsModal')?.hasAttribute('hidden'));

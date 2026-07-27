@@ -60,6 +60,8 @@ globalThis.Storage = {
   getBooks: () => books,
   getActivityLog: () => activity,
 };
+const { Storage } = await import('../frontend/js/storage.js');
+Object.assign(Storage, globalThis.Storage);
 
 const { Dashboard } = await import('../frontend/js/dashboard.js');
 assert.equal(fetchCalls, 0);

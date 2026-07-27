@@ -3,8 +3,10 @@
    Data models, constants, seed data
    ============================================ */
 
-const LIBRIQ = {
-  VERSION: '4.4.0',
+import { APP_VERSION } from './version.js';
+
+export const LIBRIQ = {
+  VERSION: APP_VERSION,
 
   // Reading status constants
   STATUS: {
@@ -30,7 +32,7 @@ const LIBRIQ = {
  * Book model factory — every book in the library follows this shape.
  * Designing it with optional fields so it's easy to add later.
  */
-function createBook(data) {
+export function createBook(data) {
   const now = new Date().toISOString();
   return {
     id:           data.id           || crypto.randomUUID(),
@@ -106,7 +108,7 @@ function createBook(data) {
   };
 }
 
-function createBookPatch(data = {}) {
+export function createBookPatch(data = {}) {
   const now = new Date().toISOString();
   return {
     ...data,
@@ -119,7 +121,7 @@ function createBookPatch(data = {}) {
 /**
  * User profile model
  */
-function createProfile(data = {}) {
+export function createProfile(data = {}) {
   const displayName = data.displayName || data.name || 'Reader';
   return {
     name:          displayName,
@@ -139,7 +141,7 @@ function createProfile(data = {}) {
 /**
  * Seed data — kept for demos, screenshots, and opt-in testing
  */
-const SEED_BOOKS = [
+export const SEED_BOOKS = [
   {
     id: 'seed-1',
     title: 'The Name of the Wind',

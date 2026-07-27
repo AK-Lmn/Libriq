@@ -4,6 +4,8 @@
    ============================================ */
 
 import { BookAPI } from './api/index.js';
+import { LIBRIQ } from './data.js';
+import { Storage } from './storage.js';
 import { LibriqFirebase } from './firebase-client.js';
 
 export const Library = (() => {

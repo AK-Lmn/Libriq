@@ -53,6 +53,7 @@ try {
   await waitFor(async () => (await readBackup(uid))?.data?.books?.some(book => book.id === bookId && book.currentPage === 33 && book.rating === 4), 'progress/rating backup did not complete');
 
   await page.evaluate(() => {
+    const Storage = window.LibriqStorage;
     Storage.saveProfile({ ...Storage.getProfile(), displayName: 'Cloud Profile' });
     Storage.saveGoals({ ...Storage.getGoals(), yearly: 25 });
     Storage.saveStreak({ ...Storage.getStreak(), current: 6 });
@@ -79,6 +80,7 @@ try {
   assert.match(await page.locator('#cloudBackupStatusText').textContent(), /backup|backed/i);
 
   const previewMutationSafe = await page.evaluate(() => {
+    const Storage = window.LibriqStorage;
     const before = JSON.stringify(Storage.getBooks());
     const backup = {
       app: 'LibriQ',
@@ -90,6 +92,7 @@ try {
   assert.deepEqual(previewMutationSafe, { newBooks: 1, unchanged: true });
   assert.equal(await page.evaluate(() => window.LibriqCloudBackup.normalizeBackup({ app: 'Wrong', data: { books: [] } })), null);
   const applyResults = await page.evaluate(() => {
+    const Storage = window.LibriqStorage;
     const mergeBackup = {
       app: 'LibriQ',
       data: { books: [{ id: 'merge-cloud', title: 'Merge Cloud', author: 'LibriQ' }], profile: {}, goals: {}, streak: {}, activity: [] },
