@@ -3,7 +3,8 @@
    App shell caching only. No API response caching.
    ============================================ */
 
-const CACHE_VERSION = 'libriq-v4.5.1';
+importScripts('./js/version-classic.js');
+const CACHE_VERSION = `libriq-v${self.LIBRIQ_APP_VERSION}`;
 const CACHE_NAME = `${CACHE_VERSION}-shell`;
 const IS_LOCAL_DEV = ['localhost', '127.0.0.1', '::1'].includes(self.location.hostname);
 
@@ -26,6 +27,7 @@ const SHELL_ASSETS = [
   './css/dashboard.css',
   './css/modals.css',
   './css/animations.css',
+  './js/version-classic.js',
   './js/data.js',
   './js/storage.js',
   './js/utils.js',

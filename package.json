@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/generate-config.mjs",
+    "test:data-modules": "node scripts/test-data-modules.mjs",
+    "test:storage-modules": "node scripts/test-storage-modules.mjs",
+    "test:storage-browser": "node scripts/test-storage-browser.mjs",
     "test:identity": "node scripts/test-book-identity.mjs",
     "test:api-modules": "node scripts/test-api-modules.mjs",
     "test:api-browser": "node scripts/test-api-browser.mjs",

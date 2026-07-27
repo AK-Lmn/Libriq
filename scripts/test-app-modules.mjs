@@ -62,6 +62,8 @@ globalThis.Storage = new Proxy({ bootstrap: () => { storageBoots += 1; } }, {
     return () => null;
   },
 });
+const { Storage } = await import('../frontend/js/storage.js');
+Object.assign(Storage, globalThis.Storage);
 
 let authRoutes = 0;
 let navInits = 0;

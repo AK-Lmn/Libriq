@@ -5,6 +5,19 @@ const rootDir = process.cwd();
 const configPath = path.join(rootDir, 'frontend', 'js', 'config.js');
 const localConfigPath = path.join(rootDir, 'frontend', 'js', 'config.local.js');
 const vendorDir = path.join(rootDir, 'frontend', 'vendor');
+const packageJson = JSON.parse(await readFile(path.join(rootDir, 'package.json'), 'utf8'));
+const appVersion = String(packageJson.version || '').trim();
+if (!appVersion) throw new Error('package.json version is required.');
+await writeFile(
+  path.join(rootDir, 'frontend', 'js', 'version.js'),
+  `// Generated from package.json by scripts/generate-config.mjs.\nexport const APP_VERSION = ${JSON.stringify(appVersion)};\n`,
+  'utf8',
+);
+await writeFile(
+  path.join(rootDir, 'frontend', 'js', 'version-classic.js'),
+  `// Generated from package.json by scripts/generate-config.mjs.\nself.LIBRIQ_APP_VERSION = ${JSON.stringify(appVersion)};\n`,
+  'utf8',
+);
 
 await loadLocalEnvFile(path.join(rootDir, '.env'));
 

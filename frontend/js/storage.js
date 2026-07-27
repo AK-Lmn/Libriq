@@ -1,10 +1,16 @@
 /* ============================================
    LIBRIQ STORAGE
    All read/write to localStorage goes here.
-   Replace this module later for cloud sync.
    ============================================ */
 
-const Storage = (() => {
+import {
+  LIBRIQ,
+  createBook,
+  createProfile,
+  SEED_BOOKS,
+} from './data.js';
+
+export const Storage = (() => {
   // INSTALL_KEY  — written once on first launch, never cleared.
   // DATA_KEYS    — everything the user can clear. resetAll()
   //                removes only these keys, then re-runs
@@ -26,7 +32,9 @@ const Storage = (() => {
   };
   const ACTIVE_UID_KEY = 'libriq_active_account_uid';
   const SCOPED_DATA_KEYS = new Set(['BOOKS', 'PROFILE', 'STREAK', 'GOALS', 'ACTIVITY', 'BACKUP', 'CLOUD_BACKUP', 'SYNC_META', 'SYNC_TOMBSTONES']);
-  let activeUid = localStorage.getItem(ACTIVE_UID_KEY) || null;
+  let activeUid = null;
+  let scopeInitialized = false;
+  let bootstrapped = false;
 
   const DEFAULTS = {
     profile: () => createProfile({ name: 'Reader', theme: 'dark' }),
@@ -107,6 +115,8 @@ const Storage = (() => {
   //                         leave books array as-is (empty after reset, intact otherwise)
 
   function bootstrap() {
+    if (bootstrapped) return;
+    _ensureScopeInitialized();
     const isFirstLaunch = !localStorage.getItem(INSTALL_KEY);
 
     if (isFirstLaunch) {
@@ -116,13 +126,22 @@ const Storage = (() => {
       _writeDefaults();
     }
     getDeviceId();
+    bootstrapped = true;
+  }
+
+  function _ensureScopeInitialized() {
+    if (scopeInitialized) return;
+    activeUid = localStorage.getItem(ACTIVE_UID_KEY) || null;
+    scopeInitialized = true;
   }
 
   function getActiveAccountUid() {
+    _ensureScopeInitialized();
     return activeUid;
   }
 
   function setActiveAccountUid(uid) {
+    _ensureScopeInitialized();
     const nextUid = uid ? String(uid) : null;
     const changed = activeUid !== nextUid;
     const previousUid = activeUid;
@@ -141,8 +160,10 @@ const Storage = (() => {
     return setActiveAccountUid(null);
   }
 
-  function clearAccountScopedData(uid = activeUid, options = {}) {
-    const nextUid = uid ? String(uid) : null;
+  function clearAccountScopedData(uid = undefined, options = {}) {
+    _ensureScopeInitialized();
+    const targetUid = uid === undefined ? activeUid : uid;
+    const nextUid = targetUid ? String(targetUid) : null;
     if (!nextUid) return false;
     const keys = Array.isArray(options.keys) && options.keys.length
       ? new Set(options.keys)
@@ -155,6 +176,7 @@ const Storage = (() => {
   }
 
   function getDeviceId() {
+    _ensureScopeInitialized();
     let deviceId = localStorage.getItem(DATA_KEYS.DEVICE_ID);
     if (!deviceId) {
       deviceId = crypto.randomUUID();
@@ -174,6 +196,7 @@ const Storage = (() => {
   }
 
   function _key(name) {
+    _ensureScopeInitialized();
     const base = DATA_KEYS[name];
     if (!SCOPED_DATA_KEYS.has(name)) return base;
     return activeUid ? _userKey(activeUid, base) : _localKey(base);
@@ -567,10 +590,12 @@ const Storage = (() => {
   }
 
   function resetAll() {
+    _ensureScopeInitialized();
     Object.entries(DATA_KEYS).forEach(([name, key]) => {
       localStorage.removeItem(activeUid && SCOPED_DATA_KEYS.has(name) ? _userKey(activeUid, key) : key);
     });
-    bootstrap();
+    _writeDefaults();
+    getDeviceId();
     _dispatchChange('reset', {});
   }
 
@@ -657,5 +682,3 @@ const Storage = (() => {
     getStats,
   };
 })();
-
-window.LibriqStorage = Storage;

@@ -190,6 +190,9 @@ globalThis.Storage = {
   saveProfile: () => {},
   saveGoals: () => {},
 };
+globalThis.LibriqStorage = globalThis.Storage;
+const { Storage: NativeStorage } = await import('../frontend/js/storage.js');
+Object.assign(NativeStorage, globalThis.Storage);
 globalThis.Library = { renderBookCard: () => document.createElement ? document.createElement('div') : ({}) };
 globalThis.Search = { open: () => {}, close: () => {}, init: () => {} };
 const firebaseState = { available: false, ready: true, user: null, restoringSession: false };
@@ -284,6 +287,11 @@ const recommendationBooks = [
 Storage.getBooks = () => recommendationBooks;
 Storage.getBooksByStatus = (status) => recommendationBooks.filter(book => book.status === status);
 Storage.getBookById = (id) => recommendationBooks.find(book => book.id === id) || null;
+Object.assign(NativeStorage, {
+  getBooks: Storage.getBooks,
+  getBooksByStatus: Storage.getBooksByStatus,
+  getBookById: Storage.getBookById,
+});
 
 const { LibriqFirebase } = await import('../frontend/js/firebase-client.js');
 Object.assign(LibriqFirebase, globalThis.LibriqFirebase);
@@ -338,6 +346,11 @@ if (/\bai recommendations\b|gemini/i.test(main.innerHTML)) {
 Storage.getBooks = () => recommendationBooks;
 Storage.getBooksByStatus = (status) => recommendationBooks.filter(book => book.status === status);
 Storage.getBookById = (id) => recommendationBooks.find(book => book.id === id) || null;
+Object.assign(NativeStorage, {
+  getBooks: Storage.getBooks,
+  getBooksByStatus: Storage.getBooksByStatus,
+  getBookById: Storage.getBookById,
+});
 nav.renderCurrentPage();
 await new Promise(resolve => setTimeout(resolve, 0));
 await new Promise(resolve => setTimeout(resolve, 0));

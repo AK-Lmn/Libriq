@@ -4,6 +4,8 @@
    ============================================ */
 
 import { BookAPI } from './api/index.js';
+import { LIBRIQ, createBook } from './data.js';
+import { Storage } from './storage.js';
 import { Library } from './library.js';
 import { Search } from './search.js';
 import { Dashboard } from './dashboard.js';
@@ -480,7 +482,7 @@ function routeAfterAuthReady() {
   }
   if (firebase.user || firebase.restoringSession) {
     if (firebase.user) {
-    window.LibriqStorage?.setActiveAccountUid?.(firebase.user.uid);
+    Storage.setActiveAccountUid?.(firebase.user.uid);
     Navigation.setSessionPreference?.('account');
     }
     if (Navigation.currentPage === 'session') {
@@ -499,7 +501,7 @@ function routeAfterAuthReady() {
     });
     if (Navigation.currentPage !== 'boot') return true;
   }
-  window.LibriqStorage?.clearActiveAccountScope?.();
+  Storage.clearActiveAccountScope?.();
   if (Navigation.getCurrentSessionMode?.() === 'offline' || Navigation.getSessionPreference?.() === 'offline') {
     Navigation.goTo('dashboard');
     return true;

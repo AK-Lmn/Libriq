@@ -3,6 +3,8 @@
    Open Library API integration + local search
    ============================================ */
 
+import { Storage } from './storage.js';
+
 import { BookAPI } from './api/index.js';
 import { Library } from './library.js';
 

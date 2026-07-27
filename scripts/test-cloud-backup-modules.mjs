@@ -46,6 +46,8 @@ globalThis.Storage = {
   buildActivityEvent: () => null,
   addActivityEvent() {},
 };
+const { Storage } = await import('../frontend/js/storage.js');
+Object.assign(Storage, globalThis.Storage);
 
 const { LibriqFirebase } = await import('../frontend/js/firebase-client.js');
 let writes = [];

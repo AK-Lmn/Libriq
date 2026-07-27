@@ -47,6 +47,8 @@ globalThis.Storage = new Proxy({}, {
     return () => null;
   },
 });
+const { Storage } = await import('../frontend/js/storage.js');
+Object.assign(Storage, globalThis.Storage);
 globalThis.LIBRIQ = {
   STATUS: { READING: 'reading', WISHLIST: 'wishlist', FINISHED: 'finished' },
   STORAGE_KEYS: {},
