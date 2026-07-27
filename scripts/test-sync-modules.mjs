@@ -48,6 +48,8 @@ globalThis.Storage = {
 const { Storage } = await import('../frontend/js/storage.js');
 Object.assign(Storage, globalThis.Storage);
 globalThis.Utils = { formatDate: value => String(value) };
+const { Utils } = await import('../frontend/js/utils.js');
+Object.assign(Utils, globalThis.Utils);
 globalThis.LIBRIQ = { VERSION: 'test' };
 globalThis.LibriqFirebase = {
   getState: () => ({ available: false, ready: false, user: null }),

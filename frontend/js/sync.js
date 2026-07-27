@@ -6,6 +6,7 @@
 import { Navigation } from './navigation.js';
 import { LIBRIQ, createBook } from './data.js';
 import { Storage } from './storage.js';
+import { Utils } from './utils.js';
 import { LibriqFirebase } from './firebase-client.js';
 import { LibriqCloudBackup } from './cloudBackup.js';
 

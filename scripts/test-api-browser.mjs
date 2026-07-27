@@ -71,7 +71,8 @@ try {
   await page.waitForFunction(() => Boolean(window.Navigation && window.LibriqNavigation));
   assert.equal(await page.evaluate(() => window.__libriqAppReadyCount), 1);
   assert.equal(await page.evaluate(() => window.__LIBRIQ_APP_READY__), true);
-  assert.equal(await page.evaluate(() => window.LIBRIQ.VERSION), appVersion);
+  assert.equal(await page.evaluate(() => window.LIBRIQ), undefined);
+  assert.equal(await page.evaluate(() => typeof window.Utils?.sanitize), 'function');
   assert.equal(await page.evaluate(() => typeof window.LibriqStorage?.bootstrap), 'function');
   assert.equal(await page.evaluate(() => window.createBook), undefined);
   assert.equal(await page.evaluate(() => window.createProfile), undefined);
@@ -80,6 +81,48 @@ try {
   assert.equal(await page.evaluate(() => window.BookAPI), undefined);
   assert.equal(await page.evaluate(() => window.Dashboard), undefined);
   assert.equal(await page.evaluate(() => window.Navigation === window.LibriqNavigation), true);
+  const utilitySecurity = await page.evaluate(() => {
+    window.__utilsXssExecutions = 0;
+    window.alert = () => { window.__utilsXssExecutions += 1; };
+
+    const unsafeCover = document.createElement('div');
+    unsafeCover.innerHTML = window.Utils.buildCover({
+      title: '<script>window.__utilsXssExecutions += 1</script>',
+      coverUrl: 'javascript:alert(1)',
+    });
+    document.body.appendChild(unsafeCover);
+
+    const fallbackCover = document.createElement('div');
+    fallbackCover.innerHTML = window.Utils.buildCover({
+      title: `');window.__utilsXssExecutions += 1;//`,
+      coverUrl: 'https://example.invalid/cover.jpg',
+    });
+    document.body.appendChild(fallbackCover);
+    fallbackCover.querySelector('img')?.dispatchEvent(new Event('error'));
+
+    window.Utils.toast('<img src=x onerror=alert(1)><script>alert(2)</script>', 'warning');
+    const toast = document.querySelector('#toastContainer .toast:last-child');
+
+    const stars = document.createElement('div');
+    stars.innerHTML = window.Utils.buildStars(3, true, `book');window.__utilsXssExecutions += 1;//`);
+    document.body.appendChild(stars);
+    stars.querySelector('.star')?.click();
+
+    return {
+      executions: window.__utilsXssExecutions,
+      unsafeImageCount: unsafeCover.querySelectorAll('img').length,
+      fallbackHasPlaceholder: Boolean(fallbackCover.querySelector('.book-cover-placeholder')),
+      toastImageCount: toast?.querySelectorAll('img').length || 0,
+      toastScriptCount: toast?.querySelectorAll('script').length || 0,
+    };
+  });
+  assert.deepEqual(utilitySecurity, {
+    executions: 0,
+    unsafeImageCount: 0,
+    fallbackHasPlaceholder: true,
+    toastImageCount: 0,
+    toastScriptCount: 0,
+  });
   for (const route of ['dashboard', 'library', 'reading', 'wishlist', 'finished', 'favorites', 'activity', 'stats', 'goals', 'help', 'profile', 'settings']) {
     await page.evaluate(pageName => Navigation.goTo(pageName), route);
     await page.waitForFunction(pageName => Navigation.currentPage === pageName && Boolean(document.querySelector('#mainContent .page')), route);
@@ -110,7 +153,7 @@ try {
   await page.waitForFunction(() => window.LibriqStorage.getBooks().some(book => book.title === 'Smoke Test Book'));
   await page.evaluate(() => {
     const book = window.LibriqStorage.getBooks().find(candidate => candidate.title === 'Smoke Test Book');
-    Library.setStatus(book.id, LIBRIQ.STATUS.READING);
+    Library.setStatus(book.id, 'reading');
     Navigation.goTo('dashboard');
   });
   await page.waitForSelector('.dashboard-hero-card:not(.dashboard-hero-card-empty)');

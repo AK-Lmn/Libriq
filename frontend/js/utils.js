@@ -3,7 +3,27 @@
    Pure functions, no side effects
    ============================================ */
 
-const Utils = {
+import { LIBRIQ } from './data.js';
+
+function _safeCoverUrl(value) {
+  const url = String(value || '').trim();
+  if (!url) return null;
+  const scheme = url.match(/^([a-z][a-z0-9+.-]*):/i)?.[1]?.toLowerCase();
+  if (!scheme) return url;
+  if (scheme === 'http' || scheme === 'https' || scheme === 'blob') return url;
+  if (scheme === 'data' && /^data:image\/(?:avif|gif|jpeg|jpg|png|webp);/i.test(url)) return url;
+  return null;
+}
+
+function _inlineString(value) {
+  return JSON.stringify(String(value ?? ''))
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;');
+}
+
+export const Utils = {
 
   // ── DOM ──────────────────────────────────
 
@@ -109,9 +129,12 @@ const Utils = {
 
   /** Sanitize HTML to prevent XSS */
   sanitize(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   },
 
   /** Turn an account handle into a friendly display name */
@@ -175,13 +198,14 @@ const Utils = {
 
   /** Build cover HTML */
   buildCover(book, sizeClass = 'cover-md') {
-    if (book.coverUrl) {
+    const coverUrl = _safeCoverUrl(book.coverUrl);
+    if (coverUrl) {
       return `
         <div class="book-cover ${sizeClass}" data-cover-fallback="true">
-          <img src="${Utils.sanitize(book.coverUrl)}"
+          <img src="${Utils.sanitize(coverUrl)}"
                alt="Cover of ${Utils.sanitize(book.title)}"
                loading="lazy"
-               onerror="if(this.dataset.fallbackTriggered==='1') return; this.dataset.fallbackTriggered='1'; this.removeAttribute('src'); this.parentElement.innerHTML=Utils.buildCoverPlaceholder('${Utils.sanitize(book.title)}')">
+               onerror="if(this.dataset.fallbackTriggered==='1') return; this.dataset.fallbackTriggered='1'; this.removeAttribute('src'); this.parentElement.innerHTML=Utils.buildCoverPlaceholder(${_inlineString(book.title)})">
         </div>`;
     }
     return `
@@ -203,7 +227,7 @@ const Utils = {
     const stars = [1,2,3,4,5].map(n => {
       const filled = rating !== null && n <= rating ? 'filled' : '';
       const attrs = interactive
-        ? `data-rating="${n}" data-book-id="${bookId}" onclick="Library.setRating('${bookId}', ${n})"`
+        ? `data-rating="${n}" data-book-id="${Utils.sanitize(bookId)}" onclick="Library.setRating(${_inlineString(bookId)}, ${n})"`
         : '';
       return `<span class="star ${filled}" ${attrs}>★</span>`;
     }).join('');

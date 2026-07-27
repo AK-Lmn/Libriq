@@ -164,6 +164,8 @@ globalThis.Utils = {
     finished: 'badge-finished',
   }[status] || ''),
 };
+const { Utils: NativeUtils } = await import('../frontend/js/utils.js');
+Object.assign(NativeUtils, globalThis.Utils);
 globalThis.LIBRIQ = {
   VERSION: 'test',
   STATUS: {

@@ -4,6 +4,7 @@
    ============================================ */
 
 import { Storage } from './storage.js';
+import { Utils } from './utils.js';
 
 import { BookAPI } from './api/index.js';
 import { Library } from './library.js';

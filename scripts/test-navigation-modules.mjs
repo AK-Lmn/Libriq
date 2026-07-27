@@ -36,6 +36,8 @@ globalThis.document = {
 globalThis.Utils = {
   $$: () => [],
 };
+const { Utils } = await import('../frontend/js/utils.js');
+Object.assign(Utils, globalThis.Utils);
 globalThis.Storage = new Proxy({}, {
   get: (_, key) => {
     if (key === 'getProfile') return () => ({});
