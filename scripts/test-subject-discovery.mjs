@@ -23,7 +23,7 @@ const context = {
     formatDisplayName: (value) => String(value || '').replace(/\b\w/g, c => c.toUpperCase()),
     sanitize: (value) => String(value ?? ''),
   },
-  BookIdentity: {
+  BookAPI: {
     isSameBook: (left, right) => String(left?.title || '').toLowerCase() === String(right?.title || '').toLowerCase(),
   },
   LIBRIQ: {
@@ -72,4 +72,3 @@ const subjectList = context._subjectCandidatesFromBook({
 assert.equal(JSON.stringify(subjectList), JSON.stringify(['Fantasy', 'Adventure']));
 
 console.log('subject discovery test passed');
-

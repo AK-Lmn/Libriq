@@ -7,7 +7,9 @@
    required for basic search (1000 req/day per IP).
    ============================================ */
 
-const GoogleBooksAPI = (() => {
+import { NormalizeBook } from './normalizeBook.js';
+
+export const GoogleBooksAPI = (() => {
 
   const BASE = 'https://www.googleapis.com/books/v1/volumes';
   const TIMEOUT_MS = 8000;

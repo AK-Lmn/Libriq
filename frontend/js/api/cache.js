@@ -5,7 +5,7 @@
    Transparent to callers — just wrap your fetch.
    ============================================ */
 
-const BookCache = (() => {
+export const BookCache = (() => {
 
   // Map<string, Object[]>  — query → results array
   const _store = new Map();

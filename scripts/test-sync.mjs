@@ -1,15 +1,12 @@
-import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { closePlaywright, phase, startE2EServer, stopE2EServer, waitForAppReady, waitForServer } from './e2e-test-utils.mjs';
 
 const port = Number(process.env.LIBRIQ_E2E_PORT || 4173);
 const baseUrl = `http://127.0.0.1:${port}/?libriq_e2e_test_mode=1`;
 
-function startServer() {
-  const child = spawn(process.execPath, ['scripts/e2e-server.mjs'], { stdio: 'inherit', env: { ...process.env, LIBRIQ_E2E_PORT: String(port) } });
-  return child;
-}
+const testName = 'account-sync';
 
 async function setupPage(context, uid, email) {
   const page = await context.newPage();
@@ -33,8 +30,10 @@ async function setupPage(context, uid, email) {
     new MutationObserver(recordBootTrace).observe(document.documentElement, { childList: true, subtree: true, attributes: true });
     window.addEventListener('libriq:page-changed', recordBootTrace);
   });
+  phase(testName, 'page created; opening application');
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-  await delay(3000);
+  await waitForAppReady(page, { testName });
+  phase(testName, 'application boot complete; establishing mock session');
   await page.evaluate(({ uid, email }) => {
     window.LibriqE2E.seedAuth(uid, email, uid);
     window.LibriqE2E.enableAccountMode();
@@ -43,6 +42,7 @@ async function setupPage(context, uid, email) {
     window.LibriqSyncBeta.maybeAutoEnable('e2e-setup');
   }, { uid, email });
   await waitForSyncAttached(page);
+  phase(testName, `initial sync listener attached for ${uid}`);
   return page;
 }
 
@@ -60,7 +60,10 @@ async function resumePage(page, uid, email) {
 }
 
 async function waitForSyncAttached(page) {
-  await page.waitForFunction(() => Boolean(window.LibriqE2E && window.LibriqSyncDebug?.status?.().attached), null, { timeout: 10000 });
+  await page.waitForFunction(() => Boolean(window.LibriqE2E && window.LibriqSyncDebug?.status?.().attached), null, { timeout: 10000 })
+    .catch(error => {
+      throw new Error(`[${testName}] Account Sync listener did not attach within 10000ms: ${error.message}`);
+    });
 }
 
 async function signInExistingPage(page, uid, email) {
@@ -79,13 +82,21 @@ function assertHasFields(object, fields) {
 }
 
 async function main() {
-    const server = startServer();
+  phase(testName, 'test setup begins');
+  const server = startE2EServer({ port, testName });
+  let browser = null;
+  const contexts = [];
   try {
-    await delay(1500);
+    await waitForServer(`http://127.0.0.1:${port}`, { testName });
+    phase(testName, 'local server ready');
     await fetch(`http://127.0.0.1:${port}/__libriq_test_api/reset`, { method: 'POST' });
-    const browser = await chromium.launch({ headless: true });
+    phase(testName, 'launching browser');
+    browser = await chromium.launch({ headless: true });
+    phase(testName, 'browser launched');
     const contextA = await browser.newContext();
     const contextB = await browser.newContext();
+    contexts.push(contextA, contextB);
+    phase(testName, 'two isolated browser contexts created');
 
     const sharedUid = 'test-user';
     const pageA = await setupPage(contextA, sharedUid, 'a@example.com');
@@ -121,7 +132,9 @@ async function main() {
     assert.equal(statusA.eligibilityAllowed, true);
     assert.equal(Array.isArray(statusA.disabledReasons), true);
     assert.equal(typeof statusA.tombstoneCount, 'number');
+    phase(testName, 'initial Firestore snapshots settled');
 
+    phase(testName, 'triggering first local book mutation');
     const bookId = await pageA.evaluate(() => {
       const book = window.LibriqE2E.addBook({
         title: 'SYNC E2E TEST',
@@ -136,6 +149,7 @@ async function main() {
 
     await delay(6000);
     assert.equal(await pageB.evaluate((id) => window.LibriqE2E.getBooks().some((book) => book.id === id), bookId), true);
+    phase(testName, 'first remote mutation observed');
 
     const richBookId = await pageA.evaluate(() => {
       const book = window.LibriqE2E.addBook({
@@ -228,6 +242,7 @@ async function main() {
     assert.equal(remoteRich.editionCount, 3);
 
     const richContext = await browser.newContext();
+    contexts.push(richContext);
     const richPage = await setupPage(richContext, sharedUid, 'a@example.com');
     await delay(6000);
     const loadedRich = await richPage.evaluate((id) => window.LibriqE2E.getBooks().find((book) => book.id === id), richBookId);
@@ -241,6 +256,7 @@ async function main() {
     await richContext.close();
 
     const contextFresh = await browser.newContext();
+    contexts.push(contextFresh);
     const pageFresh = await setupPage(contextFresh, sharedUid, 'a@example.com');
     await delay(6000);
     assert.equal(await pageFresh.evaluate((id) => window.LibriqE2E.getBooks().some((book) => book.id === id), bookId), true);
@@ -327,6 +343,7 @@ async function main() {
     assert.equal(['off', 'paused'].includes(pausedStatus.status), true);
 
     const offlineContext = await browser.newContext();
+    contexts.push(offlineContext);
     const offlinePage = await setupPage(offlineContext, 'offline-sync-user', 'offline@example.com');
     await offlineContext.setOffline(true);
     await offlinePage.evaluate(() => {
@@ -349,7 +366,6 @@ async function main() {
     assert.equal(await offlinePage.evaluate(() => window.LibriqE2E.getBooks().some((book) => book.title === 'OFFLINE SYNC TEST')), true);
     assert.equal(await offlinePage.evaluate(() => window.LibriqStorage.getSyncMeta().pending), true);
     await offlineContext.setOffline(false);
-    await offlinePage.evaluate(() => window.dispatchEvent(new Event('online')));
     await delay(6000);
     const offlineRemote = await fetch(`http://127.0.0.1:${port}/__libriq_test_api/collection?path=${encodeURIComponent('users/offline-sync-user/sync/v1/books')}`).then(res => res.json());
     assert.equal(offlineRemote.some((book) => book.title === 'OFFLINE SYNC TEST' && book.currentPage === 11), true);
@@ -357,6 +373,7 @@ async function main() {
     await offlineContext.close();
 
     const contextIsolation = await browser.newContext();
+    contexts.push(contextIsolation);
     const pageIsolation = await setupPage(contextIsolation, 'isolation-user-a', 'isolation-a@example.com');
     const isolationBookId = await pageIsolation.evaluate(() => {
       const book = window.LibriqE2E.addBook({
@@ -438,6 +455,7 @@ async function main() {
     await contextIsolation.close();
 
     const deletionContext = await browser.newContext();
+    contexts.push(deletionContext);
     const deletionPage = await setupPage(deletionContext, 'deletion-user', 'delete@example.com');
     const deletionBookId = await deletionPage.evaluate(() => window.LibriqE2E.addBook({
       title: 'DELETE ME',
@@ -479,12 +497,11 @@ async function main() {
     await deletionPage.close();
     await deletionContext.close();
 
-    await pageA.close();
-    await pageB.close();
-    await browser.close();
+    phase(testName, 'all sync, isolation, tombstone, and deletion assertions complete');
     console.log('sync e2e ok');
   } finally {
-    server.kill('SIGTERM');
+    await closePlaywright(browser, contexts, { testName });
+    await stopE2EServer(server, { testName });
   }
 }
 

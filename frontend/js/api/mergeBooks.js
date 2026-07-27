@@ -13,27 +13,10 @@
    normalised title + author string.
    ============================================ */
 
-const MergeBooks = (() => {
-  const Identity = window.BookIdentity || globalThis.BookIdentity || {
-    isSameBook: (left, right) => {
-      const clean = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
-      const leftIsbn = clean(left?.isbn);
-      const rightIsbn = clean(right?.isbn);
-      if (leftIsbn && rightIsbn && leftIsbn === rightIsbn) return true;
-      return clean(left?.title) === clean(right?.title) && clean(left?.author) === clean(right?.author);
-    },
-    buildSourceBadgeData: () => ({ sourceIds: {}, sourceBadges: [], sources: [] }),
-  };
-  const Description = window.NormalizeBook || globalThis.NormalizeBook || {
-    chooseBestDescription: (candidates) => {
-      const list = (Array.isArray(candidates) ? candidates : [candidates])
-        .map(item => String((item && typeof item === 'object' ? item.text : item) || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim())
-        .filter(Boolean);
-      return list.sort((a, b) => b.length - a.length)[0] || null;
-    },
-    normalizeDescriptionText: value => String(value || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || null,
-  };
+import * as Identity from './bookIdentity.js';
+import { NormalizeBook as Description } from './normalizeBook.js';
 
+export const MergeBooks = (() => {
   /**
    * Merge two result arrays into one deduplicated list.
    * OL books anchor the list; GB books either enrich an

@@ -6,6 +6,16 @@
   "scripts": {
     "build": "node scripts/generate-config.mjs",
     "test:identity": "node scripts/test-book-identity.mjs",
+    "test:api-modules": "node scripts/test-api-modules.mjs",
+    "test:api-browser": "node scripts/test-api-browser.mjs",
+    "test:search-library-modules": "node scripts/test-search-library-modules.mjs",
+    "test:dashboard-modules": "node scripts/test-dashboard-modules.mjs",
+    "test:navigation-modules": "node scripts/test-navigation-modules.mjs",
+    "test:app-modules": "node scripts/test-app-modules.mjs",
+    "test:sync-modules": "node scripts/test-sync-modules.mjs",
+    "test:firebase-modules": "node scripts/test-firebase-modules.mjs",
+    "test:cloud-backup-modules": "node scripts/test-cloud-backup-modules.mjs",
+    "test:cloud-backup-browser": "node scripts/test-cloud-backup-browser.mjs",
     "test:openlibrary": "node scripts/test-openlibrary.mjs",
     "test:subject-discovery": "node scripts/test-subject-discovery.mjs",
     "test:gutendex": "node scripts/test-gutendex.mjs",
@@ -14,8 +24,7 @@
     "test:activity-sync": "node scripts/test-activity-sync.mjs",
     "test:profile-sync": "node scripts/test-profile-sync.mjs",
     "test:goals-streak-sync": "node scripts/test-goals-streak-sync.mjs",
-    "test:gemini": "node scripts/test-gemini-route.mjs",
-    "test:gemini-client": "node scripts/test-gemini-client.mjs",
+    "test:recommendations": "node scripts/test-recommendations.mjs",
     "screenshots": "node scripts/screenshots.mjs",
     "test:render": "node scripts/test-navigation-render.mjs",
     "test:modal": "node scripts/test-modal.mjs",
@@ -27,7 +36,6 @@
     "playwright": "^1.55.0"
   },
   "dependencies": {
-    "firebase": "^12.15.0",
-    "firebase-admin": "^13.10.0"
+    "firebase": "^12.15.0"
   }
 }

@@ -3,10 +3,13 @@
    Book management: add, edit, remove, status
    ============================================ */
 
-const Library = (() => {
-  const Identity = window.BookIdentity || globalThis.BookIdentity || {
-    getSourceLabels: () => [],
-    normalizeSource: value => String(value || '').toLowerCase().trim(),
+import { BookAPI } from './api/index.js';
+import { LibriqFirebase } from './firebase-client.js';
+
+export const Library = (() => {
+  const Identity = {
+    getSourceLabels: (...args) => BookAPI.getSourceLabels(...args),
+    normalizeSource: (...args) => BookAPI.normalizeSource(...args),
   };
 
   function showAddModal(bookData, options = {}) {
@@ -138,14 +141,20 @@ const Library = (() => {
       </form>`;
   }
 
-  document.addEventListener('change', (e) => {
-    if (!e.target.matches('input[name="status"]')) return;
-    const pageGroup   = document.getElementById('pageProgressGroup');
-    const ratingGroup = document.getElementById('ratingGroup');
-    if (!pageGroup) return;
-    pageGroup.style.display   = e.target.value === 'reading'  ? 'flex' : 'none';
-    ratingGroup.style.display = e.target.value === 'finished' ? 'flex' : 'none';
-  });
+  let initialized = false;
+
+  function init() {
+    if (initialized) return;
+    initialized = true;
+    document.addEventListener('change', (e) => {
+      if (!e.target.matches('input[name="status"]')) return;
+      const pageGroup   = document.getElementById('pageProgressGroup');
+      const ratingGroup = document.getElementById('ratingGroup');
+      if (!pageGroup) return;
+      pageGroup.style.display   = e.target.value === 'reading'  ? 'flex' : 'none';
+      ratingGroup.style.display = e.target.value === 'finished' ? 'flex' : 'none';
+    });
+  }
 
   function _setFormRating(value) {
     document.getElementById('ratingInput').value = value;
@@ -165,7 +174,7 @@ const Library = (() => {
     const event = Storage.buildActivityEvent(type, book, payload, source);
     if (event) {
       Storage.addActivityEvent(event);
-      window.LibriqFirebase?.queueActivitySync?.(event);
+      LibriqFirebase.queueActivitySync(event);
     }
   }
 
@@ -504,12 +513,10 @@ const Library = (() => {
 
     let candidate = await _fetchMetadataCandidate(current);
     if (!candidate) return { status: 'no-new' };
-    if (candidate?.source === 'openlibrary' && typeof OpenLibraryAPI.enrichBook === 'function') {
-      candidate = await OpenLibraryAPI.enrichBook(candidate);
+    if (candidate?.source === 'openlibrary') {
+      candidate = await BookAPI.enrichBook(candidate);
     }
-    if (typeof InternetArchiveAPI?.enrichBookLinks === 'function') {
-      candidate = await InternetArchiveAPI.enrichBookLinks({ ...current, ...candidate });
-    }
+    candidate = await BookAPI.enrichBookLinks({ ...current, ...candidate });
 
     const updates = _buildMetadataUpdates(current, candidate);
     if (Object.keys(updates).length === 0) return { status: 'no-new' };
@@ -559,15 +566,11 @@ const Library = (() => {
       .filter(link => String(link || '').includes('archive.org'))));
     const archiveUrl = book.archiveUrl || archiveLinks[0] || null;
     const sourceLabels = (() => {
-      const identity = window.BookIdentity || globalThis.BookIdentity || {
-        getSourceLabels: () => [],
-        normalizeSource: value => String(value || '').toLowerCase().trim(),
-      };
-      const labels = identity.getSourceLabels(book);
+      const labels = BookAPI.getSourceLabels(book);
       if (labels.length > 0) return labels;
       if (archiveUrl) return ['Internet Archive'];
       if (book?.source && book.source !== 'api') {
-        const normalized = identity.normalizeSource(book.source);
+        const normalized = BookAPI.normalizeSource(book.source);
         const sourceLabelMap = {
           openlibrary: 'Open Library',
           google: 'Google Books',
@@ -1128,22 +1131,20 @@ const Library = (() => {
       }
     });
 
-    const helper = typeof NormalizeBook !== 'undefined' ? NormalizeBook : null;
-    const currentDescriptionUseful = helper?.isUsefulDescription?.(current.description);
+    const helper = BookAPI;
+    const currentDescriptionUseful = helper.isUsefulDescription(current.description);
     const bestDescription = currentDescriptionUseful
-      ? helper?.normalizeDescriptionText?.(current.description)
-      : helper?.chooseBestDescription?.([
+      ? helper.normalizeDescriptionText(current.description)
+      : helper.chooseBestDescription([
           { text: candidate.description, source: candidate.source || 'candidate', language: candidate.language, full: true },
           { text: candidate.shortDescription, source: candidate.source || 'candidate-snippet', language: candidate.language, snippet: true },
           { text: current.description, source: current.source || 'saved', language: current.language, full: true },
         ]);
-    if (!currentDescriptionUseful && bestDescription && bestDescription !== helper?.normalizeDescriptionText?.(current.description)) {
+    if (!currentDescriptionUseful && bestDescription && bestDescription !== helper.normalizeDescriptionText(current.description)) {
       updates.description = bestDescription;
-    } else if (!helper && !current.description && candidate.description) {
-      updates.description = candidate.description;
     }
 
-    const bestShortDescription = helper?.chooseBestDescription?.([
+    const bestShortDescription = helper.chooseBestDescription([
       { text: current.shortDescription, source: current.source || 'saved-snippet', language: current.language, snippet: true },
       { text: candidate.shortDescription, source: candidate.source || 'candidate-snippet', language: candidate.language, snippet: true },
       { text: bestDescription || candidate.description, source: candidate.source || 'candidate', language: candidate.language, full: true },
@@ -1338,6 +1339,7 @@ const Library = (() => {
   }
 
   return {
+    init,
     showAddModal, closeAddModal,
     updateProgress, setStatus, setRating,
     toggleFavorite, removeBook,
@@ -1347,4 +1349,4 @@ const Library = (() => {
   };
 })();
 
-window.Library = Library;
+if (typeof window !== 'undefined') window.Library = Library;

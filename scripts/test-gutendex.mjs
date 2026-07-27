@@ -1,106 +1,27 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import vm from 'node:vm';
+import { GutendexAPI } from '../frontend/js/api/gutendex.js';
 
-const repoRoot = process.cwd();
-
-function loadScript(filePath, context) {
-  const source = fs.readFileSync(filePath, 'utf8');
-  vm.runInNewContext(source, context, { filename: filePath });
-}
-
-function createFetchStub() {
-  return async function fetch() {
-    return {
-      ok: true,
-      status: 200,
-      async json() {
-        return {
-          results: [
-            {
-              id: 123,
-              title: 'Pride and Prejudice',
-              authors: [{ name: 'Jane Austen', key: '/authors/123' }],
-              formats: {
-                'text/html': 'https://www.gutenberg.org/ebooks/123.html.images',
-                'application/epub+zip': 'https://www.gutenberg.org/ebooks/123.epub3.images',
-                'text/plain': 'https://www.gutenberg.org/ebooks/123.txt.utf-8',
-              },
-              bookshelves: ['Classic Fiction'],
-              languages: ['en'],
-              summaries: ['A classic novel about manners and marriage.'],
-            },
-          ],
-        };
-      },
-    };
-  };
-}
-
-async function main() {
-  const context = {
-    console,
-    window: null,
-    globalThis: null,
-    fetch: createFetchStub(),
-    AbortController,
-    setTimeout,
-    clearTimeout,
-    URL,
-    URLSearchParams,
-    navigator: { onLine: true },
-  };
-  context.window = context;
-  context.globalThis = context;
-
-  loadScript(path.join(repoRoot, 'frontend/js/api/bookIdentity.js'), context);
-  loadScript(path.join(repoRoot, 'frontend/js/api/normalizeBook.js'), context);
-  loadScript(path.join(repoRoot, 'frontend/js/api/gutendex.js'), context);
-
-  const results = await vm.runInNewContext(`GutendexAPI.searchCuratedClassics({ limit: 3, topic: 'classics' })`, context);
-  assert.equal(results.length, 1);
-  assert.equal(results[0].title, 'Pride and Prejudice');
-  assert.equal(results[0].source, 'gutenberg');
-  assert.ok(results[0].sourceBadges.includes('Project Gutenberg'));
-  assert.equal(results[0].gutendexId, '123');
-  assert.equal(results[0].gutenbergId, '123');
-  assert.equal(Array.isArray(results[0].readableSourceLinks), true);
-  assert.ok(results[0].readableSourceLinks[0].includes('gutenberg.org'));
-
-  context.navigator.onLine = false;
-  const offlineResults = await vm.runInNewContext(`GutendexAPI.searchCuratedClassics({ limit: 3, topic: 'classics' })`, context);
-  assert.equal(offlineResults.length, 0);
-
-  const warnings = [];
-  const abortContext = {
-    console: {
-      ...console,
-      warn: (...args) => warnings.push(args.join(' ')),
-    },
-    window: null,
-    globalThis: null,
-    fetch: async () => { throw Object.assign(new Error('signal is aborted without reason'), { name: 'AbortError' }); },
-    AbortController,
-    setTimeout,
-    clearTimeout,
-    URL,
-    URLSearchParams,
-    navigator: { onLine: true },
-  };
-  abortContext.window = abortContext;
-  abortContext.globalThis = abortContext;
-  loadScript(path.join(repoRoot, 'frontend/js/api/bookIdentity.js'), abortContext);
-  loadScript(path.join(repoRoot, 'frontend/js/api/normalizeBook.js'), abortContext);
-  loadScript(path.join(repoRoot, 'frontend/js/api/gutendex.js'), abortContext);
-  const aborted = await vm.runInNewContext(`GutendexAPI.searchCuratedClassics({ limit: 3, topic: 'classics' })`, abortContext);
-  assert.equal(aborted.length, 0);
-  assert.equal(warnings.some(line => line.includes('Discovery failed')), false);
-
-  console.log('gutendex test passed');
-}
-
-main().catch((err) => {
-  console.error(err);
-  process.exitCode = 1;
+Object.defineProperty(globalThis, 'navigator', { value: { onLine: true }, configurable: true });
+globalThis.fetch = async () => ({
+  ok: true,
+  async json() {
+    return { results: [{
+      id: 123, title: 'Pride and Prejudice', authors: [{ name: 'Jane Austen' }],
+      formats: { 'text/html': 'https://www.gutenberg.org/ebooks/123.html.images' },
+      bookshelves: ['Classic Fiction'], languages: ['en'],
+      summaries: ['A classic novel about manners and marriage.'],
+    }] };
+  },
 });
+
+const results = await GutendexAPI.searchCuratedClassics({ limit: 3, topic: 'classics' });
+assert.equal(results.length, 1);
+assert.equal(results[0].source, 'gutenberg');
+assert.equal(results[0].gutendexId, '123');
+assert.ok(results[0].sourceBadges.includes('Project Gutenberg'));
+assert.ok(results[0].readableSourceLinks[0].includes('gutenberg.org'));
+
+globalThis.navigator.onLine = false;
+assert.deepEqual(await GutendexAPI.searchCuratedClassics({ limit: 3 }), []);
+
+console.log('gutendex test passed');

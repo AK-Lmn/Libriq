@@ -263,6 +263,10 @@ function createBookDetailsContext() {
       STATUS: { READING: 'reading', FINISHED: 'finished' },
     },
     _getMetadataQuality: () => ({ className: 'ok', label: 'OK' }),
+    BookAPI: {
+      getSourceLabels: () => [],
+      normalizeSource: (value) => String(value || '').toLowerCase().trim(),
+    },
   };
   windowObj.window = windowObj;
   windowObj.Storage = context.Storage;
