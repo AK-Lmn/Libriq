@@ -3,13 +3,22 @@
    Client-side routing and page management
    ============================================ */
 
-const Navigation = (() => {
+import { BookAPI } from './api/index.js';
+import { Library } from './library.js';
+import { Search } from './search.js';
+import { Dashboard } from './dashboard.js';
+import { buildMonthlyChart, buildGenreRow } from './dashboard.js';
+import { LibriqFirebase } from './firebase-client.js';
+import { LibriqCloudBackup } from './cloudBackup.js';
+
+export const Navigation = (() => {
   let _currentPage = 'dashboard';
   const SESSION_PREF_KEY = 'libriq_session_pref';
   const SESSION_MODE_KEY = 'libriq_session_mode';
   const PREFERRED_SESSION_MODE_KEY = 'libriq_preferred_session_mode';
   const DEBUG_SYNC = () => localStorage.getItem('libriq_debug_sync') === '1';
   let _lastAuthUid = null;
+  let initialized = false;
 
   function getMainContentRoot(context = 'navigation') {
     const main = document.getElementById('mainContent');
@@ -37,17 +46,17 @@ const Navigation = (() => {
     else console.debug(prefix, message);
   }
 
-  function isConfirmedSignedOut(firebase = window.LibriqFirebase?.getState?.() || {}) {
+  function isConfirmedSignedOut(firebase = LibriqFirebase.getState()) {
     return Boolean(firebase.ready && !firebase.user && firebase.signedOutConfirmed && !firebase.restoringSession);
   }
 
-  function shouldRenderSessionScreen(firebase = window.LibriqFirebase?.getState?.() || {}) {
+  function shouldRenderSessionScreen(firebase = LibriqFirebase.getState()) {
     if (!firebase.ready) return false;
     if (firebase.user || firebase.restoringSession) return false;
     return Boolean(firebase.signedOutConfirmed);
   }
 
-  function getSessionScreenSuppressionReason(firebase = window.LibriqFirebase?.getState?.() || {}) {
+  function getSessionScreenSuppressionReason(firebase = LibriqFirebase.getState()) {
     if (!firebase.ready) return 'auth not ready';
     if (firebase.user) return 'signed-in user exists';
     if (firebase.restoringSession) return 'restoring session';
@@ -126,8 +135,7 @@ const Navigation = (() => {
           </div>`;
       }
     }
-    if (page !== 'session') window.LibriqCloudBackup?.refresh?.();
-    if (page === 'session') window.LibriqCloudBackup?.refresh?.();
+    LibriqCloudBackup.refresh();
 
     const mainRoot = getMainContentRoot(`goTo(${page})`);
     if (mainRoot) mainRoot.scrollTop = 0;
@@ -199,7 +207,7 @@ const Navigation = (() => {
   }
 
   function shouldResumeAccountMode() {
-    const firebase = window.LibriqFirebase?.getState?.() || {};
+    const firebase = LibriqFirebase.getState();
     const stored = getCurrentSessionMode();
     const allow = Boolean(
       firebase.user &&
@@ -319,7 +327,7 @@ const Navigation = (() => {
   function updateDesktopStatusPill() {
     const el = document.getElementById('desktopStatusPill');
     if (!el) return;
-    const firebase = window.LibriqFirebase?.getState?.() || {};
+    const firebase = LibriqFirebase.getState();
     const syncState = window.LibriqSyncBeta?.getState?.() || {};
     const offline = getSessionPreference() === 'offline' || getCurrentSessionMode() === 'offline';
     const label = !firebase.user
@@ -335,6 +343,8 @@ const Navigation = (() => {
   }
 
   function init() {
+    if (initialized) return;
+    initialized = true;
     Utils.$$('.nav-item').forEach(btn => {
       btn.addEventListener('click', () => goTo(btn.dataset.page));
     });
@@ -350,7 +360,7 @@ const Navigation = (() => {
     updateBadges();
     updateDesktopStatusPill();
     const tryResume = () => {
-      const firebase = window.LibriqFirebase?.getState?.() || {};
+    const firebase = LibriqFirebase.getState();
       debugSync('startup resume check', {
         uid: firebase.user?.uid || null,
         ready: firebase.ready,
@@ -365,7 +375,7 @@ const Navigation = (() => {
     tryResume();
     window.setTimeout(tryResume, 500);
     window.addEventListener('libriq:auth-changed', () => {
-      const firebase = window.LibriqFirebase?.getState?.() || {};
+      const firebase = LibriqFirebase.getState();
       const nextUid = firebase.user?.uid || null;
       const uidChanged = _lastAuthUid !== nextUid;
       _lastAuthUid = nextUid;
@@ -400,7 +410,7 @@ const Navigation = (() => {
         renderCurrentPage?.();
       } else if (_currentPage === 'settings') renderSettingsPage();
       if (_currentPage === 'session') renderSessionChoicePage();
-      window.LibriqCloudBackup?.refresh?.();
+      LibriqCloudBackup.refresh();
       window.LibriqSyncBeta?.refresh?.();
       updateDesktopStatusPill();
       maybeShowNewDeviceCloudPrompt();
@@ -442,8 +452,6 @@ const Navigation = (() => {
   };
 })();
 
-window.LibriqNavigation = Navigation;
-
 function renderBootPage() {
   const main = document.getElementById('mainContent');
   if (!main) return;
@@ -465,7 +473,7 @@ function renderBootPage() {
 }
 
 function routeAfterAuthReady() {
-  const firebase = window.LibriqFirebase?.getState?.() || {};
+      const firebase = LibriqFirebase.getState();
   if (!firebase.ready) {
     Navigation.goTo('boot');
     return false;
@@ -506,8 +514,8 @@ function _cloudRestoreDismissKey(uid) {
 }
 
 async function maybeShowNewDeviceCloudPrompt() {
-  const firebase = window.LibriqFirebase?.getState?.() || {};
-  if (!firebase.user || !firebase.ready || !window.LibriqFirebase?.hasFirestore?.()) return;
+  const firebase = LibriqFirebase.getState();
+  if (!firebase.user || !firebase.ready || !LibriqFirebase.hasFirestore()) return;
   if (Storage.getBooks().length > 0) return;
   if (Navigation.currentPage === 'session' || document.body.classList.contains('session-choice-active')) return;
   if (Navigation.getSessionPreference?.() === 'offline') return;
@@ -516,9 +524,9 @@ async function maybeShowNewDeviceCloudPrompt() {
   if (localStorage.getItem(dismissKey) === '1') return;
 
   try {
-    const snap = await window.LibriqFirebase.readBackupDoc(['users', firebase.user.uid, 'backups', 'current']);
+    const snap = await LibriqFirebase.readBackupDoc(['users', firebase.user.uid, 'backups', 'current']);
     if (!snap?.exists?.()) return;
-    const docData = _normalizeCloudBackupDoc(snap.data());
+    const docData = LibriqCloudBackup.normalizeBackup(snap.data());
     if (!docData) return;
 
     const main = document.getElementById('mainContent');
@@ -555,353 +563,6 @@ async function maybeShowNewDeviceCloudPrompt() {
   }
 }
 
-const CloudBackup = (() => {
-  const STATUS = {
-    IDLE: 'idle',
-    SCHEDULED: 'scheduled',
-    SAVING: 'saving',
-    BACKED_UP: 'backed_up',
-    FAILED: 'failed',
-    PAUSED: 'paused',
-  };
-  let debounceTimer = null;
-  let backupInFlight = null;
-  let pendingReason = null;
-  let lastStatus = STATUS.IDLE;
-  let lastMessage = '';
-  let lastSavedAt = null;
-  let lastError = null;
-  let paused = false;
-  let suppressScheduling = false;
-  let manualSaving = false;
-  let autoBackupInProgress = false;
-  let restoreInProgress = false;
-  let suppressAutoBackupUntil = 0;
-  const DEBUG_AUTO_BACKUP = Boolean(window.localStorage?.getItem('libriq_debug_auto_backup'));
-  const CLOUD_PROMPT_DISMISS_KEY = 'libriq_cloud_restore_dismissed';
-
-  function logDebug(message, details = null) {
-    if (!DEBUG_AUTO_BACKUP) return;
-    const prefix = '[LibriQ][AutoBackup]';
-    if (details !== null && details !== undefined) console.debug(prefix, message, details);
-    else console.debug(prefix, message);
-  }
-
-  function getFirebaseState() {
-    return window.LibriqFirebase?.getState?.() || { available: false, initialized: false, ready: false, user: null };
-  }
-
-  function getDeviceId() {
-    return Storage.getDeviceId?.() || localStorage.getItem('libriq_device_id') || null;
-  }
-
-  function getBackupPath(uid) {
-    return ['users', uid, 'backups', 'current'];
-  }
-
-  function shouldSuppressAutoBackup() {
-    return Date.now() < suppressAutoBackupUntil;
-  }
-
-  function suppressAutoBackupFor(ms = 1500) {
-    suppressAutoBackupUntil = Date.now() + ms;
-  }
-
-  function isEligible() {
-    const firebase = getFirebaseState();
-    const sessionPref = Navigation.getSessionPreference?.();
-    const result = Boolean(
-      firebase.available &&
-      firebase.ready &&
-      firebase.user &&
-      window.LibriqFirebase?.hasFirestore?.() &&
-      sessionPref !== 'offline' &&
-      Navigation.currentPage !== 'session' &&
-      !document.body.classList.contains('session-choice-active') &&
-      !paused &&
-      !shouldSuppressAutoBackup()
-    );
-    logDebug('eligibility check', {
-      result,
-      firebase: {
-        available: firebase.available,
-        ready: firebase.ready,
-        hasUser: Boolean(firebase.user),
-      },
-      firestore: Boolean(window.LibriqFirebase?.hasFirestore?.()),
-      sessionPref,
-      currentPage: Navigation.currentPage,
-      paused,
-    });
-    return result;
-  }
-
-  function setStatus(status, message = '', error = null) {
-    lastStatus = status;
-    lastMessage = message;
-    lastError = error;
-    if (status === STATUS.BACKED_UP) lastSavedAt = new Date().toISOString();
-    logDebug('status set', { status, message });
-    updateSettingsBackupUI();
-  }
-
-  function updateSettingsBackupUI() {
-    const card = document.getElementById('settingsCloudBackupCard');
-    if (!card) return;
-
-    const cloudState = getState();
-    const firebase = getFirebaseState();
-    const hasFirestore = Boolean(window.LibriqFirebase?.hasFirestore?.());
-    const offlineMode = Navigation.getSessionPreference?.() === 'offline';
-    const accountCopyEl = card.closest('.goal-widget')?.querySelector('#settingsAccountCloudCopy');
-    const accountBackupCopyEl = card.closest('.goal-widget')?.querySelector('#settingsAccountCloudBackupCopy');
-    const subtitles = card.querySelectorAll('.activity-subtitle');
-    const statusEl = subtitles[0] || null;
-    const secondaryEl = subtitles[1] || null;
-    const lastSavedEl = subtitles[2] || null;
-    const bookCountEl = subtitles[3] || null;
-
-    const accountCopy = !firebase.user
-      ? 'Sign in to enable cloud backup.'
-      : offlineMode
-        ? 'You\'re signed in, but using offline mode for this session. Cloud backup is paused.'
-        : hasFirestore
-          ? 'Cloud backup is active for this account.'
-          : 'You\'re signed in, but cloud backup is unavailable right now.';
-
-    if (statusEl) {
-      statusEl.textContent = cloudState.message || (cloudState.status === STATUS.BACKED_UP ? 'Backed up just now' : 'Cloud backup active');
-    }
-    if (secondaryEl) {
-      secondaryEl.textContent = cloudState.status === STATUS.PAUSED
-        ? (offlineMode ? 'Offline mode pauses automatic backup for this session.' : 'Cloud backup is paused.')
-        : 'Cloud backup saves this device\'s library to your account. Restore from cloud is manual.';
-    }
-    if (lastSavedEl) {
-      lastSavedEl.textContent = cloudState.lastSavedAt
-        ? formatLastSavedLabel(cloudState.lastSavedAt)
-        : 'No cloud backup yet.';
-    }
-    if (bookCountEl) {
-      const meta = Storage.getCloudBackupMeta?.() || {};
-      bookCountEl.textContent = `Book count: ${typeof meta.bookCount === 'number' ? meta.bookCount : 'Unknown'}`;
-    }
-    if (accountCopyEl) accountCopyEl.textContent = accountCopy;
-    if (accountBackupCopyEl) accountBackupCopyEl.textContent = cloudState.lastSavedAt
-      ? formatLastSavedLabel(cloudState.lastSavedAt)
-      : 'Your library is backed up to your account on this device.';
-
-    if (DEBUG_AUTO_BACKUP) {
-      logDebug('targeted cloud backup card update', {
-        accountCopy,
-        status: cloudState.status,
-        lastSavedAt: cloudState.lastSavedAt,
-      });
-    }
-  }
-
-  function scheduleIfAllowed(reason) {
-    if (suppressScheduling) {
-      logDebug('auto backup skipped with reason', { reason: 'suppressed', requestedReason: reason });
-      return;
-    }
-    const syncState = window.LibriqSyncBeta?.getState?.() || {};
-    if (syncState.enabled && syncState.status !== 'off' && syncState.status !== 'error') {
-      logDebug('auto backup skipped with reason', { reason: 'sync-active', syncState });
-      return;
-    }
-    schedule(reason);
-  }
-
-  function getVisibleStatus() {
-    if (lastStatus === STATUS.SAVING && manualSaving) return 'Saving...';
-    if (lastStatus === STATUS.SAVING && autoBackupInProgress) return lastMessage || 'Cloud backup active';
-    if (lastStatus === STATUS.BACKED_UP) return lastMessage || 'Backed up just now';
-    if (lastStatus === STATUS.FAILED) return lastMessage || 'Backup failed. Your local data is still safe.';
-    if (lastStatus === STATUS.PAUSED) return lastMessage || 'Cloud backup paused';
-    if (lastStatus === STATUS.SCHEDULED) return 'Cloud backup active';
-    return lastMessage || 'Cloud backup active';
-  }
-
-  function formatLastSavedLabel(value) {
-    if (!value) return 'No cloud backup yet.';
-    const savedAt = new Date(value);
-    if (Number.isNaN(savedAt.getTime())) return 'No cloud backup yet.';
-    const now = new Date();
-    if (savedAt.toDateString() === now.toDateString()) {
-      const time = savedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-      return `Last backed up: just now at ${time}`;
-    }
-    return `Last backed up: ${Utils.formatDate(savedAt.toISOString())}`;
-  }
-
-  async function performCloudBackup(reason = 'manual', automatic = false) {
-    if (!isEligible()) {
-      setStatus('paused', Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Sign in to enable cloud backup');
-      logDebug('skipped', { reason: 'ineligible', requestedReason: reason, automatic });
-      return false;
-    }
-
-    const firebase = getFirebaseState();
-    const uid = firebase.user.uid;
-    const payload = _buildManualBackupPayload();
-    const docData = {
-      app: payload.app,
-      version: payload.version,
-      backupVersion: payload.backupVersion,
-      bookCount: payload.data.books.length,
-      activityCount: payload.data.activity.length,
-      data: payload.data,
-      updatedAt: new Date().toISOString(),
-      backupMode: automatic ? 'automatic' : 'manual',
-    };
-
-    logDebug('backup started', { reason, automatic, uid, path: ['users', uid, 'backups', 'current'] });
-    manualSaving = !automatic;
-    autoBackupInProgress = automatic;
-    if (automatic) {
-      setStatus(lastStatus === STATUS.BACKED_UP ? STATUS.BACKED_UP : STATUS.IDLE, lastMessage || 'Cloud backup active');
-    } else {
-      setStatus(STATUS.SAVING, 'Saving...');
-    }
-
-    try {
-      await window.LibriqFirebase.writeBackupDoc(getBackupPath(uid), docData);
-      const savedAt = new Date().toISOString();
-      suppressScheduling = true;
-      try {
-        Storage.saveCloudBackupMeta?.({
-          lastCloudBackupAt: savedAt,
-          bookCount: docData.bookCount,
-          activityCount: docData.activityCount,
-          deviceId: docData.deviceId,
-          backupVersion: docData.backupVersion,
-          appVersion: docData.appVersion,
-          schemaVersion: docData.schemaVersion,
-          createdAt: docData.createdAt,
-          updatedAt: docData.updatedAt,
-          notesCount: docData.notesCount,
-          quotesCount: docData.quotesCount,
-          lastLocalUpdatedAt: docData.lastLocalUpdatedAt,
-          syncReady: false,
-        });
-        if (!automatic) {
-          Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_cloud_saved', null, { itemCount: docData.bookCount, activityCount: docData.activityCount }, 'manual'));
-          Utils.toast('Cloud backup saved', 'success');
-        }
-      } finally {
-        suppressScheduling = false;
-      }
-      setStatus(STATUS.BACKED_UP, formatLastSavedLabel(savedAt));
-      logDebug('backup write succeeded', { reason, automatic, savedAt });
-      logDebug('status set to backed up', { savedAt, bookCount: docData.bookCount, activityCount: docData.activityCount });
-      return true;
-    } catch (err) {
-      const code = String(err?.code || err?.message || '').toLowerCase();
-      lastError = err;
-      logDebug('auto backup write failed', { reason, automatic, code, message: err?.message || '' });
-      if (!automatic) {
-        if (code.includes('permission-denied')) {
-          Utils.toast('You do not have permission to save this cloud backup.', 'error');
-        } else if (code.includes('unauthenticated') || code.includes('authentication-required')) {
-          Utils.toast('Please sign in again before saving your cloud backup.', 'error');
-        } else if (code.includes('unavailable') || code.includes('network')) {
-          Utils.toast('Network error while saving cloud backup.', 'error');
-        } else {
-          Utils.toast('Could not save cloud backup right now.', 'error');
-        }
-      }
-      setStatus(STATUS.FAILED, 'Backup failed. Your local data is still safe.', err);
-      return false;
-    } finally {
-      manualSaving = false;
-      autoBackupInProgress = false;
-    }
-  }
-
-  async function runBackup(reason = 'manual', automatic = false) {
-    if (backupInFlight) {
-      pendingReason = reason;
-      logDebug('any follow-up backup queued', { reason, automatic });
-      return backupInFlight;
-    }
-
-    backupInFlight = performCloudBackup(reason, automatic)
-      .finally(() => {
-      backupInFlight = null;
-      const followUp = pendingReason;
-      pendingReason = null;
-      if (followUp) {
-        if (isEligible()) schedule(followUp);
-        else setStatus(STATUS.PAUSED, Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Cloud backup paused');
-      }
-      });
-    return backupInFlight;
-  }
-
-  function schedule(reason = 'local-change') {
-    const syncState = window.LibriqSyncBeta?.getState?.() || {};
-    if (syncState.enabled && syncState.status !== 'off' && syncState.status !== 'error') {
-      const pausedMessage = 'Cloud backup paused while sync is active.';
-      setStatus(STATUS.PAUSED, pausedMessage);
-      logDebug('auto backup skipped with reason', { reason, pausedMessage, syncState });
-      return;
-    }
-    if (!isEligible()) {
-      const pausedMessage = Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Cloud backup paused';
-      setStatus(STATUS.PAUSED, pausedMessage);
-      logDebug('auto backup skipped with reason', { reason, pausedMessage });
-      return;
-    }
-    const debounceMs = 2200;
-    logDebug('auto backup scheduled', { reason, debounceMs });
-    if (debounceTimer) clearTimeout(debounceTimer);
-    pendingReason = reason;
-    setStatus(STATUS.SCHEDULED, 'Cloud backup active');
-    debounceTimer = window.setTimeout(() => {
-      debounceTimer = null;
-      logDebug('debounce fired', { reason });
-      runBackup(reason, true);
-    }, debounceMs);
-  }
-
-  function pause(reason = 'paused') {
-    paused = true;
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
-      debounceTimer = null;
-    }
-    const message = reason === 'session' ? 'Cloud backup paused' : 'Offline mode: cloud backup paused';
-    setStatus(STATUS.PAUSED, message);
-    logDebug('paused', { reason, message });
-  }
-
-  function refresh() {
-    paused = false;
-    if (isEligible()) {
-      setStatus(STATUS.IDLE, 'Cloud backup active');
-    } else {
-      setStatus(STATUS.PAUSED, Navigation.getSessionPreference?.() === 'offline' ? 'Offline mode: cloud backup paused' : 'Sign in to enable cloud backup');
-    }
-  }
-
-  function getState() {
-    return {
-      status: lastStatus,
-      message: getVisibleStatus(),
-      lastSavedAt,
-      error: lastError,
-      pending: Boolean(debounceTimer || backupInFlight),
-      manualSaving,
-      autoBackupInProgress,
-    };
-  }
-
-  return { schedule, scheduleIfAllowed, pause, refresh, getState, runBackup, formatLastSavedLabel, suppressAutoBackupFor };
-})();
-
-window.LibriqCloudBackup = CloudBackup;
-
 function renderSessionChoicePage() {
   const main = document.getElementById('mainContent');
   if (!main) {
@@ -909,7 +570,7 @@ function renderSessionChoicePage() {
     return;
   }
   main.hidden = false;
-  const firebase = window.LibriqFirebase?.getState?.() || { available: false, initialized: false, ready: false, user: null };
+  const firebase = LibriqFirebase.getState();
   if (!Navigation.shouldRenderSessionScreen?.(firebase)) {
     if (localStorage.getItem('libriq_debug_sync') === '1') {
       console.debug('[LibriQ][SyncDebug][Nav] session screen blocked', {
@@ -930,7 +591,7 @@ function renderSessionChoicePage() {
       return;
     }
   }
-  const sessionContext = window.LibriqFirebase?.getSessionContext?.() || { isInAppBrowser: false, hints: [] };
+  const sessionContext = LibriqFirebase.getSessionContext();
   const hasUser = Boolean(firebase.user);
   const accountName = getDisplayNameForAccount(firebase.user);
   const loading = !firebase.initialized || (firebase.available && !firebase.ready);
@@ -1199,7 +860,7 @@ function renderSessionChoicePage() {
       return;
     }
     try {
-      await window.LibriqFirebase?.signInWithGoogle?.();
+      await LibriqFirebase.signInWithGoogle();
       Navigation.setSessionPreference('google');
       window.LibriqSyncBeta?.maybeAutoEnable?.('google-sign-in');
       Utils.toast('Sync is on. Your books will update across signed-in devices.', 'success');
@@ -1244,7 +905,7 @@ function renderSessionChoicePage() {
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         throw Object.assign(new Error('Enter a valid email address.'), { code: 'auth/invalid-email' });
       }
-      await window.LibriqFirebase?.sendPasswordResetToEmail?.(email);
+      await LibriqFirebase.sendPasswordResetToEmail(email);
       Utils.toast('Password reset email sent if an account exists for that address.', 'success');
       showSigninMode();
     } catch (err) {
@@ -1271,9 +932,9 @@ function renderSessionChoicePage() {
     submit?.setAttribute('disabled', '');
     try {
       if (mode === 'signup') {
-        await window.LibriqFirebase?.createAccountWithEmail?.(email, password);
+        await LibriqFirebase.createAccountWithEmail(email, password);
       } else {
-        await window.LibriqFirebase?.signInWithEmail?.(email, password);
+        await LibriqFirebase.signInWithEmail(email, password);
       }
       Navigation.setSessionPreference('account');
       window.LibriqSyncBeta?.maybeAutoEnable?.(mode === 'signup' ? 'email-sign-up' : 'email-sign-in');
@@ -1294,7 +955,7 @@ function renderSessionChoicePage() {
 
   document.getElementById('switchAccountBtn')?.addEventListener('click', async () => {
     try {
-      await window.LibriqFirebase?.signOut?.();
+      await LibriqFirebase.signOut();
       Navigation.setSessionPreference('prompt');
       Navigation.clearAccountResume?.();
     } catch (err) {
@@ -2338,27 +1999,6 @@ function renderRecommendationsPage() {
   const books = Storage.getBooks();
   const recState = _buildRecommendationState(books);
 
-  const aiState = _getGeminiRecommendationsUiState();
-  const aiSection = aiState.visible ? `
-      <section class="recommendations-ai-panel" id="geminiRecommendationsPanel">
-        <div class="recommendations-ai-header">
-          <div>
-            <div class="recommendations-ai-kicker">AI recommendations</div>
-            <div class="recommendations-ai-title">Generate a focused reading nudge from your saved library.</div>
-            <div class="recommendations-ai-copy">Uses your reading history to suggest books. Notes, quotes, and reviews are not sent.</div>
-          </div>
-          ${aiState.comingSoon ? '' : `
-            <button class="btn btn-primary" id="geminiRecommendationsBtn" type="button" ${aiState.disabled ? 'disabled' : ''}>
-              <i class="ph ph-sparkle"></i>
-              Generate AI Recommendations
-            </button>
-          `}
-        </div>
-        <div class="recommendations-ai-state" id="geminiRecommendationsState">${Utils.sanitize(aiState.message)}</div>
-        <div class="recommendations-ai-results" id="geminiRecommendationsResults" hidden></div>
-      </section>
-    ` : '';
-
   main.innerHTML = `
     <div class="page recommendations-page" id="recommendationsPage">
       <div class="page-header recommendations-header">
@@ -2402,188 +2042,18 @@ function renderRecommendationsPage() {
           <div class="recommendations-empty-hint">Add books, favorite a few, finish a few, or move books to Want to Read.</div>
         </div>
       `}
-      ${aiSection}
       <div id="subjectDiscoveryRoot" class="recommendations-subject-discovery"></div>
       <div id="gutenbergDiscoveryRoot" class="recommendations-subject-discovery"></div>
     </div>`;
 
-  _wireGeminiRecommendations();
   _hydrateSubjectDiscovery(books);
   _hydrateGutendexDiscovery(books);
-}
-
-function _getGeminiRecommendationsUiState() {
-  const firebase = window.LibriqFirebase?.getState?.() || { available: false, ready: false, user: null };
-  const online = navigator.onLine !== false;
-  const offlineMode = Navigation.getSessionPreference?.() === 'offline' || Navigation.getCurrentSessionMode?.() === 'offline';
-  const aiEnabled = Boolean(window.LibriqConfig?.enableAiRecommendations);
-  if (!aiEnabled) {
-    return {
-      visible: true,
-      disabled: true,
-      activeSession: false,
-      message: 'AI recommendations are being tuned and will be available soon.',
-      comingSoon: true,
-    };
-  }
-  if (!firebase.ready) {
-    return {
-      visible: true,
-      disabled: true,
-      activeSession: false,
-      message: 'Preparing AI recommendations...',
-    };
-  }
-  const activeSession = Boolean(firebase.user && online && !offlineMode);
-  if (!firebase.user) {
-    return { visible: true, disabled: true, activeSession: false, message: 'AI recommendations are being tuned and will be available soon.', comingSoon: true };
-  }
-  if (!online || offlineMode) {
-    return {
-      visible: true,
-      disabled: true,
-      activeSession: false,
-      message: "You're offline right now. Local recommendations are still available.",
-    };
-  }
-  return {
-    visible: true,
-    disabled: !activeSession,
-    activeSession,
-    message: 'Uses your reading history to suggest books. Notes, quotes, and reviews are not sent.',
-  };
-}
-
-function _wireGeminiRecommendations() {
-  const btn = document.getElementById('geminiRecommendationsBtn');
-  const results = document.getElementById('geminiRecommendationsResults');
-  const stateNode = document.getElementById('geminiRecommendationsState');
-  if (!btn || !results || !stateNode) return;
-
-  const books = Storage.getBooks();
-  const initialState = _getGeminiRecommendationsUiState();
-  if (initialState.comingSoon) {
-    stateNode.textContent = initialState.message;
-    btn.disabled = true;
-    results.hidden = true;
-    results.innerHTML = '';
-    return;
-  }
-  btn.onclick = async () => {
-    const state = _getGeminiRecommendationsUiState();
-    if (!state.activeSession) {
-      if (!navigator.onLine || Navigation.getSessionPreference?.() === 'offline' || Navigation.getCurrentSessionMode?.() === 'offline') {
-        stateNode.textContent = "You're offline right now. Local recommendations are still available.";
-      } else {
-        stateNode.textContent = 'Please sign in again to use AI recommendations.';
-      }
-      btn.disabled = true;
-      return;
-    }
-
-    btn.disabled = true;
-    results.hidden = false;
-    results.innerHTML = `
-      <div class="recommendations-ai-loading">
-        <span class="spinner spinner--inline" aria-hidden="true"></span>
-        <span>Generating AI recommendations...</span>
-      </div>`;
-    stateNode.textContent = 'Working from your recent reading signals...';
-
-    try {
-      const response = await GeminiRecommendationsAPI.generateRecommendations({
-        mode: _getGeminiRecommendationsMode(),
-        books,
-      });
-      _renderGeminiRecommendations(results, response);
-      stateNode.textContent = response.meta.fromCache
-        ? 'Showing saved AI recommendations from today.'
-        : 'Generated just now.';
-    } catch (err) {
-      const code = String(err?.code || '').toLowerCase();
-      const status = Number(err?.status || 0);
-      if (code === 'offline') {
-        console.debug('[Libriq/Gemini] Skipped while offline.');
-        stateNode.textContent = 'Connect to the internet to generate AI recommendations.';
-      } else if (code === 'auth-loading') {
-        console.debug('[Libriq/Gemini] Waiting for Firebase auth readiness.');
-        stateNode.textContent = 'Preparing AI recommendations...';
-      } else if (code === 'auth' || code === 'auth-expired' || status === 401) {
-        console.debug('[Libriq/Gemini] Missing or expired Firebase session.', { code, status });
-        stateNode.textContent = 'Please sign in again to use AI recommendations.';
-      } else if (code === 'gemini_bad_request' || (status === 400 && code !== 'gemini_provider_quota_exhausted')) {
-        console.debug('[Libriq/Gemini] Gemini bad request.', { code, status });
-        stateNode.textContent = 'AI recommendations need a quick setup fix. Your local recommendations are still available.';
-      } else if (code === 'gemini_response_invalid' || (status === 502 && code !== 'gemini_provider_quota_exhausted')) {
-        console.debug('[Libriq/Gemini] Gemini response invalid.', { code, status });
-        stateNode.textContent = 'AI gave an unexpected response. Your local recommendations are still available.';
-      } else if (status === 429) {
-        if (code === 'gemini_provider_quota_exhausted') {
-          console.debug('[Libriq/Gemini] Gemini provider quota exhausted.');
-          stateNode.textContent = 'AI is temporarily busy or over its provider limit. Try again later. Your local recommendations are still available.';
-        } else {
-          console.debug('[Libriq/Gemini] Gemini quota exhausted.');
-          stateNode.textContent = "You've used today's AI recommendations. Try again tomorrow.";
-        }
-      } else if (status === 503) {
-        console.debug('[Libriq/Gemini] Gemini backend unavailable.');
-        stateNode.textContent = 'AI recommendations could not load right now. Your local recommendations are still available.';
-      } else {
-        console.debug('[Libriq/Gemini] Gemini request failed.', { code, status });
-        stateNode.textContent = 'AI recommendations could not load right now. Your local recommendations are still available.';
-      }
-      results.hidden = true;
-      results.innerHTML = '';
-    } finally {
-      const nextState = _getGeminiRecommendationsUiState();
-      btn.disabled = nextState.disabled;
-    }
-  };
-}
-
-function _getGeminiRecommendationsMode() {
-  return 'recommendations';
-}
-
-function _renderGeminiRecommendations(container, response) {
-  const recs = Array.isArray(response?.recommendations) ? response.recommendations.slice(0, 8) : [];
-  if (!recs.length) {
-    container.innerHTML = `
-      <div class="recommendations-ai-empty">
-        AI recommendations could not load right now. Your local recommendations are still available.
-      </div>`;
-    return;
-  }
-  container.innerHTML = `
-    <div class="recommendations-ai-results-header">
-      <div class="recommendations-ai-results-title">AI suggestions</div>
-      <div class="recommendations-ai-results-meta">${response.meta.fromCache ? 'Showing saved AI recommendations from today.' : 'Generated just now.'}</div>
-    </div>
-    <div class="recommendation-card-grid recommendations-item-grid recommendations-ai-grid">
-      ${recs.map((rec) => buildGeminiRecommendationCard(rec)).join('')}
-    </div>`;
-}
-
-function buildGeminiRecommendationCard(rec) {
-  return `
-    <article class="recommendation-card recommendation-card--ai">
-      <div class="recommendation-card-body">
-        <div class="recommendation-card-meta">
-          <span class="badge badge-accent">AI</span>
-          ${rec.confidence !== undefined ? `<span class="badge badge-metadata">Confidence ${Math.round(rec.confidence * 100)}%</span>` : ''}
-          ${rec.sourceHint ? `<span class="badge badge-metadata">${Utils.sanitize(rec.sourceHint)}</span>` : ''}
-        </div>
-        <h3 class="recommendation-card-title">${Utils.sanitize(rec.title)}</h3>
-        <div class="recommendation-card-author">${Utils.sanitize(rec.author)}</div>
-        <p class="recommendation-card-description">${Utils.sanitize(rec.reason)}</p>
-      </div>
-    </article>`;
 }
 
 async function _hydrateSubjectDiscovery(books) {
   const root = document.getElementById('subjectDiscoveryRoot');
   if (!root) return;
-  if (!navigator.onLine || typeof OpenLibraryAPI === 'undefined' || !OpenLibraryAPI?.searchBySubject) {
+  if (!navigator.onLine) {
     root.innerHTML = '';
     return;
   }
@@ -2603,7 +2073,7 @@ async function _hydrateSubjectDiscovery(books) {
   await Promise.all(railNodes.map(async (node) => {
     const subjectKey = node.dataset.subjectKey;
     const limit = Number(node.dataset.limit || 6);
-    const booksForRail = await OpenLibraryAPI.searchBySubject(subjectKey, { limit });
+    const booksForRail = await BookAPI.searchBySubject(subjectKey, { limit });
     const filtered = _filterSubjectDiscoveryBooks(booksForRail, books, limit);
     if (!filtered.length) {
       node.innerHTML = `<div class="recommendations-helper-note">This subject is unavailable right now.</div>`;
@@ -2661,8 +2131,8 @@ function _filterSubjectDiscoveryBooks(books, savedBooks, limit = 6) {
   const saved = Array.isArray(savedBooks) ? savedBooks.filter(Boolean) : [];
   const filtered = [];
   for (const book of safeBooks) {
-    if (saved.some(savedBook => BookIdentity?.isSameBook ? BookIdentity.isSameBook(savedBook, book) : _normalizeText(savedBook.title) === _normalizeText(book.title))) continue;
-    if (filtered.some(existing => BookIdentity?.isSameBook ? BookIdentity.isSameBook(existing, book) : _normalizeText(existing.title) === _normalizeText(book.title))) continue;
+    if (saved.some(savedBook => BookAPI.isSameBook(savedBook, book))) continue;
+    if (filtered.some(existing => BookAPI.isSameBook(existing, book))) continue;
     filtered.push(book);
     if (filtered.length >= limit) break;
   }
@@ -2690,7 +2160,7 @@ function buildSubjectDiscoveryRail(rail) {
 async function _hydrateGutendexDiscovery(books) {
   const root = document.getElementById('gutenbergDiscoveryRoot');
   if (!root) return;
-  if (!navigator.onLine || typeof GutendexAPI === 'undefined' || !GutendexAPI?.searchCuratedClassics) {
+  if (!navigator.onLine) {
     root.innerHTML = '';
     return;
   }
@@ -2706,7 +2176,7 @@ async function _hydrateGutendexDiscovery(books) {
   const cardsNode = root.querySelector('[data-gutendex-rail]');
   if (!cardsNode) return;
 
-  const booksForRail = await GutendexAPI.searchCuratedClassics({ limit: rail.limit, topic: rail.topic });
+  const booksForRail = await BookAPI.searchCuratedClassics({ limit: rail.limit, topic: rail.topic });
   const filtered = _filterDiscoveryBooks(booksForRail, books, rail.limit);
   if (!filtered.length) {
     cardsNode.innerHTML = `<div class="recommendations-helper-note">Free classics are unavailable right now.</div>`;
@@ -2731,8 +2201,8 @@ function _filterDiscoveryBooks(books, savedBooks, limit = 6) {
   const saved = Array.isArray(savedBooks) ? savedBooks.filter(Boolean) : [];
   const filtered = [];
   for (const book of safeBooks) {
-    if (saved.some(savedBook => BookIdentity?.isSameBook ? BookIdentity.isSameBook(savedBook, book) : _normalizeText(savedBook.title) === _normalizeText(book.title))) continue;
-    if (filtered.some(existing => BookIdentity?.isSameBook ? BookIdentity.isSameBook(existing, book) : _normalizeText(existing.title) === _normalizeText(book.title))) continue;
+    if (saved.some(savedBook => BookAPI.isSameBook(savedBook, book))) continue;
+    if (filtered.some(existing => BookAPI.isSameBook(existing, book))) continue;
     filtered.push(book);
     if (filtered.length >= limit) break;
   }
@@ -2905,8 +2375,7 @@ function buildRecommendationCard(book, reasonLabel) {
 }
 
 function _prepareRecommendationBook(book) {
-  const identity = window.BookIdentity || globalThis.BookIdentity;
-  const sourceData = identity?.buildSourceBadgeData?.(book) || {};
+  const sourceData = BookAPI.buildSourceBadgeData(book);
   return {
     ...book,
     ...sourceData,
@@ -3049,7 +2518,7 @@ function renderSettingsPage() {
   const theme = Navigation.getActiveTheme?.() || document.documentElement.getAttribute('data-theme') || 'dark';
   const backupMeta = Storage.getBackupMeta?.() || { lastExportedAt: null };
   const hasBooks = Storage.getBooks().length > 0;
-  const firebase = window.LibriqFirebase?.getState?.() || { available: false, initialized: false, user: null };
+  const firebase = LibriqFirebase.getState();
   const cloudBackupMeta = Storage.getCloudBackupMeta?.() || { lastCloudBackupAt: null, bookCount: null, activityCount: null };
   const lastExportedText = backupMeta.lastExportedAt
     ? Utils.formatDate(backupMeta.lastExportedAt)
@@ -3266,7 +2735,7 @@ function _buildAccountSection(firebase) {
   }
 
   const user = firebase.user;
-  const emailInfo = window.LibriqFirebase?.getUserEmailAuthInfo?.(user) || {
+  const emailInfo = LibriqFirebase.getUserEmailAuthInfo(user) || {
     email: String(user.email || '').trim(),
     emailVerified: false,
     hasPasswordProvider: false,
@@ -3275,8 +2744,8 @@ function _buildAccountSection(firebase) {
   const avatar = user.photoURL
     ? `<img src="${Utils.sanitize(user.photoURL)}" alt="" aria-hidden="true" style="width:40px;height:40px;border-radius:999px;object-fit:cover;" />`
     : `<div style="width:40px;height:40px;border-radius:999px;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-weight:700;">${Utils.sanitize((user.displayName || user.email || 'U').slice(0,1).toUpperCase())}</div>`;
-  const cloudState = window.LibriqCloudBackup?.getState?.() || {};
-  const hasFirestore = Boolean(window.LibriqFirebase?.hasFirestore?.());
+  const cloudState = LibriqCloudBackup.getState();
+  const hasFirestore = LibriqFirebase.hasFirestore();
   const offlineMode = Navigation.getSessionPreference?.() === 'offline';
   const isGoogleOnly = Array.isArray(emailInfo.providerData) && emailInfo.providerData.length > 0 && emailInfo.providerData.every(provider => provider.providerId === 'google.com');
   const canEmailActions = emailInfo.hasEmail && emailInfo.hasPasswordProvider;
@@ -3287,7 +2756,7 @@ function _buildAccountSection(firebase) {
       ? 'Cloud backup is active for this account.'
       : 'You\'re signed in, but cloud backup is unavailable right now.';
   const backupLabel = cloudState.lastSavedAt
-    ? cloudState.message || window.LibriqCloudBackup?.formatLastSavedLabel?.(cloudState.lastSavedAt) || 'Last backed up: just now'
+    ? cloudState.message || LibriqCloudBackup.formatLastSavedLabel(cloudState.lastSavedAt) || 'Last backed up: just now'
     : 'Your library is backed up to your account on this device.';
 
   return `
@@ -3371,7 +2840,7 @@ function _buildCloudBackupSection(firebase, cloudBackupMeta) {
       </div>`;
   }
 
-  if (!firebase.available || !window.LibriqFirebase?.hasFirestore?.()) {
+  if (!firebase.available || !LibriqFirebase.hasFirestore()) {
     return `
       <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
         <div class="activity-text">
@@ -3391,14 +2860,14 @@ function _buildCloudBackupSection(firebase, cloudBackupMeta) {
       </div>`;
   }
 
-  const cloudState = window.LibriqCloudBackup?.getState?.() || {};
+  const cloudState = LibriqCloudBackup.getState();
   if (window.localStorage?.getItem('libriq_debug_auto_backup')) {
     console.debug('[LibriQ][AutoBackup] renderCloudBackupSection reads status', cloudState);
   }
   const status = cloudState.message || (cloudBackupMeta.lastCloudBackupAt ? 'Cloud backup active' : 'Sign in to enable cloud backup');
   const lastSaved = cloudState.lastSavedAt || cloudBackupMeta.lastCloudBackupAt;
   const lastSavedText = lastSaved
-    ? (window.LibriqCloudBackup?.formatLastSavedLabel?.(lastSaved) || `Last backed up: ${Utils.formatDate(lastSaved)}`)
+    ? (LibriqCloudBackup.formatLastSavedLabel(lastSaved) || `Last backed up: ${Utils.formatDate(lastSaved)}`)
     : 'No cloud backup yet.';
   const backupHelperText = cloudState.pending
     ? 'Saving...'
@@ -3433,7 +2902,7 @@ function _buildCloudBackupSection(firebase, cloudBackupMeta) {
 
 function _buildSyncSection(firebase) {
   const syncState = window.LibriqSyncBeta?.getState?.() || { enabled: false, status: 'off', message: 'Account sync off', conflictCount: 0 };
-  const signedIn = Boolean(firebase.user || window.LibriqFirebase?.getCurrentUser?.());
+  const signedIn = Boolean(firebase.user || LibriqFirebase.getCurrentUser());
   const offlineMode = Navigation.getSessionPreference?.() === 'offline';
   const diagnosticsRows = _buildSyncDiagnosticsRows(syncState);
   if (!firebase.initialized) {
@@ -3445,7 +2914,7 @@ function _buildSyncSection(firebase) {
         </div>
       </div>`;
   }
-  if (!firebase.available || !window.LibriqFirebase?.hasFirestore?.()) {
+  if (!firebase.available || !LibriqFirebase.hasFirestore()) {
     return `
       <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
         <div class="activity-text">
@@ -3542,9 +3011,9 @@ function _wireAccountControls() {
     const action = btn.dataset.accountAction;
     try {
       if (action === 'signin') {
-        await window.LibriqFirebase?.signInWithGoogle?.();
+        await LibriqFirebase.signInWithGoogle();
       } else {
-        await window.LibriqFirebase?.signOut?.();
+        await LibriqFirebase.signOut();
       }
     } catch (err) {
       const code = String(err?.code || err?.message || '');
@@ -3553,7 +3022,7 @@ function _wireAccountControls() {
     }
   };
 
-  const firebase = window.LibriqFirebase;
+  const firebase = LibriqFirebase;
 
   const verificationBtn = document.getElementById('sendVerificationEmailBtn');
   if (verificationBtn) verificationBtn.onclick = async () => {
@@ -3621,17 +3090,17 @@ function _wireAccountControls() {
       Navigation.renderCurrentPage?.();
       return;
     }
-    const firebase = window.LibriqFirebase?.getState?.() || { available: false, initialized: false, ready: false, user: null };
+    const firebase = LibriqFirebase.getState();
     if (Navigation.getSessionPreference?.() === 'offline') {
       Utils.toast('Switch to account mode before enabling sync.', 'warning');
       return;
     }
-    if (!firebase.user && !window.LibriqFirebase?.getCurrentUser?.()) {
+    if (!firebase.user && !LibriqFirebase.getCurrentUser()) {
       Utils.toast('Sign in first to enable sync.', 'warning');
       return;
     }
     if (!firebase.user) {
-      firebase.user = window.LibriqFirebase?.getCurrentUser?.() || null;
+      firebase.user = LibriqFirebase.getCurrentUser() || null;
     }
     window.LibriqSyncBeta?.setEnabled?.(true);
     Utils.toast('Sync is on. Your books will update across signed-in devices.', 'success');
@@ -3701,17 +3170,17 @@ function _buildRestoreSummaryMarkup(label, summary, extra = []) {
 }
 
 async function openCloudRestorePreview() {
-  const firebase = window.LibriqFirebase?.getState?.() || {};
-  if (!firebase.user || !window.LibriqFirebase?.hasFirestore?.()) return restoreFromCloud();
+  const firebase = LibriqFirebase.getState();
+  if (!firebase.user || !LibriqFirebase.hasFirestore()) return restoreFromCloud();
   const currentBooks = Storage.getBooks();
   let docData = null;
   try {
-    const snap = await window.LibriqFirebase.readBackupDoc(['users', firebase.user.uid, 'backups', 'current']);
+    const snap = await LibriqFirebase.readBackupDoc(['users', firebase.user.uid, 'backups', 'current']);
     if (!snap?.exists?.()) {
       Utils.toast('No cloud backup found yet.', 'info');
       return;
     }
-    docData = _normalizeCloudBackupDoc(snap.data());
+    docData = LibriqCloudBackup.normalizeBackup(snap.data());
   } catch (err) {
     console.error('[Libriq] Cloud restore preview failed:', err);
     Utils.toast('Could not load the cloud backup preview.', 'error');
@@ -3776,18 +3245,18 @@ async function openCloudRestorePreview() {
 }
 
 async function openCloudMergePreview() {
-  const firebase = window.LibriqFirebase?.getState?.() || {};
-  if (!firebase.user || !window.LibriqFirebase?.hasFirestore?.()) return;
+  const firebase = LibriqFirebase.getState();
+  if (!firebase.user || !LibriqFirebase.hasFirestore()) return;
 
   const currentBooks = Storage.getBooks();
   let docData = null;
   try {
-    const snap = await window.LibriqFirebase.readBackupDoc(['users', firebase.user.uid, 'backups', 'current']);
+    const snap = await LibriqFirebase.readBackupDoc(['users', firebase.user.uid, 'backups', 'current']);
     if (!snap?.exists?.()) {
       Utils.toast('No cloud backup found yet.', 'info');
       return;
     }
-    docData = _normalizeCloudBackupDoc(snap.data());
+    docData = LibriqCloudBackup.normalizeBackup(snap.data());
   } catch (err) {
     console.error('[Libriq] Cloud merge preview failed:', err);
     Utils.toast('Could not load the cloud backup preview.', 'error');
@@ -3800,7 +3269,7 @@ async function openCloudMergePreview() {
 
   const currentSummary = _summarizeLibrary(currentBooks, Storage.getActivityLog?.() || []);
   const cloudSummary = _summarizeLibrary(docData.data.books, docData.data.activity);
-  const plan = _planCloudMerge(currentBooks, docData.data);
+  const plan = LibriqCloudBackup.previewMerge(docData, currentBooks);
   const modal = document.getElementById('backupImportModal');
   const body = document.getElementById('backupImportBody');
   const title = document.getElementById('backupImportTitle');
@@ -3937,143 +3406,13 @@ async function exportData() {
   }
 }
 
-function _buildManualBackupPayload() {
-  const activity = Storage.getActivityLog?.() || [];
-  const books = Storage.getBooks();
-  const createdAt = new Date().toISOString();
-  const lastLocalUpdatedAt = books.reduce((latest, book) => {
-    const time = new Date(book?.updatedAt || book?.createdAt || book?.dateFinished || book?.dateStarted || book?.dateAdded || 0).getTime();
-    return Number.isFinite(time) && time > latest ? time : latest;
-  }, 0);
-  return {
-    app: 'LibriQ',
-    version: LIBRIQ.VERSION,
-    backupVersion: 4,
-    appVersion: LIBRIQ.VERSION,
-    schemaVersion: 2,
-    deviceId: Storage.getDeviceId?.(),
-    createdAt,
-    updatedAt: createdAt,
-    bookCount: books.length,
-    notesCount: books.reduce((sum, book) => sum + (book?.notes ? 1 : 0), 0),
-    quotesCount: books.reduce((sum, book) => sum + (Array.isArray(book?.quotes) ? book.quotes.length : 0), 0),
-    activityCount: activity.length,
-    lastLocalUpdatedAt: lastLocalUpdatedAt ? new Date(lastLocalUpdatedAt).toISOString() : null,
-    syncReady: false,
-    data: {
-      books,
-      profile: Storage.getProfile(),
-      goals: Storage.getGoals(),
-      streak: Storage.getStreak(),
-      activity,
-    },
-  };
-}
-
-function _normalizeCloudBackupDoc(docData) {
-  if (!docData || typeof docData !== 'object') return null;
-  if (docData.app && docData.app !== 'LibriQ') return null;
-  const data = docData.data;
-  if (!data || typeof data !== 'object') return null;
-  if (!Array.isArray(data.books)) return null;
-  return {
-    ...docData,
-    app: docData.app || 'LibriQ',
-    backupVersion: docData.backupVersion ?? 1,
-    appVersion: docData.appVersion || docData.version || LIBRIQ.VERSION,
-    schemaVersion: docData.schemaVersion ?? null,
-    createdAt: docData.createdAt || docData.updatedAt || null,
-    updatedAt: docData.updatedAt || docData.createdAt || null,
-    deviceId: docData.deviceId || null,
-    bookCount: typeof docData.bookCount === 'number' ? docData.bookCount : data.books.length,
-    notesCount: typeof docData.notesCount === 'number' ? docData.notesCount : null,
-    quotesCount: typeof docData.quotesCount === 'number' ? docData.quotesCount : null,
-    activityCount: typeof docData.activityCount === 'number' ? docData.activityCount : Array.isArray(data.activity) ? data.activity.length : 0,
-    lastLocalUpdatedAt: docData.lastLocalUpdatedAt || null,
-    syncReady: Boolean(docData.syncReady),
-    data: {
-      books: data.books,
-      profile: data.profile && typeof data.profile === 'object' ? data.profile : createProfile(),
-      goals: data.goals && typeof data.goals === 'object' ? data.goals : Storage.getGoals(),
-      streak: data.streak && typeof data.streak === 'object' ? data.streak : Storage.getStreak(),
-      activity: Array.isArray(data.activity) ? data.activity : [],
-    },
-  };
-}
-
-function _planCloudMerge(localBooks, cloudData) {
-  const local = Array.isArray(localBooks) ? localBooks.map(book => createBook(book)) : [];
-  const cloudBooks = Array.isArray(cloudData?.books) ? cloudData.books.map(book => createBook(book)) : [];
-  const localById = new Map(local.map(book => [book.id, book]));
-  const localByIsbn = new Map();
-  const localByKey = new Map();
-  local.forEach(book => {
-    if (book.isbn) localByIsbn.set(String(book.isbn).trim(), book);
-    localByKey.set(_bookMergeKey(book), book);
-  });
-
-  const result = {
-    newBooksToAdd: [],
-    localBooksKept: local.slice(),
-    duplicatesSkipped: [],
-    conflicts: [],
-    notesToAdd: 0,
-    quotesToAdd: 0,
-    itemsUnchanged: 0,
-  };
-
-  cloudBooks.forEach(cloudBook => {
-    const match = _findBookMergeMatch(cloudBook, localById, localByIsbn, localByKey);
-    if (!match) {
-      result.newBooksToAdd.push(cloudBook);
-      result.itemsUnchanged += 1;
-      result.notesToAdd += cloudBook.notes ? 1 : 0;
-      result.quotesToAdd += Array.isArray(cloudBook.quotes) ? cloudBook.quotes.length : 0;
-      return;
-    }
-
-    const localBook = match;
-    const localTime = new Date(localBook.updatedAt || localBook.createdAt || localBook.dateAdded || 0).getTime();
-    const cloudTime = new Date(cloudBook.updatedAt || cloudBook.createdAt || cloudBook.dateAdded || 0).getTime();
-    const deletedWins = Boolean(localBook.deletedAt || cloudBook.deletedAt);
-    const conflict = deletedWins || (
-      String(localBook.notes || '') !== String(cloudBook.notes || '') ||
-      Number(localBook.currentPage || 0) !== Number(cloudBook.currentPage || 0) ||
-      String(localBook.status || '') !== String(cloudBook.status || '') ||
-      (Number.isFinite(localTime) && Number.isFinite(cloudTime) && localTime !== cloudTime)
-    );
-
-    if (deletedWins || conflict) {
-      result.conflicts.push({ localBook, cloudBook, reason: deletedWins ? 'deleted' : 'changed' });
-      return;
-    }
-
-    result.notesToAdd += !localBook.notes && cloudBook.notes ? 1 : 0;
-    result.quotesToAdd += _countSafeQuoteAdds(localBook.quotes, cloudBook.quotes);
-    result.duplicatesSkipped.push(cloudBook);
-    result.itemsUnchanged += 1;
-  });
-
-  return result;
-}
-
-function _findBookMergeMatch(book, localById, localByIsbn, localByKey) {
-  if (!book) return null;
-  if (book.id && localById.has(book.id)) return localById.get(book.id);
-  const isbnKey = book.isbn ? String(book.isbn).trim() : '';
-  if (isbnKey && localByIsbn.has(isbnKey)) return localByIsbn.get(isbnKey);
-  const titleKey = _bookMergeKey(book);
-  if (titleKey && localByKey.has(titleKey)) return localByKey.get(titleKey);
-  return null;
-}
-
 async function mergeCloudWithThisDevice(docData, plan) {
-  const firebase = window.LibriqFirebase?.getState?.() || {};
+  const firebase = LibriqFirebase.getState();
   if (!firebase.user) {
     Utils.toast('Sign in first to merge from cloud.', 'warning');
     return;
   }
-  if (!window.LibriqFirebase?.hasFirestore?.()) {
+  if (!LibriqFirebase.hasFirestore()) {
     Utils.toast('Cloud backup is unavailable right now.', 'error');
     return;
   }
@@ -4082,50 +3421,11 @@ async function mergeCloudWithThisDevice(docData, plan) {
     return;
   }
 
-  const localBooks = Storage.getBooks();
-  const mergedBooks = localBooks.map(book => createBook(book));
-  const mergedIndexById = new Map(mergedBooks.map((book, index) => [book.id, index]));
-  const mergedIndexByKey = new Map();
-  mergedBooks.forEach((book, index) => {
-    mergedIndexByKey.set(_bookMergeKey(book), index);
-    if (book.isbn) mergedIndexByKey.set(`isbn:${String(book.isbn).trim()}`, index);
-  });
-
-  plan.newBooksToAdd.forEach(book => {
-    mergedBooks.push(createBook(book));
-  });
-
-  const cloudBooks = Array.isArray(docData.data.books) ? docData.data.books.map(book => createBook(book)) : [];
-  cloudBooks.forEach(cloudBook => {
-    const matchIndex = _findCloudMergeIndex(cloudBook, mergedIndexById, mergedIndexByKey, mergedBooks);
-    if (matchIndex === null) return;
-    const localBook = mergedBooks[matchIndex];
-    if (!localBook) return;
-    if (localBook.deletedAt || cloudBook.deletedAt) return;
-    mergedBooks[matchIndex] = _mergeCloudBookSafely(localBook, cloudBook);
-    mergedIndexById.set(mergedBooks[matchIndex].id, matchIndex);
-    mergedIndexByKey.set(_bookMergeKey(mergedBooks[matchIndex]), matchIndex);
-    if (mergedBooks[matchIndex].isbn) mergedIndexByKey.set(`isbn:${String(mergedBooks[matchIndex].isbn).trim()}`, matchIndex);
-  });
-
-  const mergedActivity = _mergeActivityById(Storage.getActivityLog?.() || [], Array.isArray(docData.data.activity) ? docData.data.activity : []);
-
-  Storage.saveBooks(mergedBooks);
-  Storage.replaceActivityLog?.(mergedActivity);
-  Storage.saveCloudBackupMeta?.({
-    lastCloudBackupAt: docData.updatedAt || new Date().toISOString(),
-    bookCount: docData.bookCount ?? docData.data.books.length,
-    activityCount: docData.activityCount ?? mergedActivity.length,
-    backupVersion: docData.backupVersion ?? 1,
-    appVersion: docData.appVersion || docData.version || LIBRIQ.VERSION,
-    schemaVersion: docData.schemaVersion ?? null,
-    deviceId: docData.deviceId || Storage.getDeviceId?.(),
-    notesCount: docData.notesCount ?? null,
-    quotesCount: docData.quotesCount ?? null,
-    lastLocalUpdatedAt: docData.lastLocalUpdatedAt ?? null,
-    syncReady: false,
-  });
-
+  const result = LibriqCloudBackup.applyMerge(docData, plan);
+  if (!result.ok) {
+    Utils.toast('Couldn\'t read this cloud backup. Your local data was not changed.', 'error');
+    return;
+  }
   Utils.toast('Cloud merge completed', 'success');
   try {
     Navigation.updateBadges?.();
@@ -4135,84 +3435,19 @@ async function mergeCloudWithThisDevice(docData, plan) {
   }
 }
 
-function _findCloudMergeIndex(book, mergedIndexById, mergedIndexByKey, mergedBooks) {
-  if (!book) return null;
-  if (book.id && mergedIndexById.has(book.id)) return mergedIndexById.get(book.id);
-  const isbnKey = book.isbn ? `isbn:${String(book.isbn).trim()}` : '';
-  if (isbnKey && mergedIndexByKey.has(isbnKey)) return mergedIndexByKey.get(isbnKey);
-  const titleKey = _bookMergeKey(book);
-  if (titleKey && mergedIndexByKey.has(titleKey)) return mergedIndexByKey.get(titleKey);
-  return null;
-}
-
-function _mergeCloudBookSafely(localBook, cloudBook) {
-  const merged = { ...localBook };
-  merged.tags = Array.from(new Set([...(localBook.tags || []), ...(cloudBook.tags || [])].map(tag => String(tag || '').trim()).filter(Boolean)));
-  if (!merged.notes && cloudBook.notes) {
-    merged.notes = cloudBook.notes;
-    merged.notesUpdatedAt = cloudBook.notesUpdatedAt || cloudBook.updatedAt || cloudBook.createdAt || merged.notesUpdatedAt || null;
-  }
-  merged.quotes = _mergeQuotesSafely(localBook.quotes, cloudBook.quotes);
-  if (!merged.createdAt) merged.createdAt = localBook.createdAt || cloudBook.createdAt || localBook.dateAdded || cloudBook.dateAdded || new Date().toISOString();
-  merged.updatedAt = localBook.updatedAt || cloudBook.updatedAt || merged.updatedAt || new Date().toISOString();
-  merged.deletedAt = localBook.deletedAt ?? cloudBook.deletedAt ?? null;
-  return merged;
-}
-
-function _mergeQuotesSafely(localQuotes, cloudQuotes) {
-  const byId = new Map();
-  const localList = Array.isArray(localQuotes) ? localQuotes : [];
-  const cloudList = Array.isArray(cloudQuotes) ? cloudQuotes : [];
-  localList.forEach(quote => {
-    if (!quote?.id) return;
-    byId.set(quote.id, { ...quote });
-  });
-  cloudList.forEach(quote => {
-    const normalized = {
-      id: quote.id || crypto.randomUUID(),
-      text: String(quote.text || ''),
-      page: quote.page ?? null,
-      note: quote.note ?? '',
-      createdAt: quote.createdAt || quote.updatedAt || new Date().toISOString(),
-      updatedAt: quote.updatedAt || quote.createdAt || new Date().toISOString(),
-    };
-    if (normalized.id && byId.has(normalized.id)) return;
-    const duplicate = Array.from(byId.values()).find(existing => String(existing.text || '').trim() === normalized.text.trim() && String(existing.page ?? '') === String(normalized.page ?? ''));
-    if (duplicate) return;
-    byId.set(normalized.id, normalized);
-  });
-  return Array.from(byId.values());
-}
-
-function _countSafeQuoteAdds(localQuotes, cloudQuotes) {
-  const localList = Array.isArray(localQuotes) ? localQuotes : [];
-  const cloudList = Array.isArray(cloudQuotes) ? cloudQuotes : [];
-  let count = 0;
-  cloudList.forEach(quote => {
-    if (!quote) return;
-    const normalized = String(quote.text || '').trim();
-    const page = String(quote.page ?? '');
-    const exists = localList.some(existing => {
-      if (existing?.id && quote.id && existing.id === quote.id) return true;
-      return String(existing?.text || '').trim() === normalized && String(existing?.page ?? '') === page;
-    });
-    if (!exists) count += 1;
-  });
-  return count;
-}
-
 async function backupToCloud() {
-  const firebase = window.LibriqFirebase?.getState?.() || {};
+  const firebase = LibriqFirebase.getState();
   if (!firebase.user) {
     Utils.toast('Sign in first to use cloud backup.', 'warning');
     return;
   }
-  if (!window.LibriqFirebase?.hasFirestore?.()) {
+  if (!LibriqFirebase.hasFirestore()) {
     Utils.toast('Cloud backup is unavailable right now.', 'error');
     return;
   }
-  const ok = await window.LibriqCloudBackup?.runBackup?.('manual', false);
+  const ok = await LibriqCloudBackup.runBackup('manual', false);
   if (ok) {
+    Utils.toast('Cloud backup saved', 'success');
     try {
       Navigation.renderCurrentPage?.();
     } catch (uiErr) {
@@ -4222,12 +3457,12 @@ async function backupToCloud() {
 }
 
 async function restoreFromCloud(preloadedDoc = null) {
-  const firebase = window.LibriqFirebase?.getState?.() || {};
+  const firebase = LibriqFirebase.getState();
   if (!firebase.user) {
     Utils.toast('Sign in first to restore from cloud.', 'warning');
     return;
   }
-  if (!window.LibriqFirebase?.hasFirestore?.()) {
+  if (!LibriqFirebase.hasFirestore()) {
     Utils.toast('Cloud backup is unavailable right now.', 'error');
     return;
   }
@@ -4236,12 +3471,12 @@ async function restoreFromCloud(preloadedDoc = null) {
   let docData = preloadedDoc;
   try {
     if (!docData) {
-      const snap = await window.LibriqFirebase.readBackupDoc(['users', firebase.user.uid, 'backups', 'current']);
+      const snap = await LibriqFirebase.readBackupDoc(['users', firebase.user.uid, 'backups', 'current']);
       if (!snap?.exists?.()) {
         Utils.toast('No cloud backup found yet.', 'info');
         return;
       }
-      docData = _normalizeCloudBackupDoc(snap.data());
+      docData = LibriqCloudBackup.normalizeBackup(snap.data());
     }
     if (!docData) {
       Utils.toast("Couldn't restore this backup. Your local data was not changed.", 'error');
@@ -4263,33 +3498,17 @@ async function restoreFromCloud(preloadedDoc = null) {
   }
 
   const data = docData.data;
+  let result;
   try {
-    restoreInProgress = true;
-    window.LibriqCloudBackup?.suppressAutoBackupFor?.(2500);
-    Storage.saveBooks((data.books || []).map(book => createBook(book)));
-    Storage.saveProfile(data.profile);
-    Storage.saveGoals(data.goals);
-    Storage.saveStreak?.(data.streak);
+    result = LibriqCloudBackup.applyRestore(docData);
   } catch (err) {
     console.error('[Libriq] Cloud restore local replacement failed:', err);
     Utils.toast("Couldn't restore this backup. Your local data was not changed.", 'error');
-    restoreInProgress = false;
     return;
   }
-
-  try {
-    Storage.replaceActivityLog?.(Array.isArray(data.activity) ? data.activity.slice(-500) : []);
-    Storage.saveCloudBackupMeta?.({
-      lastCloudBackupAt: docData.updatedAt || new Date().toISOString(),
-      bookCount: docData.bookCount ?? data.books.length,
-      activityCount: docData.activityCount ?? data.activity.length,
-      backupVersion: docData.backupVersion ?? 1,
-      appVersion: docData.appVersion || docData.version || LIBRIQ.VERSION,
-      deviceId: docData.deviceId || Storage.getDeviceId?.(),
-    });
-    Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_cloud_restored', null, { itemCount: data.books.length, activityCount: data.activity.length }, 'manual'));
-  } catch (err) {
-    console.warn('[Libriq] Cloud restore post-update failed:', err);
+  if (!result?.ok) {
+    Utils.toast("Couldn't restore this backup. Your local data was not changed.", 'error');
+    return;
   }
 
   Utils.toast('Cloud backup restored', 'success');
@@ -4299,7 +3518,6 @@ async function restoreFromCloud(preloadedDoc = null) {
   } catch (uiErr) {
     console.warn('[Libriq] Cloud restore UI refresh failed:', uiErr);
   }
-  restoreInProgress = false;
 }
 
 function promptImportData() {
@@ -4682,7 +3900,7 @@ async function clearLocalCache() {
     actionLabel: 'Clear cache',
   });
   if (!confirmed) return;
-  const firebase = window.LibriqFirebase?.getState?.() || {};
+  const firebase = LibriqFirebase.getState();
   if (firebase.user?.uid) {
     Storage.clearAccountScopedData?.(firebase.user.uid, { keys: ['BOOKS', 'ACTIVITY', 'STREAK', 'GOALS', 'BACKUP', 'CLOUD_BACKUP', 'SYNC_META', 'SYNC_TOMBSTONES'] });
   }
@@ -4692,7 +3910,7 @@ async function clearLocalCache() {
 }
 
 async function confirmDeleteLibraryData() {
-  const firebase = window.LibriqFirebase?.getState?.() || {};
+  const firebase = LibriqFirebase.getState();
   if (!firebase.user?.uid) {
     Utils.toast('Sign in first to delete library data.', 'warning');
     return;
@@ -4707,7 +3925,7 @@ async function confirmDeleteLibraryData() {
   if (!confirmed) return;
   try {
     window.LibriqSyncBeta?.detachForAccountSwitch?.('delete-library-data');
-    await window.LibriqFirebase.deleteCurrentUserLibraryData?.();
+    await LibriqFirebase.deleteCurrentUserLibraryData();
     Storage.clearAccountScopedData?.(firebase.user.uid, { keys: ['BOOKS', 'ACTIVITY', 'STREAK', 'GOALS', 'BACKUP', 'CLOUD_BACKUP', 'SYNC_META', 'SYNC_TOMBSTONES'] });
     Navigation.updateBadges?.();
     Navigation.renderCurrentPage?.();
@@ -4719,7 +3937,7 @@ async function confirmDeleteLibraryData() {
 }
 
 async function confirmDeleteAccount() {
-  const firebase = window.LibriqFirebase?.getState?.() || {};
+  const firebase = LibriqFirebase.getState();
   if (!firebase.user?.uid) {
     Utils.toast('Sign in first to delete your account.', 'warning');
     return;
@@ -4734,7 +3952,7 @@ async function confirmDeleteAccount() {
   if (!confirmed) return;
   try {
     window.LibriqSyncBeta?.detachForAccountSwitch?.('delete-account');
-    await window.LibriqFirebase.deleteCurrentUserAccount?.();
+    await LibriqFirebase.deleteCurrentUserAccount();
     Storage.clearAccountScopedData?.(firebase.user.uid, { keys: ['BOOKS', 'ACTIVITY', 'PROFILE', 'STREAK', 'GOALS', 'BACKUP', 'CLOUD_BACKUP', 'SYNC_META', 'SYNC_TOMBSTONES'] });
     Storage.clearActiveAccountScope?.();
     Navigation.goTo('session');

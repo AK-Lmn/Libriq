@@ -3,13 +3,13 @@
    Open Library API integration + local search
    ============================================ */
 
-const Search = (() => {
-  const Identity = window.BookIdentity || globalThis.BookIdentity || {
-    isSameBook: (left, right) => {
-      const clean = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
-      return clean(left?.title) === clean(right?.title) && clean(left?.author) === clean(right?.author);
-    },
-    getSourceLabels: () => [],
+import { BookAPI } from './api/index.js';
+import { Library } from './library.js';
+
+export const Search = (() => {
+  const Identity = {
+    isSameBook: (...args) => BookAPI.isSameBook(...args),
+    getSourceLabels: (...args) => BookAPI.getSourceLabels(...args),
   };
   let currentQuery = '';
   let focusedIndex = -1;
@@ -17,6 +17,7 @@ const Search = (() => {
   let searchDebounced;
   let filtersOpen = false;
   let activeFilters = _defaultFilters();
+  let initialized = false;
 
   function getEls() {
     return {
@@ -320,8 +321,7 @@ const Search = (() => {
   }
 
   function _previewDescription(book) {
-    const helper = typeof NormalizeBook !== 'undefined' ? NormalizeBook : null;
-    return helper?.chooseBestDescription?.([
+    return BookAPI.chooseBestDescription([
       { text: book?.shortDescription, source: book?.source || 'search-snippet', language: book?.language, snippet: true },
       { text: book?.description, source: book?.source || 'search-description', language: book?.language, full: true },
     ], { preferShort: true }) || 'No description available yet.';
@@ -432,6 +432,8 @@ const Search = (() => {
   }
 
   function init() {
+    if (initialized) return;
+    initialized = true;
     const { input } = getEls();
 
     searchDebounced = Utils.debounce((q) => {
@@ -479,4 +481,6 @@ const Search = (() => {
 
   return { init, open, close, openManualEntry, updateShortcutLabel };
 })();
+
+if (typeof window !== 'undefined') window.Search = Search;
 

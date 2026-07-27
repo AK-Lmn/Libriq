@@ -3,15 +3,25 @@
    Entry point — bootstraps the application
    ============================================ */
 
-(() => {
-  let _booted = false;
-  let _whatsNewTimer = null;
-  const RELEASE_KEY = 'libriq_seen_version';
-  const WHATS_NEW_VERSION = LIBRIQ.VERSION;
-  const SESSION_PREF_KEY = 'libriq_session_pref';
+import { Navigation } from './navigation.js';
+import { Library } from './library.js';
+import { Search } from './search.js';
+import { LibriqSyncBeta } from './sync.js';
+import { LibriqFirebase } from './firebase-client.js';
+import { LibriqCloudBackup } from './cloudBackup.js';
 
-  const RELEASE_NOTES = {
-    [WHATS_NEW_VERSION]: {
+let _booted = false;
+let _whatsNewTimer = null;
+const RELEASE_KEY = 'libriq_seen_version';
+const SESSION_PREF_KEY = 'libriq_session_pref';
+
+function getWhatsNewVersion() {
+  return LIBRIQ.VERSION;
+}
+
+function getReleaseNotes() {
+  return {
+    [getWhatsNewVersion()]: {
       title: "What's New in LibriQ v4.7.0",
       subtitle: 'Better discovery, synced activity, and a smoother cloud-first experience.',
       sections: [
@@ -20,11 +30,11 @@
         ['Clickable recommendations', 'Recommendations, Open Library subject rails, and free classics cards now open details and add flows more naturally.'],
         ['Synced activity history', 'Activity now syncs with your account so Dashboard and Activity stay aligned after reloads and site-data clears.'],
         ['Read and archive links', 'When available, Internet Archive links appear in Book Details without changing the normal search experience.'],
-        ['AI recommendations', 'Gemini-backed recommendations are present as an experimental foundation and remain safely parked while provider compatibility is tuned.'],
       ],
       note: 'This release stays backward-compatible with older saved books and keeps search, sync, and library behavior intact.',
     },
   };
+}
 
   function resetShellUI() {
     if (typeof Search !== 'undefined' && Search.close) Search.close();
@@ -45,7 +55,7 @@
 
   function shouldShowWhatsNew() {
     const seen = localStorage.getItem(RELEASE_KEY) || '';
-    return seen !== WHATS_NEW_VERSION;
+    return seen !== getWhatsNewVersion();
   }
 
   function renderWhatsNew() {
@@ -53,7 +63,7 @@
     const body = document.getElementById('whatsNewBody');
     if (!modal || !body) return;
 
-    const notes = RELEASE_NOTES[WHATS_NEW_VERSION];
+    const notes = getReleaseNotes()[getWhatsNewVersion()];
     if (!notes) return;
 
     modal.querySelector('.modal-title')?.replaceChildren(document.createTextNode(notes.title));
@@ -101,12 +111,12 @@
   }
 
   function dismissWhatsNew() {
-    localStorage.setItem(RELEASE_KEY, WHATS_NEW_VERSION);
+    localStorage.setItem(RELEASE_KEY, getWhatsNewVersion());
     closeWhatsNew();
     document.body.style.overflow = '';
-    window.LibriqNavigation?.routeAfterAuthReady?.();
-    if (window.LibriqNavigation?.currentPage === 'session') {
-      window.LibriqNavigation?.renderCurrentPage?.();
+    Navigation.routeAfterAuthReady?.();
+    if (Navigation.currentPage === 'session') {
+      Navigation.renderCurrentPage?.();
     }
   }
 
@@ -114,22 +124,22 @@
     window.addEventListener('libriq:book:added',   () => Navigation.updateBadges());
     window.addEventListener('libriq:book:updated', () => Navigation.updateBadges());
     window.addEventListener('libriq:book:removed', () => Navigation.updateBadges());
-    window.addEventListener('libriq:book:added',   () => window.LibriqCloudBackup?.scheduleIfAllowed?.('book-added'));
-    window.addEventListener('libriq:book:updated', () => window.LibriqCloudBackup?.scheduleIfAllowed?.('book-updated'));
-    window.addEventListener('libriq:book:removed', () => window.LibriqCloudBackup?.scheduleIfAllowed?.('book-removed'));
-    window.addEventListener('libriq:book:added',   () => window.LibriqSyncBeta?.onLocalChange?.());
-    window.addEventListener('libriq:book:updated', () => window.LibriqSyncBeta?.onLocalChange?.());
-    window.addEventListener('libriq:book:removed', () => window.LibriqSyncBeta?.onLocalChange?.());
-    window.addEventListener('libriq:profile:updated', () => window.LibriqCloudBackup?.scheduleIfAllowed?.('profile-updated'));
-    window.addEventListener('libriq:goals:updated', () => window.LibriqCloudBackup?.scheduleIfAllowed?.('goals-updated'));
-    window.addEventListener('libriq:streak:updated', () => window.LibriqCloudBackup?.scheduleIfAllowed?.('streak-updated'));
-    window.addEventListener('libriq:activity:updated', () => window.LibriqCloudBackup?.scheduleIfAllowed?.('activity-updated'));
+    window.addEventListener('libriq:book:added',   () => LibriqCloudBackup.scheduleIfAllowed('book-added'));
+    window.addEventListener('libriq:book:updated', () => LibriqCloudBackup.scheduleIfAllowed('book-updated'));
+    window.addEventListener('libriq:book:removed', () => LibriqCloudBackup.scheduleIfAllowed('book-removed'));
+    window.addEventListener('libriq:book:added',   () => LibriqSyncBeta.onLocalChange());
+    window.addEventListener('libriq:book:updated', () => LibriqSyncBeta.onLocalChange());
+    window.addEventListener('libriq:book:removed', () => LibriqSyncBeta.onLocalChange());
+    window.addEventListener('libriq:profile:updated', () => LibriqCloudBackup.scheduleIfAllowed('profile-updated'));
+    window.addEventListener('libriq:goals:updated', () => LibriqCloudBackup.scheduleIfAllowed('goals-updated'));
+    window.addEventListener('libriq:streak:updated', () => LibriqCloudBackup.scheduleIfAllowed('streak-updated'));
+    window.addEventListener('libriq:activity:updated', () => LibriqCloudBackup.scheduleIfAllowed('activity-updated'));
     window.addEventListener('libriq:page-changed', (event) => {
       if (event?.detail?.page === 'session') {
         cancelScheduledWhatsNew();
         closeWhatsNew();
-        window.LibriqCloudBackup?.pause?.('session');
-        window.LibriqSyncBeta?.refresh?.();
+        LibriqCloudBackup.pause('session');
+        LibriqSyncBeta.refresh();
         return;
       }
       if (event?.detail?.page) {
@@ -142,11 +152,11 @@
       Navigation.applyTheme();
       Navigation.updateBadges();
       Navigation.goTo('dashboard');
-      window.LibriqCloudBackup?.scheduleIfAllowed?.('reset');
+      LibriqCloudBackup.scheduleIfAllowed('reset');
     });
   }
 
-  function boot() {
+  export function bootApp() {
     if (_booted) return;
     _booted = true;
 
@@ -160,6 +170,7 @@
     Navigation.goTo('boot');
     waitForAuthThenRoute();
 
+    Library.init();
     Search.init();
 
     wireGlobalEvents();
@@ -180,8 +191,8 @@
   }
 
   function registerServiceWorker() {
-    if (!('serviceWorker' in navigator)) return;
-    if (location.protocol === 'file:') return;
+    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+    if (typeof location === 'undefined' || location.protocol === 'file:') return;
 
     const isLocalDevHost = ['localhost', '127.0.0.1', '::1'].includes(location.hostname);
     if (isLocalDevHost) {
@@ -195,7 +206,7 @@
       }).catch((err) => {
         console.warn('[LibriQ] Service worker cleanup failed:', err);
       });
-      caches?.keys?.().then((keys) => {
+      globalThis.caches?.keys?.().then((keys) => {
         return Promise.all(keys.filter((key) => key.startsWith('libriq-')).map((key) => caches.delete(key)));
       }).catch((err) => {
         console.warn('[LibriQ] Cache cleanup failed:', err);
@@ -210,13 +221,13 @@
   }
 
   function waitForAuthThenRoute() {
-    const firebase = window.LibriqFirebase?.getState?.() || {};
+    const firebase = LibriqFirebase.getState();
     if (firebase.ready) {
       Navigation.routeAfterAuthReady?.();
       return;
     }
     let routed = false;
-    const unsubscribe = window.LibriqFirebase?.onChange?.((nextState) => {
+    const unsubscribe = LibriqFirebase.onChange((nextState) => {
       if (routed || !nextState?.ready) return;
       routed = true;
       unsubscribe?.();
@@ -224,7 +235,7 @@
     });
     window.setTimeout(() => {
       if (routed) return;
-      const latest = window.LibriqFirebase?.getState?.() || {};
+      const latest = LibriqFirebase.getState();
       if (!latest.ready) return;
       routed = true;
       unsubscribe?.();
@@ -232,12 +243,9 @@
     }, 2500);
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot);
-  } else {
-    boot();
-  }
-})();
+export function isAppBooted() {
+  return _booted;
+}
 
 
 

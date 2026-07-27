@@ -37,9 +37,9 @@ const state = {
 };
 
 const listeners = new Set();
-const config = window.LibriqConfig?.firebase || {};
-const hasConfig = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId']
-  .every(key => String(config[key] || '').trim());
+let config = {};
+let hasConfig = false;
+let runtimePrepared = false;
 
 let app = null;
 let auth = null;
@@ -50,10 +50,7 @@ let testFirestore = null;
 let initRetryTimer = null;
 let initRetryStartedAt = 0;
 let manualSignOutPending = false;
-const TEST_MODE = Boolean(
-  (location.hostname === 'localhost' || location.hostname === '127.0.0.1') &&
-  (new URLSearchParams(location.search).get('libriq_e2e_test_mode') === '1' || localStorage.getItem('libriq_e2e_test_mode') === '1')
-);
+let TEST_MODE = false;
 const INIT_RETRY_TIMEOUT_MS = 3500;
 const INIT_RETRY_INTERVAL_MS = 75;
 const AUTH_READY_TIMEOUT_MS = 1500;
@@ -67,6 +64,19 @@ let authNullTimer = null;
 let profileSyncHydrating = false;
 let goalsSyncHydrating = false;
 let streakSyncHydrating = false;
+
+function prepareRuntime() {
+  if (runtimePrepared) return;
+  const runtimeLocation = globalThis.location || { hostname: '', search: '' };
+  config = window.LibriqConfig?.firebase || {};
+  hasConfig = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId']
+    .every(key => String(config[key] || '').trim());
+  TEST_MODE = Boolean(
+    (runtimeLocation.hostname === 'localhost' || runtimeLocation.hostname === '127.0.0.1') &&
+    (new URLSearchParams(runtimeLocation.search).get('libriq_e2e_test_mode') === '1' || globalThis.localStorage?.getItem('libriq_e2e_test_mode') === '1')
+  );
+  runtimePrepared = true;
+}
 
 function getTestApiBase() {
   return `${location.origin}/__libriq_test_api`;
@@ -146,6 +156,9 @@ function getVisibleUser() {
 }
 
 function init() {
+  prepareRuntime();
+  if (state.initialized || authListener || app || initRetryTimer) return state;
+
   if (TEST_MODE) {
     app = { name: 'libriq-test-app' };
     testFirestore = createTestFirestore();
@@ -171,13 +184,18 @@ function init() {
     state.user = testUser;
     state.restoringSession = false;
     state.signedOutConfirmed = !testUser;
+    attachTestModeSyncListeners();
+    installTestHooks();
+    emit();
     return state;
   }
 
   if (!hasConfig) {
-    if ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && !initRetryTimer) {
+    if ((globalThis.location?.hostname === 'localhost' || globalThis.location?.hostname === '127.0.0.1') && !initRetryTimer) {
       initRetryStartedAt = initRetryStartedAt || Date.now();
       initRetryTimer = window.setInterval(() => {
+        runtimePrepared = false;
+        prepareRuntime();
         if (hasConfig) {
           window.clearInterval(initRetryTimer);
           initRetryTimer = null;
@@ -343,6 +361,32 @@ function init() {
   return state;
 }
 
+function attachTestModeSyncListeners() {
+  if (!TEST_MODE || window.__libriqTestSupplementalSyncListenersAttached) return;
+  window.__libriqTestSupplementalSyncListenersAttached = true;
+
+  window.addEventListener?.('libriq:profile:updated', event => {
+    if (profileSyncHydrating || !getCurrentUser()?.uid) return;
+    queueProfileSync(event?.detail || window.LibriqStorage?.getProfile?.());
+  });
+  window.addEventListener?.('libriq:goals:updated', event => {
+    if (goalsSyncHydrating || !getCurrentUser()?.uid) return;
+    queueGoalsSync(event?.detail || window.LibriqStorage?.getGoals?.());
+  });
+  window.addEventListener?.('libriq:streak:updated', event => {
+    if (streakSyncHydrating || !getCurrentUser()?.uid) return;
+    queueStreakSync(event?.detail || window.LibriqStorage?.getStreak?.());
+  });
+  window.addEventListener?.('online', () => {
+    const current = getCurrentUser();
+    if (!current?.uid) return;
+    syncActivityFromCloud(current.uid);
+    syncProfileFromCloud(current.uid);
+    syncGoalsFromCloud(current.uid);
+    syncStreakFromCloud(current.uid);
+  });
+}
+
 async function signInWithGoogle() {
   if (TEST_MODE) {
     testUser = {
@@ -419,6 +463,7 @@ function getUserEmailAuthInfo(user = null) {
 }
 
 async function refreshCurrentUser() {
+  if (TEST_MODE) return getCurrentUser();
   const current = auth?.currentUser || (await getCurrentAuthUser({ waitForReady: true }));
   if (!current) return null;
   await reload(current);
@@ -434,6 +479,11 @@ async function refreshCurrentUser() {
 }
 
 async function sendVerificationEmailToCurrentUser() {
+  if (TEST_MODE && testUser?.email) {
+    testUser = { ...testUser, emailVerified: true };
+    setState({ user: testUser });
+    return true;
+  }
   const current = auth?.currentUser || (await getCurrentAuthUser({ waitForReady: true }));
   if (!current?.email) {
     const error = new Error('No email address is available for this account.');
@@ -451,18 +501,24 @@ async function sendPasswordResetToEmail(email) {
     error.code = 'auth/invalid-email';
     throw error;
   }
+  if (TEST_MODE) return true;
   await sendPasswordResetEmail(auth, normalizedEmail);
   return true;
 }
 
 async function requestEmailChange(newEmail) {
-  const current = auth?.currentUser || (await getCurrentAuthUser({ waitForReady: true }));
   const normalizedEmail = String(newEmail || '').trim();
   if (!normalizedEmail) {
     const error = new Error('Enter a valid email address.');
     error.code = 'auth/invalid-email';
     throw error;
   }
+  if (TEST_MODE && testUser) {
+    testUser = { ...testUser, email: normalizedEmail };
+    setState({ user: testUser });
+    return true;
+  }
+  const current = auth?.currentUser || (await getCurrentAuthUser({ waitForReady: true }));
   if (!current) {
     const error = new Error('Firebase is unavailable.');
     error.code = 'auth/network-request-failed';
@@ -925,7 +981,6 @@ async function syncProfileFromCloud(uid = null) {
         setPendingProfileQueue(null);
       }
     }
-    window.dispatchEvent?.(new CustomEvent('libriq:profile:updated', { detail: { uid: profileUid } }));
     logActivityDebug('Profile sync success', { uid: `${String(profileUid).slice(0, 6)}…` });
     return merged;
   } catch (err) {
@@ -1346,9 +1401,8 @@ function subscribe(fn) {
   return () => listeners.delete(fn);
 }
 
-init();
-
-window.LibriqFirebase = {
+export const LibriqFirebase = {
+  init,
   getState: () => ({ ...state }),
   onChange: subscribe,
   signInWithGoogle,
@@ -1395,7 +1449,8 @@ window.LibriqFirebase = {
   isTestMode: () => TEST_MODE,
 };
 
-if (TEST_MODE) {
+function installTestHooks() {
+  if (!TEST_MODE || window.LibriqE2E) return;
   window.LibriqE2E = {
     seedAuth(uid, email, displayName) {
       localStorage.setItem('libriq_e2e_test_uid', uid);

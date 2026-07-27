@@ -1,12 +1,14 @@
 # LibriQ
 
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the native ES-module API boundary and temporary classic-script bridge.
+
 **LibriQ** is a cloud-first personal book-tracking web app designed to help readers organize their library, track reading progress, rate books, save favorites, write private notes, refresh book metadata, and view reading statistics in one calm and focused workspace.
 
 The app is built with **HTML, CSS, and Vanilla JavaScript**, with book data powered by **Google Books** and **Open Library**.
 
 LibriQ now centers on signed-in account use with Google sign-in and email/password sign-in. When account services are unavailable, a fallback offline path can appear so the app remains usable on the current device. Saved library data, reading progress, ratings, favorites, and private notes are stored locally and can be backed up or synced through the signed-in account flow, with safer manual cloud restore previews, manual cloud merge previews, automatic Account Sync for signed-in devices, Sync Health diagnostics, and optional JSON export/import for manual safety copies.
 
-LibriQ 4.7 keeps the v4.6 metadata/discovery work, adds synced activity history, clickable recommendations, smoother session restore, and keeps Gemini recommendations parked as an experimental foundation while provider compatibility is tuned.
+LibriQ 4.7 keeps the v4.6 metadata/discovery work and adds synced activity history, clickable library-based recommendations, and smoother session restore.
 
 LibriQ also uses basic Google Analytics page-view tracking for anonymous traffic measurement only.
 
@@ -59,7 +61,6 @@ The app is designed to feel like a focused digital reading space instead of a pl
 * Clickable recommendation cards that open details and add flows more naturally
 * Firebase-backed activity history so Dashboard and Activity stay aligned after reloads and site-data clears
 * Session restore is smoother and no longer flashes the sign-in screen during temporary auth rehydration
-* Gemini AI recommendations remain experimental/parked until provider compatibility is fully resolved
 * Backward-compatible saved books with no destructive migration
 
 ## What's New in v4.2.0
@@ -266,20 +267,7 @@ LibriQ's current public metadata usage does not require API keys for Open Librar
 
 Google Books search works best with a Google Books API key configured, and Firebase client configuration is still required for auth and cloud sync.
 
-Firebase Admin credentials are only needed for serverless/private backend features such as Gemini recommendations. Use either:
-
-* `FIREBASE_SERVICE_ACCOUNT_JSON`, or
-* `FIREBASE_ADMIN_PROJECT_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL`, and `FIREBASE_ADMIN_PRIVATE_KEY`
-
-The private key env var may need literal `\n` normalization depending on your deployment platform.
-
-Gemini AI recommendations use a backend/serverless foundation and expect `GEMINI_API_KEY` in the deployment environment only when the experimental AI feature flag is enabled. Gemini stays parked/experimental until provider compatibility is fully resolved.
-
-Optional Gemini env vars:
-
-* `GEMINI_API_KEY`
-* `GEMINI_MODEL`
-* `GEMINI_API_BASE`
+The normal application uses only the Firebase client SDK for authentication and Firestore sync. It does not require Firebase Admin credentials or a private server-side service account.
 
 Firestore rules for cloud-backed activity:
 

@@ -4,7 +4,9 @@
    No UI logic. No state. Pure data fetching.
    ============================================ */
 
-const OpenLibraryAPI = (() => {
+import { NormalizeBook } from './normalizeBook.js';
+
+export const OpenLibraryAPI = (() => {
 
   // Responsible API identity note:
   // Open Library recommends identifying clients, but browser JavaScript
@@ -213,8 +215,7 @@ const OpenLibraryAPI = (() => {
   function _normalizeSubjectResult(work, subjectKey) {
     if (!work || !work.title) return null;
     const coverId = Array.isArray(work.cover_id) ? work.cover_id[0] : work.cover_id || (Array.isArray(work.covers) ? work.covers[0] : null);
-    const source = typeof NormalizeBook !== 'undefined' && NormalizeBook?.fromOpenLibrary
-      ? NormalizeBook.fromOpenLibrary({
+    const source = NormalizeBook.fromOpenLibrary({
           key: work.key || null,
           title: work.title,
           author_name: Array.isArray(work.authors) ? work.authors.map(author => author?.name || '').filter(Boolean) : ['Unknown Author'],
@@ -228,8 +229,7 @@ const OpenLibraryAPI = (() => {
           subject_people: Array.isArray(work.subject_people) ? work.subject_people : [],
           subject_times: Array.isArray(work.subject_times) ? work.subject_times : [],
           isbn: Array.isArray(work.isbn) ? work.isbn : [],
-        })
-      : null;
+        });
     if (source) {
       return {
         ...source,

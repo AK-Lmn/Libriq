@@ -3,7 +3,11 @@
    Books-only sync namespace separate from backup.
    ============================================ */
 
-const LibriqSyncBeta = (() => {
+import { Navigation } from './navigation.js';
+import { LibriqFirebase } from './firebase-client.js';
+import { LibriqCloudBackup } from './cloudBackup.js';
+
+export const LibriqSyncBeta = (() => {
   const STORAGE_KEY = 'libriq_sync_beta_enabled';
   const USER_DISABLED_KEY = 'libriq_account_sync_user_disabled';
   const DEBUG_KEY = 'libriq_debug_sync';
@@ -18,7 +22,8 @@ const LibriqSyncBeta = (() => {
     ERROR: 'error',
   };
 
-  let enabled = localStorage.getItem(STORAGE_KEY) === '1';
+  let initialized = false;
+  let enabled = false;
   let status = STATUS.OFF;
   let message = 'Account sync off';
   let conflictCount = 0;
@@ -40,7 +45,7 @@ const LibriqSyncBeta = (() => {
   let awaitingInitialSnapshot = false;
   let queuedUploadBeforeInitialSnapshot = false;
   let uploadInFlight = false;
-  let lastAuthUid = getResolvedUser()?.uid || null;
+  let lastAuthUid = null;
 
   function isUserDisabled() {
     return localStorage.getItem(USER_DISABLED_KEY) === '1';
@@ -52,11 +57,11 @@ const LibriqSyncBeta = (() => {
   }
 
   function getFirebaseState() {
-    return window.LibriqFirebase?.getState?.() || {};
+    return LibriqFirebase.getState();
   }
 
   function getResolvedUser() {
-    return window.LibriqFirebase?.getCurrentUser?.() || getFirebaseState().user || null;
+    return LibriqFirebase.getCurrentUser() || getFirebaseState().user || null;
   }
 
   function debugEnabled() {
@@ -202,7 +207,7 @@ const LibriqSyncBeta = (() => {
     if (!firebase.available) reasons.push('firebase unavailable');
     if (!firebase.ready) reasons.push('firebase not ready');
     if (!user) reasons.push('no firebase user');
-    if (!window.LibriqFirebase?.hasFirestore?.()) reasons.push('firestore unavailable');
+    if (!LibriqFirebase.hasFirestore()) reasons.push('firestore unavailable');
     if (!isAccountMode()) reasons.push(`session mode ${sessionMode}`);
     if (Navigation.currentPage === 'session') reasons.push('session screen');
     if (document.body.classList.contains('session-choice-active')) reasons.push('session choice active');
@@ -220,7 +225,7 @@ const LibriqSyncBeta = (() => {
       firebase.available &&
       firebase.ready &&
       user &&
-      window.LibriqFirebase?.hasFirestore?.() &&
+      LibriqFirebase.hasFirestore() &&
       isAccountMode() &&
       Navigation.currentPage !== 'session' &&
       !document.body.classList.contains('session-choice-active')
@@ -362,7 +367,7 @@ const LibriqSyncBeta = (() => {
       rawEnabled: localStorage.getItem(STORAGE_KEY),
     });
     if (!enabled) return setState(STATUS.OFF, 'Account sync off');
-    if (!firebase.available || !firebase.ready || !user || !window.LibriqFirebase?.hasFirestore?.()) {
+    if (!firebase.available || !firebase.ready || !user || !LibriqFirebase.hasFirestore()) {
       lastError = null;
       return setState(STATUS.UNAVAILABLE, 'Sync unavailable');
     }
@@ -392,8 +397,8 @@ const LibriqSyncBeta = (() => {
       listenerUnsub();
       debugLog('sync listener detached', { reason: 'reattach', listenerPath });
     }
-    const colRef = window.LibriqFirebase.collection(window.LibriqFirebase.getFirestoreClient(), ...segments);
-    const q = window.LibriqFirebase.query(colRef, window.LibriqFirebase.orderBy('updatedAt', 'asc'));
+    const colRef = LibriqFirebase.collection(LibriqFirebase.getFirestoreClient(), ...segments);
+    const q = LibriqFirebase.query(colRef, LibriqFirebase.orderBy('updatedAt', 'asc'));
     listenerPath = path;
     currentUid = uid;
     listenerAttached = true;
@@ -401,7 +406,7 @@ const LibriqSyncBeta = (() => {
     awaitingInitialSnapshot = true;
     debugLog('sync listener attach attempt', { uid, listenerPath });
     try {
-      listenerUnsub = window.LibriqFirebase.onSnapshot(q, (snapshot) => {
+      listenerUnsub = LibriqFirebase.onSnapshot(q, (snapshot) => {
         if (applyingRemoteChanges) return;
         const remoteBooks = [];
         snapshot.forEach((docSnap) => remoteBooks.push(docSnap.data()));
@@ -500,16 +505,16 @@ const LibriqSyncBeta = (() => {
   }
 
   function scheduleSettledBackup() {
-    if (!window.LibriqCloudBackup?.runBackup) return;
+    if (!LibriqCloudBackup.runBackup) return;
     if (!enabled || !listenerAttached) return;
     if (applyingRemoteChanges) return;
     if (pendingSettledBackupTimer) clearTimeout(pendingSettledBackupTimer);
-    window.LibriqCloudBackup?.suppressAutoBackupFor?.(5000);
+    LibriqCloudBackup.suppressAutoBackupFor(5000);
     pendingSettledBackupTimer = window.setTimeout(() => {
       pendingSettledBackupTimer = null;
       if (!enabled || !listenerAttached || applyingRemoteChanges) return;
       if (![STATUS.SYNCED, STATUS.CONFLICT].includes(status)) return;
-      window.LibriqCloudBackup?.runBackup?.('sync-settled', true);
+      LibriqCloudBackup.runBackup('sync-settled', true);
       debugLog('settled backup started');
     }, 4500);
   }
@@ -646,7 +651,7 @@ const LibriqSyncBeta = (() => {
 
   async function uploadLocalBooks(reason = 'local-change') {
     const user = getResolvedUser();
-    if (!enabled || !user || !window.LibriqFirebase?.hasFirestore?.()) return;
+    if (!enabled || !user || !LibriqFirebase.hasFirestore()) return;
     if (currentUid && currentUid !== user.uid) {
       debugLog('sync write blocked for stale uid', { currentUid, authUid: user.uid, reason });
       return;
@@ -662,13 +667,13 @@ const LibriqSyncBeta = (() => {
     try {
       uploadInFlight = true;
       applyingRemoteChanges = true;
-      const db = window.LibriqFirebase.getFirestoreClient();
-      const writes = books.map(book => window.LibriqFirebase.setDoc(
-        window.LibriqFirebase.doc(db, ...getSyncBooksCollectionSegments(user.uid), book.id),
+      const db = LibriqFirebase.getFirestoreClient();
+      const writes = books.map(book => LibriqFirebase.setDoc(
+        LibriqFirebase.doc(db, ...getSyncBooksCollectionSegments(user.uid), book.id),
         book,
       ));
-      const deleteWrites = tombstones.map(tombstone => window.LibriqFirebase.setDoc(
-        window.LibriqFirebase.doc(db, ...getSyncBooksCollectionSegments(user.uid), tombstone.id),
+      const deleteWrites = tombstones.map(tombstone => LibriqFirebase.setDoc(
+        LibriqFirebase.doc(db, ...getSyncBooksCollectionSegments(user.uid), tombstone.id),
         tombstone,
       ));
       const favoriteWrites = books.filter(book => typeof book.isFavorite === 'boolean').map(book => ({ bookId: book.id, isFavorite: book.isFavorite }));
@@ -961,7 +966,7 @@ const LibriqSyncBeta = (() => {
       debugLog('account sync auto-enable skipped by user preference', { reason, uid: user?.uid || null });
       return false;
     }
-    if (!firebase.available || !firebase.ready || !user || !window.LibriqFirebase?.hasFirestore?.()) {
+    if (!firebase.available || !firebase.ready || !user || !LibriqFirebase.hasFirestore()) {
       if (enabled) refresh();
       return false;
     }
@@ -973,23 +978,21 @@ const LibriqSyncBeta = (() => {
     return true;
   }
 
-  window.addEventListener('libriq:auth-changed', () => {
+  function handleAuthChanged() {
     const nextUid = getResolvedUser()?.uid || null;
     if (lastAuthUid !== nextUid) {
       detachForAccountSwitch('auth-uid-changed');
       lastAuthUid = nextUid;
     }
     maybeAutoEnable('auth-changed');
-  });
-  window.addEventListener('libriq:page-changed', (event) => {
+  }
+
+  function handlePageChanged(event) {
     if (event?.detail?.page === 'session') return;
     scheduleUiRefresh();
-  });
-  window.addEventListener('libriq:sync-request-upload', onLocalChange);
-  window.addEventListener('libriq:book:added', onLocalChange);
-  window.addEventListener('libriq:book:updated', onLocalChange);
-  window.addEventListener('libriq:book:removed', onLocalChange);
-  window.addEventListener('online', () => {
+  }
+
+  function handleOnline() {
     refresh();
     if (Storage.getSyncMeta?.()?.pending) {
       queueUpload('reconnect');
@@ -999,10 +1002,35 @@ const LibriqSyncBeta = (() => {
         }
       }, 750);
     }
-  });
-  window.addEventListener('offline', () => setState(STATUS.PAUSED, 'Sync paused in offline mode'));
+  }
 
-  maybeAutoEnable('startup');
+  function handleOffline() {
+    setState(STATUS.PAUSED, 'Sync paused in offline mode');
+  }
+
+  function init() {
+    if (initialized) return;
+    initialized = true;
+    enabled = localStorage.getItem(STORAGE_KEY) === '1';
+    lastAuthUid = getResolvedUser()?.uid || null;
+
+    window.addEventListener('libriq:auth-changed', handleAuthChanged);
+    window.addEventListener('libriq:page-changed', handlePageChanged);
+    window.addEventListener('libriq:sync-request-upload', onLocalChange);
+    window.addEventListener('libriq:book:added', onLocalChange);
+    window.addEventListener('libriq:book:updated', onLocalChange);
+    window.addEventListener('libriq:book:removed', onLocalChange);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    window.LibriqSyncDebug = { status: debugStatus, pruneOldLocalTombstones };
+    window.LibriqSyncPaths = {
+      getSyncBooksCollectionSegments,
+      getSyncBooksCollectionPath,
+    };
+
+    maybeAutoEnable('startup');
+  }
 
   function debugStatus() {
     const firebase = getFirebaseState();
@@ -1012,7 +1040,7 @@ const LibriqSyncBeta = (() => {
     const reasons = [];
     if (!enabled) reasons.push('not enabled in storage');
     if (!user) reasons.push('no uid');
-    if (!firebase.available || !window.LibriqFirebase?.hasFirestore?.()) reasons.push('Firestore unavailable');
+    if (!firebase.available || !LibriqFirebase.hasFirestore()) reasons.push('Firestore unavailable');
     if (!isAccountMode()) reasons.push('not account mode');
     if (Navigation.currentPage === 'session' || document.body.classList.contains('session-choice-active')) reasons.push('session choice active');
     if (lastError) reasons.push('listener error');
@@ -1040,20 +1068,12 @@ const LibriqSyncBeta = (() => {
       lastSyncSuccessAt: syncMeta.lastSyncSuccessAt || null,
       ...getTombstoneStats(),
       disabledReasons: reasons,
-      firebaseCurrentUserUid: firebase.user?.uid || window.LibriqFirebase?.getCurrentUser?.()?.uid || null,
-      firestoreAvailable: Boolean(window.LibriqFirebase?.hasFirestore?.()),
+      firebaseCurrentUserUid: firebase.user?.uid || LibriqFirebase.getCurrentUser()?.uid || null,
+      firestoreAvailable: LibriqFirebase.hasFirestore(),
       eligibilityAllowed: isEligible(),
       eligibilityBlockedReason: reasons[0] || null,
     };
   }
 
-  window.LibriqSyncDebug = { status: debugStatus, pruneOldLocalTombstones };
-  window.LibriqSyncPaths = {
-    getSyncBooksCollectionSegments,
-    getSyncBooksCollectionPath,
-  };
-
-  return { getState, setEnabled, pauseForOffline, enableWithPrompt, refresh, maybeAutoEnable, onLocalChange, queueUpload, pruneOldLocalTombstones, detachForAccountSwitch };
+  return { init, getState, setEnabled, pauseForOffline, enableWithPrompt, refresh, maybeAutoEnable, onLocalChange, queueUpload, pruneOldLocalTombstones, detachForAccountSwitch };
 })();
-
-window.LibriqSyncBeta = LibriqSyncBeta;

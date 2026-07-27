@@ -13,7 +13,6 @@ LibriQ 4.7 stabilizes the cloud-first experience with richer discovery, synced a
 * Clickable recommendation cards that open saved details or add flows more naturally
 * Firebase-backed activity history with Dashboard and Activity staying in sync after reloads and site-data clears
 * Session restore now avoids a false sign-in screen during temporary auth rehydration
-* Gemini AI recommendations remain parked/experimental while provider compatibility is tuned
 
 ### Notes
 
@@ -60,7 +59,6 @@ LibriQ's latest release is a Studio polish pass focused on the cloud-first accou
 
 ### Notes
 
-* No Gemini recommendations yet
 * No v4.6 metadata expansion yet
 * No Tailwind migration
 * No change to auth, sync, Firestore paths, or book data model behavior

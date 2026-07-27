@@ -4,7 +4,10 @@
    Discovery only. No main search integration.
    ============================================ */
 
-const GutendexAPI = (() => {
+import * as BookIdentity from './bookIdentity.js';
+import { NormalizeBook } from './normalizeBook.js';
+
+export const GutendexAPI = (() => {
   const BASE = 'https://gutendex.com/books';
   const TIMEOUT_MS = 8000;
   let _lastFetchFailed = false;
@@ -80,8 +83,7 @@ const GutendexAPI = (() => {
     const subjects = Array.isArray(item.bookshelves)
       ? item.bookshelves.map(value => String(value || '').trim()).filter(Boolean)
       : [];
-    const sourceData = typeof BookIdentity !== 'undefined' && BookIdentity?.buildSourceBadgeData
-      ? BookIdentity.buildSourceBadgeData({
+    const sourceData = BookIdentity.buildSourceBadgeData({
           source: 'gutenberg',
           gutendexId,
           gutenbergId,
@@ -90,8 +92,7 @@ const GutendexAPI = (() => {
             gutendex: gutendexId,
             ...(gutenbergId ? { gutenberg: gutenbergId } : {}),
           },
-        })
-      : { sourceIds: {}, sourceBadges: ['Project Gutenberg'], sources: ['Project Gutenberg'] };
+        });
 
     const description = NormalizeBook?.chooseBestDescription?.([
       { text: item.summaries?.[0], source: 'gutendex', language: Array.isArray(item.languages) ? item.languages[0] : 'en', full: true },

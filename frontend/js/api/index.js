@@ -17,8 +17,17 @@
      search.js never needs to change.
    ============================================ */
 
-const BookAPI = (() => {
-  window.LibriqApiMeta = window.LibriqApiMeta || Object.freeze({
+import * as BookIdentity from './bookIdentity.js';
+import { NormalizeBook } from './normalizeBook.js';
+import { OpenLibraryAPI } from './openLibrary.js';
+import { GoogleBooksAPI } from './googleBooks.js';
+import { GutendexAPI } from './gutendex.js';
+import { InternetArchiveAPI } from './internetArchive.js';
+import { MergeBooks } from './mergeBooks.js';
+import { BookCache } from './cache.js';
+
+export const BookAPI = (() => {
+  if (typeof window !== 'undefined') window.LibriqApiMeta = window.LibriqApiMeta || Object.freeze({
     appName: 'LibriQ',
     appVersion: '4.6',
     contactEmail: 'klamano23@gmail.com',
@@ -101,10 +110,9 @@ const BookAPI = (() => {
     ]);
 
     let result = MergeBooks.mergeOne(olBook, gbBook);
-    const descriptionHelper = typeof NormalizeBook !== 'undefined' ? NormalizeBook : null;
     if (
       result &&
-      !descriptionHelper?.isUsefulDescription?.(result.description) &&
+      !NormalizeBook.isUsefulDescription(result.description) &&
       typeof OpenLibraryAPI.enrichBook === 'function' &&
       (result.openLibraryWorkKey || String(result.openLibraryId || '').includes('/works/'))
     ) {
@@ -128,12 +136,10 @@ const BookAPI = (() => {
 
   async function _enrichSearchDescriptions(results) {
     if (!Array.isArray(results) || results.length === 0) return [];
-    if (typeof OpenLibraryAPI.enrichBook !== 'function') return results;
-    const descriptionHelper = typeof NormalizeBook !== 'undefined' ? NormalizeBook : null;
     const needsDescription = results
       .map((book, index) => ({ book, index }))
       .filter(({ book }) => (
-        !descriptionHelper?.isUsefulDescription?.(book.description) &&
+        !NormalizeBook.isUsefulDescription(book.description) &&
         (book.openLibraryWorkKey || String(book.openLibraryId || '').includes('/works/'))
       ))
       .slice(0, 6);
@@ -152,6 +158,17 @@ const BookAPI = (() => {
     lookupISBN,
     searchOpenLibrary,
     searchGoogleBooks,
+    searchBySubject: OpenLibraryAPI.searchBySubject,
+    searchCuratedClassics: GutendexAPI.searchCuratedClassics,
+    enrichBook: OpenLibraryAPI.enrichBook,
+    enrichBookLinks: InternetArchiveAPI.enrichBookLinks,
+    isSameBook: BookIdentity.isSameBook,
+    getSourceLabels: BookIdentity.getSourceLabels,
+    normalizeSource: BookIdentity.normalizeSource,
+    buildSourceBadgeData: BookIdentity.buildSourceBadgeData,
+    chooseBestDescription: NormalizeBook.chooseBestDescription,
+    isUsefulDescription: NormalizeBook.isUsefulDescription,
+    normalizeDescriptionText: NormalizeBook.normalizeDescriptionText,
     getLastSearchMeta: () => ({ ..._lastSearchMeta }),
   };
 

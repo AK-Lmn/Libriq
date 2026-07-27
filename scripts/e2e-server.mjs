@@ -7,6 +7,7 @@ const root = path.resolve(process.cwd(), 'frontend');
 const port = Number(process.env.LIBRIQ_E2E_PORT || 4173);
 const store = new Map();
 const subscribers = new Map();
+const sockets = new Set();
 
 function sendJson(res, code, data) {
   res.writeHead(code, { 'content-type': 'application/json' });
@@ -47,6 +48,11 @@ const server = http.createServer(async (req, res) => {
   if (pathname.startsWith('/__libriq_test_api')) {
     if (pathname === '/__libriq_test_api/reset' && req.method === 'POST') {
       store.clear();
+      sendJson(res, 200, { ok: true });
+      return;
+    }
+
+    if (pathname === '/__libriq_test_api/health' && req.method === 'GET') {
       sendJson(res, 200, { ok: true });
       return;
     }
@@ -122,3 +128,26 @@ const server = http.createServer(async (req, res) => {
 server.listen(port, '127.0.0.1', () => {
   console.log(`LibriQ E2E server running at http://127.0.0.1:${port}`);
 });
+
+server.on('connection', socket => {
+  sockets.add(socket);
+  socket.once('close', () => sockets.delete(socket));
+});
+
+let shuttingDown = false;
+function shutdown() {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  for (const responses of subscribers.values()) {
+    for (const response of responses) response.end();
+  }
+  subscribers.clear();
+  server.close(() => process.exit(0));
+  setTimeout(() => {
+    for (const socket of sockets) socket.destroy();
+    process.exit(0);
+  }, 2000).unref();
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);

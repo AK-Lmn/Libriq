@@ -12,20 +12,9 @@
      rating, ratingsCount, previewLink
    ============================================ */
 
-const NormalizeBook = (() => {
-  const Identity = window.BookIdentity || globalThis.BookIdentity || {
-    normalizeIsbn: value => String(value || '').toUpperCase().replace(/[^0-9X]/g, ''),
-    buildSourceBadgeData: (book = {}) => ({
-      sourceIds: {
-        ...(book.openLibraryId ? { openlibrary: book.openLibraryId } : {}),
-        ...(book.googleBooksId ? { google: book.googleBooksId } : {}),
-      },
-      sourceBadges: [],
-      sources: [],
-    }),
-    normalizeSourceId: value => String(value || '').trim().toLowerCase(),
-  };
+import * as Identity from './bookIdentity.js';
 
+export const NormalizeBook = (() => {
   const OL_COVER = 'https://covers.openlibrary.org/b/id';
   const DESCRIPTION_FALLBACK = 'No description available yet.';
 

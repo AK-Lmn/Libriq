@@ -3,7 +3,11 @@
    Home page renderer
    ============================================ */
 
-const Dashboard = {
+import { Library } from './library.js';
+import { Search } from './search.js';
+import { LibriqFirebase } from './firebase-client.js';
+
+export const Dashboard = {
 
   render() {
     const main = document.getElementById('mainContent');
@@ -221,14 +225,12 @@ const Dashboard = {
   },
 };
 
-window.Dashboard = Dashboard;
-
 function getDashboardAccountName() {
   const profile = Storage.getProfile();
   const profileName = String(profile?.name || '').trim();
   if (profileName && profileName.toLowerCase() !== 'reader') return profileName;
 
-  const firebase = window.LibriqFirebase?.getState?.() || {};
+  const firebase = LibriqFirebase.getState();
   const displayName = Utils.formatDisplayName(firebase.user?.displayName);
   if (displayName) return displayName;
 
@@ -439,7 +441,7 @@ function buildWishlistShelf() {
     </div>`;
 }
 
-function buildMonthlyChart(monthlyData) {
+export function buildMonthlyChart(monthlyData) {
   const max = Math.max(...monthlyData, 1);
   const currentMonth = new Date().getMonth();
 
@@ -556,7 +558,7 @@ function buildActivityFromEvent(event) {
   };
 }
 
-function buildGenreRow(genre, count, total) {
+export function buildGenreRow(genre, count, total) {
   const pct = Math.round((count / total) * 100);
   const color = Utils.genreColor(genre);
   return `

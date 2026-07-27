@@ -21,6 +21,7 @@ function createNode(id) {
     id,
     hidden: false,
     innerHTML: '',
+    childNodes: [],
     scrollTop: 0,
     style: {},
     classList: makeClassList(),
@@ -141,6 +142,9 @@ globalThis.Utils = {
   toast: () => {},
   show: (node) => { if (node) node.hidden = false; },
   hide: (node) => { if (node) node.hidden = true; },
+  toggle: (node, visible) => { if (node) node.hidden = !visible; },
+  isApplePlatform: () => false,
+  getSearchShortcutLabel: () => 'Ctrl K',
   formatDate: value => String(value ?? ''),
   timeAgo: value => String(value ?? ''),
   formatNumber: value => String(value ?? 0),
@@ -202,8 +206,8 @@ globalThis.LibriqFirebase = {
 };
 globalThis.LibriqSyncBeta = { refresh: () => {}, pauseForOffline: () => {}, maybeAutoEnable: () => {}, getState: () => ({ enabled: false, status: 'off' }) };
 globalThis.LibriqCloudBackup = { refresh: () => {}, scheduleIfAllowed: () => {}, pause: () => {} };
-globalThis.LibriqConfig = { enableAiRecommendations: false };
-globalThis.OpenLibraryAPI = {
+globalThis.LibriqConfig = {};
+const navigationBookApiFixture = {
   searchBySubject: async () => [
     {
       id: 'ol-1',
@@ -218,8 +222,6 @@ globalThis.OpenLibraryAPI = {
       pageCount: 222,
     },
   ],
-};
-globalThis.GutendexAPI = {
   searchCuratedClassics: async () => [
     {
       id: 'gd-1',
@@ -234,7 +236,14 @@ globalThis.GutendexAPI = {
       pageCount: 320,
     },
   ],
+  isSameBook: (left, right) => left?.title === right?.title,
+  buildSourceBadgeData: (book) => ({
+    sourceBadges: book?.sourceBadges || [],
+    sources: book?.sources || book?.sourceBadges || [],
+  }),
 };
+const { BookAPI: importedBookAPI } = await import('../frontend/js/api/index.js');
+Object.assign(importedBookAPI, navigationBookApiFixture);
 
 const dashboardRecentBook = {
   id: 'dashboard-recent-1',
@@ -276,8 +285,9 @@ Storage.getBooks = () => recommendationBooks;
 Storage.getBooksByStatus = (status) => recommendationBooks.filter(book => book.status === status);
 Storage.getBookById = (id) => recommendationBooks.find(book => book.id === id) || null;
 
-await import('../frontend/js/dashboard.js');
-await import('../frontend/js/library.js');
+const { LibriqFirebase } = await import('../frontend/js/firebase-client.js');
+Object.assign(LibriqFirebase, globalThis.LibriqFirebase);
+await import('../frontend/js/appModules.js');
 await import('../frontend/js/navigation.js');
 globalThis.Navigation = globalThis.LibriqNavigation;
 await import('../frontend/js/app.js');
@@ -319,11 +329,11 @@ for (const [name, expectedToken, expectedClass, visibleTokens, run] of checks) {
 
 main.innerHTML = '';
 nav.goTo('recommendations');
-if (!main.innerHTML.toLowerCase().includes('ai recommendations are being tuned and will be available soon.')) {
-  throw new Error('recommendations page did not show the AI coming-soon note');
+if (!main.innerHTML.includes('Library-based suggestions')) {
+  throw new Error('recommendations page did not render its local recommendation shell');
 }
-if (main.innerHTML.includes('id="geminiRecommendationsBtn"')) {
-  throw new Error('recommendations page still exposed an AI button while disabled');
+if (/\bai recommendations\b|gemini/i.test(main.innerHTML)) {
+  throw new Error('recommendations page rendered removed AI UI');
 }
 Storage.getBooks = () => recommendationBooks;
 Storage.getBooksByStatus = (status) => recommendationBooks.filter(book => book.status === status);

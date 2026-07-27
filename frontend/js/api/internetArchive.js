@@ -4,7 +4,7 @@
    No discovery. No main search integration.
    ============================================ */
 
-const InternetArchiveAPI = (() => {
+export const InternetArchiveAPI = (() => {
   const BASE = 'https://archive.org';
   const TIMEOUT_MS = 6000;
   let _lastFetchFailed = false;
