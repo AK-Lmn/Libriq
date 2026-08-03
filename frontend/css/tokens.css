@@ -99,10 +99,10 @@
 
   /* Surfaces */
   --bg: #0D0C0A;
-  --surface-1: #0E0D0B;
-  --surface-2: #111009;
-  --surface-3: #141210;
-  --surface-4: #1A1814;
+  --surface-1: #12100D;
+  --surface-2: #17140F;
+  --surface-3: #1D1913;
+  --surface-4: #252018;
   --bg-base: var(--bg);
   --bg-surface: var(--surface-1);
   --bg-elevated: var(--surface-2);
@@ -128,11 +128,11 @@
 
   /* Text */
   --text-strong: #F5F0E8;
-  --text-primary: #D5CCBE;
-  --text-body: #9B9083;
-  --text-muted: #8A7E70;
-  --text-dim: #7A6E60;
-  --text-faint: #4A4438;
+  --text-primary: #DDD5C9;
+  --text-body: #B5AA9C;
+  --text-muted: #A79B8D;
+  --text-dim: #9A8E80;
+  --text-faint: #968A7D;
   --text-secondary: var(--text-body);
   --text-tertiary: var(--text-dim);
   --text-inverse: var(--bg);

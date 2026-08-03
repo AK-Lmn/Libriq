@@ -1,8 +1,3 @@
-/* ============================================
-   LIBRIQ NAVIGATION
-   Client-side routing and page management
-   ============================================ */
-
 import { BookAPI } from './api/index.js';
 import { LIBRIQ, createBook } from './data.js';
 import { Storage } from './storage.js';
@@ -13,6 +8,9 @@ import { Dashboard } from './dashboard.js';
 import { buildMonthlyChart, buildGenreRow } from './dashboard.js';
 import { LibriqFirebase } from './firebase-client.js';
 import { LibriqCloudBackup } from './cloudBackup.js';
+import { Router } from './app/router.js';
+import { createDashboardPage } from './features/dashboard/dashboardPage.js';
+import { createLibraryPage } from './features/library/libraryPage.js';
 
 export const Navigation = (() => {
   let _currentPage = 'dashboard';
@@ -92,77 +90,95 @@ export const Navigation = (() => {
     return nextMode;
   }
 
+  const featureActions = {
+    navigate: (page) => goTo(page),
+    openSearch: () => Search.open(),
+    openManualEntry: () => Search.openManualEntry(),
+    importBackup: () => promptImportData(),
+    clearSearch: () => clearLibrarySearch(),
+    showBookDetails: (bookId) => Library.showDetailsModal(bookId),
+    updateProgress: (bookId) => Library.showProgressModal(bookId),
+    toggleFavorite: (bookId) => {
+      Library.toggleFavorite(bookId);
+      updateBadges();
+      renderCurrentPage();
+    },
+    removeBook: (bookId) => {
+      const book = Storage.getBookById(bookId);
+      Library.removeBook(bookId, book?.title || 'this book');
+    },
+  };
+
+  function lazyFeature(load, factoryName, render) {
+    let pagePromise;
+    return (context) => {
+      pagePromise ||= load().then(module => module[factoryName]({ render }));
+      return pagePromise.then(page => {
+        if (context.router.currentRoute !== context.name) return undefined;
+        return page(context);
+      });
+    };
+  }
+
   const pages = {
     boot:      () => renderBootPage(),
     session:   () => renderSessionChoicePage(),
-    dashboard: () => Dashboard.render(),
-    library:   () => renderLibraryPage(),
+    dashboard: createDashboardPage({ dashboard: Dashboard, actions: featureActions }),
+    library:   createLibraryPage({ render: renderLibraryPage, actions: featureActions }),
     reading:   () => renderStatusPage(LIBRIQ.STATUS.READING,  'Currently Reading', 'ph-book-open'),
     wishlist:  () => renderStatusPage(LIBRIQ.STATUS.WISHLIST, 'Want to Read',      'ph-bookmark'),
     finished:  () => renderStatusPage(LIBRIQ.STATUS.FINISHED, 'Finished Books',    'ph-check-circle'),
     favorites: () => renderFavoritesPage(),
-    stats:     () => renderStatsPage(),
+    stats:     lazyFeature(() => import('./features/statistics/statisticsPage.js'), 'createStatisticsPage', renderStatsPage),
     activity:  () => renderActivityPage(),
     goals:     () => renderGoalsPage(),
-    recommendations: () => renderRecommendationsPage(),
+    recommendations: lazyFeature(() => import('./features/recommendations/recommendationsPage.js'), 'createRecommendationsPage', renderRecommendationsPage),
     help:      () => renderHelpPage(),
     profile:   () => renderProfilePage(),
-    settings:  () => renderSettingsPage(),
+    settings:  lazyFeature(() => import('./features/settings/settingsPage.js'), 'createSettingsPage', renderSettingsPage),
   };
 
-  function goTo(page) {
-    if (!pages[page]) return;
-    _currentPage = page;
-    applyAuthShellStateForPage(page);
+  const router = new Router({
+    root: () => getMainContentRoot('router'),
+    initialRoute: _currentPage,
+    beforeNavigate: ({ name }) => {
+      _currentPage = name;
+      applyAuthShellStateForPage(name);
 
-    Utils.$$('.nav-item').forEach(el => {
-      el.classList.toggle('active', el.dataset.page === page);
-      el.setAttribute('aria-current', el.dataset.page === page ? 'page' : 'false');
-    });
-
-    closeMobileSidebar();
-
-    const main = getMainContentRoot(`goTo(${page})`);
-    if (main) main.innerHTML = '';
-    try {
-      pages[page]();
-    } catch (err) {
-      console.error(`[LibriQ] Failed to render ${page} page:`, err);
-      if (main) {
-        main.innerHTML = `
-          <div class="page" id="${page}Page">
+      Utils.$$('.nav-item').forEach(el => {
+        const active = el.dataset.page === name;
+        el.classList.toggle('active', active);
+        if (active) el.setAttribute('aria-current', 'page');
+        else el.removeAttribute('aria-current');
+      });
+      closeMobileSidebar();
+    },
+    afterNavigate: ({ name, root }) => {
+      LibriqCloudBackup.refresh();
+      if (root) root.scrollTop = 0;
+      window.dispatchEvent(new CustomEvent('libriq:page-changed', { detail: { page: name } }));
+    },
+    renderError: ({ error, name, root }) => {
+      console.error(`[LibriQ] Failed to render ${name} page:`, error);
+      if (root) {
+        root.innerHTML = `
+          <div class="page" id="${name}Page">
             <div class="page-header">
-              <h1 class="page-title">${Utils.sanitize(page.charAt(0).toUpperCase() + page.slice(1))}</h1>
+              <h1 class="page-title">${Utils.sanitize(name.charAt(0).toUpperCase() + name.slice(1))}</h1>
               <p class="page-subtitle">This page could not finish rendering.</p>
             </div>
           </div>`;
       }
-    }
-    LibriqCloudBackup.refresh();
+    },
+  }).registerAll(pages);
 
-    const mainRoot = getMainContentRoot(`goTo(${page})`);
-    if (mainRoot) mainRoot.scrollTop = 0;
-    window.dispatchEvent(new CustomEvent('libriq:page-changed', { detail: { page } }));
+  function goTo(page) {
+    router.navigate(page);
   }
 
   function renderCurrentPage() {
     applyAuthShellStateForPage(_currentPage);
-    const main = getMainContentRoot(`renderCurrentPage(${_currentPage})`);
-    if (main) main.innerHTML = '';
-    try {
-      if (pages[_currentPage]) pages[_currentPage]();
-    } catch (err) {
-      console.error(`[LibriQ] Failed to render current page ${_currentPage}:`, err);
-      if (main) {
-        main.innerHTML = `
-          <div class="page" id="${_currentPage}Page">
-            <div class="page-header">
-              <h1 class="page-title">${Utils.sanitize(_currentPage.charAt(0).toUpperCase() + _currentPage.slice(1))}</h1>
-              <p class="page-subtitle">This page could not finish rendering.</p>
-            </div>
-          </div>`;
-      }
-    }
+    router.refresh();
   }
 
   function applyAuthShellStateForPage(page) {
@@ -462,7 +478,7 @@ function renderBootPage() {
   main.innerHTML = `
     <div class="session-page">
       <section class="session-hero">
-        <div class="session-card-stack" style="max-width: 420px; margin: 0 auto;">
+        <div class="session-card-stack session-card-stack--compact">
           <div class="session-loading-card" aria-live="polite">
             <div class="session-loading-spinner"></div>
             <div>
@@ -541,13 +557,13 @@ async function maybeShowNewDeviceCloudPrompt() {
     card.style.marginTop = 'var(--space-6)';
     card.innerHTML = `
       <div class="goal-header"><div class="goal-title">Cloud backup found</div></div>
-      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+      <div class="activity-item activity-item--static">
         <div class="activity-text">
           <div class="activity-title">We found a cloud backup for your account.</div>
           <div class="activity-subtitle">Restore here or keep this device empty for now.</div>
         </div>
       </div>
-      <div style="display:flex; gap: var(--space-2); flex-wrap: wrap;">
+      <div class="inline-actions">
         <button class="btn btn-primary btn-sm" id="newDeviceCloudRestoreBtn" type="button">Restore here</button>
         <button class="btn btn-secondary btn-sm" id="newDeviceCloudDismissBtn" type="button">Keep this device empty for now</button>
       </div>
@@ -1037,7 +1053,7 @@ function renderLibraryPage() {
           <h1 class="page-title">My Library</h1>
           <p class="page-subtitle">${books.length} book${books.length !== 1 ? 's' : ''} total</p>
         </div>
-        <button class="btn btn-primary" onclick="Search.open()">
+        <button class="btn btn-primary" type="button" data-action="open-search">
           <i class="ph ph-plus"></i> Add Book
         </button>
       </div>
@@ -1273,18 +1289,18 @@ function buildLibraryEmpty(filter = 'all', query = '') {
       ? [`No books on "${selectedShelf}"`, 'Try another shelf or add this book to a shelf.']
       : (messages[filter] || messages.all);
   return `
-    <div class="empty-state" style="grid-column: 1/-1;">
+    <div class="empty-state grid-full-width">
       <div class="empty-state-icon"><i class="ph ph-books"></i></div>
       <div class="empty-state-title">${title}</div>
       <div class="empty-state-body">${body}</div>
-      ${hasQuery ? `<button class="btn btn-secondary" onclick="Navigation.clearLibrarySearch()"><i class="ph ph-x"></i> Clear Search</button>` : `
-        <button class="btn btn-primary" onclick="Search.open()">
+      ${hasQuery ? `<button class="btn btn-secondary" type="button" data-action="clear-library-search"><i class="ph ph-x"></i> Clear Search</button>` : `
+        <button class="btn btn-primary" type="button" data-action="open-search">
           <i class="ph ph-magnifying-glass"></i> Search Books
         </button>
-        <button class="btn btn-secondary" onclick="Search.openManualEntry()">
+        <button class="btn btn-secondary" type="button" data-action="open-manual-entry">
           <i class="ph ph-pencil"></i> Add Manually
         </button>
-        <button class="btn btn-secondary" onclick="Navigation.promptImportData()">
+        <button class="btn btn-secondary" type="button" data-action="import-backup">
           <i class="ph ph-upload-simple"></i> Import Backup
         </button>
       `}
@@ -1349,7 +1365,7 @@ function renderFavoritesPage() {
   const grid = document.getElementById('favoritesGrid');
   if (books.length === 0) {
     grid.innerHTML = `
-      <div class="empty-state" style="grid-column:1/-1;">
+      <div class="empty-state grid-full-width">
         <div class="empty-state-icon"><i class="ph ph-heart"></i></div>
         <div class="empty-state-title">No favorites yet</div>
         <div class="empty-state-body">Tap the heart on any book to save it here.</div>
@@ -1387,7 +1403,7 @@ function renderFavoritesPage() {
         </div>
       </div>
 
-      <div class="stats-row stagger" style="margin-bottom: var(--space-8);">
+      <div class="stats-row stagger stats-row--spaced">
         <div class="stat-card">
           <div class="stat-card-icon amber"><i class="ph ph-books"></i></div>
           <div class="stat-card-value">${stats.total}</div>
@@ -1416,20 +1432,20 @@ function renderFavoritesPage() {
         </div>
       </div>
 
-        <div class="goal-widget" style="margin-bottom: var(--space-8);">
-        <div class="goal-header" style="gap: var(--space-3); align-items: center; justify-content: space-between; flex-wrap: wrap;">
+        <div class="goal-widget goal-widget--section">
+        <div class="goal-header goal-header--responsive">
           <div>
             <div class="goal-title">Yearly Recap</div>
             <div class="stats-section-meta">Private summary from your local library</div>
           </div>
-          <label class="library-sort-label" for="recapYearSelect" style="margin: 0;">Year</label>
-          <select id="recapYearSelect" class="library-sort-select" style="max-width: 140px;">
+          <label class="library-sort-label library-sort-label--flush" for="recapYearSelect">Year</label>
+          <select id="recapYearSelect" class="library-sort-select library-sort-select--year">
             ${recapYears.length ? recapYears.map(year => `<option value="${year}" ${year === selectedYear ? 'selected' : ''}>${year}</option>`).join('') : `<option value="${selectedYear}" selected>${selectedYear}</option>`}
           </select>
         </div>
 
         ${recap.missingFinishDates ? `
-          <div class="empty-state stats-empty-state" style="margin-top: var(--space-4);">
+          <div class="empty-state stats-empty-state block-offset-md">
             <div class="empty-state-icon"><i class="ph ph-hourglass-medium"></i></div>
             <div class="empty-state-title">${recap.missingFinishDates} finished book${recap.missingFinishDates !== 1 ? 's are' : ' is'} missing a finish date</div>
             <div class="empty-state-body">Statistics is using the best available local metadata so your finished books still appear here.</div>
@@ -1437,11 +1453,11 @@ function renderFavoritesPage() {
         ` : ''}
 
         ${recap.finishedCount === 0 ? `
-          <div class="empty-state stats-empty-state" style="margin-top: var(--space-4);">
+          <div class="empty-state stats-empty-state block-offset-md">
             <div class="empty-state-icon"><i class="ph ph-book-open"></i></div>
             <div class="empty-state-title">No finished books for this year yet.</div>
             <div class="empty-state-body">If your finished books are missing finish dates, Statistics will show a note above instead of counting them as empty.</div>
-            <div style="display:flex; gap: var(--space-2); flex-wrap: wrap; justify-content: center;">
+            <div class="inline-actions inline-actions--centered">
               <button class="btn btn-primary btn-sm" onclick="Search.open()">
                 <i class="ph ph-magnifying-glass"></i> Search Books
               </button>
@@ -1451,7 +1467,7 @@ function renderFavoritesPage() {
             </div>
           </div>
         ` : `
-          <div class="stats-row stagger" style="margin-top: var(--space-4);">
+          <div class="stats-row stagger block-offset-md">
             <div class="stat-card">
               <div class="stat-card-icon amber"><i class="ph ph-check-circle"></i></div>
               <div class="stat-card-value">${recap.finishedCount}</div>
@@ -1474,15 +1490,15 @@ function renderFavoritesPage() {
             </div>
           </div>
 
-          <div class="stats-chart-grid" style="margin-top: var(--space-4);">
+          <div class="stats-chart-grid block-offset-md">
             <div class="goal-widget stats-chart-card">
               <div class="goal-header">
                 <div class="goal-title">Most Read Genre / Shelf</div>
                 <div class="stats-section-meta">Based on finished books this year</div>
               </div>
               ${recap.topBucket ? `
-                <div class="activity-list" style="margin-top: var(--space-3);">
-                  <div class="activity-item" style="cursor: default;">
+                <div class="activity-list block-offset-sm">
+                  <div class="activity-item activity-item--noninteractive">
                     <div class="activity-text">
                       <div class="activity-subtitle">${Utils.sanitize(recap.topBucket.type === 'shelf' ? 'Shelf' : 'Genre')}</div>
                       <div class="activity-title">${Utils.sanitize(recap.topBucket.name)}</div>
@@ -1491,7 +1507,7 @@ function renderFavoritesPage() {
                   </div>
                 </div>
               ` : `
-                <div class="empty-state stats-empty-state" style="margin-top: var(--space-3);">
+                <div class="empty-state stats-empty-state block-offset-sm">
                   <div class="empty-state-icon"><i class="ph ph-tag"></i></div>
                   <div class="empty-state-title">No genres or shelves yet</div>
                   <div class="empty-state-body">Add a few shelf labels or books with genres to see this summary.</div>
@@ -1505,8 +1521,8 @@ function renderFavoritesPage() {
                 <div class="stats-section-meta">By page count</div>
               </div>
               ${recap.longestBook ? `
-                <div class="activity-list" style="margin-top: var(--space-3);">
-                  <div class="activity-item" style="cursor: default;">
+                <div class="activity-list block-offset-sm">
+                  <div class="activity-item activity-item--noninteractive">
                     <div class="activity-text">
                       <div class="activity-title">${Utils.sanitize(recap.longestBook.title)}</div>
                       <div class="activity-subtitle">${Utils.sanitize(recap.longestBook.author)}</div>
@@ -1515,7 +1531,7 @@ function renderFavoritesPage() {
                   </div>
                 </div>
               ` : `
-                <div class="empty-state stats-empty-state" style="margin-top: var(--space-3);">
+                <div class="empty-state stats-empty-state block-offset-sm">
                   <div class="empty-state-icon"><i class="ph ph-book"></i></div>
                   <div class="empty-state-title">No page counts yet</div>
                   <div class="empty-state-body">Books without page counts are skipped here.</div>
@@ -1524,7 +1540,7 @@ function renderFavoritesPage() {
             </div>
           </div>
 
-          <div class="goal-widget" style="margin-top: var(--space-4);">
+          <div class="goal-widget block-offset-md">
             <div class="goal-header">
               <div class="goal-title">Highest Rated</div>
               <div class="stats-section-meta">${recap.highestRatedBooks.length ? `${recap.highestRatedBooks.length} book${recap.highestRatedBooks.length !== 1 ? 's' : ''}` : 'No rated books this year'}</div>
@@ -1574,7 +1590,7 @@ function renderFavoritesPage() {
         </div>
 
         <div class="stats-side-stack">
-          <div class="goal-widget" style="height: fit-content;">
+          <div class="goal-widget goal-widget--fit">
             <div class="goal-header"><div class="goal-title">All-Time Summary</div></div>
             <div class="activity-list">
               ${[
@@ -1589,18 +1605,18 @@ function renderFavoritesPage() {
                 ['Longest streak',     `${streak.longest} days`],
                 ['This year\'s goal',  `${stats.finishedThisYear} / ${goals.yearly}`],
               ].map(([label, val]) => `
-                <div class="activity-item" style="cursor:default;">
+                <div class="activity-item activity-item--noninteractive">
                   <div class="activity-text">
                     <div class="activity-subtitle">${label}</div>
                   </div>
-                  <div class="activity-time" style="font-family: var(--font-mono); font-weight: 600; color: var(--text-primary);">
+                  <div class="activity-time activity-time--metric">
                     ${val}
                   </div>
                 </div>`).join('')}
             </div>
           </div>
 
-          <div class="goal-widget" style="height: fit-content;">
+          <div class="goal-widget goal-widget--fit">
             <div class="goal-header">
               <div class="goal-title">Highest Rated</div>
               ${ratedBooks.length ? `<div class="stats-section-meta">${ratedBooks.length} rated book${ratedBooks.length !== 1 ? 's' : ''}</div>` : ''}
@@ -1620,7 +1636,6 @@ function renderFavoritesPage() {
     </div>`;
 }
 
-// ── Goals Page ────────────────────────────────
 
 function renderGoalsPage() {
   const main  = document.getElementById('mainContent');
@@ -1632,20 +1647,20 @@ function renderGoalsPage() {
   const stats = Storage.getStats();
 
   main.innerHTML = `
-    <div class="page goals-page" id="goalsPage" style="max-width: 600px;">
-      <div class="page-header" style="margin-bottom: var(--space-6);">
+    <div class="page goals-page page--narrow" id="goalsPage">
+      <div class="page-header page-header--spaced">
         <h1 class="page-title">Reading Goals</h1>
         <p class="page-subtitle">Set your target for ${new Date().getFullYear()}</p>
       </div>
 
-      <div class="goal-widget" style="margin-bottom: var(--space-6);">
+      <div class="goal-widget goal-widget--section-sm">
         <form id="goalsForm" class="add-book-form">
           <div class="form-group">
             <label class="form-label" for="yearlyGoalInput">Books to read in ${new Date().getFullYear()}</label>
             <input type="number" id="yearlyGoalInput" name="yearly"
               class="form-input" value="${goals.yearly}" min="1" max="365" />
           </div>
-          <div style="display:flex; gap: var(--space-3); margin-top: var(--space-2);">
+          <div class="goal-presets">
             ${[6,12,24,52].map(n =>
               `<button type="button" class="btn btn-secondary btn-sm"
                 onclick="document.getElementById('yearlyGoalInput').value=${n}">
@@ -1653,7 +1668,7 @@ function renderGoalsPage() {
               </button>`
             ).join('')}
           </div>
-          <button type="submit" class="btn btn-primary" style="margin-top: var(--space-4);">
+          <button type="submit" class="btn btn-primary form-submit-offset">
             <i class="ph ph-floppy-disk"></i> Save Goal
           </button>
         </form>
@@ -1668,9 +1683,9 @@ function renderGoalsPage() {
             ['Remaining',    Math.max(0, goals.yearly - stats.finishedThisYear) + ' books'],
             ['On track',     stats.finishedThisYear >= Math.round(goals.yearly * (new Date().getMonth() + 1) / 12) ? '✅ Yes' : '⚠️ Behind'],
           ].map(([label, val]) => `
-            <div class="activity-item" style="cursor:default;">
+            <div class="activity-item activity-item--noninteractive">
               <div class="activity-text"><div class="activity-subtitle">${label}</div></div>
-              <div class="activity-time" style="color: var(--text-primary); font-weight: 600;">${val}</div>
+              <div class="activity-time activity-time--strong">${val}</div>
             </div>`).join('')}
         </div>
       </div>
@@ -1831,7 +1846,6 @@ function getDisplayNameForAccount(user) {
   return Utils.formatEmailPrefixName(user?.email) || 'Reader';
 }
 
-// ── Help Page ────────────────────────────────
 
 function renderHelpPage() {
   const main = document.getElementById('mainContent');
@@ -1915,7 +1929,7 @@ function renderHelpPage() {
         <div class="help-intro-icon"><i class="ph ph-book-open-text"></i></div>
         <div class="help-intro-copy">
           <h2 class="help-intro-title">A calm place to learn the app</h2>
-          <p class="text-secondary" style="line-height: var(--leading-loose); margin: 0;">
+          <p class="text-secondary prose-copy">
             LibriQ stays simple and local-first. This guide covers the core features, backups, and account behavior so you can build your reading space without needing a long tutorial.
           </p>
         </div>
@@ -1991,7 +2005,6 @@ function renderHelpPage() {
     </div>`;
 }
 
-// ── Recommendations Page ──────────────────────
 
 function renderRecommendationsPage() {
   const main = document.getElementById('mainContent');
@@ -2448,7 +2461,6 @@ function _dateValue(value) {
   return Number.isFinite(ts) ? ts : 0;
 }
 
-// ── Profile Page ──────────────────────────────
 
 function renderProfilePage() {
   const main    = document.getElementById('mainContent');
@@ -2460,19 +2472,19 @@ function renderProfilePage() {
   const stats   = Storage.getStats();
 
   main.innerHTML = `
-    <div class="page profile-page" id="profilePage" style="max-width: 600px;">
-      <div class="page-header" style="margin-bottom: var(--space-6);">
+    <div class="page profile-page page--narrow" id="profilePage">
+      <div class="page-header page-header--spaced">
         <h1 class="page-title">Profile</h1>
       </div>
 
-      <div class="goal-widget" style="margin-bottom: var(--space-6);">
+      <div class="goal-widget goal-widget--section-sm">
         <form id="profileForm" class="add-book-form">
           <div class="form-group">
             <label class="form-label" for="profileName">Display name</label>
             <input type="text" id="profileName" name="name"
               class="form-input" value="${Utils.sanitize(profile.name)}"
               placeholder="Your name" maxlength="40" />
-            <div class="text-xs text-tertiary" style="margin-top: var(--space-2);">Use any name you want LibriQ to call you.</div>
+            <div class="text-xs text-tertiary field-help">Use any name you want LibriQ to call you.</div>
           </div>
           <div class="form-group">
             <label class="form-label" for="profileBio">Bio <span class="text-tertiary">(optional)</span></label>
@@ -2488,7 +2500,7 @@ function renderProfilePage() {
 
       <div class="goal-widget profile-stats-card">
         <div class="goal-header"><div class="goal-title">Reading Stats</div></div>
-        <div class="stats-row profile-stats-row" style="grid-template-columns: repeat(2,1fr); margin: 0; gap: var(--space-3);">
+        <div class="stats-row profile-stats-row profile-stats-grid">
           <div class="stat-card"><div class="stat-card-value">${stats.total}</div><div class="stat-card-label">Books tracked</div></div>
           <div class="stat-card"><div class="stat-card-value">${stats.finished}</div><div class="stat-card-label">Books finished</div></div>
           <div class="stat-card"><div class="stat-card-value">${Utils.formatNumber(stats.totalPages)}</div><div class="stat-card-label">Pages read</div></div>
@@ -2502,12 +2514,10 @@ function renderProfilePage() {
     const data = Object.fromEntries(new FormData(e.target));
     Storage.saveProfile(data);
     Utils.toast('Profile saved', 'success');
-    // Update greeting
     document.querySelector('.greeting-title span')?.textContent;
   });
 }
 
-// ── Settings Page ─────────────────────────────
 
 function renderSettingsPage() {
   const main  = document.getElementById('mainContent');
@@ -2661,7 +2671,7 @@ function renderSettingsPage() {
               <div class="settings-panel-subtitle">A local-first app with optional account features.</div>
             </div>
           </div>
-          <p class="text-sm text-secondary" style="line-height: var(--leading-loose); margin-top: 0;">
+          <p class="text-sm text-secondary settings-copy">
             LibriQ works without an account. Your library stays on this device unless you choose to back it up, sync it, or export it.
           </p>
           <div class="settings-list">
@@ -2690,10 +2700,10 @@ function renderSettingsPage() {
               <div class="settings-panel-subtitle">Version and source notes for the current build.</div>
             </div>
           </div>
-          <p class="text-sm text-secondary" style="line-height: var(--leading-loose); margin-top: 0;">
-            <strong style="color: var(--text-primary);">LibriQ</strong> v${LIBRIQ.VERSION}<br>
+          <p class="text-sm text-secondary settings-copy">
+            <strong class="text-primary">LibriQ</strong> v${LIBRIQ.VERSION}<br>
             Your reading life, beautifully organized.<br>
-            Book data from <a href="https://openlibrary.org" target="_blank" style="color: var(--text-accent);">Open Library</a> and <a href="https://books.google.com" target="_blank" style="color: var(--text-accent);">Google Books</a>.
+            Book data from <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer" class="text-link">Open Library</a> and <a href="https://books.google.com" target="_blank" rel="noopener noreferrer" class="text-link">Google Books</a>.
             <br>Manual cloud backup is available for signed-in users.
           </p>
         </section>
@@ -2706,7 +2716,7 @@ function renderSettingsPage() {
 function _buildAccountSection(firebase) {
   if (!firebase.initialized) {
     return `
-      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+      <div class="activity-item activity-item--static">
         <div class="activity-text">
           <div class="activity-title">Account</div>
           <div class="activity-subtitle">Loading account status…</div>
@@ -2716,7 +2726,7 @@ function _buildAccountSection(firebase) {
 
   if (!firebase.available) {
     return `
-      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+      <div class="activity-item activity-item--static">
         <div class="activity-text">
           <div class="activity-title">Account</div>
           <div class="activity-subtitle">Account features are unavailable in this build.</div>
@@ -2726,7 +2736,7 @@ function _buildAccountSection(firebase) {
 
   if (!firebase.user) {
     return `
-      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0; align-items: center;">
+      <div class="activity-item activity-item--static activity-item--centered">
         <div class="activity-text">
           <div class="activity-title">Account</div>
           <div class="activity-subtitle">Sign in to enable cloud backup.</div>
@@ -2745,8 +2755,8 @@ function _buildAccountSection(firebase) {
     hasEmail: Boolean(String(user.email || '').trim()),
   };
   const avatar = user.photoURL
-    ? `<img src="${Utils.sanitize(user.photoURL)}" alt="" aria-hidden="true" style="width:40px;height:40px;border-radius:999px;object-fit:cover;" />`
-    : `<div style="width:40px;height:40px;border-radius:999px;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-weight:700;">${Utils.sanitize((user.displayName || user.email || 'U').slice(0,1).toUpperCase())}</div>`;
+    ? `<img src="${Utils.sanitize(user.photoURL)}" alt="" aria-hidden="true" class="account-avatar" />`
+    : `<div class="account-avatar account-avatar--fallback">${Utils.sanitize((user.displayName || user.email || 'U').slice(0,1).toUpperCase())}</div>`;
   const cloudState = LibriqCloudBackup.getState();
   const hasFirestore = LibriqFirebase.hasFirestore();
   const offlineMode = Navigation.getSessionPreference?.() === 'offline';
@@ -2835,7 +2845,7 @@ function _buildAccountSection(firebase) {
 function _buildCloudBackupSection(firebase, cloudBackupMeta) {
   if (!firebase.initialized) {
     return `
-      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+      <div class="activity-item activity-item--static">
         <div class="activity-text">
           <div class="activity-title">Cloud backup</div>
           <div class="activity-subtitle">Checking cloud backup status...</div>
@@ -2845,7 +2855,7 @@ function _buildCloudBackupSection(firebase, cloudBackupMeta) {
 
   if (!firebase.available || !LibriqFirebase.hasFirestore()) {
     return `
-      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+      <div class="activity-item activity-item--static">
         <div class="activity-text">
           <div class="activity-title">Cloud backup</div>
           <div class="activity-subtitle">Cloud backup is unavailable right now.</div>
@@ -2855,7 +2865,7 @@ function _buildCloudBackupSection(firebase, cloudBackupMeta) {
 
   if (!firebase.user) {
     return `
-      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+      <div class="activity-item activity-item--static">
         <div class="activity-text">
           <div class="activity-title">Cloud backup</div>
           <div class="activity-subtitle">Sign in to enable cloud backup.</div>
@@ -2878,7 +2888,7 @@ function _buildCloudBackupSection(firebase, cloudBackupMeta) {
 
   return `
     <div class="activity-list" id="settingsCloudBackupCard">
-      <div class="activity-item settings-summary-item" style="cursor:default; padding: var(--space-3) 0;">
+      <div class="activity-item settings-summary-item activity-item--static">
         <div class="activity-text">
           <div class="activity-title">Cloud backup</div>
           <div class="activity-subtitle" id="cloudBackupStatusText">${status}</div>
@@ -2910,7 +2920,7 @@ function _buildSyncSection(firebase) {
   const diagnosticsRows = _buildSyncDiagnosticsRows(syncState);
   if (!firebase.initialized) {
     return `
-      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+      <div class="activity-item activity-item--static">
         <div class="activity-text">
           <div class="activity-title">Account Sync</div>
           <div class="activity-subtitle">Checking sync status...</div>
@@ -2919,7 +2929,7 @@ function _buildSyncSection(firebase) {
   }
   if (!firebase.available || !LibriqFirebase.hasFirestore()) {
     return `
-      <div class="activity-item" style="cursor:default; padding: var(--space-3) 0;">
+      <div class="activity-item activity-item--static">
         <div class="activity-text">
           <div class="activity-title">Account Sync</div>
           <div class="activity-subtitle">Sync unavailable.</div>
@@ -2946,7 +2956,7 @@ function _buildSyncSection(firebase) {
   const actionDisabled = !signedIn || offlineMode;
   return `
     <div class="activity-list" id="settingsSyncCard">
-      <div class="activity-item settings-summary-item" style="cursor:default; padding: var(--space-3) 0;">
+      <div class="activity-item settings-summary-item activity-item--static">
         <div class="activity-text">
           <div class="activity-title">Account Sync</div>
           <div class="activity-subtitle" id="syncStatusText">Sync status: ${Utils.sanitize(syncStatus)}</div>
@@ -4116,11 +4126,11 @@ function buildActivityEmptyState(filter) {
   };
   const [title, body] = messages[filter] || messages.all;
   return `
-    <div class="empty-state activity-empty-state" style="grid-column: 1 / -1;">
+    <div class="empty-state activity-empty-state grid-full-width">
       <div class="empty-state-icon"><i class="ph ph-clock-counter-clockwise"></i></div>
       <div class="empty-state-title">${title}</div>
       <div class="empty-state-body">${body}</div>
-      <div style="display:flex; gap: var(--space-2); flex-wrap: wrap; justify-content: center;">
+      <div class="inline-actions inline-actions--centered">
         <button class="btn btn-secondary btn-sm" onclick="Navigation.goTo('library')">
           <i class="ph ph-books"></i> Library
         </button>

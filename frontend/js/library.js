@@ -1,8 +1,3 @@
-/* ============================================
-   LIBRIQ LIBRARY
-   Book management: add, edit, remove, status
-   ============================================ */
-
 import { BookAPI } from './api/index.js';
 import { LIBRIQ } from './data.js';
 import { Storage } from './storage.js';
@@ -33,8 +28,8 @@ export const Library = (() => {
       const ratingGroup = body.querySelector('#manualRatingGroup');
       const syncManualFields = () => {
         const status = statusSelect?.value;
-        if (currentPageGroup) currentPageGroup.style.display = status === LIBRIQ.STATUS.READING ? 'flex' : 'none';
-        if (ratingGroup) ratingGroup.style.display = status === LIBRIQ.STATUS.FINISHED ? 'flex' : 'none';
+        if (currentPageGroup) currentPageGroup.hidden = status !== LIBRIQ.STATUS.READING;
+        if (ratingGroup) ratingGroup.hidden = status !== LIBRIQ.STATUS.FINISHED;
       };
       statusSelect?.addEventListener('change', syncManualFields);
       syncManualFields();
@@ -100,7 +95,7 @@ export const Library = (() => {
           </div>
         </div>
 
-        <div class="form-group" id="pageProgressGroup" style="display:none">
+        <div class="form-group" id="pageProgressGroup" hidden>
           <label class="form-label" for="currentPageInput">Current page</label>
           <input
             type="number"
@@ -113,11 +108,11 @@ export const Library = (() => {
           />
         </div>
 
-        <div class="form-group" id="ratingGroup" style="display:none">
+        <div class="form-group" id="ratingGroup" hidden>
           <label class="form-label">Your rating</label>
           <div class="star-rating star-lg" id="addBookStars">
             ${[1,2,3,4,5].map(n =>
-              `<span class="star" data-value="${n}" onclick="Library._setFormRating(${n})">★</span>`
+              `<button class="star" type="button" data-action="set-add-rating" data-rating="${n}" aria-label="Rate ${n} out of 5">★</button>`
             ).join('')}
           </div>
           <input type="hidden" name="rating" id="ratingInput" value="">
@@ -134,8 +129,8 @@ export const Library = (() => {
           />
         </div>
 
-        <div class="modal-footer" style="padding: 0; border: none; margin-top: var(--space-2);">
-          <button type="button" class="btn btn-ghost" onclick="Library.closeAddModal()">Cancel</button>
+        <div class="modal-footer modal-footer--embedded">
+          <button type="button" class="btn btn-ghost" data-action="close-add-dialog">Cancel</button>
           <button type="submit" class="btn btn-primary">
             <i class="ph ph-plus"></i>
             Add to Library
@@ -154,8 +149,16 @@ export const Library = (() => {
       const pageGroup   = document.getElementById('pageProgressGroup');
       const ratingGroup = document.getElementById('ratingGroup');
       if (!pageGroup) return;
-      pageGroup.style.display   = e.target.value === 'reading'  ? 'flex' : 'none';
-      ratingGroup.style.display = e.target.value === 'finished' ? 'flex' : 'none';
+      pageGroup.hidden = e.target.value !== 'reading';
+      ratingGroup.hidden = e.target.value !== 'finished';
+    });
+    document.getElementById('addBookModal')?.addEventListener('click', (event) => {
+      const trigger = event.target.closest?.('[data-action]');
+      if (!trigger) return;
+      const rating = Number.parseInt(trigger.dataset.rating || '', 10);
+      if (trigger.dataset.action === 'set-add-rating' && Number.isFinite(rating)) _setFormRating(rating);
+      if (trigger.dataset.action === 'set-manual-rating' && Number.isFinite(rating)) _setManualFormRating(rating);
+      if (trigger.dataset.action === 'close-add-dialog') closeAddModal();
     });
   }
 
@@ -254,7 +257,6 @@ export const Library = (() => {
     Utils.hide(modal);
   }
 
-  // ── Update Progress ───────────────────────
 
   function updateProgress(bookId, currentPage) {
     const book = Storage.getBookById(bookId);
@@ -281,7 +283,6 @@ export const Library = (() => {
     return updated;
   }
 
-  // ── Quick Status Change ───────────────────
 
   function setStatus(bookId, newStatus) {
     const updates = { status: newStatus };
@@ -305,7 +306,6 @@ export const Library = (() => {
     return book;
   }
 
-  // ── Rating ────────────────────────────────
 
   function setRating(bookId, rating) {
     const current = Storage.getBookById(bookId);
@@ -332,19 +332,19 @@ export const Library = (() => {
     return `
       <div class="book-details-notes">
         <h3 class="book-details-section-title">Manual Entry</h3>
-        <p class="text-sm text-tertiary" style="margin: 0;">
+        <p class="text-sm text-tertiary manual-entry-copy">
           Add a book by hand when it is missing from Open Library or Google Books.
         </p>
       </div>
 
       <form id="addBookForm" class="add-book-form">
         <div class="form-group">
-          <label class="form-label" for="manualTitleInput">Title <span style="color: var(--color-danger);">*</span></label>
+          <label class="form-label" for="manualTitleInput">Title <span class="form-required">*</span></label>
           <input type="text" id="manualTitleInput" name="title" class="form-input" value="${Utils.sanitize(book.title || '')}" required />
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="manualAuthorInput">Author <span style="color: var(--color-danger);">*</span></label>
+          <label class="form-label" for="manualAuthorInput">Author <span class="form-required">*</span></label>
           <input type="text" id="manualAuthorInput" name="author" class="form-input" value="${Utils.sanitize(book.author || '')}" required />
         </div>
 
@@ -398,23 +398,23 @@ export const Library = (() => {
           </select>
         </div>
 
-        <div class="form-group" id="manualCurrentPageGroup" style="display:${selectedStatus === LIBRIQ.STATUS.READING ? 'flex' : 'none'}">
+        <div class="form-group" id="manualCurrentPageGroup" ${selectedStatus === LIBRIQ.STATUS.READING ? '' : 'hidden'}>
           <label class="form-label" for="manualCurrentPageInput">Current page <span class="text-tertiary">(optional)</span></label>
           <input type="number" id="manualCurrentPageInput" name="currentPage" class="form-input" value="${book.currentPage || 0}" min="0" step="1" />
         </div>
 
-        <div class="form-group" id="manualRatingGroup" style="display:${selectedStatus === LIBRIQ.STATUS.FINISHED ? 'flex' : 'none'}">
+        <div class="form-group" id="manualRatingGroup" ${selectedStatus === LIBRIQ.STATUS.FINISHED ? '' : 'hidden'}>
           <label class="form-label">Your rating</label>
           <div class="star-rating star-lg" id="manualBookStars">
             ${[1,2,3,4,5].map(n =>
-              `<span class="star" data-value="${n}" onclick="Library._setManualFormRating(${n})">★</span>`
+              `<button class="star" type="button" data-action="set-manual-rating" data-rating="${n}" aria-label="Rate ${n} out of 5">★</button>`
             ).join('')}
           </div>
           <input type="hidden" name="rating" id="manualRatingInput" value="${book.rating || ''}">
         </div>
 
-        <div class="modal-footer" style="padding: 0; border: none; margin-top: var(--space-2);">
-          <button type="button" class="btn btn-ghost" onclick="Library.closeAddModal()">Cancel</button>
+        <div class="modal-footer modal-footer--embedded">
+          <button type="button" class="btn btn-ghost" data-action="close-add-dialog">Cancel</button>
           <button type="submit" class="btn btn-primary">
             <i class="ph ph-plus"></i>
             Save Manual Book
@@ -423,7 +423,6 @@ export const Library = (() => {
       </form>`;
   }
 
-  // ── Favorite ──────────────────────────────
 
   function toggleFavorite(bookId) {
     const book = Storage.toggleFavorite(bookId);
@@ -433,7 +432,6 @@ export const Library = (() => {
     return book;
   }
 
-  // ── Remove ────────────────────────────────
 
   function removeBook(bookId, title) {
     if (!confirm(`Remove "${title}" from your library?`)) return;
@@ -732,7 +730,7 @@ export const Library = (() => {
           rows="4"
           placeholder="Paste a quote you want to keep..."
         ></textarea>
-        <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin-top: var(--space-3);">
+        <div class="book-detail-form-grid">
           <input id="bookQuotePageInput" class="form-input" type="number" min="1" placeholder="Page (optional)" />
           <input id="bookQuoteNoteInput" class="form-input" type="text" placeholder="Thought or context (optional)" />
         </div>
@@ -742,7 +740,7 @@ export const Library = (() => {
             Save Quote
           </button>
         </div>
-        <div id="bookQuotesList" style="margin-top: var(--space-3); display: grid; gap: var(--space-3);"></div>
+        <div id="bookQuotesList" class="book-quotes-list"></div>
       </div>
 
       `;
@@ -814,20 +812,20 @@ export const Library = (() => {
       if (!quotesList) return;
       const safeQuotes = normalizeQuotes(Storage.getBookById(book.id)?.quotes || book.quotes || []);
       if (!safeQuotes.length) {
-        quotesList.innerHTML = `<div class="empty-state" style="margin: 0; padding: var(--space-3);"><div class="empty-state-body" style="margin:0;">No private quotes yet.</div></div>`;
+      quotesList.innerHTML = `<div class="empty-state quote-empty-state"><div class="empty-state-body">No private quotes yet.</div></div>`;
         return;
       }
 
       quotesList.innerHTML = safeQuotes.map(quote => `
-        <div class="activity-item" style="align-items:flex-start; padding: var(--space-3); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); background: var(--bg-elevated);">
-          <div class="activity-text" style="gap: var(--space-1);">
-            <div class="activity-title" style="white-space: pre-wrap;">${Utils.sanitize(quote.text)}</div>
+        <div class="activity-item quote-list-item">
+          <div class="activity-text quote-list-copy">
+            <div class="activity-title quote-list-text">${Utils.sanitize(quote.text)}</div>
             ${quote.page || quote.note ? `<div class="activity-subtitle">${[
               quote.page ? `p. ${Utils.sanitize(String(quote.page))}` : '',
               quote.note ? Utils.sanitize(quote.note) : '',
             ].filter(Boolean).join(' · ')}</div>` : ''}
           </div>
-          <div class="activity-time" style="display:flex; gap: var(--space-2); flex-wrap: wrap; justify-content:flex-end;">
+          <div class="activity-time quote-list-actions">
             <button type="button" class="btn btn-ghost btn-sm" data-quote-action="edit" data-quote-id="${quote.id}">Edit</button>
             <button type="button" class="btn btn-ghost btn-sm" data-quote-action="delete" data-quote-id="${quote.id}">Delete</button>
           </div>
@@ -1243,8 +1241,7 @@ export const Library = (() => {
     const favBtn = document.createElement('button');
     favBtn.className = 'btn btn-ghost btn-sm btn-icon';
     favBtn.title = book.isFavorite ? 'Unfavorite' : 'Favorite';
-    favBtn.innerHTML = `<i class="${book.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart'}"
-      style="color:${book.isFavorite ? 'var(--color-danger)' : ''}"></i>`;
+    favBtn.innerHTML = `<i class="${book.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart'}"></i>`;
     favBtn.addEventListener('click', (e) => {
   e.stopPropagation();
 
@@ -1291,8 +1288,8 @@ export const Library = (() => {
         <div class="book-preview-info">
           <div class="book-preview-title">${Utils.sanitize(book.title)}</div>
           <div class="book-preview-author">${Utils.sanitize(book.author)}</div>
-          <div style="margin-top: var(--space-2);">
-            <div class="progress-bar" style="margin-bottom: var(--space-1);">
+          <div class="progress-summary">
+            <div class="progress-bar progress-bar--spaced">
               <div class="progress-fill" style="width:${pct}%"></div>
             </div>
             <span class="text-xs text-tertiary">${pct}% complete</span>
@@ -1318,8 +1315,8 @@ export const Library = (() => {
           />
         </div>
 
-        <div class="modal-footer" style="padding: 0; border: none; margin-top: var(--space-2);">
-          <button type="button" class="btn btn-ghost" onclick="Library.closeAddModal()">Cancel</button>
+        <div class="modal-footer modal-footer--embedded">
+          <button type="button" class="btn btn-ghost" data-action="close-add-dialog">Cancel</button>
           <button type="submit" class="btn btn-primary">
             <i class="ph ph-floppy-disk"></i> Save
           </button>

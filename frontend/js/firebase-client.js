@@ -1,31 +1,32 @@
-import { initializeApp, getApp, getApps } from '../vendor/firebase-app.js';
-import {
-  createUserWithEmailAndPassword,
-  getAuth,
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  reload,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  deleteUser,
-  signOut,
-  sendEmailVerification,
-  sendPasswordResetEmail,
-  verifyBeforeUpdateEmail,
-} from '../vendor/firebase-auth.js';
 import { Storage } from './storage.js';
-import {
-  getFirestore,
-  doc,
-  collection,
-  query,
-  orderBy,
-  onSnapshot,
-  setDoc,
-  getDoc,
-  deleteDoc,
-  getDocs,
-} from '../vendor/firebase-firestore.js';
+
+let initializeApp;
+let getApp;
+let getApps;
+let createUserWithEmailAndPassword;
+let getAuth;
+let GoogleAuthProvider;
+let onAuthStateChanged;
+let reload;
+let signInWithEmailAndPassword;
+let signInWithPopup;
+let deleteUser;
+let signOut;
+let sendEmailVerification;
+let sendPasswordResetEmail;
+let verifyBeforeUpdateEmail;
+let getFirestore;
+let doc;
+let collection;
+let query;
+let orderBy;
+let onSnapshot;
+let setDoc;
+let getDoc;
+let deleteDoc;
+let getDocs;
+let firebaseSdkPromise = null;
+let firebaseSdkReady = false;
 
 const state = {
   available: false,
@@ -65,6 +66,36 @@ let authNullTimer = null;
 let profileSyncHydrating = false;
 let goalsSyncHydrating = false;
 let streakSyncHydrating = false;
+
+async function loadFirebaseSdk() {
+  if (firebaseSdkReady) return;
+  if (!firebaseSdkPromise) {
+    firebaseSdkPromise = Promise.all([
+      import('../vendor/firebase-app.js'),
+      import('../vendor/firebase-auth.js'),
+      import('../vendor/firebase-firestore.js'),
+    ]).then(([appSdk, authSdk, firestoreSdk]) => {
+      ({ initializeApp, getApp, getApps } = appSdk);
+      ({
+        createUserWithEmailAndPassword,
+        getAuth,
+        GoogleAuthProvider,
+        onAuthStateChanged,
+        reload,
+        signInWithEmailAndPassword,
+        signInWithPopup,
+        deleteUser,
+        signOut,
+        sendEmailVerification,
+        sendPasswordResetEmail,
+        verifyBeforeUpdateEmail,
+      } = authSdk);
+      ({ getFirestore, doc, collection, query, orderBy, onSnapshot, setDoc, getDoc, deleteDoc, getDocs } = firestoreSdk);
+      firebaseSdkReady = true;
+    });
+  }
+  return firebaseSdkPromise;
+}
 
 function prepareRuntime() {
   if (runtimePrepared) return;
@@ -156,6 +187,31 @@ function getVisibleUser() {
   return auth?.currentUser || (state.restoringSession ? state.user : null);
 }
 
+function defer() {
+  prepareRuntime();
+  if (TEST_MODE) return init();
+  setState({
+    available: hasConfig,
+    initialized: false,
+    ready: true,
+    user: null,
+    restoringSession: false,
+    signedOutConfirmed: true,
+  });
+  return state;
+}
+
+async function ensureInitialized() {
+  prepareRuntime();
+  if (TEST_MODE) {
+    init();
+    return;
+  }
+  if (!hasConfig) throw new Error('Firebase is unavailable.');
+  await loadFirebaseSdk();
+  init();
+}
+
 function init() {
   prepareRuntime();
   if (state.initialized || authListener || app || initRetryTimer) return state;
@@ -222,6 +278,19 @@ function init() {
     window.clearInterval(initRetryTimer);
     initRetryTimer = null;
     initRetryStartedAt = 0;
+  }
+
+  if (!firebaseSdkReady) {
+    state.available = true;
+    state.ready = false;
+    state.restoringSession = true;
+    loadFirebaseSdk()
+      .then(() => init())
+      .catch((err) => {
+        console.warn('[Libriq] Firebase SDK load failed:', err);
+        setState({ available: false, initialized: true, ready: true, user: null, restoringSession: false, signedOutConfirmed: true, error: err });
+      });
+    return state;
   }
 
   try {
@@ -389,6 +458,7 @@ function attachTestModeSyncListeners() {
 }
 
 async function signInWithGoogle() {
+  await ensureInitialized();
   if (TEST_MODE) {
     testUser = {
       uid: localStorage.getItem('libriq_e2e_test_uid') || 'test-uid',
@@ -420,6 +490,7 @@ async function signInWithGoogle() {
 }
 
 async function signInWithEmail(email, password) {
+  await ensureInitialized();
   if (TEST_MODE) {
     const normalizedEmail = String(email || '').trim();
     testUser = {
@@ -443,6 +514,7 @@ async function signInWithEmail(email, password) {
 }
 
 async function createAccountWithEmail(email, password) {
+  await ensureInitialized();
   if (TEST_MODE) return signInWithEmail(email, password);
   if (!state.available || !auth) {
     const error = new Error('Firebase is unavailable.');
@@ -502,6 +574,7 @@ async function sendPasswordResetToEmail(email) {
     error.code = 'auth/invalid-email';
     throw error;
   }
+  await ensureInitialized();
   if (TEST_MODE) return true;
   await sendPasswordResetEmail(auth, normalizedEmail);
   return true;
@@ -1404,6 +1477,8 @@ function subscribe(fn) {
 
 export const LibriqFirebase = {
   init,
+  defer,
+  load: ensureInitialized,
   getState: () => ({ ...state }),
   onChange: subscribe,
   signInWithGoogle,

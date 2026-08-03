@@ -84,6 +84,10 @@ assert.doesNotMatch(source, /window\.(?:BookAPI|Library|Search|Dashboard)|global
 assert.match(source, /BookAPI\.searchBySubject/);
 assert.match(source, /BookAPI\.searchCuratedClassics/);
 assert.ok(source.includes("import { buildMonthlyChart, buildGenreRow } from './dashboard.js';"));
+assert.ok(source.includes("import { Router } from './app/router.js';"));
+assert.match(source, /createDashboardPage/);
+assert.match(source, /createLibraryPage/);
+assert.match(source, /createSettingsPage/);
 
 assert.equal(globalThis.BookAPI, undefined);
 assert.equal(globalThis.Dashboard, undefined);

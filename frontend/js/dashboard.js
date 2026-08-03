@@ -1,10 +1,3 @@
-﻿/* ============================================
-   LIBRIQ DASHBOARD
-   Home page renderer
-   ============================================ */
-
-import { Library } from './library.js';
-import { Search } from './search.js';
 import { LIBRIQ } from './data.js';
 import { Storage } from './storage.js';
 import { Utils } from './utils.js';
@@ -65,7 +58,7 @@ export const Dashboard = {
             <span>${syncLabel}</span>
           </div>
           <div class="dashboard-actions">
-            <button class="btn btn-primary dashboard-add-book" onclick="Search.open()">
+            <button class="btn btn-primary dashboard-add-book" type="button" data-action="open-search">
               <i class="ph ph-plus"></i>
               Add Book
             </button>
@@ -95,7 +88,7 @@ export const Dashboard = {
             <section class="dashboard-panel dashboard-feature-panel">
               <div class="section-header dashboard-section-header">
                 <h2 class="section-title">Reading Now</h2>
-                <button class="section-action" onclick="Navigation.goTo('reading')">View all</button>
+                <button class="section-action" type="button" data-action="navigate" data-route="reading">View all</button>
               </div>
               ${featuredBook ? buildFeaturedReadingHero(featuredBook) : buildFeaturedEmptyHero()}
             </section>
@@ -103,7 +96,7 @@ export const Dashboard = {
             <section class="dashboard-panel dashboard-recent-panel">
               <div class="section-header dashboard-section-header">
                 <h2 class="section-title">Recently Updated</h2>
-                <button class="section-action" onclick="Navigation.goTo('library')">View all library</button>
+                <button class="section-action" type="button" data-action="navigate" data-route="library">View all library</button>
               </div>
               ${recentBooks.length ? buildRecentBooksRow(recentBooks) : buildRecentEmptyState()}
             </section>
@@ -111,7 +104,7 @@ export const Dashboard = {
             <section class="dashboard-panel dashboard-compact-panel">
               <div class="section-header dashboard-section-header">
                 <h2 class="section-title">Reading Momentum</h2>
-                <button class="section-action" onclick="Navigation.goTo('stats')">Full stats</button>
+                <button class="section-action" type="button" data-action="navigate" data-route="stats">Full stats</button>
               </div>
               <div class="dashboard-compact-grid">
                 <div class="dashboard-compact-card">
@@ -142,7 +135,7 @@ export const Dashboard = {
             <section class="dashboard-panel dashboard-quick-panel">
               <div class="section-header dashboard-section-header">
                 <h2 class="section-title">Quick Workspace</h2>
-                <button class="section-action" onclick="Navigation.goTo('activity')">Activity</button>
+                <button class="section-action" type="button" data-action="navigate" data-route="activity">Activity</button>
               </div>
               <div class="dashboard-quick-note">
                 <div class="dashboard-quote-label">Latest capture</div>
@@ -152,7 +145,7 @@ export const Dashboard = {
                 <span><i class="ph ph-dot"></i> Active focus session: ${formatFocusTime(streak)}</span>
                 <span>${stats.avgRating ? `Average rating ${stats.avgRating}` : 'No ratings yet'}</span>
               </div>
-              <button class="btn btn-primary dashboard-note-button" type="button" onclick="Navigation.goTo('activity')">
+              <button class="btn btn-primary dashboard-note-button" type="button" data-action="navigate" data-route="activity">
                 <i class="ph ph-clock-counter-clockwise"></i>
                 View Activity
               </button>
@@ -175,7 +168,7 @@ export const Dashboard = {
                   <div class="goal-title">Reading Goal</div>
                   <div class="goal-year text-xs text-tertiary">${new Date().getFullYear()}</div>
                 </div>
-                <button class="btn btn-ghost btn-sm" onclick="Navigation.goTo('goals')">Edit</button>
+                <button class="btn btn-ghost btn-sm" type="button" data-action="navigate" data-route="goals">Edit</button>
               </div>
               <div class="goal-progress-ring dashboard-goal-ring">
                 <div class="goal-ring-wrap">
@@ -276,11 +269,11 @@ function buildFeaturedReadingHero(book) {
         </div>
         <p class="dashboard-hero-quote">${Utils.sanitize(buildFeaturedQuote(book))}</p>
         <div class="dashboard-hero-actions">
-          <button class="btn btn-primary" onclick="Library.showProgressModal('${book.id}')">
+          <button class="btn btn-primary" type="button" data-action="update-progress" data-book-id="${Utils.sanitize(book.id)}">
             <i class="ph ph-play"></i>
             Resume Reading
           </button>
-          <button class="btn btn-secondary" onclick="Library.showDetailsModal('${book.id}')">
+          <button class="btn btn-secondary" type="button" data-action="show-book-details" data-book-id="${Utils.sanitize(book.id)}">
             View Details
           </button>
         </div>
@@ -296,11 +289,11 @@ function buildFeaturedEmptyHero() {
         <h3 class="dashboard-hero-title">Your next session starts here</h3>
         <p class="dashboard-hero-author">Add a book to surface a featured reading card with progress and quick actions.</p>
         <div class="dashboard-hero-actions">
-          <button class="btn btn-primary" onclick="Search.open()">
+          <button class="btn btn-primary" type="button" data-action="open-search">
             <i class="ph ph-plus"></i>
             Add Book
           </button>
-          <button class="btn btn-secondary" onclick="Navigation.goTo('library')">
+          <button class="btn btn-secondary" type="button" data-action="navigate" data-route="library">
             Browse Library
           </button>
         </div>
@@ -318,7 +311,7 @@ function buildRecentBooksRow(books) {
   return `
     <div class="dashboard-recent-row">
       ${books.slice(0, 4).map(book => `
-        <button class="dashboard-recent-card" onclick="Library.showDetailsModal('${String(book.id || '').replace(/'/g, "\\'")}')" type="button">
+        <button class="dashboard-recent-card" data-action="show-book-details" data-book-id="${Utils.sanitize(book.id)}" type="button">
           ${Utils.buildCover(book, 'cover-md')}
           <div class="dashboard-recent-copy">
             <strong>${Utils.sanitize(book.title)}</strong>
@@ -378,7 +371,7 @@ function getQuickNoteText(profile, recentActivity, featuredBook) {
 function buildReadingCard(book) {
   const pct = Utils.readingProgress(book.currentPage, book.pageCount);
   return `
-    <div class="reading-card" onclick="Library.showProgressModal('${book.id}')">
+    <div class="reading-card" role="button" tabindex="0" data-action="update-progress" data-book-id="${Utils.sanitize(book.id)}">
       ${Utils.buildCover(book, 'cover-sm')}
       <div class="reading-card-info">
         <div class="reading-card-title">${Utils.sanitize(book.title)}</div>
@@ -394,15 +387,14 @@ function buildReadingCard(book) {
             <div class="progress-fill" style="width:${pct}%"></div>
           </div>
         </div>
-        <div class="reading-card-actions" onclick="event.stopPropagation()">
-          <button class="btn btn-primary btn-sm"
-            onclick="Library.showProgressModal('${book.id}')">
+        <div class="reading-card-actions">
+          <button class="btn btn-primary btn-sm" type="button"
+            data-action="update-progress" data-book-id="${Utils.sanitize(book.id)}">
             <i class="ph ph-pencil"></i> Update
           </button>
-          <button class="btn btn-ghost btn-sm"
-            onclick="Library.toggleFavorite('${book.id}'); Navigation.updateBadges(); Navigation.renderCurrentPage();">
-            <i class="${book.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart'}"
-               style="color: ${book.isFavorite ? 'var(--color-danger)' : ''}"></i>
+          <button class="btn btn-ghost btn-sm" type="button"
+            data-action="toggle-favorite" data-book-id="${Utils.sanitize(book.id)}">
+            <i class="${book.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart'}"></i>
           </button>
         </div>
       </div>
@@ -411,17 +403,17 @@ function buildReadingCard(book) {
 
 function buildReadingEmptyState() {
   return `
-    <div class="empty-state" style="padding: var(--space-8);">
+      <div class="empty-state empty-state--compact">
       <div class="empty-state-icon"><i class="ph ph-book-open"></i></div>
       <div class="empty-state-title">No books in progress</div>
       <div class="empty-state-body">Search for a book, add one manually, or import a backup to get started.</div>
-      <button class="btn btn-primary" onclick="Search.open()">
+      <button class="btn btn-primary" type="button" data-action="open-search">
         <i class="ph ph-magnifying-glass"></i> Search Books
       </button>
-      <button class="btn btn-secondary" onclick="Search.openManualEntry()">
+      <button class="btn btn-secondary" type="button" data-action="open-manual-entry">
         <i class="ph ph-pencil"></i> Add Manually
       </button>
-      <button class="btn btn-secondary" onclick="Navigation.promptImportData()">
+      <button class="btn btn-secondary" type="button" data-action="import-backup">
         <i class="ph ph-upload-simple"></i> Import Backup
       </button>
     </div>`;
@@ -430,17 +422,17 @@ function buildReadingEmptyState() {
 function buildWishlistShelf() {
   const books = Storage.getBooksByStatus(LIBRIQ.STATUS.WISHLIST).slice(0, 8);
   if (books.length === 0) {
-    return `<p class="text-sm text-secondary" style="padding: var(--space-2) 0;">
-      Your reading queue is empty. <button class="section-action" onclick="Search.open()">Add some books →</button>
+    return `<p class="text-sm text-secondary dashboard-queue-empty">
+      Your reading queue is empty. <button class="section-action" type="button" data-action="open-search">Add some books →</button>
     </p>`;
   }
   return `
     <div class="books-shelf">
       ${books.map(b => `
-        <div class="shelf-item" onclick="Library.showAddModal(${JSON.stringify(b).replace(/"/g, '&quot;')})">
+        <button class="shelf-item" type="button" data-action="show-book-details" data-book-id="${Utils.sanitize(b.id)}">
           ${Utils.buildCover(b, 'cover-lg')}
           <div class="shelf-item-title">${Utils.sanitize(b.title)}</div>
-        </div>`).join('')}
+        </button>`).join('')}
     </div>`;
 }
 

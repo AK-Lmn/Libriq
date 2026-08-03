@@ -1,9 +1,4 @@
-/* ============================================
-   LIBRIQ DASHBOARD - V2
-   Phase 3 dashboard redesign only
-   ============================================ */
-
-.dashboard-page {
+﻿.dashboard-page {
   max-width: 1240px;
 }
 
@@ -660,7 +655,7 @@
   }
 }
 
-/* Stitch-style dashboard overrides */
+
 #dashboardPage.dashboard-page {
   max-width: 1320px;
   padding-top: var(--space-4);

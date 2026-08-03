@@ -4,6 +4,21 @@
    ============================================ */
 
 import { LIBRIQ } from './data.js';
+import { AccessibleDialog } from './components/ui/dialog.js';
+
+const dialogControllers = new WeakMap();
+
+function _getDialogController(element) {
+  if (!element?.matches?.('[role="dialog"]')) return null;
+  if (!dialogControllers.has(element)) {
+    dialogControllers.set(element, new AccessibleDialog(element, {
+      panel: element.firstElementChild,
+      closeOnBackdrop: true,
+      closeOnEscape: true,
+    }));
+  }
+  return dialogControllers.get(element);
+}
 
 function _safeCoverUrl(value) {
   const url = String(value || '').trim();
@@ -58,8 +73,18 @@ export const Utils = {
   },
 
   /** Show/hide with hidden attribute */
-  show: (el) => el && el.removeAttribute('hidden'),
-  hide: (el) => el && el.setAttribute('hidden', ''),
+  show(el) {
+    if (!el) return;
+    const dialog = _getDialogController(el);
+    if (dialog) dialog.open();
+    else el.removeAttribute('hidden');
+  },
+  hide(el) {
+    if (!el) return;
+    const dialog = _getDialogController(el);
+    if (dialog) dialog.close();
+    else el.setAttribute('hidden', '');
+  },
   toggle: (el, force) => {
     if (force === undefined) force = el.hasAttribute('hidden');
     force ? Utils.show(el) : Utils.hide(el);
