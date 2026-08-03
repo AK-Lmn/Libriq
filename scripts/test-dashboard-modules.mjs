@@ -93,18 +93,20 @@ assert.match(main.innerHTML, /Reading Book/);
 assert.match(main.innerHTML, /Finished this year/);
 assert.match(main.innerHTML, /Finished Book/);
 assert.match(main.innerHTML, /3 Days/);
-assert.match(main.innerHTML, /Library\.showProgressModal/);
-assert.match(main.innerHTML, /Library\.showDetailsModal/);
+assert.match(main.innerHTML, /data-action="update-progress" data-book-id="reading-1"/);
+assert.match(main.innerHTML, /data-action="show-book-details" data-book-id="reading-1"/);
+assert.doesNotMatch(main.innerHTML, /onclick=/);
 
 assert.equal(globalThis.Dashboard, undefined);
 
 const source = fs.readFileSync('frontend/js/dashboard.js', 'utf8');
-assert.match(source, /import\s+\{\s*Library\s*\}\s+from\s+'\.\/library\.js'/);
-assert.match(source, /import\s+\{\s*Search\s*\}\s+from\s+'\.\/search\.js'/);
+assert.doesNotMatch(source, /import\s+\{\s*Library\s*\}\s+from\s+'\.\/library\.js'/);
+assert.doesNotMatch(source, /import\s+\{\s*Search\s*\}\s+from\s+'\.\/search\.js'/);
 assert.doesNotMatch(source, /window\.(?:BookAPI|Library|Search)|globalThis\.(?:BookAPI|Library|Search)/);
-assert.match(source, /Search\.open/);
-assert.match(source, /Search\.openManualEntry/);
-assert.match(source, /Library\.toggleFavorite/);
+assert.match(source, /data-action="open-search"/);
+assert.match(source, /data-action="open-manual-entry"/);
+assert.match(source, /data-action="toggle-favorite"/);
+assert.doesNotMatch(source, /onclick=/);
 
 const html = fs.readFileSync('frontend/index.html', 'utf8');
 assert.doesNotMatch(html, /<script[^>]+src="js\/dashboard\.js"/);

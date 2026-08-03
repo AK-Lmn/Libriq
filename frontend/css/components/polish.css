@@ -1,0 +1,633 @@
+﻿.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-3) 25%,
+    rgba(255,255,255,0.04) 50%,
+    var(--surface-3) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background: var(--surface-3);
+  }
+}
+
+
+
+
+.btn {
+  border: 1px solid transparent;
+  letter-spacing: 0;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn:hover { text-decoration: none; }
+
+.btn:active { transform: scale(0.95); }
+
+.btn:focus-visible,
+.chip:focus-visible,
+.star:focus-visible,
+.book-card:focus-visible,
+.shelf-item:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background: var(--gold);
+  color: var(--text-inverse);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.btn-primary:hover {
+  background: var(--gold-hover);
+  filter: brightness(1.04);
+}
+
+.btn-primary:focus-visible {
+  box-shadow: 0 0 0 3px var(--gold-12);
+}
+
+.btn-secondary {
+  background: var(--gold-04);
+  color: var(--text-body);
+  border-color: var(--gold-12);
+}
+
+.btn-secondary:hover {
+  background: var(--gold-06);
+  border-color: var(--gold-18);
+  color: var(--text-primary);
+}
+
+.btn-success {
+  background: var(--green);
+  color: var(--text-inverse);
+  border-color: transparent;
+  font-weight: var(--weight-semi);
+}
+
+.btn-success:hover { filter: brightness(1.1); }
+
+.btn-ghost {
+  color: var(--text-dim);
+  border-color: transparent;
+}
+
+.btn-ghost:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.btn-icon {
+  min-width: 40px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon i,
+.btn i {
+  flex-shrink: 0;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.btn-sm {
+  min-height: 36px;
+  padding: var(--space-2) var(--space-3);
+}
+
+.btn-icon.btn-sm {
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.badge {
+  border: 1px solid transparent;
+  min-height: 22px;
+}
+
+.badge-genre,
+.badge-accent {
+  background: var(--gold-06);
+  color: var(--gold-strong);
+  border-color: var(--gold-10);
+}
+
+.badge-reading { border-color: rgba(123,157,201,0.24); }
+.badge-finished { border-color: rgba(107,170,117,0.24); }
+.badge-wishlist { border-color: var(--gold-12); }
+.badge-dnf { border-color: rgba(155,94,94,0.24); }
+
+.chip {
+  min-height: 32px;
+  background: rgba(255,255,255,0.02);
+  border-color: var(--border-soft);
+  color: var(--text-body);
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.chip:hover {
+  background: var(--gold-04);
+  border-color: var(--gold-18);
+  color: var(--text-primary);
+}
+
+.chip.active,
+.chip[aria-pressed="true"] {
+  background: var(--gold-12);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.chip:active { transform: scale(0.97); }
+
+.book-card,
+.stat-card,
+.reading-card,
+.goal-widget,
+.book-preview {
+  background: var(--surface-2);
+  border-color: var(--border-hairline);
+}
+
+.book-card:hover,
+.stat-card:hover,
+.reading-card:hover,
+.goal-widget:hover {
+  border-color: var(--gold-18);
+  box-shadow: var(--shadow-card);
+}
+
+.dashboard-panel {
+  position: relative;
+}
+
+.dashboard-panel .section-header,
+.dashboard-panel .goal-header {
+  margin-bottom: var(--space-4);
+}
+
+.dashboard-panel .section-title,
+.dashboard-panel .goal-title {
+  color: var(--text-strong);
+}
+
+#dashboardPage {
+  max-width: 1240px;
+}
+
+#dashboardPage .dashboard-header,
+#libraryPage .library-header,
+#statusPage .status-header,
+.settings-header {
+  align-items: end;
+}
+
+#dashboardPage .dashboard-grid {
+  gap: var(--space-5);
+}
+
+#dashboardPage .dashboard-main,
+#dashboardPage .dashboard-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+#dashboardPage .stats-row {
+  gap: var(--space-4);
+}
+
+#dashboardPage .stat-card,
+#libraryPage .book-card,
+#statusPage .book-card,
+.settings-page .goal-widget {
+  transition: border-color var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out);
+}
+
+#dashboardPage .dashboard-stat-card {
+  min-height: 176px;
+  padding: var(--space-5);
+}
+
+#dashboardPage .stat-card-value {
+  font-family: var(--font-serif);
+  font-size: var(--text-2xl);
+}
+
+#dashboardPage .stat-card-label {
+  color: var(--text-dim);
+}
+
+#dashboardPage .stat-card-footnote {
+  max-width: 24ch;
+}
+
+#dashboardPage .currently-reading-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+#dashboardPage .reading-card {
+  gap: var(--space-3);
+  padding: var(--space-4);
+  min-height: 152px;
+}
+
+#dashboardPage .reading-card .book-cover {
+  width: 72px;
+  height: 104px;
+  border-radius: var(--radius-md);
+}
+
+#dashboardPage .reading-card-info {
+  gap: var(--space-2);
+}
+
+#dashboardPage .reading-card-title {
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  color: var(--text-strong);
+}
+
+#dashboardPage .reading-card-author {
+  color: var(--text-body);
+}
+
+#dashboardPage .reading-card .reading-progress {
+  margin-top: var(--space-2);
+}
+
+#dashboardPage .reading-card-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+
+#dashboardPage .goal-widget {
+  padding: var(--space-5);
+}
+
+#dashboardPage .goal-progress-ring {
+  gap: var(--space-4);
+}
+
+#dashboardPage .goal-stats {
+  gap: var(--space-3);
+}
+
+#dashboardPage .goal-stat {
+  min-height: 72px;
+}
+
+#dashboardPage .activity-list,
+#dashboardPage .genre-list {
+  gap: var(--space-2);
+}
+
+#dashboardPage .activity-item,
+#dashboardPage .genre-row {
+  padding: var(--space-3);
+}
+
+#dashboardPage .goal-widget .empty-state {
+  min-height: 180px;
+}
+
+#statusPage,
+#statusPage #favoritesGrid {
+  max-width: 1320px;
+}
+
+#statusPage {
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-8);
+}
+
+#statusPage .status-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+#statusPage .status-heading {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+#statusPage .books-grid {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-6);
+  align-items: stretch;
+}
+
+#statusPage .book-card,
+#libraryPage .book-card {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+
+#statusPage .book-card:hover,
+#libraryPage .book-card:hover {
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-card);
+}
+
+#statusPage .book-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  height: 100%;
+  padding: var(--space-3);
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+#statusPage .book-card > .book-cover {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 3;
+  border-radius: 18px;
+  box-shadow: var(--shadow-cover);
+}
+
+#statusPage .book-card-info,
+#libraryPage .book-card-info {
+  gap: var(--space-2);
+  min-height: 0;
+}
+
+#statusPage .book-card-title,
+#libraryPage .book-card-title {
+  font-family: var(--font-serif);
+  color: var(--text-strong);
+  font-size: var(--text-lg);
+  line-height: var(--leading-snug);
+}
+
+#statusPage .book-card-author,
+#libraryPage .book-card-author {
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#statusPage .book-card-meta,
+#libraryPage .book-card-meta {
+  gap: var(--space-2);
+  margin-top: 2px;
+}
+
+#statusPage .book-card-complete {
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  background: var(--bg-elevated);
+  border-color: var(--border-soft);
+  color: var(--text-body);
+}
+
+#statusPage .book-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-divider);
+}
+
+#statusPage .book-card-actions-primary,
+#statusPage .book-card-actions-secondary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+#statusPage .book-card-actions-primary {
+  flex-wrap: wrap;
+  min-height: 36px;
+}
+
+#statusPage .book-card-actions-secondary {
+  flex-wrap: nowrap;
+  min-height: 36px;
+  justify-content: flex-end;
+}
+
+#statusPage .book-card-actions .btn:not(.btn-icon) {
+  flex: 1 1 0;
+  min-width: 0;
+  padding-left: 10px;
+  padding-right: 10px;
+  white-space: nowrap;
+}
+
+#statusPage .book-card-actions .btn-icon {
+  flex: 0 0 36px;
+  width: 36px;
+  min-width: 36px;
+  max-width: 36px;
+}
+
+#statusPage .book-card-actions .btn-ghost.btn-icon {
+  background: var(--gold-04);
+  border-color: var(--gold-08);
+  color: var(--text-body);
+}
+
+#statusPage .book-card-actions .btn-ghost.btn-icon:hover,
+#statusPage .book-card-actions .btn-ghost.btn-icon:focus-visible {
+  background: var(--gold-12);
+  border-color: var(--gold-18);
+  color: var(--text-strong);
+}
+
+#statusPage .book-card-actions .btn-secondary {
+  background: var(--bg-elevated);
+  border-color: var(--border-soft);
+  color: var(--text-body);
+}
+
+#statusPage .book-card-actions .btn-secondary:hover,
+#statusPage .book-card-actions .btn-secondary:focus-visible {
+  background: var(--gold-08);
+  border-color: var(--gold-18);
+  color: var(--text-strong);
+}
+
+#statusPage .book-card-actions .btn-primary {
+  box-shadow: none;
+}
+
+#statusPage .book-card-actions .ph-fill.ph-heart,
+#statusPage .book-card-actions .ph-heart-fill {
+  color: var(--gold) !important;
+  opacity: 1;
+}
+
+#statusPage .empty-state {
+  min-height: 360px;
+  padding: var(--space-12) var(--space-6);
+  background: linear-gradient(180deg, var(--gold-04), rgba(255,255,255,0.01));
+}
+
+#statusPage .empty-state-icon {
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  background: var(--surface-3);
+  border: 1px solid var(--gold-12);
+  color: var(--gold);
+  font-size: 1.65rem;
+}
+
+#statusPage .empty-state-title {
+  font-family: var(--font-serif);
+  color: var(--text-strong);
+  font-size: var(--t-card);
+}
+
+#statusPage .book-card > .book-cover {
+  background: linear-gradient(180deg, var(--bg-elevated), var(--bg-surface));
+  border: 1px solid var(--border-subtle);
+}
+
+.book-cover-placeholder {
+  color: var(--text-body);
+  background:
+    radial-gradient(circle at top, rgba(255,255,255,0.08), transparent 42%),
+    linear-gradient(180deg, var(--bg-elevated), var(--bg-surface));
+  border: 1px solid var(--border-subtle);
+}
+
+.book-cover-placeholder .cover-title {
+  color: var(--text-body);
+}
+
+.book-cover-placeholder i {
+  color: var(--gold);
+  opacity: 0.8;
+}
+
+.book-card-actions .btn-ghost.btn-icon,
+.reading-card-actions .btn-ghost,
+.book-details-actions .btn-ghost.btn-icon {
+  background: var(--bg-elevated);
+  border-color: var(--border-soft);
+  color: var(--text-body);
+}
+
+.book-card-actions .btn-ghost.btn-icon:hover,
+.reading-card-actions .btn-ghost:hover,
+.book-details-actions .btn-ghost.btn-icon:hover {
+  background: var(--gold-08);
+  border-color: var(--gold-18);
+  color: var(--text-strong);
+}
+
+.book-card-actions .ph-fill.ph-heart,
+.reading-card-actions .ph-fill.ph-heart,
+.book-details-actions .ph-fill.ph-heart {
+  color: var(--gold) !important;
+}
+
+.progress-bar {
+  height: 3px;
+  background: rgba(255,255,255,0.06);
+  border-radius: var(--r-pill);
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, var(--gold-strong), var(--gold));
+  box-shadow: var(--glow-gold);
+}
+
+.progress-fill.complete {
+  background: linear-gradient(90deg, var(--green-deep), var(--green));
+  box-shadow: var(--glow-green);
+}
+
+.progress-pct {
+  color: var(--gold);
+  font-weight: var(--weight-semi);
+}
+
+.empty-state {
+  border: 1px dashed var(--gold-12);
+  border-radius: var(--radius-lg);
+  background: var(--gold-04);
+}
+
+.empty-state-icon {
+  color: var(--text-faint);
+  opacity: 1;
+}
+
+.empty-state-title { color: var(--text-dim); }
+.empty-state-body { color: var(--text-faint); }
+
+
+
+.page,
+.books-grid,
+.dashboard-grid,
+.stats-row {
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .books-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat-card,
+  .goal-widget,
+  .book-card,
+  .reading-card {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 430px) {
+  .books-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .btn,
+  .btn-sm,
+  .btn-icon,
+  .btn-icon.btn-sm,
+  .chip {
+    min-height: 44px;
+  }
+}

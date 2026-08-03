@@ -4,6 +4,8 @@
    No discovery. No main search integration.
    ============================================ */
 
+import { fetchJson } from '../shared/fetchClient.js';
+
 export const InternetArchiveAPI = (() => {
   const BASE = 'https://archive.org';
   const TIMEOUT_MS = 6000;
@@ -158,21 +160,8 @@ export const InternetArchiveAPI = (() => {
   }
 
   async function _fetch(url) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
     const requestUrl = _cacheBust(url);
-
-    try {
-      const res = await fetch(requestUrl, {
-        signal: controller.signal,
-        cache: 'no-store',
-        credentials: 'omit',
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
-    } finally {
-      clearTimeout(timer);
-    }
+    return fetchJson(requestUrl, { timeoutMs: TIMEOUT_MS, retries: 1 });
   }
 
   function _normalizeIdentifier(value) {

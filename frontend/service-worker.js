@@ -5,7 +5,7 @@
 
 importScripts('./js/version-classic.js');
 const CACHE_VERSION = `libriq-v${self.LIBRIQ_APP_VERSION}`;
-const CACHE_NAME = `${CACHE_VERSION}-shell`;
+const CACHE_NAME = `${CACHE_VERSION}-shell-v2`;
 const IS_LOCAL_DEV = ['localhost', '127.0.0.1', '::1'].includes(self.location.hostname);
 
 const SHELL_ASSETS = [
@@ -22,10 +22,19 @@ const SHELL_ASSETS = [
   './css/tokens.css',
   './css/reset.css',
   './css/base.css',
-  './css/components.css',
+  './css/components/button.css',
+  './css/components/card.css',
+  './css/components/toast.css',
+  './css/components/form.css',
+  './css/components/polish.css',
+  './css/components/utilities.css',
+  './css/components/dialog.css',
+  './css/features/settings.css',
+  './css/features/library.css',
+  './css/features/insights.css',
+  './css/features/session.css',
+  './css/features/dashboard.css',
   './css/sidebar.css',
-  './css/dashboard.css',
-  './css/modals.css',
   './css/animations.css',
   './js/version-classic.js',
   './js/data.js',
@@ -37,15 +46,20 @@ const SHELL_ASSETS = [
   './js/navigation.js',
   './js/app.js',
   './js/sync.js',
+  './js/app/router.js',
+  './js/components/ui/dialog.js',
+  './js/features/dashboard/dashboardPage.js',
+  './js/features/library/libraryPage.js',
+  './js/features/settings/settingsPage.js',
+  './js/features/statistics/statisticsPage.js',
+  './js/features/recommendations/recommendationsPage.js',
   './js/api/cache.js',
   './js/api/googleBooks.js',
   './js/api/index.js',
   './js/api/mergeBooks.js',
   './js/api/normalizeBook.js',
   './js/api/openLibrary.js',
-  './vendor/firebase-app.js',
-  './vendor/firebase-auth.js',
-  './vendor/firebase-firestore.js',
+  './js/shared/fetchClient.js',
 ];
 
 self.addEventListener('install', (event) => {

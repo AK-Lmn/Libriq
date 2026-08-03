@@ -1,9 +1,4 @@
-/* ============================================
-   LIBRIQ MODALS
-   ============================================ */
-
-/* ── Overlay ──────────────────────────────── */
-.modal-overlay {
+﻿.modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 200;
@@ -18,7 +13,7 @@
 
 .modal-overlay[hidden] { display: none; }
 
-/* ── Base Modal ───────────────────────────── */
+
 .modal {
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
@@ -80,7 +75,7 @@
   flex-shrink: 0;
 }
 
-/* ── Search Modal ─────────────────────────── */
+
 .search-modal {
   margin-top: 0;
   padding: 0;
@@ -246,7 +241,7 @@
   line-height: var(--leading-loose);
 }
 
-/* Search result item */
+
 .search-result-item {
   display: flex;
   align-items: center;
@@ -303,7 +298,7 @@
   flex-shrink: 0;
 }
 
-/* Section divider in search */
+
 .search-section-label {
   padding: var(--space-2) var(--space-5);
   font-size: var(--text-xs);
@@ -325,7 +320,7 @@
   text-transform: none;
 }
 
-/* Search loading */
+
 .search-loading {
   display: flex;
   align-items: center;
@@ -345,7 +340,7 @@
   animation: spin 0.7s linear infinite;
 }
 
-/* ── Search Footer ────────────────────────── */
+
 .search-footer {
   display: flex;
   align-items: center;
@@ -389,7 +384,7 @@
   min-height: 44px;
 }
 
-/* ── What's New Modal ─────────────────────── */
+
 .whats-new-modal {
   max-width: 680px;
   background: linear-gradient(180deg, var(--bg-surface) 0%, var(--surface-2) 100%);
@@ -460,7 +455,7 @@ html[data-theme="dark"] .whats-new-footer {
   background: linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
 }
 
-/* ── Add Book Modal ───────────────────────── */
+
 .add-book-modal {
   max-width: 520px;
 }
@@ -595,7 +590,7 @@ html[data-theme="dark"] .whats-new-footer {
 
 .status-option.selected span { color: var(--text-accent); }
 
-/* ── Responsive ───────────────────────────── */
+
 @media (max-width: 640px) {
   .modal-overlay {
     align-items: flex-end;
@@ -649,9 +644,7 @@ html[data-theme="dark"] .whats-new-footer {
   }
 }
 
-/* ============================================
-   PHASE 2 - MODAL, SEARCH, AND FORM CONTROLS
-   ============================================ */
+
 
 .modal-overlay {
   background: rgba(0,0,0,0.7);
@@ -787,10 +780,7 @@ html[data-theme="dark"] .whats-new-footer {
   }
 }
 
-/* ============================================
-   PHASE 5B - BOOK DETAILS REDESIGN
-   Scoped to the Book Details modal only.
-   ============================================ */
+
 
 #bookDetailsModal .book-details-modal {
   max-width: 760px;
@@ -1441,10 +1431,7 @@ html[data-theme="dark"] .whats-new-footer {
   }
 }
 
-/* ============================================
-   PHASE 7 - MODAL SHEET POLISH
-   Shared responsive modal behavior only.
-   ============================================ */
+
 
 @media (max-width: 768px) {
   .modal-overlay {
@@ -1470,10 +1457,7 @@ html[data-theme="dark"] .whats-new-footer {
   }
 }
 
-/* ============================================
-   STUDIO MODAL REFRESH
-   Shared light modal language and Studio dialogs.
-   ============================================ */
+
 
 .modal-overlay,
 .session-fallback-modal {

@@ -315,7 +315,10 @@ const checks = [
 
 for (const [name, expectedToken, expectedClass, visibleTokens, run] of checks) {
   main.innerHTML = '';
-  run();
+  await run();
+  for (let attempt = 0; attempt < 100 && !main.innerHTML.includes(expectedToken); attempt += 1) {
+    await new Promise(resolve => setImmediate(resolve));
+  }
   if (!String(main.innerHTML || '').trim()) {
     throw new Error(`${name} render produced empty content`);
   }
@@ -339,6 +342,9 @@ for (const [name, expectedToken, expectedClass, visibleTokens, run] of checks) {
 
 main.innerHTML = '';
 nav.goTo('recommendations');
+for (let attempt = 0; attempt < 100 && !main.innerHTML.includes('Library-based suggestions'); attempt += 1) {
+  await new Promise(resolve => setImmediate(resolve));
+}
 if (!main.innerHTML.includes('Library-based suggestions')) {
   throw new Error('recommendations page did not render its local recommendation shell');
 }

@@ -30,8 +30,10 @@ try {
   context = await browser.newContext();
   const page = await context.newPage();
   const errors = [];
+  const failedRequests = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  page.on('requestfailed', request => failedRequests.push(request.url()));
   await page.goto(`${baseUrl}/?libriq_e2e_test_mode=1`, { waitUntil: 'domcontentloaded' });
   await waitForAppReady(page, { testName });
 
@@ -122,7 +124,7 @@ try {
   assert.equal(await page.evaluate(() => window.LibriqCloudBackup.getState().activeUid), otherUid);
   await page.evaluate(() => window.LibriqFirebase.signOut());
   assert.equal(await page.evaluate(() => window.LibriqCloudBackup.getState().status), 'paused');
-  assert.deepEqual(errors, []);
+  assert.deepEqual(errors, [], `failed requests: ${failedRequests.join(', ')}`);
   console.log('Cloud Backup browser lifecycle test passed');
 } finally {
   await closePlaywright(browser, context ? [context] : [], { testName });
