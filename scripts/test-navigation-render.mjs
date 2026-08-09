@@ -362,8 +362,8 @@ Object.assign(NativeStorage, {
 nav.renderCurrentPage();
 await new Promise(resolve => setTimeout(resolve, 0));
 await new Promise(resolve => setTimeout(resolve, 0));
-if (!main.innerHTML.includes('Library.showDetailsModal')) {
-  throw new Error('saved recommendation cards should open saved book details');
+if (!main.innerHTML.includes('data-action="open-recommendation"') || !main.innerHTML.includes('data-book-saved="1"')) {
+  throw new Error('saved recommendation cards should use delegated detail actions');
 }
 if (!main.innerHTML.includes('Already in Library')) {
   throw new Error('saved recommendation cards should show already-in-library state');

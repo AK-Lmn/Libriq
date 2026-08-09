@@ -25,6 +25,7 @@
     "test:statistics-calculations": "node scripts/test-statistics-calculations.mjs",
     "test:statistics-page": "node scripts/test-statistics-page.mjs",
     "test:settings-page": "node scripts/test-settings-page.mjs",
+    "test:recommendations-page": "node scripts/test-recommendations-page.mjs",
     "test:dialog-browser": "node scripts/test-dialog-accessibility-browser.mjs",
     "test:sync-modules": "node scripts/test-sync-modules.mjs",
     "test:firebase-modules": "node scripts/test-firebase-modules.mjs",
