@@ -26,6 +26,8 @@
     "test:statistics-page": "node scripts/test-statistics-page.mjs",
     "test:settings-page": "node scripts/test-settings-page.mjs",
     "test:recommendations-page": "node scripts/test-recommendations-page.mjs",
+    "test:import-merge": "node scripts/test-import-merge.mjs",
+    "test:backup-serialization": "node scripts/test-backup-serialization.mjs",
     "test:dialog-browser": "node scripts/test-dialog-accessibility-browser.mjs",
     "test:sync-modules": "node scripts/test-sync-modules.mjs",
     "test:firebase-modules": "node scripts/test-firebase-modules.mjs",
