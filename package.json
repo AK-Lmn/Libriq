@@ -22,6 +22,7 @@
     "test:help-page": "node scripts/test-help-page.mjs",
     "test:goals-page": "node scripts/test-goals-page.mjs",
     "test:library-shelves-page": "node scripts/test-library-shelves-page.mjs",
+    "test:statistics-calculations": "node scripts/test-statistics-calculations.mjs",
     "test:dialog-browser": "node scripts/test-dialog-accessibility-browser.mjs",
     "test:sync-modules": "node scripts/test-sync-modules.mjs",
     "test:firebase-modules": "node scripts/test-firebase-modules.mjs",
