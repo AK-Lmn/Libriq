@@ -72,6 +72,7 @@ Navigation.init();
 assert.equal(listeners.length, listenerCount);
 
 const source = fs.readFileSync('frontend/js/navigation.js', 'utf8');
+const recommendationsSource = fs.readFileSync('frontend/js/features/recommendations/recommendationsPage.js', 'utf8');
 for (const [name, path] of [
   ['BookAPI', './api/index.js'],
   ['Library', './library.js'],
@@ -81,8 +82,8 @@ for (const [name, path] of [
   assert.ok(source.includes(`import { ${name} } from '${path}';`));
 }
 assert.doesNotMatch(source, /window\.(?:BookAPI|Library|Search|Dashboard)|globalThis\.(?:BookAPI|Library|Search|Dashboard)/);
-assert.match(source, /BookAPI\.searchBySubject/);
-assert.match(source, /BookAPI\.searchCuratedClassics/);
+assert.match(recommendationsSource, /bookApi\.searchBySubject/);
+assert.match(recommendationsSource, /bookApi\.searchCuratedClassics/);
 assert.ok(source.includes("import { buildMonthlyChart, buildGenreRow } from './dashboard.js';"));
 assert.ok(source.includes("import { Router } from './app/router.js';"));
 assert.match(source, /createDashboardPage/);

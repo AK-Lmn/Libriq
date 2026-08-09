@@ -4,7 +4,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 
 const root = process.cwd();
-const navigationPath = path.join(root, 'frontend/js/navigation.js');
+const navigationPath = path.join(root, 'frontend/js/features/recommendations/recommendationsPage.js');
 const htmlPath = path.join(root, 'frontend/index.html');
 const source = fs.readFileSync(navigationPath, 'utf8');
 const html = fs.readFileSync(htmlPath, 'utf8');
@@ -23,16 +23,16 @@ assert.equal(/\/api\/gemini/i.test(source + html), false);
 assert.equal(packageJson.dependencies?.['firebase-admin'], undefined);
 assert.equal(fs.existsSync(path.join(root, 'frontend/js/api/geminiClient.js')), false);
 assert.equal(fs.existsSync(path.join(root, 'api/gemini/recommendations.js')), false);
-assert.match(source, /BookAPI\.searchBySubject/);
-assert.match(source, /BookAPI\.searchCuratedClassics/);
+assert.match(source, /bookApi\.searchBySubject/);
+assert.match(source, /bookApi\.searchCuratedClassics/);
 
 const context = {
-  LIBRIQ: { STATUS: { READING: 'reading', FINISHED: 'finished', WISHLIST: 'wishlist' } },
+  constants: { STATUS: { READING: 'reading', FINISHED: 'finished', WISHLIST: 'wishlist' } },
   Date,
   Map,
 };
 vm.runInNewContext(
-  extract('function _buildRecommendationState(books) {', 'function renderProfilePage() {'),
+  extract('function _buildRecommendationState(books) {', 'function bindRecommendationActions(main) {'),
   context,
   { filename: 'navigation-recommendations-snippet.js' },
 );
@@ -50,12 +50,13 @@ const localState = context._buildRecommendationState([
 assert.equal(localState.hasSignal, true);
 assert.ok(localState.groups.some(group => group.books.length > 0));
 
-context.BookAPI = { buildSourceBadgeData: () => ({}) };
+context.bookApi = { buildSourceBadgeData: () => ({}) };
 context.window = context;
 context.globalThis = context.window;
-context.Storage = { getBookById: id => id === 'saved' ? { id } : null };
-context.Library = {};
-context.Utils = {
+context.storage = { getBookById: id => id === 'saved' ? { id } : null };
+context.library = {};
+context.recommendationBooks = new Map();
+context.utils = {
   sanitize: value => String(value ?? ''),
   statusLabel: status => status,
   statusBadgeClass: () => 'badge-status',
@@ -63,8 +64,9 @@ context.Utils = {
 };
 const savedCard = context.buildRecommendationCard({ id: 'saved', title: 'Saved', author: 'Author', status: 'reading' }, '');
 const addableCard = context.buildRecommendationCard({ id: 'new', title: 'New', author: 'Author' }, '');
-assert.match(savedCard, /Library\.showDetailsModal/);
-assert.match(addableCard, /Library\.showAddModal/);
+assert.match(savedCard, /data-action="open-recommendation"/);
+assert.match(savedCard, /data-book-saved="1"/);
+assert.match(addableCard, /data-book-saved="0"/);
 assert.match(addableCard, /Add to Library/);
 
 console.log('recommendations regression test passed');

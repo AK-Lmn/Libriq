@@ -4,7 +4,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 
 const repoRoot = process.cwd();
-const source = fs.readFileSync(path.join(repoRoot, 'frontend/js/navigation.js'), 'utf8');
+const source = fs.readFileSync(path.join(repoRoot, 'frontend/js/features/recommendations/recommendationsPage.js'), 'utf8');
 
 function extract(startToken, endToken) {
   const start = source.indexOf(startToken);
@@ -19,14 +19,14 @@ const context = {
   window: null,
   document: { getElementById: () => null },
   navigator: { onLine: true },
-  Utils: {
+  utils: {
     formatDisplayName: (value) => String(value || '').replace(/\b\w/g, c => c.toUpperCase()),
     sanitize: (value) => String(value ?? ''),
   },
-  BookAPI: {
+  bookApi: {
     isSameBook: (left, right) => String(left?.title || '').toLowerCase() === String(right?.title || '').toLowerCase(),
   },
-  LIBRIQ: {
+  constants: {
     STATUS: { READING: 'reading', FINISHED: 'finished', WISHLIST: 'wishlist' },
   },
 };
