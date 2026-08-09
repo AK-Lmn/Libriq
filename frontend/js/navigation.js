@@ -13,6 +13,7 @@ import { createDashboardPage } from './features/dashboard/dashboardPage.js';
 import { createLibraryPage } from './features/library/libraryPage.js';
 import { createActivityPage } from './features/activity/activityPage.js';
 import { createHelpPage } from './features/help/helpPage.js';
+import { createGoalsPage } from './features/goals/goalsPage.js';
 export const Navigation = (() => {
   let _currentPage = 'dashboard';
   const SESSION_PREF_KEY = 'libriq_session_pref';
@@ -108,7 +109,12 @@ export const Navigation = (() => {
       const book = Storage.getBookById(bookId);
       Library.removeBook(bookId, book?.title || 'this book');
     },
+    setGoalPreset: (input, yearly) => {
+      if (input) input.value = yearly;
+    },
+    refreshGoals: () => renderGoalsPage(goalsFeature),
   };
+  const goalsFeature = createGoalsPage({ storage: Storage, utils: Utils, actions: featureActions });
 
   function lazyFeature(load, factoryName, render) {
     let pagePromise;
@@ -132,7 +138,7 @@ export const Navigation = (() => {
     favorites: () => renderFavoritesPage(),
     stats:     lazyFeature(() => import('./features/statistics/statisticsPage.js'), 'createStatisticsPage', renderStatsPage),
     activity:  createActivityPage({ storage: Storage, utils: Utils, actions: featureActions }),
-    goals:     () => renderGoalsPage(),
+    goals:     () => renderGoalsPage(goalsFeature),
     recommendations: lazyFeature(() => import('./features/recommendations/recommendationsPage.js'), 'createRecommendationsPage', renderRecommendationsPage),
     help:      createHelpPage({ storage: Storage, actions: featureActions }),
     profile:   () => renderProfilePage(),
@@ -1638,68 +1644,8 @@ function renderFavoritesPage() {
 }
 
 
-function renderGoalsPage() {
-  const main  = document.getElementById('mainContent');
-  if (!main) {
-    console.error('[LibriQ] Missing #mainContent while rendering goals page.');
-    return;
-  }
-  const goals = Storage.getGoals();
-  const stats = Storage.getStats();
-
-  main.innerHTML = `
-    <div class="page goals-page page--narrow" id="goalsPage">
-      <div class="page-header page-header--spaced">
-        <h1 class="page-title">Reading Goals</h1>
-        <p class="page-subtitle">Set your target for ${new Date().getFullYear()}</p>
-      </div>
-
-      <div class="goal-widget goal-widget--section-sm">
-        <form id="goalsForm" class="add-book-form">
-          <div class="form-group">
-            <label class="form-label" for="yearlyGoalInput">Books to read in ${new Date().getFullYear()}</label>
-            <input type="number" id="yearlyGoalInput" name="yearly"
-              class="form-input" value="${goals.yearly}" min="1" max="365" />
-          </div>
-          <div class="goal-presets">
-            ${[6,12,24,52].map(n =>
-              `<button type="button" class="btn btn-secondary btn-sm"
-                onclick="document.getElementById('yearlyGoalInput').value=${n}">
-                ${n} books
-              </button>`
-            ).join('')}
-          </div>
-          <button type="submit" class="btn btn-primary form-submit-offset">
-            <i class="ph ph-floppy-disk"></i> Save Goal
-          </button>
-        </form>
-      </div>
-
-      <div class="goal-widget">
-        <div class="goal-header"><div class="goal-title">Progress</div></div>
-        <div class="activity-list">
-          ${[
-            ['Goal',         goals.yearly + ' books'],
-            ['Completed',    stats.finishedThisYear + ' books'],
-            ['Remaining',    Math.max(0, goals.yearly - stats.finishedThisYear) + ' books'],
-            ['On track',     stats.finishedThisYear >= Math.round(goals.yearly * (new Date().getMonth() + 1) / 12) ? '✅ Yes' : '⚠️ Behind'],
-          ].map(([label, val]) => `
-            <div class="activity-item activity-item--noninteractive">
-              <div class="activity-text"><div class="activity-subtitle">${label}</div></div>
-              <div class="activity-time activity-time--strong">${val}</div>
-            </div>`).join('')}
-        </div>
-      </div>
-    </div>`;
-
-  document.getElementById('goalsForm')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const yearly = parseInt(new FormData(e.target).get('yearly'), 10);
-    if (!yearly || yearly < 1) return;
-    Storage.saveGoals({ yearly, year: new Date().getFullYear() });
-    Utils.toast(`Goal set: ${yearly} books in ${new Date().getFullYear()}`, 'success');
-    renderGoalsPage();
-  });
+function renderGoalsPage(renderGoalsFeature) {
+  renderGoalsFeature();
 
   document.getElementById('recapYearSelect')?.addEventListener('change', (e) => {
     _setRecapYear(e.target.value);
