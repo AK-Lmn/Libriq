@@ -14,6 +14,7 @@ import { createLibraryPage } from './features/library/libraryPage.js';
 import { createActivityPage } from './features/activity/activityPage.js';
 import { createHelpPage } from './features/help/helpPage.js';
 import { createGoalsPage } from './features/goals/goalsPage.js';
+import { buildLibraryShelfEmpty, createLibraryShelvesPage } from './features/library/libraryShelvesPage.js';
 export const Navigation = (() => {
   let _currentPage = 'dashboard';
   const SESSION_PREF_KEY = 'libriq_session_pref';
@@ -113,8 +114,10 @@ export const Navigation = (() => {
       if (input) input.value = yearly;
     },
     refreshGoals: () => renderGoalsPage(goalsFeature),
+    getLibraryState: () => _getLibraryState(),
   };
   const goalsFeature = createGoalsPage({ storage: Storage, utils: Utils, actions: featureActions });
+  const libraryShelvesFeature = createLibraryShelvesPage({ storage: Storage, library: Library, utils: Utils, actions: featureActions });
 
   function lazyFeature(load, factoryName, render) {
     let pagePromise;
@@ -132,10 +135,10 @@ export const Navigation = (() => {
     session:   () => renderSessionChoicePage(),
     dashboard: createDashboardPage({ dashboard: Dashboard, actions: featureActions }),
     library:   createLibraryPage({ render: renderLibraryPage, actions: featureActions }),
-    reading:   () => renderStatusPage(LIBRIQ.STATUS.READING,  'Currently Reading', 'ph-book-open'),
-    wishlist:  () => renderStatusPage(LIBRIQ.STATUS.WISHLIST, 'Want to Read',      'ph-bookmark'),
-    finished:  () => renderStatusPage(LIBRIQ.STATUS.FINISHED, 'Finished Books',    'ph-check-circle'),
-    favorites: () => renderFavoritesPage(),
+    reading:   () => libraryShelvesFeature.renderStatusPage(LIBRIQ.STATUS.READING,  'Currently Reading', 'ph-book-open'),
+    wishlist:  () => libraryShelvesFeature.renderStatusPage(LIBRIQ.STATUS.WISHLIST, 'Want to Read',      'ph-bookmark'),
+    finished:  () => libraryShelvesFeature.renderStatusPage(LIBRIQ.STATUS.FINISHED, 'Finished Books',    'ph-check-circle'),
+    favorites: () => libraryShelvesFeature.renderFavoritesPage(),
     stats:     lazyFeature(() => import('./features/statistics/statisticsPage.js'), 'createStatisticsPage', renderStatsPage),
     activity:  createActivityPage({ storage: Storage, utils: Utils, actions: featureActions }),
     goals:     () => renderGoalsPage(goalsFeature),
@@ -1279,108 +1282,9 @@ function _sortLibraryBooks(books, sort) {
 }
 
 function buildLibraryEmpty(filter = 'all', query = '') {
-  const messages = {
-    all:       ['Your library is empty', 'Search for books to build your collection.'],
-    reading:   ['Nothing in progress', 'Pick a book and start reading.'],
-    wishlist:  ['Queue is clear', 'Add books you want to read next.'],
-    finished:  ['No finished books yet', 'Keep reading — you\'re getting there.'],
-    favorites: ['No favorites yet', 'Save the books you love most here.'],
-    'needs-metadata': ['No metadata issues found', 'Your saved books already look complete.'],
-  };
-  const state = _getLibraryState();
-  const selectedShelf = state.shelf && state.shelf !== 'all' ? state.shelf : '';
-  const hasQuery = !!query;
-  const [title, body] = hasQuery
-    ? ['No books match your search.', 'Try a different keyword, add a book manually, or clear the search to see everything again.']
-    : selectedShelf
-      ? [`No books on "${selectedShelf}"`, 'Try another shelf or add this book to a shelf.']
-      : (messages[filter] || messages.all);
-  return `
-    <div class="empty-state grid-full-width">
-      <div class="empty-state-icon"><i class="ph ph-books"></i></div>
-      <div class="empty-state-title">${title}</div>
-      <div class="empty-state-body">${body}</div>
-      ${hasQuery ? `<button class="btn btn-secondary" type="button" data-action="clear-library-search"><i class="ph ph-x"></i> Clear Search</button>` : `
-        <button class="btn btn-primary" type="button" data-action="open-search">
-          <i class="ph ph-magnifying-glass"></i> Search Books
-        </button>
-        <button class="btn btn-secondary" type="button" data-action="open-manual-entry">
-          <i class="ph ph-pencil"></i> Add Manually
-        </button>
-        <button class="btn btn-secondary" type="button" data-action="import-backup">
-          <i class="ph ph-upload-simple"></i> Import Backup
-        </button>
-      `}
-    </div>`;
+  return buildLibraryShelfEmpty(filter, query, _getLibraryState());
 }
 
-function renderStatusPage(status, title, iconClass) {
-  const main  = document.getElementById('mainContent');
-  if (!main) {
-    console.error(`[LibriQ] Missing #mainContent while rendering ${title} page.`);
-    return;
-  }
-  const books = Storage.getBooksByStatus(status);
-  const summaries = {
-    [LIBRIQ.STATUS.READING]: ['Reading queue', 'Books you are currently moving through.'],
-    [LIBRIQ.STATUS.WISHLIST]: ['Wishlist', 'Books saved for later.'],
-    [LIBRIQ.STATUS.FINISHED]: ['Finished shelf', 'Books you have completed.'],
-  };
-  const [eyebrow, subtitle] = summaries[status] || ['Reading list', 'Books on this shelf.'];
-  const summaryLabel = `${books.length} book${books.length !== 1 ? 's' : ''}`;
-
-  main.innerHTML = `
-    <div class="page status-page" id="statusPage">
-      <div class="page-header status-header">
-        <div class="status-heading">
-          <span class="library-eyebrow">${eyebrow}</span>
-          <h1 class="page-title">${title}</h1>
-          <p class="page-subtitle">${summaryLabel}${subtitle ? ` · ${subtitle}` : ''}</p>
-        </div>
-      </div>
-      <div class="books-grid" id="statusGrid"></div>
-    </div>`;
-
-  const grid = document.getElementById('statusGrid');
-  if (books.length === 0) {
-    grid.innerHTML = buildLibraryEmpty(status);
-  } else {
-    books.forEach(b => grid.appendChild(Library.renderBookCard(b)));
-  }
-}
-
-function renderFavoritesPage() {
-  const main  = document.getElementById('mainContent');
-  if (!main) {
-    console.error('[LibriQ] Missing #mainContent while rendering favorites page.');
-    return;
-  }
-  const books = Storage.getBooks().filter(b => b.isFavorite);
-
-  main.innerHTML = `
-    <div class="page status-page" id="statusPage">
-      <div class="page-header status-header">
-        <div class="status-heading">
-          <span class="library-eyebrow">Favorite books</span>
-          <h1 class="page-title">Favorites</h1>
-          <p class="page-subtitle">${books.length} book${books.length !== 1 ? 's' : ''} saved with a heart</p>
-        </div>
-      </div>
-      <div class="books-grid" id="favoritesGrid"></div>
-    </div>`;
-
-  const grid = document.getElementById('favoritesGrid');
-  if (books.length === 0) {
-    grid.innerHTML = `
-      <div class="empty-state grid-full-width">
-        <div class="empty-state-icon"><i class="ph ph-heart"></i></div>
-        <div class="empty-state-title">No favorites yet</div>
-        <div class="empty-state-body">Tap the heart on any book to save it here.</div>
-      </div>`;
-  } else {
-    books.forEach(b => grid.appendChild(Library.renderBookCard(b)));
-  }
-}
 
   function renderStatsPage() {
     const main  = document.getElementById('mainContent');
