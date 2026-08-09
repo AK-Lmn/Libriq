@@ -18,6 +18,17 @@ import { buildLibraryShelfEmpty, createLibraryShelvesPage } from './features/lib
 import { createStatisticsPage } from './features/statistics/statisticsPage.js';
 import { createSettingsPage } from './features/settings/settingsPage.js';
 import { createRecommendationsPage } from './features/recommendations/recommendationsPage.js';
+import { createImportMerge } from './services/importMerge.js';
+
+const importMerge = createImportMerge({
+  createBook,
+  statuses: LIBRIQ.STATUS,
+  now: () => new Date().toISOString(),
+  createId: () => crypto.randomUUID(),
+});
+const _summarizeLibrary = importMerge.summarizeLibrary;
+const _mergeBooksForImport = importMerge.mergeBooksForImport;
+const _mergeActivityById = importMerge.mergeActivityById;
 export const Navigation = (() => {
   let _currentPage = 'dashboard';
   const SESSION_PREF_KEY = 'libriq_session_pref';
@@ -1474,29 +1485,6 @@ function _friendlyAuthMessage(err) {
   return map[code] || 'Something went wrong. Please try again.';
 }
 
-function _countRecords(list, filterFn) {
-  return Array.isArray(list) ? list.filter(filterFn).length : 0;
-}
-
-function _summarizeLibrary(books, activity = []) {
-  const safeBooks = Array.isArray(books) ? books : [];
-  const safeActivity = Array.isArray(activity) ? activity : [];
-  const notesCount = safeBooks.reduce((sum, book) => sum + (book?.notes ? 1 : 0), 0);
-  const quotesCount = safeBooks.reduce((sum, book) => sum + (Array.isArray(book?.quotes) ? book.quotes.length : 0), 0);
-  const lastUpdated = safeBooks.reduce((latest, book) => {
-    const time = new Date(book?.updatedAt || book?.dateFinished || book?.dateStarted || book?.dateAdded || 0).getTime();
-    return Number.isFinite(time) && time > latest ? time : latest;
-  }, 0);
-  return {
-    bookCount: safeBooks.length,
-    readingCount: _countRecords(safeBooks, book => book?.status === LIBRIQ.STATUS.READING),
-    finishedCount: _countRecords(safeBooks, book => book?.status === LIBRIQ.STATUS.FINISHED),
-    notesCount,
-    quotesCount,
-    activityCount: safeActivity.length,
-    lastUpdatedAt: lastUpdated ? new Date(lastUpdated).toISOString() : null,
-  };
-}
 
 function _buildRestoreSummaryMarkup(label, summary, extra = []) {
   return `
@@ -1990,179 +1978,6 @@ function _applyImportedBackup(parsed, replaceMode) {
   }
 }
 
-function _mergeBooksForImport(currentBooks, importedBooks) {
-  const current = Array.isArray(currentBooks) ? currentBooks : [];
-  const imported = Array.isArray(importedBooks) ? importedBooks : [];
-  const result = current.map(book => ({ ...book }));
-  const indexById = new Map(result.map((book, index) => [book.id, index]));
-  const isbnIndex = new Map();
-  const titleIndex = new Map();
-
-  result.forEach((book, index) => {
-    if (book?.isbn) isbnIndex.set(String(book.isbn).trim(), index);
-    titleIndex.set(_bookMergeKey(book), index);
-  });
-
-  imported.forEach(rawBook => {
-    const book = createBook(rawBook);
-    let matchIndex = null;
-    const isbnKey = book.isbn ? String(book.isbn).trim() : '';
-    if (book.id && indexById.has(book.id)) {
-      matchIndex = indexById.get(book.id);
-    } else if (isbnKey && isbnIndex.has(isbnKey)) {
-      matchIndex = isbnIndex.get(isbnKey);
-    } else if (titleIndex.has(_bookMergeKey(book))) {
-      matchIndex = titleIndex.get(_bookMergeKey(book));
-    }
-
-    if (matchIndex === null || matchIndex === undefined) {
-      const cloned = { ...book };
-      result.push(cloned);
-      indexById.set(cloned.id, result.length - 1);
-      if (cloned.isbn) isbnIndex.set(String(cloned.isbn).trim(), result.length - 1);
-      titleIndex.set(_bookMergeKey(cloned), result.length - 1);
-      return;
-    }
-
-    const currentBook = result[matchIndex];
-    result[matchIndex] = _mergeBookRecords(currentBook, book);
-    indexById.set(result[matchIndex].id, matchIndex);
-    if (result[matchIndex].isbn) isbnIndex.set(String(result[matchIndex].isbn).trim(), matchIndex);
-    titleIndex.set(_bookMergeKey(result[matchIndex]), matchIndex);
-  });
-
-  return result;
-}
-
-function _bookMergeKey(book) {
-  return `${_normalizeMergeText(book?.title)}|${_normalizeMergeText(book?.author)}`;
-}
-
-function _normalizeMergeText(value) {
-  return String(value || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-    .replace(/\s+/g, ' ');
-}
-
-function _getReliableBookTime(book) {
-  const candidates = [book?.notesUpdatedAt, book?.dateFinished, book?.dateStarted, book?.dateAdded];
-  for (const value of candidates) {
-    const time = new Date(value || 0).getTime();
-    if (Number.isFinite(time) && time > 0) return time;
-  }
-  return 0;
-}
-
-function _mergeBookRecords(currentBook, importedBook) {
-  const current = currentBook || {};
-  const incoming = importedBook || {};
-  const currentTime = _getReliableBookTime(current);
-  const incomingTime = _getReliableBookTime(incoming);
-  const preferIncoming = incomingTime > 0 && currentTime > 0 ? incomingTime > currentTime : false;
-  const base = preferIncoming ? { ...current, ...incoming } : { ...incoming, ...current };
-
-  const mergedTags = Array.from(new Set([...(current.tags || []), ...(incoming.tags || [])].map(tag => String(tag || '').trim()).filter(Boolean)));
-  const mergedGenres = Array.from(new Set([...(current.genres || []), ...(incoming.genres || [])].map(genre => String(genre || '').trim()).filter(Boolean)));
-  const mergedQuotes = _mergeQuotes(current.quotes, incoming.quotes);
-
-  const notes = typeof current.notes === 'string' ? current.notes.trim() : '';
-  const importedNotes = typeof incoming.notes === 'string' ? incoming.notes.trim() : '';
-  const keepNotes = notes || importedNotes;
-
-  const merged = {
-    ...base,
-    id: current.id || incoming.id || crypto.randomUUID(),
-    tags: mergedTags,
-    genres: mergedGenres,
-    notes: notes || importedNotes || '',
-    notesUpdatedAt: notes ? (current.notesUpdatedAt || incoming.notesUpdatedAt || null) : (incoming.notesUpdatedAt || current.notesUpdatedAt || null),
-    status: _preferStatus(current.status, incoming.status),
-    currentPage: _preferNumeric(current.currentPage, incoming.currentPage),
-    rating: _preferRating(current.rating, incoming.rating),
-    dateAdded: current.dateAdded || incoming.dateAdded || new Date().toISOString(),
-    dateStarted: current.dateStarted || incoming.dateStarted || null,
-    dateFinished: current.dateFinished || incoming.dateFinished || null,
-    quotes: mergedQuotes,
-  };
-
-  if (!keepNotes) merged.notes = '';
-  return merged;
-}
-
-function _mergeQuotes(currentQuotes, incomingQuotes) {
-  const byId = new Map();
-  (Array.isArray(currentQuotes) ? currentQuotes : []).forEach(quote => {
-    if (!quote?.id) return;
-    byId.set(quote.id, {
-      id: quote.id,
-      text: String(quote.text || ''),
-      page: quote.page ?? null,
-      note: quote.note ?? '',
-      createdAt: quote.createdAt || new Date().toISOString(),
-      updatedAt: quote.updatedAt || quote.createdAt || new Date().toISOString(),
-    });
-  });
-  (Array.isArray(incomingQuotes) ? incomingQuotes : []).forEach(quote => {
-    if (!quote?.id) return;
-    const normalized = {
-      id: quote.id,
-      text: String(quote.text || ''),
-      page: quote.page ?? null,
-      note: quote.note ?? '',
-      createdAt: quote.createdAt || new Date().toISOString(),
-      updatedAt: quote.updatedAt || quote.createdAt || new Date().toISOString(),
-    };
-    const existing = byId.get(quote.id);
-    if (!existing) {
-      byId.set(quote.id, normalized);
-      return;
-    }
-    const existingTime = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
-    const incomingTime = new Date(normalized.updatedAt || normalized.createdAt || 0).getTime();
-    byId.set(quote.id, incomingTime > existingTime ? normalized : existing);
-  });
-  return Array.from(byId.values());
-}
-
-function _preferNumeric(currentValue, incomingValue) {
-  const currentNum = Number(currentValue);
-  const incomingNum = Number(incomingValue);
-  if (Number.isFinite(currentNum) && Number.isFinite(incomingNum)) {
-    return Math.max(currentNum, incomingNum);
-  }
-  return Number.isFinite(currentNum) ? currentNum : (Number.isFinite(incomingNum) ? incomingNum : 0);
-}
-
-function _preferRating(currentValue, incomingValue) {
-  const currentNum = Number(currentValue);
-  const incomingNum = Number(incomingValue);
-  if (Number.isFinite(currentNum) && Number.isFinite(incomingNum)) {
-    return Math.max(currentNum, incomingNum);
-  }
-  if (Number.isFinite(currentNum)) return currentNum;
-  if (Number.isFinite(incomingNum)) return incomingNum;
-  return null;
-}
-
-function _preferStatus(currentStatus, incomingStatus) {
-  const current = currentStatus || LIBRIQ.STATUS.WISHLIST;
-  const incoming = incomingStatus || LIBRIQ.STATUS.WISHLIST;
-  const rank = { finished: 3, reading: 2, wishlist: 1, dnf: 0 };
-  return rank[current] >= rank[incoming] ? current : incoming;
-}
-
-function _mergeActivityById(currentEvents, importedEvents) {
-  const byId = new Map();
-  (currentEvents || []).forEach(event => {
-    if (event?.id) byId.set(event.id, event);
-  });
-  (importedEvents || []).forEach(event => {
-    if (event?.id) byId.set(event.id, event);
-  });
-  return Array.from(byId.values()).sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
-}
 
 function _dangerConfirmElements() {
   return {
