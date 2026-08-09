@@ -19,6 +19,8 @@ import { createStatisticsPage } from './features/statistics/statisticsPage.js';
 import { createSettingsPage } from './features/settings/settingsPage.js';
 import { createRecommendationsPage } from './features/recommendations/recommendationsPage.js';
 import { createImportMerge } from './services/importMerge.js';
+import { createExportPayload, parseBackupText, serializeBackup, validateBackup } from './services/backupSerialization.js';
+import { createBrowserDownloadFile, createImportExportService, readBrowserFileText } from './services/importExportService.js';
 
 const importMerge = createImportMerge({
   createBook,
@@ -29,6 +31,19 @@ const importMerge = createImportMerge({
 const _summarizeLibrary = importMerge.summarizeLibrary;
 const _mergeBooksForImport = importMerge.mergeBooksForImport;
 const _mergeActivityById = importMerge.mergeActivityById;
+const importExportService = createImportExportService({
+  storage: Storage,
+  constants: LIBRIQ,
+  createBook,
+  createExportPayload,
+  serializeBackup,
+  parseBackupText,
+  validateBackup,
+  downloadFile: createBrowserDownloadFile({ BlobCtor: globalThis.Blob, urlApi: globalThis.URL, documentRoot: globalThis.document }),
+  readFileText: readBrowserFileText,
+  clock: () => new Date(),
+  createId: () => crypto.randomUUID(),
+});
 export const Navigation = (() => {
   let _currentPage = 'dashboard';
   const SESSION_PREF_KEY = 'libriq_session_pref';
@@ -1706,30 +1721,10 @@ function _hasGoogleBooksKey() {
 }
 
 async function exportData() {
-  const activity = Storage.getActivityLog?.() || [];
-  const exportedAt = new Date().toISOString();
-  const data = {
-    app: 'LibriQ',
-    version: LIBRIQ.VERSION,
-    exportedAt,
-    data: {
-      books: Storage.getBooks(),
-      profile: Storage.getProfile(),
-      goals: Storage.getGoals(),
-      streak: Storage.getStreak(),
-      activity,
-    },
-  };
-
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `libriq-backup-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const result = importExportService.exportCurrentLibrary();
+  const { payload: data, exportedAt, activityCount } = result;
   Storage.saveBackupMeta?.({ lastExportedAt: exportedAt });
-  Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_exported', null, { itemCount: data.data.books.length, activityCount: activity.length }, 'export'));
+  Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_exported', null, { itemCount: data.data.books.length, activityCount }, 'export'));
   Utils.toast('Library exported', 'success');
   if (document.getElementById('mainContent')?.querySelector('#importLibraryInput')) {
     try {
@@ -1860,21 +1855,16 @@ function promptImportData() {
 
 async function importDataFromFile(file) {
   if (!file) return;
-
-  let parsed;
-  try {
-    parsed = JSON.parse(await file.text());
-  } catch (err) {
+  const result = await importExportService.parseImportFile(file);
+  if (!result.ok && result.reason === 'invalid-json') {
     Utils.toast('That file is not valid JSON.', 'error');
     return;
   }
-
-  if (!parsed || parsed.app !== 'LibriQ' || !parsed.data || !Array.isArray(parsed.data.books)) {
+  if (!result.ok) {
     Utils.toast('That file is not a valid LibriQ backup.', 'error');
     return;
   }
-
-  _openImportPreview(file, parsed);
+  _openImportPreview(file, result.payload);
 }
 
 function _openImportPreview(file, parsed) {
