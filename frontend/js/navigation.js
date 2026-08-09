@@ -16,6 +16,7 @@ import { createHelpPage } from './features/help/helpPage.js';
 import { createGoalsPage } from './features/goals/goalsPage.js';
 import { buildLibraryShelfEmpty, createLibraryShelvesPage } from './features/library/libraryShelvesPage.js';
 import { createStatisticsPage } from './features/statistics/statisticsPage.js';
+import { createSettingsPage } from './features/settings/settingsPage.js';
 export const Navigation = (() => {
   let _currentPage = 'dashboard';
   const SESSION_PREF_KEY = 'libriq_session_pref';
@@ -119,9 +120,95 @@ export const Navigation = (() => {
     buildMonthlyChart,
     buildGenreRow,
   };
+  const settingsActions = {
+    ...featureActions,
+    getActiveTheme: () => Navigation.getActiveTheme?.(),
+    getSessionPreference: () => Navigation.getSessionPreference?.(),
+    getFirebaseState: () => LibriqFirebase.getState(),
+    getUserEmailAuthInfo: user => LibriqFirebase.getUserEmailAuthInfo(user),
+    getCurrentUser: () => LibriqFirebase.getCurrentUser(),
+    hasFirestore: () => LibriqFirebase.hasFirestore(),
+    getCloudBackupState: () => LibriqCloudBackup.getState(),
+    formatLastSavedLabel: value => LibriqCloudBackup.formatLastSavedLabel(value),
+    getSyncState: () => window.LibriqSyncBeta?.getState?.(),
+    getDisplayName: user => getDisplayNameForAccount(user),
+    toggleTheme: () => Navigation.toggleTheme(),
+    exportData: () => exportData(),
+    promptImportData: () => promptImportData(),
+    importDataFromFile: file => importDataFromFile(file),
+    confirmDeleteLibraryData: () => confirmDeleteLibraryData(),
+    confirmDeleteAccount: () => confirmDeleteAccount(),
+    clearLocalCache: () => clearLocalCache(),
+    backupToCloud: () => backupToCloud(),
+    openCloudRestorePreview: () => openCloudRestorePreview(),
+    openCloudMergePreview: () => openCloudMergePreview(),
+    accountAction: async action => {
+      try {
+        if (action === 'signin') await LibriqFirebase.signInWithGoogle();
+        else await LibriqFirebase.signOut();
+      } catch (err) {
+        const code = String(err?.code || err?.message || '');
+        const cancelled = code.includes('popup-closed-by-user') || code.includes('popup-blocked');
+        Utils.toast(cancelled ? 'Sign-in was cancelled.' : 'Could not update account status right now.', 'error');
+      }
+    },
+    sendVerification: async () => {
+      try {
+        await LibriqFirebase.sendVerificationEmailToCurrentUser?.();
+        Utils.toast('Verification email sent. Check your inbox.', 'success');
+        await LibriqFirebase.refreshCurrentUser?.();
+        Navigation.renderCurrentPage?.();
+      } catch (err) { Utils.toast(_friendlyAuthMessage(err), 'error'); }
+    },
+    refreshEmailStatus: async () => {
+      try {
+        await LibriqFirebase.refreshCurrentUser?.();
+        Utils.toast('Account status refreshed.', 'info');
+        Navigation.renderCurrentPage?.();
+      } catch (err) { Utils.toast(_friendlyAuthMessage(err), 'error'); }
+    },
+    resetPassword: async () => {
+      try {
+        await LibriqFirebase.sendPasswordResetToEmail?.(LibriqFirebase.getState?.()?.user?.email || '');
+        Utils.toast('Password reset email sent if an account exists for that address.', 'success');
+      } catch (err) { Utils.toast(_friendlyAuthMessage(err), 'error'); }
+    },
+    changeEmail: async value => {
+      try {
+        await LibriqFirebase.requestEmailChange?.(String(value || '').trim());
+        Utils.toast('We sent a confirmation link to your new email. Your email will update after you confirm it.', 'success');
+      } catch (err) { Utils.toast(_friendlyAuthMessage(err), 'error'); }
+    },
+    toggleSync: enabled => {
+      if (enabled) {
+        window.LibriqSyncBeta?.setEnabled?.(false);
+        Utils.toast('Account sync turned off', 'info');
+        Navigation.renderCurrentPage?.();
+        return;
+      }
+      const firebase = LibriqFirebase.getState();
+      if (Navigation.getSessionPreference?.() === 'offline') {
+        Utils.toast('Switch to account mode before enabling sync.', 'warning');
+        return;
+      }
+      if (!firebase.user && !LibriqFirebase.getCurrentUser()) {
+        Utils.toast('Sign in first to enable sync.', 'warning');
+        return;
+      }
+      if (!firebase.user) firebase.user = LibriqFirebase.getCurrentUser() || null;
+      window.LibriqSyncBeta?.setEnabled?.(true);
+      Utils.toast('Sync is on. Your books will update across signed-in devices.', 'success');
+    },
+    refreshSync: () => {
+      window.LibriqSyncBeta?.refresh?.();
+      Utils.toast('Sync status refreshed', 'info');
+      window.setTimeout(() => Navigation.renderCurrentPage?.(), 150);
+    },
+  };
   const goalsFeature = createGoalsPage({ storage: Storage, utils: Utils, actions: featureActions });
   const libraryShelvesFeature = createLibraryShelvesPage({ storage: Storage, library: Library, utils: Utils, actions: featureActions });
   const statisticsFeature = createStatisticsPage({ storage: Storage, utils: Utils, constants: LIBRIQ, actions: featureActions });
+  const settingsFeature = createSettingsPage({ storage: Storage, utils: Utils, constants: LIBRIQ, actions: settingsActions });
 
   function lazyFeature(load, factoryName, render) {
     let pagePromise;
@@ -149,7 +236,7 @@ export const Navigation = (() => {
     recommendations: lazyFeature(() => import('./features/recommendations/recommendationsPage.js'), 'createRecommendationsPage', renderRecommendationsPage),
     help:      createHelpPage({ storage: Storage, actions: featureActions }),
     profile:   () => renderProfilePage(),
-    settings:  lazyFeature(() => import('./features/settings/settingsPage.js'), 'createSettingsPage', renderSettingsPage),
+    settings:  settingsFeature,
   };
 
   const router = new Router({
@@ -345,7 +432,7 @@ export const Navigation = (() => {
       _updateThemeToggleUI(next);
     });
     Storage.saveProfile({ theme: next });
-    if (_currentPage === 'settings') renderSettingsPage();
+    if (_currentPage === 'settings') settingsFeature();
   }
 
   function _updateThemeToggleUI(theme) {
@@ -441,7 +528,7 @@ export const Navigation = (() => {
         renderSessionChoicePage();
       } else if (firebase.restoringSession && firebase.user && _currentPage !== 'session') {
         renderCurrentPage?.();
-      } else if (_currentPage === 'settings') renderSettingsPage();
+      } else if (_currentPage === 'settings') settingsFeature();
       if (_currentPage === 'session') renderSessionChoicePage();
       LibriqCloudBackup.refresh();
       window.LibriqSyncBeta?.refresh?.();
@@ -1823,614 +1910,7 @@ function renderProfilePage() {
 }
 
 
-function renderSettingsPage() {
-  const main  = document.getElementById('mainContent');
-  if (!main) {
-    console.error('[LibriQ] Missing #mainContent while rendering settings page.');
-    return;
-  }
-  if (window.localStorage?.getItem('libriq_debug_auto_backup')) {
-    console.debug('[LibriQ][AutoBackup] full settings render');
-  }
-  const theme = Navigation.getActiveTheme?.() || document.documentElement.getAttribute('data-theme') || 'dark';
-  const backupMeta = Storage.getBackupMeta?.() || { lastExportedAt: null };
-  const hasBooks = Storage.getBooks().length > 0;
-  const firebase = LibriqFirebase.getState();
-  const cloudBackupMeta = Storage.getCloudBackupMeta?.() || { lastCloudBackupAt: null, bookCount: null, activityCount: null };
-  const lastExportedText = backupMeta.lastExportedAt
-    ? Utils.formatDate(backupMeta.lastExportedAt)
-    : 'No backup exported yet.';
-  const lastCloudBackupText = cloudBackupMeta.lastCloudBackupAt
-    ? Utils.formatDate(cloudBackupMeta.lastCloudBackupAt)
-    : 'No cloud backup yet.';
 
-  main.innerHTML = `
-    <div class="page settings-page" id="settingsPage">
-      <div class="settings-header">
-        <div class="settings-heading">
-          <span class="settings-eyebrow">App preferences</span>
-          <h1 class="page-title">Settings</h1>
-          <p class="page-subtitle">Tune the app, manage backups, and keep your library safe.</p>
-        </div>
-      </div>
-
-      <div class="settings-grid">
-        <section class="goal-widget settings-panel settings-panel-theme">
-          <div class="goal-header">
-            <div>
-              <div class="goal-title">Appearance</div>
-              <div class="settings-panel-subtitle">Choose the surface that feels best for your reading sessions.</div>
-            </div>
-          </div>
-          <div class="settings-row settings-row-action">
-            <div class="activity-text">
-              <div class="activity-title">Theme</div>
-              <div class="activity-subtitle">Switch between the Studio dark and light palettes.</div>
-            </div>
-            <button class="btn btn-secondary btn-sm" onclick="Navigation.toggleTheme()">
-              <i class="ph ph-${theme === 'dark' ? 'sun' : 'moon'}"></i>
-              Switch to ${theme === 'dark' ? 'light' : 'dark'}
-            </button>
-          </div>
-        </section>
-
-        <section class="goal-widget settings-panel">
-          <div class="goal-header">
-            <div>
-              <div class="goal-title">Account</div>
-              <div class="settings-panel-subtitle">Sign in only when you want backup, sync, or multi-device continuity.</div>
-            </div>
-          </div>
-          ${_buildAccountSection(firebase)}
-          <div class="settings-session-actions">
-            <button class="btn btn-secondary btn-sm" type="button" onclick="Navigation.goTo('session')">
-              <i class="ph ph-arrow-counter-clockwise"></i>
-              Choose start mode
-            </button>
-          </div>
-        </section>
-
-        <section class="goal-widget settings-panel settings-panel-cloud">
-          <div class="goal-header">
-            <div>
-              <div class="goal-title">Cloud Backup</div>
-              <div class="settings-panel-subtitle">Keep a recovery copy tied to your signed-in account.</div>
-            </div>
-          </div>
-          ${_buildCloudBackupSection(firebase, cloudBackupMeta)}
-        </section>
-
-        <section class="goal-widget settings-panel settings-panel-sync">
-          <div class="goal-header">
-            <div>
-              <div class="goal-title">Account Sync</div>
-              <div class="settings-panel-subtitle">Sync status and safety notes are separated from everyday backup controls.</div>
-            </div>
-          </div>
-          ${_buildSyncSection(firebase)}
-        </section>
-
-        <section class="goal-widget settings-panel settings-panel-data">
-          <div class="goal-header">
-            <div>
-              <div class="goal-title">Export / Import</div>
-              <div class="settings-panel-subtitle">Move your library between devices with a JSON backup.</div>
-            </div>
-          </div>
-          <div class="settings-row settings-row-action">
-            <div class="activity-text">
-              <div class="activity-title">Export library</div>
-              <div class="activity-subtitle">Download your data as JSON. Private notes are included.</div>
-            </div>
-            <button class="btn btn-secondary btn-sm" onclick="Navigation.exportData()">
-              <i class="ph ph-download-simple"></i> Export
-            </button>
-          </div>
-          <div class="settings-row settings-row-action">
-            <div class="activity-text">
-              <div class="activity-title">Import library</div>
-              <div class="activity-subtitle">Review a backup before replacing or merging your library.</div>
-            </div>
-            <button class="btn btn-secondary btn-sm" onclick="Navigation.promptImportData()">
-              <i class="ph ph-upload-simple"></i> Import
-            </button>
-          </div>
-          <div class="settings-row settings-row-danger">
-            <div class="activity-text">
-              <div class="activity-title">Danger zone</div>
-              <div class="activity-subtitle">Destructive account and cloud data actions live here.</div>
-            </div>
-            <div class="settings-danger-actions">
-              <button class="btn btn-danger btn-sm" onclick="Navigation.confirmDeleteLibraryData()">
-                <i class="ph ph-trash"></i> Delete library data
-              </button>
-              <button class="btn btn-danger btn-sm" onclick="Navigation.confirmDeleteAccount()">
-                <i class="ph ph-user-minus"></i> Delete account
-              </button>
-            </div>
-          </div>
-          <div class="settings-row">
-            <div class="activity-text">
-              <div class="activity-title">Last exported</div>
-              <div class="activity-subtitle">${lastExportedText}</div>
-            </div>
-          </div>
-          <div class="settings-row">
-            <div class="activity-text">
-              <div class="activity-title">Last cloud backup</div>
-              <div class="activity-subtitle">${lastCloudBackupText}</div>
-            </div>
-          </div>
-          ${hasBooks && !backupMeta.lastExportedAt ? `
-            <div class="settings-callout">
-              Consider exporting a backup before making larger changes.
-            </div>` : ''}
-          <input id="importLibraryInput" type="file" accept="application/json,.json" hidden onchange="Navigation.importDataFromFile(this.files?.[0])" />
-        </section>
-
-        <section class="goal-widget settings-panel">
-          <div class="goal-header">
-            <div>
-              <div class="goal-title">Privacy / Data</div>
-              <div class="settings-panel-subtitle">A local-first app with optional account features.</div>
-            </div>
-          </div>
-          <p class="text-sm text-secondary settings-copy">
-            LibriQ works without an account. Your library stays on this device unless you choose to back it up, sync it, or export it.
-          </p>
-          <div class="settings-list">
-            ${[
-              ['Local library storage', 'LibriQ stores your library locally on this device.'],
-              ['Analytics', 'LibriQ uses anonymous page views to understand general traffic.'],
-              ['Accounts are optional', 'You can keep using LibriQ without signing in.'],
-              ['Backup and sync', 'Backup, restore, merge, and Account Sync stay separate.'],
-              ['JSON export', 'Export a copy anytime for your own backup.'],
-              ['Private notes and quotes', 'Private notes and quotes stay local unless you include them in a backup.'],
-              ['Continue offline', 'Offline mode keeps your books on this device.'],
-            ].map(([title, subtitle]) => `
-              <div class="settings-row">
-                <div class="activity-text">
-                  <div class="activity-title">${title}</div>
-                  <div class="activity-subtitle">${subtitle}</div>
-                </div>
-              </div>`).join('')}
-          </div>
-        </section>
-
-        <section class="goal-widget settings-panel">
-          <div class="goal-header">
-            <div>
-              <div class="goal-title">About</div>
-              <div class="settings-panel-subtitle">Version and source notes for the current build.</div>
-            </div>
-          </div>
-          <p class="text-sm text-secondary settings-copy">
-            <strong class="text-primary">LibriQ</strong> v${LIBRIQ.VERSION}<br>
-            Your reading life, beautifully organized.<br>
-            Book data from <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer" class="text-link">Open Library</a> and <a href="https://books.google.com" target="_blank" rel="noopener noreferrer" class="text-link">Google Books</a>.
-            <br>Manual cloud backup is available for signed-in users.
-          </p>
-        </section>
-      </div>
-    </div>`;
-
-  _wireAccountControls();
-}
-
-function _buildAccountSection(firebase) {
-  if (!firebase.initialized) {
-    return `
-      <div class="activity-item activity-item--static">
-        <div class="activity-text">
-          <div class="activity-title">Account</div>
-          <div class="activity-subtitle">Loading account status…</div>
-        </div>
-      </div>`;
-  }
-
-  if (!firebase.available) {
-    return `
-      <div class="activity-item activity-item--static">
-        <div class="activity-text">
-          <div class="activity-title">Account</div>
-          <div class="activity-subtitle">Account features are unavailable in this build.</div>
-        </div>
-      </div>`;
-  }
-
-  if (!firebase.user) {
-    return `
-      <div class="activity-item activity-item--static activity-item--centered">
-        <div class="activity-text">
-          <div class="activity-title">Account</div>
-          <div class="activity-subtitle">Sign in to enable cloud backup.</div>
-        </div>
-        <button class="btn btn-secondary btn-sm" id="accountActionBtn" type="button" data-account-action="signin">
-          Sign in
-        </button>
-      </div>`;
-  }
-
-  const user = firebase.user;
-  const emailInfo = LibriqFirebase.getUserEmailAuthInfo(user) || {
-    email: String(user.email || '').trim(),
-    emailVerified: false,
-    hasPasswordProvider: false,
-    hasEmail: Boolean(String(user.email || '').trim()),
-  };
-  const avatar = user.photoURL
-    ? `<img src="${Utils.sanitize(user.photoURL)}" alt="" aria-hidden="true" class="account-avatar" />`
-    : `<div class="account-avatar account-avatar--fallback">${Utils.sanitize((user.displayName || user.email || 'U').slice(0,1).toUpperCase())}</div>`;
-  const cloudState = LibriqCloudBackup.getState();
-  const hasFirestore = LibriqFirebase.hasFirestore();
-  const offlineMode = Navigation.getSessionPreference?.() === 'offline';
-  const isGoogleOnly = Array.isArray(emailInfo.providerData) && emailInfo.providerData.length > 0 && emailInfo.providerData.every(provider => provider.providerId === 'google.com');
-  const canEmailActions = emailInfo.hasEmail && emailInfo.hasPasswordProvider;
-  const showVerificationNotice = canEmailActions && !emailInfo.emailVerified;
-  const cloudLabel = cloudState.status === 'paused' || offlineMode
-    ? 'Cloud backup is paused while you’re using offline mode.'
-    : hasFirestore
-      ? 'Cloud backup is active for this account.'
-      : 'You\'re signed in, but cloud backup is unavailable right now.';
-  const backupLabel = cloudState.lastSavedAt
-    ? cloudState.message || LibriqCloudBackup.formatLastSavedLabel(cloudState.lastSavedAt) || 'Last backed up: just now'
-    : 'Your library is backed up to your account on this device.';
-
-  return `
-    <div class="settings-account-card">
-      <div class="settings-account-identity">
-        ${avatar}
-        <div class="settings-account-copy">
-          <div class="activity-title">${Utils.sanitize(getDisplayNameForAccount(user) || 'Signed in')}</div>
-          <div class="activity-subtitle">${Utils.sanitize(user.email || '')}</div>
-          ${isGoogleOnly ? `
-            <div class="activity-subtitle">Signed in with Google</div>
-            <div class="activity-subtitle">Your email is managed by Google.</div>
-          ` : ''}
-          <div class="activity-subtitle" id="settingsAccountCloudCopy">${Utils.sanitize(cloudLabel)}</div>
-          ${cloudState.lastSavedAt ? `<div class="activity-subtitle" id="settingsAccountCloudBackupCopy">${Utils.sanitize(backupLabel)}</div>` : ''}
-          ${showVerificationNotice ? `<div class="settings-callout" id="emailVerificationNotice">Your email isn’t verified yet.</div>` : ''}
-        </div>
-      </div>
-      ${canEmailActions ? `
-      <div class="settings-account-actions">
-        <div class="settings-account-row">
-          <div class="activity-text">
-            <div class="activity-title">Email verification</div>
-            <div class="activity-subtitle">Send a verification email to your address.</div>
-          </div>
-          <button class="btn btn-secondary btn-sm" type="button" id="sendVerificationEmailBtn">
-            Send verification email
-          </button>
-        </div>
-        <div class="settings-account-row">
-          <div class="activity-text">
-            <div class="activity-title">Check verification</div>
-            <div class="activity-subtitle">Reload your account after you confirm the message.</div>
-          </div>
-          <button class="btn btn-secondary btn-sm" type="button" id="refreshEmailStatusBtn">
-            I’ve verified my email
-          </button>
-        </div>
-        <div class="settings-account-row">
-          <div class="activity-text">
-            <div class="activity-title">Password reset</div>
-            <div class="activity-subtitle">Send a reset link to the email on this account.</div>
-          </div>
-          <button class="btn btn-secondary btn-sm" type="button" id="resetPasswordBtn">
-            Reset password
-          </button>
-        </div>
-        <div class="settings-account-row settings-account-row-change-email">
-          <div class="activity-text">
-            <div class="activity-title">Change email address</div>
-            <div class="activity-subtitle">We’ll send a confirmation link to your new address.</div>
-          </div>
-          <div class="settings-account-email-controls">
-            <input class="form-input" id="changeEmailInput" type="email" value="${Utils.sanitize(emailInfo.email)}" placeholder="New email address" />
-            <button class="btn btn-secondary btn-sm" type="button" id="changeEmailBtn">
-              Change email address
-            </button>
-          </div>
-        </div>
-      </div>` : (isGoogleOnly ? `<div class="settings-callout">Your email is managed by Google.</div>` : '')}
-      <div class="settings-account-row settings-account-signout-row">
-        <div class="activity-text">
-          <div class="activity-title">Sign out</div>
-          <div class="activity-subtitle">Return to the session screen on this device.</div>
-        </div>
-        <button class="btn btn-secondary btn-sm" id="accountActionBtn" type="button" data-account-action="signout">
-          Sign out
-        </button>
-      </div>
-    </div>`;
-}
-
-function _buildCloudBackupSection(firebase, cloudBackupMeta) {
-  if (!firebase.initialized) {
-    return `
-      <div class="activity-item activity-item--static">
-        <div class="activity-text">
-          <div class="activity-title">Cloud backup</div>
-          <div class="activity-subtitle">Checking cloud backup status...</div>
-        </div>
-      </div>`;
-  }
-
-  if (!firebase.available || !LibriqFirebase.hasFirestore()) {
-    return `
-      <div class="activity-item activity-item--static">
-        <div class="activity-text">
-          <div class="activity-title">Cloud backup</div>
-          <div class="activity-subtitle">Cloud backup is unavailable right now.</div>
-        </div>
-      </div>`;
-  }
-
-  if (!firebase.user) {
-    return `
-      <div class="activity-item activity-item--static">
-        <div class="activity-text">
-          <div class="activity-title">Cloud backup</div>
-          <div class="activity-subtitle">Sign in to enable cloud backup.</div>
-        </div>
-      </div>`;
-  }
-
-  const cloudState = LibriqCloudBackup.getState();
-  if (window.localStorage?.getItem('libriq_debug_auto_backup')) {
-    console.debug('[LibriQ][AutoBackup] renderCloudBackupSection reads status', cloudState);
-  }
-  const status = cloudState.message || (cloudBackupMeta.lastCloudBackupAt ? 'Cloud backup active' : 'Sign in to enable cloud backup');
-  const lastSaved = cloudState.lastSavedAt || cloudBackupMeta.lastCloudBackupAt;
-  const lastSavedText = lastSaved
-    ? (LibriqCloudBackup.formatLastSavedLabel(lastSaved) || `Last backed up: ${Utils.formatDate(lastSaved)}`)
-    : 'No cloud backup yet.';
-  const backupHelperText = cloudState.pending
-    ? 'Saving...'
-    : 'Cloud backup is a safety copy of your library. Account Sync updates books across devices, while backup and restore stay separate.';
-
-  return `
-    <div class="activity-list" id="settingsCloudBackupCard">
-      <div class="activity-item settings-summary-item activity-item--static">
-        <div class="activity-text">
-          <div class="activity-title">Cloud backup</div>
-          <div class="activity-subtitle" id="cloudBackupStatusText">${status}</div>
-          <div class="activity-subtitle" id="cloudBackupSecondaryText">${backupHelperText}</div>
-          <div class="activity-subtitle" id="cloudBackupLastSavedText">${lastSavedText}</div>
-        </div>
-      </div>
-      <div class="settings-cloud-actions">
-        <button class="btn btn-primary btn-sm" type="button" id="cloudBackupSaveBtn">
-          <i class="ph ph-cloud-arrow-up"></i>
-          Back up now
-        </button>
-        <button class="btn btn-secondary btn-sm" type="button" id="cloudBackupRestoreBtn">
-          <i class="ph ph-cloud-arrow-down"></i>
-          Restore from cloud
-        </button>
-        <button class="btn btn-secondary btn-sm" type="button" id="cloudBackupMergeBtn">
-          <i class="ph ph-arrows-left-right"></i>
-          Merge cloud with this device
-        </button>
-      </div>
-    </div>`;
-}
-
-function _buildSyncSection(firebase) {
-  const syncState = window.LibriqSyncBeta?.getState?.() || { enabled: false, status: 'off', message: 'Account sync off', conflictCount: 0 };
-  const signedIn = Boolean(firebase.user || LibriqFirebase.getCurrentUser());
-  const offlineMode = Navigation.getSessionPreference?.() === 'offline';
-  const diagnosticsRows = _buildSyncDiagnosticsRows(syncState);
-  if (!firebase.initialized) {
-    return `
-      <div class="activity-item activity-item--static">
-        <div class="activity-text">
-          <div class="activity-title">Account Sync</div>
-          <div class="activity-subtitle">Checking sync status...</div>
-        </div>
-      </div>`;
-  }
-  if (!firebase.available || !LibriqFirebase.hasFirestore()) {
-    return `
-      <div class="activity-item activity-item--static">
-        <div class="activity-text">
-          <div class="activity-title">Account Sync</div>
-          <div class="activity-subtitle">Sync unavailable.</div>
-        </div>
-      </div>`;
-  }
-  const description = offlineMode
-    ? 'Offline mode: books stay on this device.'
-    : signedIn && syncState.enabled
-      ? (syncState.pending ? 'Saved locally. Will sync when online.' : 'Your books sync automatically across signed-in devices.')
-      : signedIn
-        ? 'Sync is off on this device.'
-        : 'Sign in to sync your library.';
-  const syncStatus = offlineMode ? 'Paused'
-    : !signedIn ? 'Off'
-    : syncState.pending ? 'Pending'
-    : syncState.enabled ? 'On'
-    : 'Off';
-  const lastSynced = syncState.pending && syncState.pendingSince
-    ? `Saved locally: ${Utils.formatDate(syncState.pendingSince)}`
-    : syncState.lastSyncedAt ? `Last synced: ${Utils.formatDate(syncState.lastSyncedAt)}` : 'Last synced: Not yet';
-  const errorText = syncState.status === 'error' && syncState.lastError ? `Sync needs attention: ${syncState.lastError}` : '';
-  const actionLabel = syncState.enabled && !offlineMode ? 'Turn off sync' : 'Turn on sync';
-  const actionDisabled = !signedIn || offlineMode;
-  return `
-    <div class="activity-list" id="settingsSyncCard">
-      <div class="activity-item settings-summary-item activity-item--static">
-        <div class="activity-text">
-          <div class="activity-title">Account Sync</div>
-          <div class="activity-subtitle" id="syncStatusText">Sync status: ${Utils.sanitize(syncStatus)}</div>
-          <div class="activity-subtitle" id="syncSecondaryText">${Utils.sanitize(description)}</div>
-          <div class="activity-subtitle" id="syncLastSyncedText">${Utils.sanitize(lastSynced)}</div>
-          ${errorText ? `<div class="activity-subtitle" id="syncErrorText">${Utils.sanitize(errorText)}</div>` : ''}
-        </div>
-      </div>
-      <div class="settings-cloud-actions">
-        <button class="btn ${syncState.enabled && !offlineMode ? 'btn-secondary' : 'btn-primary'} btn-sm" type="button" id="syncToggleBtn" ${actionDisabled ? 'disabled' : ''} data-sync-enabled="${syncState.enabled && !offlineMode ? '1' : '0'}">
-          ${actionLabel}
-        </button>
-        <button class="btn btn-secondary btn-sm" type="button" id="syncRefreshStatusBtn">
-          Refresh
-        </button>
-      </div>
-      <details class="settings-diagnostics">
-        <summary class="activity-title">Advanced diagnostics</summary>
-        <div class="activity-text">
-          <div class="activity-subtitle">For troubleshooting only.</div>
-          <div class="sync-health-list">${diagnosticsRows}</div>
-          <div class="settings-diagnostics-actions">
-            <button class="btn btn-secondary btn-sm" type="button" onclick="Navigation.clearLocalCache()">
-              <i class="ph ph-trash"></i> Clear local cache
-            </button>
-          </div>
-        </div>
-      </details>
-    </div>`;
-}
-
-function _buildSyncDiagnosticsRows(syncState) {
-  const listenerStatus = syncState.listenerAttached ? 'Connected' : 'Not connected';
-  const lastSnapshot = syncState.lastSnapshotAt ? Utils.formatDate(syncState.lastSnapshotAt) : 'Not yet';
-  const lastWrite = syncState.lastWriteAt ? Utils.formatDate(syncState.lastWriteAt) : 'Not yet';
-  const lastError = syncState.lastError || 'None';
-  const pendingBooks = Array.isArray(syncState.pendingBookIds) ? syncState.pendingBookIds.length : 0;
-  const pendingDeletes = Array.isArray(syncState.pendingDeleteIds) ? syncState.pendingDeleteIds.length : 0;
-  const eligibility = syncState.eligibilityAllowed ? 'Allowed' : 'Not eligible right now';
-  const syncPath = syncState.syncPath || syncState.listenerPath || 'Not available yet';
-  const rows = [
-    ['Device ID', syncState.deviceId || 'Not available yet'],
-    ['Listener state', listenerStatus],
-    ['Sync path', syncPath],
-    ['Last snapshot', lastSnapshot],
-    ['Last write', lastWrite],
-    ['Last error', lastError],
-    ['Pending books', String(pendingBooks)],
-    ['Pending deletes', String(pendingDeletes)],
-    ['Tombstone count', String(syncState.tombstoneCount ?? 0)],
-    ['Oldest tombstone', syncState.oldestTombstoneAt ? Utils.formatDate(syncState.oldestTombstoneAt) : 'None'],
-    ['Eligibility status', eligibility],
-  ];
-  return rows.map(([label, value]) => `
-    <div class="activity-subtitle sync-health-row">
-      <strong>${Utils.sanitize(label)}:</strong> ${Utils.sanitize(value)}
-    </div>
-  `).join('');
-}
-
-function _wireAccountControls() {
-  const btn = document.getElementById('accountActionBtn');
-  if (!btn) return;
-  btn.onclick = async () => {
-    const action = btn.dataset.accountAction;
-    try {
-      if (action === 'signin') {
-        await LibriqFirebase.signInWithGoogle();
-      } else {
-        await LibriqFirebase.signOut();
-      }
-    } catch (err) {
-      const code = String(err?.code || err?.message || '');
-      const cancelled = code.includes('popup-closed-by-user') || code.includes('popup-blocked');
-      Utils.toast(cancelled ? 'Sign-in was cancelled.' : 'Could not update account status right now.', 'error');
-    }
-  };
-
-  const firebase = LibriqFirebase;
-
-  const verificationBtn = document.getElementById('sendVerificationEmailBtn');
-  if (verificationBtn) verificationBtn.onclick = async () => {
-    try {
-      await firebase?.sendVerificationEmailToCurrentUser?.();
-      Utils.toast('Verification email sent. Check your inbox.', 'success');
-      await firebase?.refreshCurrentUser?.();
-      Navigation.renderCurrentPage?.();
-    } catch (err) {
-      Utils.toast(_friendlyAuthMessage(err), 'error');
-    }
-  };
-
-  const refreshEmailStatusBtn = document.getElementById('refreshEmailStatusBtn');
-  if (refreshEmailStatusBtn) refreshEmailStatusBtn.onclick = async () => {
-    try {
-      await firebase?.refreshCurrentUser?.();
-      Utils.toast('Account status refreshed.', 'info');
-      Navigation.renderCurrentPage?.();
-    } catch (err) {
-      Utils.toast(_friendlyAuthMessage(err), 'error');
-    }
-  };
-
-  const resetPasswordBtn = document.getElementById('resetPasswordBtn');
-  if (resetPasswordBtn) resetPasswordBtn.onclick = async () => {
-    try {
-      await firebase?.sendPasswordResetToEmail?.(firebase?.getState?.()?.user?.email || '');
-      Utils.toast('Password reset email sent if an account exists for that address.', 'success');
-    } catch (err) {
-      Utils.toast(_friendlyAuthMessage(err), 'error');
-    }
-  };
-
-  const changeEmailBtn = document.getElementById('changeEmailBtn');
-  if (changeEmailBtn) changeEmailBtn.onclick = async () => {
-    const input = document.getElementById('changeEmailInput');
-    const nextEmail = String(input?.value || '').trim();
-    try {
-      await firebase?.requestEmailChange?.(nextEmail);
-      Utils.toast('We sent a confirmation link to your new email. Your email will update after you confirm it.', 'success');
-    } catch (err) {
-      Utils.toast(_friendlyAuthMessage(err), 'error');
-    }
-  };
-
-  const saveBtn = document.getElementById('cloudBackupSaveBtn');
-  if (saveBtn) saveBtn.onclick = backupToCloud;
-
-  const restoreBtn = document.getElementById('cloudBackupRestoreBtn');
-  if (restoreBtn) restoreBtn.onclick = async () => {
-    await openCloudRestorePreview();
-  };
-
-  const mergeBtn = document.getElementById('cloudBackupMergeBtn');
-  if (mergeBtn) mergeBtn.onclick = async () => {
-    await openCloudMergePreview();
-  };
-
-  const enableSyncBtn = document.getElementById('syncToggleBtn');
-  if (enableSyncBtn) enableSyncBtn.onclick = () => {
-    if (enableSyncBtn.dataset.syncEnabled === '1') {
-      window.LibriqSyncBeta?.setEnabled?.(false);
-      Utils.toast('Account sync turned off', 'info');
-      Navigation.renderCurrentPage?.();
-      return;
-    }
-    const firebase = LibriqFirebase.getState();
-    if (Navigation.getSessionPreference?.() === 'offline') {
-      Utils.toast('Switch to account mode before enabling sync.', 'warning');
-      return;
-    }
-    if (!firebase.user && !LibriqFirebase.getCurrentUser()) {
-      Utils.toast('Sign in first to enable sync.', 'warning');
-      return;
-    }
-    if (!firebase.user) {
-      firebase.user = LibriqFirebase.getCurrentUser() || null;
-    }
-    window.LibriqSyncBeta?.setEnabled?.(true);
-    Utils.toast('Sync is on. Your books will update across signed-in devices.', 'success');
-  };
-
-  const refreshSyncBtn = document.getElementById('syncRefreshStatusBtn');
-  if (refreshSyncBtn) refreshSyncBtn.onclick = () => {
-    window.LibriqSyncBeta?.refresh?.();
-    Utils.toast('Sync status refreshed', 'info');
-    window.setTimeout(() => Navigation.renderCurrentPage?.(), 150);
-  };
-
-}
 
 function _friendlyAuthMessage(err) {
   const code = String(err?.code || '').trim();
