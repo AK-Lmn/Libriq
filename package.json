@@ -19,6 +19,7 @@
     "test:app-modules": "node scripts/test-app-modules.mjs",
     "test:phase1-modules": "node scripts/test-phase1-modules.mjs",
     "test:activity-page": "node scripts/test-activity-page.mjs",
+    "test:help-page": "node scripts/test-help-page.mjs",
     "test:dialog-browser": "node scripts/test-dialog-accessibility-browser.mjs",
     "test:sync-modules": "node scripts/test-sync-modules.mjs",
     "test:firebase-modules": "node scripts/test-firebase-modules.mjs",
