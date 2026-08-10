@@ -821,8 +821,7 @@ export const Library = (() => {
     updateProgress, setStatus, setRating,
     toggleFavorite, removeBook,
     renderBookCard, showProgressModal,
-    showDetailsModal, closeDetailsModal, refreshMetadata,
-    _setFormRating, _setManualFormRating,
+    showDetailsModal, closeDetailsModal,
   };
 })();
 

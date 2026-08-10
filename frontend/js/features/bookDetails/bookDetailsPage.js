@@ -607,5 +607,5 @@ export function createBookDetailsPage({
   }
 
 
-  return { render: showDetailsModal, close: closeDetailsModal, showDetailsModal, closeDetailsModal };
+  return { render: showDetailsModal, close: closeDetailsModal };
 }

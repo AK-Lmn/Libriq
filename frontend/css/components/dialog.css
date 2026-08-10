@@ -609,11 +609,6 @@ html[data-theme="dark"] .whats-new-footer {
     width: 100%;
   }
 
-  .modal-overlay.search-overlay {
-    align-items: flex-start;
-    padding-top: var(--space-4);
-  }
-
   .search-advanced-toggle-row {
     padding-left: var(--space-4);
     padding-right: var(--space-4);
@@ -1044,15 +1039,6 @@ html[data-theme="dark"] .whats-new-footer {
   margin: 0;
 }
 
-#bookDetailsModal .book-details-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  gap: var(--space-3);
-  padding-top: var(--space-1);
-}
-
 #bookDetailsModal .book-details-primary-row,
 #bookDetailsModal .book-details-secondary-row,
 #bookDetailsModal .book-details-utility-row {
@@ -1066,39 +1052,6 @@ html[data-theme="dark"] .whats-new-footer {
 #bookDetailsModal .book-details-secondary-row,
 #bookDetailsModal .book-details-utility-row {
   display: contents;
-}
-
-#bookDetailsModal .book-details-actions .btn {
-  min-height: 44px;
-}
-
-#bookDetailsModal .book-details-actions .btn-primary,
-#bookDetailsModal .book-details-actions .btn-secondary,
-#bookDetailsModal .book-details-actions .btn-ghost {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-#bookDetailsModal .book-details-actions .btn-ghost.btn-icon {
-  width: 44px;
-  min-width: 44px;
-  padding: 0;
-  background: var(--gold-04);
-  border: 1px solid var(--gold-08);
-  color: var(--text-body);
-}
-
-#bookDetailsModal .book-details-actions .btn-ghost.btn-icon:hover,
-#bookDetailsModal .book-details-actions .btn-ghost.btn-icon:focus-visible {
-  background: var(--gold-12);
-  border-color: var(--gold-18);
-  color: var(--text-strong);
-}
-
-#bookDetailsModal .book-details-actions .ph-fill.ph-heart,
-#bookDetailsModal .book-details-actions .ph-heart-fill {
-  color: var(--gold) !important;
-  opacity: 1;
 }
 
 #bookDetailsModal .modal-close {
@@ -1150,12 +1103,6 @@ html[data-theme="dark"] .whats-new-footer {
     gap: var(--space-1);
   }
 
-  #bookDetailsModal .book-details-actions {
-    align-items: stretch;
-    justify-content: flex-start;
-    gap: var(--space-2);
-  }
-
   #bookDetailsModal .book-details-primary-row,
   #bookDetailsModal .book-details-secondary-row,
   #bookDetailsModal .book-details-utility-row {
@@ -1177,15 +1124,6 @@ html[data-theme="dark"] .whats-new-footer {
     grid-column: 1 / -1;
   }
 
-  #bookDetailsModal .book-details-actions .btn {
-    width: 100%;
-  }
-
-  #bookDetailsModal .book-details-actions .btn-ghost.btn-icon {
-    width: 100%;
-    min-width: 0;
-    flex-basis: auto;
-  }
 }
 
 @media (max-width: 430px) {
@@ -1291,50 +1229,12 @@ html[data-theme="dark"] .whats-new-footer {
     width: 100%;
   }
 
-  #bookDetailsModal .book-details-actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-2);
-    align-items: stretch;
-    justify-content: stretch;
-    padding-top: var(--space-2);
-    padding-bottom: var(--space-2);
-  }
-
   #bookDetailsModal .book-details-primary-row,
   #bookDetailsModal .book-details-secondary-row,
   #bookDetailsModal .book-details-utility-row {
     display: contents;
   }
 
-  #bookDetailsModal .book-details-actions .btn {
-    min-height: 40px;
-    padding-inline: var(--space-3);
-    width: 100%;
-  }
-
-  #bookDetailsModal .book-details-actions .btn-ghost.btn-icon {
-    width: 40px;
-    min-width: 40px;
-    flex-basis: 40px;
-  }
-
-  #bookDetailsModal .book-details-actions .btn[data-details-action="primary"] {
-    grid-column: 1 / -1;
-  }
-
-  #bookDetailsModal .book-details-actions .btn[data-details-action="secondary"] {
-    grid-column: span 1;
-  }
-
-  #bookDetailsModal .book-details-actions .btn[data-details-action="icon"] {
-    grid-column: 1 / 2;
-    justify-self: stretch;
-  }
-
-  #bookDetailsModal .book-details-actions .btn[data-details-action="destructive"] {
-    grid-column: 2 / 3;
-  }
 }
 
 @media (max-width: 360px) {
@@ -1361,11 +1261,6 @@ html[data-theme="dark"] .whats-new-footer {
     padding: var(--space-3);
   }
 
-  #bookDetailsModal .book-details-actions .btn-ghost.btn-icon {
-    flex-basis: 40px;
-    width: 40px;
-    min-width: 40px;
-  }
 }
 
 @media (max-width: 390px) {
@@ -1375,10 +1270,6 @@ html[data-theme="dark"] .whats-new-footer {
 
   #bookDetailsModal .book-details-hero {
     gap: var(--space-2);
-  }
-
-  #bookDetailsModal .book-details-actions .btn:not(.btn-icon) {
-    min-height: 38px;
   }
 
   #bookDetailsModal .book-details-notes-actions .btn {
@@ -1391,31 +1282,11 @@ html[data-theme="dark"] .whats-new-footer {
     padding: 11px;
   }
 
-  #bookDetailsModal .book-details-actions {
-    gap: 6px;
-  }
-
-  #bookDetailsModal .book-details-actions .btn {
-    min-height: 38px;
-  }
 }
 
 @media (max-width: 360px) {
   #bookDetailsModal .book-details-modal {
     max-height: 96dvh;
-  }
-
-  #bookDetailsModal .book-details-actions {
-    gap: 6px;
-  }
-
-  #bookDetailsModal .book-details-actions .btn[data-details-action="secondary"],
-  #bookDetailsModal .book-details-actions .btn[data-details-action="destructive"] {
-    min-height: 36px;
-  }
-
-  #bookDetailsModal .book-details-actions .btn[data-details-action="icon"] {
-    min-height: 36px;
   }
 
   #bookDetailsModal .book-details-notes-textarea {
@@ -1424,9 +1295,7 @@ html[data-theme="dark"] .whats-new-footer {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #bookDetailsModal .book-details-hero,
-  #bookDetailsModal .book-details-actions .btn,
-  #bookDetailsModal .book-details-actions .btn-ghost.btn-icon {
+  #bookDetailsModal .book-details-hero {
     transition-duration: 0.01ms !important;
   }
 }
@@ -1667,23 +1536,6 @@ html[data-theme="dark"] .whats-new-footer {
   flex: none;
 }
 
-#bookDetailsModal .book-details-actions .btn {
-  min-height: 44px;
-}
-
-#bookDetailsModal .book-details-actions .btn-ghost.btn-icon {
-  width: 44px;
-  min-width: 44px;
-  padding: 0;
-}
-
-#bookDetailsModal .book-details-actions .btn-primary,
-#bookDetailsModal .book-details-actions .btn-secondary,
-#bookDetailsModal .book-details-actions .btn-ghost {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
 .add-book-modal {
   max-width: 560px;
 }
@@ -1857,31 +1709,6 @@ html[data-theme="dark"] #bookDetailsModal .book-details-progress .progress-bar {
   background: rgba(148, 163, 184, 0.18);
 }
 
-html[data-theme="dark"] #bookDetailsModal .book-details-actions .btn-ghost.btn-icon {
-  background: rgba(99, 102, 241, 0.14);
-  border-color: rgba(99, 102, 241, 0.22);
-  color: #e2e8f0;
-}
-
-html[data-theme="dark"] #bookDetailsModal .book-details-actions .btn-ghost {
-  color: #e2e8f0;
-  border-color: rgba(148, 163, 184, 0.18);
-  background: rgba(30, 41, 59, 0.78);
-}
-
-html[data-theme="dark"] #bookDetailsModal .book-details-actions .btn-ghost:hover,
-html[data-theme="dark"] #bookDetailsModal .book-details-actions .btn-ghost:focus-visible {
-  color: #f8fafc;
-  border-color: rgba(148, 163, 184, 0.28);
-  background: rgba(51, 65, 85, 0.9);
-}
-
-html[data-theme="dark"] #bookDetailsModal .book-details-actions .btn-ghost.btn-icon:hover,
-html[data-theme="dark"] #bookDetailsModal .book-details-actions .btn-ghost.btn-icon:focus-visible {
-  background: rgba(99, 102, 241, 0.22);
-  border-color: rgba(99, 102, 241, 0.34);
-}
-
 html[data-theme="dark"] .add-book-modal .modal-body {
   background:
     radial-gradient(circle at top right, rgba(99, 102, 241, 0.14), transparent 40%),
@@ -2028,19 +1855,6 @@ html[data-theme="dark"] .add-book-modal .btn-ghost:focus-visible {
     width: 100%;
     justify-content: center;
   }
-}
-
-html[data-theme="dark"] #bookDetailsModal .book-details-actions .btn-secondary {
-  background: rgba(15, 23, 42, 0.9);
-  border-color: rgba(148, 163, 184, 0.18);
-  color: #e2e8f0;
-}
-
-html[data-theme="dark"] #bookDetailsModal .book-details-actions .btn-secondary:hover,
-html[data-theme="dark"] #bookDetailsModal .book-details-actions .btn-secondary:focus-visible {
-  background: rgba(30, 41, 59, 0.96);
-  border-color: rgba(99, 102, 241, 0.34);
-  color: #f8fafc;
 }
 
 #dangerConfirmModal .modal-body {
@@ -2305,8 +2119,7 @@ html[data-theme="dark"] #searchModal .search-result-title {
 }
 
 html[data-theme="dark"] #searchModal .search-result-author,
-html[data-theme="dark"] #searchModal .search-result-meta,
-html[data-theme="dark"] #searchModal .search-result-note {
+html[data-theme="dark"] #searchModal .search-result-meta {
   color: #94a3b8;
 }
 
@@ -2376,7 +2189,4 @@ html[data-theme="dark"] #searchModal .search-result-note {
     height: 320px;
   }
 
-  #bookDetailsModal .book-details-actions {
-    position: static;
-  }
 }

@@ -219,7 +219,7 @@ export const Navigation = (() => {
     setGoalPreset: (input, yearly) => {
       if (input) input.value = yearly;
     },
-    refreshGoals: () => renderGoalsPage(goalsFeature),
+    refreshGoals: () => goalsFeature(),
     getLibraryState: () => libraryFeature.getState(),
     buildMonthlyChart,
     buildGenreRow,
@@ -362,7 +362,7 @@ export const Navigation = (() => {
     stats:     statisticsFeature,
     activity:  createActivityPage({ storage: Storage, utils: Utils, actions: featureActions }),
     quotes:    quotesFeature,
-    goals:     () => renderGoalsPage(goalsFeature),
+    goals:     goalsFeature,
     recommendations: recommendationsFeature,
     help:      createHelpPage({ storage: Storage, actions: featureActions }),
     profile:   profileFeature,
@@ -1257,10 +1257,6 @@ Navigation.exportData = exportData;
 Navigation.promptImportData = promptImportData;
 Navigation.importDataFromFile = importDataFromFile;
 Navigation.clearAllData = clearAllData;
-
-function renderGoalsPage(renderGoalsFeature) {
-  renderGoalsFeature();
-}
 
 function getDisplayNameForAccount(user) {
   return profileFeature.getDisplayNameForAccount(user);

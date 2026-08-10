@@ -224,16 +224,14 @@
 
 
 .book-card-actions .btn-ghost.btn-icon,
-.reading-card-actions .btn-ghost,
-.book-details-actions .btn-ghost.btn-icon {
+.reading-card-actions .btn-ghost {
   background: var(--bg-hover);
   border: 1px solid var(--border-subtle);
   color: var(--text-primary);
 }
 
 .book-card-actions .btn-ghost.btn-icon:hover,
-.reading-card-actions .btn-ghost:hover,
-.book-details-actions .btn-ghost.btn-icon:hover {
+.reading-card-actions .btn-ghost:hover {
   background: var(--bg-active);
   border-color: var(--border-strong);
   color: var(--text-strong);
@@ -242,11 +240,7 @@
 
 
 .book-card-actions .ph-fill.ph-heart,
-.reading-card-actions .ph-fill.ph-heart,
-.book-details-actions .ph-fill.ph-heart,
-.book-card-actions .ph-heart-fill,
-.reading-card-actions .ph-heart-fill,
-.book-details-actions .ph-heart-fill {
+.reading-card-actions .ph-fill.ph-heart {
   color: var(--gold) !important;
   opacity: 1;
   display: inline-block;
@@ -339,14 +333,6 @@
   font-size: var(--text-xs);
   line-height: var(--leading-snug);
   color: var(--text-faint);
-}
-
-.stat-card-change {
-  font-size: var(--text-xs);
-  color: var(--color-success);
-  display: flex;
-  align-items: center;
-  gap: 2px;
 }
 
 
@@ -854,14 +840,6 @@ html:not([data-theme="dark"]) .recommendations-intro {
   overflow: hidden;
 }
 
-.recommendation-card-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-  align-items: center;
-}
-
 .recommendations-subject-loading {
   display: inline-flex;
   align-items: center;
@@ -992,7 +970,6 @@ html:not([data-theme="dark"]) #recommendationsPage .recommendations-section .sta
   color: #5e6b84;
 }
 
-html:not([data-theme="dark"]) #recommendationsPage .recommendation-card-meta .badge,
 html:not([data-theme="dark"]) #recommendationsPage .recommendations-intro-meta .badge {
   background: rgba(123, 157, 201, 0.10);
   border-color: rgba(123, 157, 201, 0.16);
@@ -1127,11 +1104,6 @@ html:not([data-theme="dark"]) #recommendationsPage .recommendations-intro-meta .
     font-size: 0.82rem;
   }
 
-  #recommendationsPage .recommendation-card-meta {
-    margin-top: 4px;
-    gap: 6px;
-  }
-
   #recommendationsPage .recommendation-card-source-badges {
     gap: 4px;
     margin-top: 2px;
@@ -1139,12 +1111,6 @@ html:not([data-theme="dark"]) #recommendationsPage .recommendations-intro-meta .
 
   #recommendationsPage .recommendation-card-source-badges .badge {
     padding-inline: 7px;
-  }
-
-  #recommendationsPage .recommendation-card-meta .badge {
-    min-height: 22px;
-    padding: 0 8px;
-    font-size: 10px;
   }
 
   #recommendationsPage .recommendations-empty-state {
@@ -1226,10 +1192,6 @@ html:not([data-theme="dark"]) #recommendationsPage .recommendations-intro-meta .
   #recommendationsPage .recommendations-helper-note,
   #recommendationsPage .recommendations-empty-hint {
     font-size: 0.78rem;
-  }
-
-  #recommendationsPage .recommendation-card-meta .badge {
-    font-size: 10px;
   }
 
   #recommendationsPage .recommendation-group .stats-section-meta {

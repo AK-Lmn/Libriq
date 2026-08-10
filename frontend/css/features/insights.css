@@ -187,8 +187,7 @@
   margin-bottom: var(--space-6);
 }
 
-#statsPage .stats-chart-card,
-#statsPage .stats-genre-card {
+#statsPage .stats-chart-card {
   min-width: 0;
 }
 

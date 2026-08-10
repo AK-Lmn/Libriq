@@ -301,8 +301,7 @@
   color: var(--text-strong);
 }
 
-#libraryPage .book-card-actions .ph-fill.ph-heart,
-#libraryPage .book-card-actions .ph-heart-fill {
+#libraryPage .book-card-actions .ph-fill.ph-heart {
   color: var(--gold) !important;
   opacity: 1;
 }

@@ -191,7 +191,6 @@
   max-width: 1240px;
 }
 
-#dashboardPage .dashboard-header,
 #libraryPage .library-header,
 #statusPage .status-header,
 .settings-header {
@@ -220,11 +219,6 @@
   transition: border-color var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out);
 }
 
-#dashboardPage .dashboard-stat-card {
-  min-height: 176px;
-  padding: var(--space-5);
-}
-
 #dashboardPage .stat-card-value {
   font-family: var(--font-serif);
   font-size: var(--text-2xl);
@@ -236,12 +230,6 @@
 
 #dashboardPage .stat-card-footnote {
   max-width: 24ch;
-}
-
-#dashboardPage .currently-reading-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
 }
 
 #dashboardPage .reading-card {
@@ -486,8 +474,7 @@
   box-shadow: none;
 }
 
-#statusPage .book-card-actions .ph-fill.ph-heart,
-#statusPage .book-card-actions .ph-heart-fill {
+#statusPage .book-card-actions .ph-fill.ph-heart {
   color: var(--gold) !important;
   opacity: 1;
 }
@@ -540,24 +527,21 @@
 }
 
 .book-card-actions .btn-ghost.btn-icon,
-.reading-card-actions .btn-ghost,
-.book-details-actions .btn-ghost.btn-icon {
+.reading-card-actions .btn-ghost {
   background: var(--bg-elevated);
   border-color: var(--border-soft);
   color: var(--text-body);
 }
 
 .book-card-actions .btn-ghost.btn-icon:hover,
-.reading-card-actions .btn-ghost:hover,
-.book-details-actions .btn-ghost.btn-icon:hover {
+.reading-card-actions .btn-ghost:hover {
   background: var(--gold-08);
   border-color: var(--gold-18);
   color: var(--text-strong);
 }
 
 .book-card-actions .ph-fill.ph-heart,
-.reading-card-actions .ph-fill.ph-heart,
-.book-details-actions .ph-fill.ph-heart {
+.reading-card-actions .ph-fill.ph-heart {
   color: var(--gold) !important;
 }
 
