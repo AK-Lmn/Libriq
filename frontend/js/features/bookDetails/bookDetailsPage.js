@@ -53,8 +53,6 @@ export function createBookDetailsPage({
     const notesUpdatedText = book.notesUpdatedAt
       ? `Last updated ${Utils.formatDate(book.notesUpdatedAt)}`
       : '';
-    const quotes = Array.isArray(book.quotes) ? book.quotes : [];
-
     const genreBadges = (book.genres || []).slice(0, 3)
       .map(g => `<span class="badge badge-genre">${Utils.sanitize(g)}</span>`)
       .join('');

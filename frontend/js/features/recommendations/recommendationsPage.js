@@ -250,7 +250,6 @@ export function createRecommendationsPage({ storage, library, bookApi, utils, co
 
     const ratedBooks = safeBooks.filter(book => typeof book.rating === 'number' && book.rating > 0);
     const highRatedBooks = ratedBooks.filter(book => book.rating >= 4);
-    const favoriteBooks = safeBooks.filter(book => book.isFavorite);
     const readingBooks = safeBooks.filter(book => book.status === constants.STATUS.READING);
     const wishlistBooks = safeBooks.filter(book => book.status === constants.STATUS.WISHLIST);
     const finishedBooks = safeBooks.filter(book => book.status === constants.STATUS.FINISHED);
