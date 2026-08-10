@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { createProfilePage } from '../frontend/js/features/profile/profilePage.js';
+import { resolveAccountDisplayName } from '../frontend/js/accountDisplayName.js';
 
 const listeners = new Map();
 const fields = { profileName: { value: 'Updated Reader' }, profileBio: { value: 'Always reading.' } };
@@ -38,7 +40,27 @@ const accountNamePage = createProfilePage({
   },
 });
 assert.equal(accountNamePage.getDisplayNameForAccount({ displayName: 'Account Reader', email: 'reader@example.com' }), 'Account Reader');
-assert.equal(accountNamePage.getDisplayNameForAccount({ displayName: '', email: 'email.reader@example.com' }), 'email.reader');
+assert.equal(accountNamePage.getDisplayNameForAccount({ displayName: '', email: 'email.reader@example.com' }), 'Email');
+assert.equal(accountNamePage.getDisplayNameForAccount({}), 'Reader');
+assert.equal(resolveAccountDisplayName({ name: 'Local Reader' }, { displayName: 'Account Reader', email: 'account@example.com' }), 'Local Reader');
+assert.equal(resolveAccountDisplayName({ name: 'Reader' }, { displayName: 'Account Reader', email: 'account@example.com' }), 'Account Reader');
+assert.equal(resolveAccountDisplayName({ name: 'Reader' }, { displayName: '', email: 'email.reader@example.com' }), 'Email');
+assert.equal(resolveAccountDisplayName({ name: 'Reader' }, null), 'Reader');
+
+const firebaseProfileMain = { innerHTML: '', addEventListener() {} };
+const firebaseProfilePage = createProfilePage({
+  storage: {
+    getProfile: () => ({ name: 'Reader', bio: '' }),
+    getStats: () => ({ total: 0, finished: 0, totalPages: 0, avgRating: 0 }),
+  },
+  utils: { sanitize: value => String(value ?? ''), formatNumber: value => String(value ?? 0) },
+  actions: { getFirebaseState: () => ({ user: { displayName: 'Account Reader', email: 'account@example.com' } }) },
+  documentRoot: { getElementById: id => id === 'mainContent' ? firebaseProfileMain : null },
+});
+firebaseProfilePage();
+assert.match(firebaseProfileMain.innerHTML, /value="Account Reader"/);
+const dashboardSource = fs.readFileSync('frontend/js/dashboard.js', 'utf8');
+assert.match(dashboardSource, /resolveAccountDisplayName\(profile, LibriqFirebase\.getState\(\)\.user\)/);
 
 let prevented = false;
 listeners.get('submit')({
