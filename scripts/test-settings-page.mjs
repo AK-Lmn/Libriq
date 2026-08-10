@@ -40,6 +40,7 @@ const render = createSettingsPage({
     }),
     toggleTheme: () => calls.push('theme'),
     refreshSync: () => calls.push('refresh-sync'),
+    openKindleImport: () => calls.push('kindle-import'),
   },
   documentRoot: {
     documentElement: { getAttribute: () => 'dark' },
@@ -54,11 +55,13 @@ assert.match(main.innerHTML, /reader@example\.com/);
 assert.match(main.innerHTML, /Sync status: On/);
 assert.match(main.innerHTML, /Device ID/);
 assert.match(main.innerHTML, /device-1/);
+assert.match(main.innerHTML, /Import Kindle Clippings/);
 assert.doesNotMatch(main.innerHTML, /onclick=|onchange=/);
 
 const click = listeners.get('click');
 click({ target: { closest: () => ({ dataset: { action: 'toggle-theme' } }) } });
 click({ target: { closest: () => ({ dataset: { action: 'refresh-sync' } }) } });
-assert.deepEqual(calls, ['theme', 'refresh-sync']);
+click({ target: { closest: () => ({ dataset: { action: 'open-kindle-import' } }) } });
+assert.deepEqual(calls, ['theme', 'refresh-sync', 'kindle-import']);
 
 console.log('Settings page tests passed');

@@ -117,6 +117,15 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
                 <i class="ph ph-upload-simple"></i> Import
               </button>
             </div>
+            <div class="settings-row settings-row-action">
+              <div class="activity-text">
+                <div class="activity-title">Import Kindle Clippings</div>
+                <div class="activity-subtitle">Preview highlights and notes from My Clippings.txt.</div>
+              </div>
+              <button class="btn btn-secondary btn-sm" type="button" data-action="open-kindle-import">
+                <i class="ph ph-book-open-text"></i> Import Clippings
+              </button>
+            </div>
             <div class="settings-row settings-row-danger">
               <div class="activity-text">
                 <div class="activity-title">Danger zone</div>
@@ -514,6 +523,7 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
         'choose-session-mode': () => actions.navigate?.('session'),
         'export-data': () => actions.exportData?.(),
         'prompt-import': () => actions.promptImportData?.(),
+        'open-kindle-import': () => actions.openKindleImport?.(),
         'delete-library': () => actions.confirmDeleteLibraryData?.(),
         'delete-account': () => actions.confirmDeleteAccount?.(),
         'clear-local-cache': () => actions.clearLocalCache?.(),

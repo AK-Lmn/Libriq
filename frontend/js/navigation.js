@@ -19,9 +19,13 @@ import { createStatisticsPage } from './features/statistics/statisticsPage.js';
 import { createSettingsPage } from './features/settings/settingsPage.js';
 import { createRecommendationsPage } from './features/recommendations/recommendationsPage.js';
 import { createProfilePage } from './features/profile/profilePage.js';
+import { createKindleImportPage } from './features/kindleImport/kindleImportPage.js';
 import { createImportMerge } from './services/importMerge.js';
 import { createExportPayload, parseBackupText, serializeBackup, validateBackup } from './services/backupSerialization.js';
 import { createBrowserDownloadFile, createImportExportService, readBrowserFileText } from './services/importExportService.js';
+import { parseKindleClippings } from './services/kindleClippingsParser.js';
+import { createKindleImportService } from './services/kindleImportService.js';
+import { createKindleQuoteImport } from './services/kindleQuoteImport.js';
 
 const importMerge = createImportMerge({
   createBook,
@@ -165,6 +169,7 @@ export const Navigation = (() => {
     toggleTheme: () => Navigation.toggleTheme(),
     exportData: () => exportData(),
     promptImportData: () => promptImportData(),
+    openKindleImport: () => kindleImportFeature.open(),
     importDataFromFile: file => importDataFromFile(file),
     confirmDeleteLibraryData: () => confirmDeleteLibraryData(),
     confirmDeleteAccount: () => confirmDeleteAccount(),
@@ -239,6 +244,24 @@ export const Navigation = (() => {
   const libraryFeature = createLibraryPage({ storage: Storage, library: Library, utils: Utils, constants: LIBRIQ, actions: featureActions });
   const libraryShelvesFeature = createLibraryShelvesPage({ storage: Storage, library: Library, utils: Utils, actions: featureActions });
   const statisticsFeature = createStatisticsPage({ storage: Storage, utils: Utils, constants: LIBRIQ, actions: featureActions });
+  const kindleImportService = createKindleImportService({
+    createBook,
+    createId: () => crypto.randomUUID(),
+    now: () => new Date().toISOString(),
+  });
+  const kindleQuoteImport = createKindleQuoteImport({
+    createId: () => crypto.randomUUID(),
+    now: () => new Date().toISOString(),
+  });
+  const kindleImportFeature = createKindleImportPage({
+    parseClippings: parseKindleClippings,
+    buildImportPlan: kindleImportService.buildImportPlan,
+    applyKindleImportPlan: kindleQuoteImport.applyKindleImportPlan,
+    actions: {
+      getExistingBooks: () => Storage.getBooks(),
+      continueImport: detail => window.dispatchEvent(new CustomEvent('libriq:kindle-import-continue', { detail })),
+    },
+  });
   const settingsFeature = createSettingsPage({ storage: Storage, utils: Utils, constants: LIBRIQ, actions: settingsActions });
   const recommendationsFeature = createRecommendationsPage({ storage: Storage, library: Library, bookApi: BookAPI, utils: Utils, constants: LIBRIQ, actions: featureActions });
   profileFeature = createProfilePage({ storage: Storage, utils: Utils, constants: LIBRIQ, actions: featureActions });
