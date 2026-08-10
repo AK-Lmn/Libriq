@@ -18,6 +18,7 @@ import { buildLibraryShelfEmpty, createLibraryShelvesPage } from './features/lib
 import { createStatisticsPage } from './features/statistics/statisticsPage.js';
 import { createSettingsPage } from './features/settings/settingsPage.js';
 import { createRecommendationsPage } from './features/recommendations/recommendationsPage.js';
+import { createProfilePage } from './features/profile/profilePage.js';
 import { createImportMerge } from './services/importMerge.js';
 import { createExportPayload, parseBackupText, serializeBackup, validateBackup } from './services/backupSerialization.js';
 import { createBrowserDownloadFile, createImportExportService, readBrowserFileText } from './services/importExportService.js';
@@ -238,6 +239,7 @@ export const Navigation = (() => {
   const statisticsFeature = createStatisticsPage({ storage: Storage, utils: Utils, constants: LIBRIQ, actions: featureActions });
   const settingsFeature = createSettingsPage({ storage: Storage, utils: Utils, constants: LIBRIQ, actions: settingsActions });
   const recommendationsFeature = createRecommendationsPage({ storage: Storage, library: Library, bookApi: BookAPI, utils: Utils, constants: LIBRIQ, actions: featureActions });
+  const profileFeature = createProfilePage({ storage: Storage, utils: Utils, constants: LIBRIQ, actions: featureActions });
 
   function lazyFeature(load, factoryName, render) {
     let pagePromise;
@@ -264,7 +266,7 @@ export const Navigation = (() => {
     goals:     () => renderGoalsPage(goalsFeature),
     recommendations: recommendationsFeature,
     help:      createHelpPage({ storage: Storage, actions: featureActions }),
-    profile:   () => renderProfilePage(),
+    profile:   profileFeature,
     settings:  settingsFeature,
   };
 
@@ -1414,75 +1416,10 @@ function renderGoalsPage(renderGoalsFeature) {
 
 
 function getDisplayNameForAccount(user) {
-  const profileName = String(Storage.getProfile()?.name || '').trim();
-  if (profileName && profileName.toLowerCase() !== 'reader') return profileName;
-
-  const displayName = Utils.formatDisplayName(user?.displayName);
-  if (displayName) return displayName;
-
-  return Utils.formatEmailPrefixName(user?.email) || 'Reader';
+  return profileFeature.getDisplayNameForAccount(user);
 }
 
 
-
-
-
-
-function renderProfilePage() {
-  const main    = document.getElementById('mainContent');
-  if (!main) {
-    console.error('[LibriQ] Missing #mainContent while rendering profile page.');
-    return;
-  }
-  const profile = Storage.getProfile();
-  const stats   = Storage.getStats();
-
-  main.innerHTML = `
-    <div class="page profile-page page--narrow" id="profilePage">
-      <div class="page-header page-header--spaced">
-        <h1 class="page-title">Profile</h1>
-      </div>
-
-      <div class="goal-widget goal-widget--section-sm">
-        <form id="profileForm" class="add-book-form">
-          <div class="form-group">
-            <label class="form-label" for="profileName">Display name</label>
-            <input type="text" id="profileName" name="name"
-              class="form-input" value="${Utils.sanitize(profile.name)}"
-              placeholder="Your name" maxlength="40" />
-            <div class="text-xs text-tertiary field-help">Use any name you want LibriQ to call you.</div>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="profileBio">Bio <span class="text-tertiary">(optional)</span></label>
-            <textarea id="profileBio" name="bio" class="form-input form-textarea"
-              placeholder="A few words about your reading life…"
-              maxlength="200">${Utils.sanitize(profile.bio || '')}</textarea>
-          </div>
-          <button type="submit" class="btn btn-primary">
-            <i class="ph ph-floppy-disk"></i> Save Profile
-          </button>
-        </form>
-      </div>
-
-      <div class="goal-widget profile-stats-card">
-        <div class="goal-header"><div class="goal-title">Reading Stats</div></div>
-        <div class="stats-row profile-stats-row profile-stats-grid">
-          <div class="stat-card"><div class="stat-card-value">${stats.total}</div><div class="stat-card-label">Books tracked</div></div>
-          <div class="stat-card"><div class="stat-card-value">${stats.finished}</div><div class="stat-card-label">Books finished</div></div>
-          <div class="stat-card"><div class="stat-card-value">${Utils.formatNumber(stats.totalPages)}</div><div class="stat-card-label">Pages read</div></div>
-          <div class="stat-card"><div class="stat-card-value">${stats.avgRating || '–'}</div><div class="stat-card-label">Avg rating</div></div>
-        </div>
-      </div>
-    </div>`;
-
-  document.getElementById('profileForm')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(e.target));
-    Storage.saveProfile(data);
-    Utils.toast('Profile saved', 'success');
-    document.querySelector('.greeting-title span')?.textContent;
-  });
-}
 
 
 
