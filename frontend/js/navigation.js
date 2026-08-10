@@ -27,6 +27,76 @@ import { parseKindleClippings } from './services/kindleClippingsParser.js';
 import { createKindleImportService } from './services/kindleImportService.js';
 import { createKindleQuoteImport } from './services/kindleQuoteImport.js';
 
+export function executeKindleImport({ previewResult, storage } = {}) {
+  if (!storage || typeof storage.updateBook !== 'function' || typeof storage.addBook !== 'function') {
+    throw new TypeError('executeKindleImport requires Storage book APIs.');
+  }
+  const importPlan = previewResult?.importPlan || {};
+  const quoteImportPlan = previewResult?.quoteImportPlan || {};
+  const matchedBooks = Array.isArray(quoteImportPlan.matchedBooks) ? quoteImportPlan.matchedBooks : [];
+  const booksToCreate = Array.isArray(quoteImportPlan.booksToCreate) ? quoteImportPlan.booksToCreate : [];
+  let booksMatched = 0;
+  let booksCreated = 0;
+
+  for (const item of matchedBooks) {
+    const bookId = String(item?.bookId || '').trim();
+    if (!bookId) continue;
+    const current = storage.getBookById?.(bookId);
+    if (!current) continue;
+    const quotes = mergeQuoteRecords(current.quotes, item.quotes);
+    if (storage.updateBook(bookId, { quotes })) booksMatched += 1;
+  }
+
+  for (const item of booksToCreate) {
+    if (!item?.candidateBook) continue;
+    const candidateBook = { ...item.candidateBook, quotes: cloneQuotes(item.quotes) };
+    if (storage.addBook(candidateBook)) booksCreated += 1;
+  }
+
+  const result = {
+    booksCreated,
+    booksMatched,
+    quotesImported: Number(quoteImportPlan.importedQuotes) || 0,
+    duplicatesSkipped: Number(quoteImportPlan.skippedQuotes) || 0,
+    highlightsImported: Number(importPlan.totalHighlights) || 0,
+    notesImported: Number(importPlan.totalNotes) || 0,
+  };
+  if ((booksCreated || booksMatched || result.quotesImported) && typeof storage.buildActivityEvent === 'function' && typeof storage.addActivityEvent === 'function') {
+    const event = storage.buildActivityEvent('kindle_imported', null, result, 'import');
+    if (event) storage.addActivityEvent(event);
+  }
+  return result;
+}
+
+export function completeKindleImport({ previewResult, storage, toast, rerender } = {}) {
+  const result = executeKindleImport({ previewResult, storage });
+  toast?.(`Kindle import complete: ${result.booksCreated} books created, ${result.booksMatched} books matched, ${result.quotesImported} quotes imported, ${result.duplicatesSkipped} duplicates skipped.`, 'success');
+  rerender?.();
+  return result;
+}
+
+function cloneQuotes(quotes) {
+  return (Array.isArray(quotes) ? quotes : []).map(quote => ({ ...quote }));
+}
+
+function mergeQuoteRecords(currentQuotes, plannedQuotes) {
+  const merged = cloneQuotes(currentQuotes);
+  const identities = new Set(merged.map(quoteRecordIdentity));
+  for (const quote of cloneQuotes(plannedQuotes)) {
+    const identity = quoteRecordIdentity(quote);
+    if (identities.has(identity)) continue;
+    merged.push(quote);
+    identities.add(identity);
+  }
+  return merged;
+}
+
+function quoteRecordIdentity(quote) {
+  const id = String(quote?.id || '').trim();
+  if (id) return `id:${id}`;
+  return `quote:${String(quote?.text || '')}\u0000${String(quote?.note || '')}\u0000${String(quote?.page ?? '')}`;
+}
+
 const importMerge = createImportMerge({
   createBook,
   statuses: LIBRIQ.STATUS,
@@ -259,7 +329,19 @@ export const Navigation = (() => {
     applyKindleImportPlan: kindleQuoteImport.applyKindleImportPlan,
     actions: {
       getExistingBooks: () => Storage.getBooks(),
-      continueImport: detail => window.dispatchEvent(new CustomEvent('libriq:kindle-import-continue', { detail })),
+      continueImport: detail => {
+        try {
+          return completeKindleImport({
+            previewResult: detail,
+            storage: Storage,
+            toast: (message, type) => Utils.toast(message, type),
+            rerender: () => Navigation.renderCurrentPage?.(),
+          });
+        } catch (error) {
+          Utils.toast('Could not import Kindle clippings.', 'error');
+          return false;
+        }
+      },
     },
   });
   const settingsFeature = createSettingsPage({ storage: Storage, utils: Utils, constants: LIBRIQ, actions: settingsActions });
