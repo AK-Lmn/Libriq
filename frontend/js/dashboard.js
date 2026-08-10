@@ -2,6 +2,7 @@ import { LIBRIQ } from './data.js';
 import { Storage } from './storage.js';
 import { Utils } from './utils.js';
 import { LibriqFirebase } from './firebase-client.js';
+import { resolveAccountDisplayName } from './accountDisplayName.js';
 
 export const Dashboard = {
 
@@ -26,7 +27,7 @@ export const Dashboard = {
     const recentBooks = buildRecentBooks(books);
     const recentActivity = buildRecentActivity();
     const topGenres = stats.topGenres || [];
-    const accountName = getDashboardAccountName();
+    const accountName = resolveAccountDisplayName(profile, LibriqFirebase.getState().user);
     const syncState = window.LibriqSyncBeta?.getState?.() || { status: 'off', message: 'Account sync off', pending: false };
     const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
     const syncLabel = offline
@@ -220,21 +221,6 @@ export const Dashboard = {
       </div>`;
   },
 };
-
-function getDashboardAccountName() {
-  const profile = Storage.getProfile();
-  const profileName = String(profile?.name || '').trim();
-  if (profileName && profileName.toLowerCase() !== 'reader') return profileName;
-
-  const firebase = LibriqFirebase.getState();
-  const displayName = Utils.formatDisplayName(firebase.user?.displayName);
-  if (displayName) return displayName;
-
-  const emailName = Utils.formatEmailPrefixName(firebase.user?.email);
-  if (emailName) return emailName;
-
-  return profileName || 'Reader';
-}
 
 function pickFeaturedReadingBook(reading, books) {
   const source = reading?.length ? reading : (books || []);

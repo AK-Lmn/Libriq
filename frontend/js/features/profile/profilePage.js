@@ -1,13 +1,11 @@
+import { resolveAccountDisplayName } from '../../accountDisplayName.js';
+
 export function createProfilePage({ storage, utils, constants, actions = {}, documentRoot } = {}) {
   let boundMain = null;
   const getDocument = () => documentRoot || globalThis.document;
 
   function getDisplayNameForAccount(user) {
-    const profileName = String(storage.getProfile()?.name || '').trim();
-    if (profileName && profileName.toLowerCase() !== 'reader') return profileName;
-    const displayName = utils.formatDisplayName(user?.displayName);
-    if (displayName) return displayName;
-    return utils.formatEmailPrefixName(user?.email) || 'Reader';
+    return resolveAccountDisplayName(storage.getProfile(), user);
   }
 
   function renderProfilePage() {
@@ -18,6 +16,7 @@ export function createProfilePage({ storage, utils, constants, actions = {}, doc
       return;
     }
     const profile = storage.getProfile();
+    const displayName = resolveAccountDisplayName(profile, actions.getFirebaseState?.().user);
     const stats = storage.getStats();
 
     main.innerHTML = `
@@ -31,7 +30,7 @@ export function createProfilePage({ storage, utils, constants, actions = {}, doc
             <div class="form-group">
               <label class="form-label" for="profileName">Display name</label>
               <input type="text" id="profileName" name="name"
-                class="form-input" value="${utils.sanitize(profile.name)}"
+                class="form-input" value="${utils.sanitize(displayName)}"
                 placeholder="Your name" maxlength="40" />
               <div class="text-xs text-tertiary field-help">Use any name you want LibriQ to call you.</div>
             </div>

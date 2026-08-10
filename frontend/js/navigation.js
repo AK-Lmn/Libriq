@@ -27,6 +27,7 @@ import { createBrowserDownloadFile, createImportExportService, readBrowserFileTe
 import { parseKindleClippings } from './services/kindleClippingsParser.js';
 import { createKindleImportService } from './services/kindleImportService.js';
 import { createKindleQuoteImport } from './services/kindleQuoteImport.js';
+import { resolveAccountDisplayName } from './accountDisplayName.js';
 
 function executeKindleImport({ previewResult, storage } = {}) {
   if (!storage || typeof storage.updateBook !== 'function' || typeof storage.addBook !== 'function') {
@@ -224,6 +225,7 @@ export const Navigation = (() => {
     buildMonthlyChart,
     buildGenreRow,
     isOnline: () => globalThis.navigator?.onLine !== false,
+    getFirebaseState: () => LibriqFirebase.getState(),
   };
   const settingsActions = {
     ...featureActions,
@@ -1259,7 +1261,7 @@ Navigation.importDataFromFile = importDataFromFile;
 Navigation.clearAllData = clearAllData;
 
 function getDisplayNameForAccount(user) {
-  return profileFeature.getDisplayNameForAccount(user);
+  return resolveAccountDisplayName(Storage.getProfile(), user);
 }
 
 function _friendlyAuthMessage(err) {
