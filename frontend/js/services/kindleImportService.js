@@ -75,7 +75,7 @@ export function buildImportPlan({ parsedBooks, existingBooks } = {}, dependencie
   };
 }
 
-export function deduplicateParsedBooks(parsedBooks) {
+function deduplicateParsedBooks(parsedBooks) {
   const byIdentity = new Map();
   const safeBooks = Array.isArray(parsedBooks) ? parsedBooks : [];
 
@@ -100,7 +100,7 @@ export function deduplicateParsedBooks(parsedBooks) {
   return Array.from(byIdentity.values()).filter(book => book.entries.length > 0);
 }
 
-export function normalizeParsedBook(rawBook) {
+function normalizeParsedBook(rawBook) {
   if (!rawBook || typeof rawBook !== 'object') return null;
   const title = String(rawBook.title || '').trim();
   if (!title) return null;
@@ -117,7 +117,7 @@ export function normalizeParsedBook(rawBook) {
   };
 }
 
-export function normalizeParsedEntry(rawEntry) {
+function normalizeParsedEntry(rawEntry) {
   if (!rawEntry || typeof rawEntry !== 'object') return null;
   const type = String(rawEntry.type || '').toLowerCase();
   const text = String(rawEntry.text || '').trim();
@@ -132,7 +132,7 @@ export function normalizeParsedEntry(rawEntry) {
   };
 }
 
-export function buildExistingIndexes(existingBooks) {
+function buildExistingIndexes(existingBooks) {
   const byId = new Map();
   const byIsbn = new Map();
   const byTitleAuthor = new Map();
@@ -147,7 +147,7 @@ export function buildExistingIndexes(existingBooks) {
   return { byId, byIsbn, byTitleAuthor };
 }
 
-export function findExistingBook(parsedBook, indexes) {
+function findExistingBook(parsedBook, indexes) {
   const id = String(parsedBook?.id || '').trim();
   const isbn = String(parsedBook?.isbn || '').trim();
   if (id && indexes.byId.has(id)) return indexes.byId.get(id);
@@ -155,7 +155,7 @@ export function findExistingBook(parsedBook, indexes) {
   return indexes.byTitleAuthor.get(bookMergeKey(parsedBook)) || null;
 }
 
-export function parsedBookIdentityKey(book) {
+function parsedBookIdentityKey(book) {
   const id = String(book?.id || '').trim();
   const isbn = String(book?.isbn || '').trim();
   if (id) return `id:${id}`;
@@ -163,7 +163,7 @@ export function parsedBookIdentityKey(book) {
   return `book:${bookMergeKey(book)}`;
 }
 
-export function entryIdentityKey(entry) {
+function entryIdentityKey(entry) {
   return [entry?.type, entry?.location, entry?.addedAt, entry?.text].map(value => String(value || '')).join('\u0000');
 }
 

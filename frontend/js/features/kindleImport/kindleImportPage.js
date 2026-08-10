@@ -186,7 +186,7 @@ export function createKindleImportPage({
   return { open, close, getPreview: () => previewResult, getSelectedFile: () => selectedFile };
 }
 
-export function buildQuoteIndex(books) {
+function buildQuoteIndex(books) {
   return Object.fromEntries((Array.isArray(books) ? books : [])
     .filter(book => book?.id)
     .map(book => [book.id, Array.isArray(book.quotes) ? book.quotes : []]));

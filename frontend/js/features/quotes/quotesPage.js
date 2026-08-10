@@ -216,7 +216,7 @@ function getClipboardAdapter(adapter) {
   throw new Error('Clipboard is unavailable.');
 }
 
-export async function downloadMarkdownFile({ filename, text }) {
+async function downloadMarkdownFile({ filename, text }) {
   const pageDocument = globalThis.document;
   const BlobCtor = globalThis.Blob;
   const urlApi = globalThis.URL;
