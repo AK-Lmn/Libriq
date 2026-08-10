@@ -1,25 +1,8 @@
-/* ============================================
-   LIBRIQ — normalizeBook.js
-   Maps raw API responses from any provider
-   to the internal book shape used by createBook()
-   and the rest of the application.
-
-   Internal shape (must match createBook() in data.js):
-     title, author, coverUrl, isbn, pageCount,
-     publishYear, publisher, description, genres,
-     language, googleBooksId, openLibraryId,
-     internetArchiveId, archiveUrl, readableSourceLinks,
-     rating, ratingsCount, previewLink
-   ============================================ */
-
 import * as Identity from './bookIdentity.js';
 
 export const NormalizeBook = (() => {
   const OL_COVER = 'https://covers.openlibrary.org/b/id';
   const DESCRIPTION_FALLBACK = 'No description available yet.';
-
-  // ── Open Library ──────────────────────────
-  // Input: one doc from /search.json response
 
   function fromOpenLibrary(doc) {
     if (!doc || !doc.title) return null;
@@ -42,7 +25,7 @@ export const NormalizeBook = (() => {
       publishYear:   doc.first_publish_year || null,
       firstPublishYear: doc.first_publish_year || null,
       publisher:     _firstOf(doc.publisher) || null,
-      description:   null,           // OL search doesn't return descriptions
+      description:   null,
       shortDescription: null,
       genres:        _cleanSubjects(doc.subject),
       language:      _olLanguage(doc.language),
@@ -76,15 +59,11 @@ export const NormalizeBook = (() => {
     };
   }
 
-  // ── Google Books ──────────────────────────
-  // Input: one item from volumes?q= response
-
   function fromGoogleBooks(item) {
     if (!item || !item.volumeInfo) return null;
     const v = item.volumeInfo;
     if (!v.title) return null;
 
-    // GB sometimes gives multiple ISBNs — prefer ISBN-13
     const isbn = _gbISBN(v.industryIdentifiers);
     const sourceData = Identity.buildSourceBadgeData({
       source: 'google',
@@ -93,7 +72,6 @@ export const NormalizeBook = (() => {
       identifiers: Array.isArray(v.industryIdentifiers) ? v.industryIdentifiers : [],
     });
 
-    // Prefer the largest available thumbnail
     const coverUrl = v.imageLinks
       ? (v.imageLinks.large
           || v.imageLinks.medium
@@ -149,8 +127,6 @@ export const NormalizeBook = (() => {
       source:        'google',
     };
   }
-
-  // ── Helpers ───────────────────────────────
 
   function normalizeDescriptionText(value) {
     if (value && typeof value === 'object') {
@@ -247,15 +223,13 @@ export const NormalizeBook = (() => {
     return Array.isArray(arr) && arr.length > 0 ? arr[0] : null;
   }
 
-  // OL subjects can be very verbose — keep the first 5 clean ones
   function _cleanSubjects(subjects) {
     if (!Array.isArray(subjects)) return [];
     return subjects
-      .filter(s => typeof s === 'string' && s.length < 40) // drop "Accessible book"-style noise
+      .filter(s => typeof s === 'string' && s.length < 40)
       .slice(0, 5);
   }
 
-  // OL language field is an array of codes like ["eng", "fre"]
   function _olLanguage(lang) {
     const first = _firstOf(lang);
     if (!first) return null;
@@ -265,14 +239,12 @@ export const NormalizeBook = (() => {
     return map[first] || first;
   }
 
-  // GB publishedDate can be "2011", "2011-06", or "2011-06-14"
   function _gbYear(dateStr) {
     if (!dateStr) return null;
     const year = parseInt(dateStr.slice(0, 4), 10);
     return isNaN(year) ? null : year;
   }
 
-  // Prefer ISBN-13, fall back to ISBN-10
   function _gbISBN(identifiers) {
     if (!Array.isArray(identifiers)) return null;
     const isbn13 = identifiers.find(i => i.type === 'ISBN_13');

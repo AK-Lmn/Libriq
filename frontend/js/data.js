@@ -1,14 +1,8 @@
-/* ============================================
-   LIBRIQ DATA LAYER
-   Data models, constants, seed data
-   ============================================ */
-
 import { APP_VERSION } from './version.js';
 
 export const LIBRIQ = {
   VERSION: APP_VERSION,
 
-  // Reading status constants
   STATUS: {
     READING:  'reading',
     FINISHED: 'finished',
@@ -16,7 +10,6 @@ export const LIBRIQ = {
     DNF:      'dnf',
   },
 
-  // Genre list
   GENRES: [
     'Fiction', 'Non-Fiction', 'Fantasy', 'Science Fiction', 'Mystery',
     'Thriller', 'Romance', 'Historical Fiction', 'Biography', 'Self-Help',
@@ -24,14 +17,9 @@ export const LIBRIQ = {
     'Young Adult', 'Classic', 'Literary Fiction', 'Adventure', 'Business',
   ],
 
-  // Month abbreviations
   MONTHS: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
 };
 
-/**
- * Book model factory — every book in the library follows this shape.
- * Designing it with optional fields so it's easy to add later.
- */
 export function createBook(data) {
   const now = new Date().toISOString();
   return {
@@ -55,7 +43,6 @@ export function createBook(data) {
     editionCount: data.editionCount || null,
     coverId:      data.coverId      || null,
 
-    // Library state
     status:       data.status       || LIBRIQ.STATUS.WISHLIST,
     dateAdded:    data.dateAdded    || now,
     dateStarted:  data.dateStarted  || null,
@@ -64,14 +51,11 @@ export function createBook(data) {
     updatedAt:    data.updatedAt    || data.dateFinished || data.dateStarted || data.dateAdded || now,
     deletedAt:    data.deletedAt    ?? null,
 
-    // Progress
     currentPage:  data.currentPage  || 0,
 
-    // Rating & review (1–5, null = unrated)
     rating:       data.rating       ?? null,
     review:       data.review       || null,
 
-    // Extras
     isFavorite:   data.isFavorite   || false,
     tags:         data.tags         || [],
     shelves:      data.shelves      || [],
@@ -86,7 +70,6 @@ export function createBook(data) {
       updatedAt: q.updatedAt || q.createdAt || now,
     })) : [],
 
-    // Source metadata (from API search)
     source: data.source || 'api',
     sources: Array.isArray(data.sources) ? data.sources : [],
     sourceBadges: Array.isArray(data.sourceBadges) ? data.sourceBadges : [],
@@ -118,9 +101,6 @@ export function createBookPatch(data = {}) {
   };
 }
 
-/**
- * User profile model
- */
 export function createProfile(data = {}) {
   const displayName = data.displayName || data.name || 'Reader';
   return {
@@ -138,9 +118,6 @@ export function createProfile(data = {}) {
   };
 }
 
-/**
- * Seed data — kept for demos, screenshots, and opt-in testing
- */
 export const SEED_BOOKS = [
   {
     id: 'seed-1',

@@ -1,9 +1,3 @@
-/* ============================================
-   LIBRIQ — bookIdentity.js
-   Shared metadata identity and normalization helpers.
-   Pure functions. No network. No UI.
-   ============================================ */
-
 const SOURCE_LABELS = {
   openlibrary: 'Open Library',
   google: 'Google Books',

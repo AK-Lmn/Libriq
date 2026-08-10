@@ -1,10 +1,5 @@
-/* ============================================
-   LIBRIQ DESIGN TOKENS
-   Single source of truth for all design values
-   ============================================ */
-
 :root {
-  /* Typography */
+
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-sans: 'DM Sans', system-ui, sans-serif;
   --font-display: var(--font-serif);
@@ -42,7 +37,6 @@
   --leading-normal: 1.65;
   --leading-loose: 1.75;
 
-  /* Spacing scale */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -56,7 +50,6 @@
   --space-16: 64px;
   --space-20: 80px;
 
-  /* Radius */
   --r-sm: 8px;
   --r-md: 12px;
   --r-lg: 16px;
@@ -70,7 +63,6 @@
   --radius-xl: var(--r-xl);
   --radius-full: var(--r-pill);
 
-  /* Shadows and glows */
   --shadow-card: 0 8px 24px rgba(0,0,0,0.4);
   --shadow-cover: 0 4px 12px rgba(0,0,0,0.4);
   --shadow-modal: 0 40px 80px rgba(0,0,0,0.6);
@@ -83,7 +75,6 @@
   --shadow-lg: var(--shadow-modal);
   --shadow-xl: var(--shadow-modal);
 
-  /* Motion */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
   --ease-inout: cubic-bezier(0.4, 0, 0.2, 1);
@@ -92,12 +83,10 @@
   --duration-slow: 350ms;
   --duration-slower: 500ms;
 
-  /* Layout */
   --sidebar-width: 240px;
   --topbar-height: 56px;
   --content-max: 1200px;
 
-  /* Surfaces */
   --bg: #0D0C0A;
   --surface-1: #12100D;
   --surface-2: #17140F;
@@ -110,7 +99,6 @@
   --bg-hover: rgba(255,255,255,0.05);
   --bg-active: rgba(255,255,255,0.08);
 
-  /* Gold accent ramp */
   --gold: #C9A84C;
   --gold-hover: #D8B65A;
   --gold-strong: #8B6E2E;
@@ -126,7 +114,6 @@
   --accent-hover: var(--gold-hover);
   --accent-muted: var(--gold-strong);
 
-  /* Text */
   --text-strong: #F5F0E8;
   --text-primary: #DDD5C9;
   --text-body: #B5AA9C;
@@ -138,7 +125,6 @@
   --text-inverse: var(--bg);
   --text-accent: var(--gold);
 
-  /* Borders */
   --border-hairline: rgba(201,168,76,0.07);
   --border-soft: rgba(255,255,255,0.06);
   --border-divider: rgba(255,255,255,0.03);
@@ -146,7 +132,6 @@
   --border-default: var(--gold-12);
   --border-strong: var(--gold-18);
 
-  /* Semantic colors */
   --green: #6BAA75;
   --green-deep: #4E9E62;
   --blue: #7B9DC9;
@@ -163,29 +148,23 @@
   --color-info: var(--blue);
   --color-info-dim: rgba(123,157,201,0.18);
 
-  /* Status badges */
   --status-reading: var(--blue);
   --status-finished: var(--green);
   --status-wishlist: var(--gold);
   --status-dnf: var(--red);
 
-  /* Chart genre palette */
   --chart-1: #C9A84C;
   --chart-2: #7B6ABA;
   --chart-3: #4A8FA8;
   --chart-4: #6BAA75;
   --chart-5: #8BAD5A;
 
-  /* Scrollbar */
   --scrollbar-track: var(--surface-1);
   --scrollbar-thumb: var(--surface-4);
 
   color-scheme: dark;
 }
 
-/* ============================================
-   THEME COMPATIBILITY
-   ============================================ */
 [data-theme="dark"] {
   color-scheme: dark;
 }

@@ -10,12 +10,12 @@ const appVersion = String(packageJson.version || '').trim();
 if (!appVersion) throw new Error('package.json version is required.');
 await writeFile(
   path.join(rootDir, 'frontend', 'js', 'version.js'),
-  `// Generated from package.json by scripts/generate-config.mjs.\nexport const APP_VERSION = ${JSON.stringify(appVersion)};\n`,
+  `export const APP_VERSION = ${JSON.stringify(appVersion)};\n`,
   'utf8',
 );
 await writeFile(
   path.join(rootDir, 'frontend', 'js', 'version-classic.js'),
-  `// Generated from package.json by scripts/generate-config.mjs.\nself.LIBRIQ_APP_VERSION = ${JSON.stringify(appVersion)};\n`,
+  `self.LIBRIQ_APP_VERSION = ${JSON.stringify(appVersion)};\n`,
   'utf8',
 );
 

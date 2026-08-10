@@ -243,17 +243,6 @@ export const Navigation = (() => {
   const recommendationsFeature = createRecommendationsPage({ storage: Storage, library: Library, bookApi: BookAPI, utils: Utils, constants: LIBRIQ, actions: featureActions });
   profileFeature = createProfilePage({ storage: Storage, utils: Utils, constants: LIBRIQ, actions: featureActions });
 
-  function lazyFeature(load, factoryName, render) {
-    let pagePromise;
-    return (context) => {
-      pagePromise ||= load().then(module => module[factoryName]({ render }));
-      return pagePromise.then(page => {
-        if (context.router.currentRoute !== context.name) return undefined;
-        return page(context);
-      });
-    };
-  }
-
   const pages = {
     boot:      () => renderBootPage(),
     session:   () => renderSessionChoicePage(),
@@ -1165,15 +1154,9 @@ function renderGoalsPage(renderGoalsFeature) {
   renderGoalsFeature();
 }
 
-
 function getDisplayNameForAccount(user) {
   return profileFeature.getDisplayNameForAccount(user);
 }
-
-
-
-
-
 
 function _friendlyAuthMessage(err) {
   const code = String(err?.code || '').trim();
@@ -1187,7 +1170,6 @@ function _friendlyAuthMessage(err) {
   try { console.warn('[LibriQ] Auth action failed:', code || 'unknown'); } catch {}
   return map[code] || 'Something went wrong. Please try again.';
 }
-
 
 function _buildRestoreSummaryMarkup(label, summary, extra = []) {
   return `
@@ -1387,12 +1369,6 @@ async function confirmAndMergeCloud(docData, plan, currentSummary) {
     return;
   }
   await mergeCloudWithThisDevice(docData, plan);
-}
-
-function _hasGoogleBooksKey() {
-  const config = window.LibriqConfig || window.__LIBRIQ_CONFIG__ || {};
-  const candidate = config.googleBooksApiKey || config.googleBooksKey || config.GOOGLE_BOOKS_API_KEY || '';
-  return Boolean(String(candidate).trim());
 }
 
 async function exportData() {
@@ -1643,7 +1619,6 @@ function _applyImportedBackup(parsed, replaceMode) {
   }
 }
 
-
 function _dangerConfirmElements() {
   return {
     modal: document.getElementById('dangerConfirmModal'),
@@ -1797,4 +1772,3 @@ async function confirmDeleteAccount() {
 function clearAllData() {
   return clearLocalCache();
 }
-

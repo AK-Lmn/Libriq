@@ -1,20 +1,7 @@
-/* ============================================
-   LIBRIQ — openLibrary.js
-   Open Library API communication only.
-   No UI logic. No state. Pure data fetching.
-   ============================================ */
-
 import { NormalizeBook } from './normalizeBook.js';
 import { fetchJson } from '../shared/fetchClient.js';
 
 export const OpenLibraryAPI = (() => {
-
-  // Responsible API identity note:
-  // Open Library recommends identifying clients, but browser JavaScript
-  // cannot reliably set a custom User-Agent header and adding custom
-  // headers here risks CORS/preflight failures.
-  // If LibriQ adds a backend or serverless proxy later, that layer should
-  // set User-Agent to LibriQ/4.6 (klamano23@gmail.com).
 
   const BASE_SEARCH = 'https://openlibrary.org/search.json';
   const BASE_ISBN   = 'https://openlibrary.org/isbn';
@@ -24,8 +11,6 @@ export const OpenLibraryAPI = (() => {
   const TIMEOUT_MS  = 8000;
   let _lastFetchFailed = false;
 
-  // Fields requested from the search endpoint.
-  // Kept explicit to avoid OL's 2025 default-field restrictions.
   const SEARCH_FIELDS = [
     'key', 'title', 'author_name',
     'cover_i', 'cover_edition_key',
@@ -33,15 +18,6 @@ export const OpenLibraryAPI = (() => {
     'subject', 'isbn', 'publisher', 'language',
   ].join(',');
 
-  // ── Search ────────────────────────────────
-
-  /**
-   * Search Open Library by any query string.
-   * Returns an array of normalized book objects,
-   * or an empty array on failure.
-   * @param {string} query
-   * @returns {Promise<Object[]>}
-   */
   async function search(query) {
     if (!query || query.trim().length < 3) return [];
     _lastFetchFailed = false;
@@ -58,7 +34,7 @@ export const OpenLibraryAPI = (() => {
 
       return data.docs
         .map(doc => NormalizeBook.fromOpenLibrary(doc))
-        .filter(Boolean); // remove nulls (docs with no title)
+        .filter(Boolean);
     } catch (err) {
       console.warn('[Libriq/OL] Search failed:', err.message);
       _lastFetchFailed = _isNetworkFailure(err);
@@ -66,24 +42,16 @@ export const OpenLibraryAPI = (() => {
     }
   }
 
-  /**
-   * Look up a single book by ISBN.
-   * Returns a normalized book object or null.
-   * @param {string} isbn
-   * @returns {Promise<Object|null>}
-   */
   async function lookupISBN(isbn) {
     if (!isbn) return null;
     const clean = isbn.replace(/[^0-9X]/gi, '');
     if (clean.length !== 10 && clean.length !== 13) return null;
 
     try {
-      // OL's ISBN endpoint returns the edition record directly
+
       const data = await _fetch(`${BASE_ISBN}/${clean}.json`);
       if (!data) return null;
 
-      // ISBN endpoint returns edition data, not a search doc.
-      // Build a minimal compatible shape for normalizeBook.
       const doc = {
         key:                    data.key,
         title:                  data.title,
@@ -162,8 +130,6 @@ export const OpenLibraryAPI = (() => {
       return [];
     }
   }
-
-  // ── Internal ──────────────────────────────
 
   async function _fetch(url) {
     const requestUrl = _cacheBust(url);

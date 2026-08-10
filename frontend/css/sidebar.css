@@ -1,7 +1,3 @@
-/* ============================================
-   LIBRIQ SIDEBAR
-   ============================================ */
-
 .sidebar {
   width: var(--sidebar-width);
   height: 100dvh;
@@ -21,7 +17,6 @@
   flex-shrink: 0;
 }
 
-/* ── Logo ─────────────────────────────────── */
 .sidebar-logo {
   display: flex;
   align-items: center;
@@ -59,7 +54,6 @@
   letter-spacing: -0.01em;
 }
 
-/* ── Search Trigger ───────────────────────── */
 .sidebar-search-btn {
   display: flex;
   align-items: center;
@@ -95,7 +89,6 @@
   margin-left: auto;
 }
 
-/* ── Navigation ───────────────────────────── */
 .sidebar-nav {
   flex: 1;
   display: flex;
@@ -164,7 +157,6 @@
 
 .nav-item.active i { opacity: 1; }
 
-/* Nav badge */
 .nav-badge {
   margin-left: auto;
   padding: 1px 6px;
@@ -182,7 +174,6 @@
 .nav-badge.reading  { background: var(--color-info-dim);    color: var(--status-reading); }
 .nav-badge.success  { background: var(--color-success-dim); color: var(--status-finished); }
 
-/* ── Streak Widget ────────────────────────── */
 .sidebar-streak {
   display: flex;
   align-items: center;
@@ -219,7 +210,6 @@
   color: var(--text-tertiary);
 }
 
-/* ── Theme Toggle ─────────────────────────── */
 .theme-toggle {
   display: flex;
   align-items: center;
@@ -239,7 +229,6 @@
 
 .theme-toggle i { font-size: 1rem; }
 
-/* ── Sidebar Overlay (mobile) ─────────────── */
 .sidebar-overlay {
   display: none;
   position: fixed;
@@ -251,7 +240,6 @@
   transition: opacity var(--duration-slow) var(--ease-out);
 }
 
-/* ── Mobile Sidebar ───────────────────────── */
 @media (max-width: 768px) {
   .sidebar {
     position: fixed;
@@ -279,10 +267,6 @@
     pointer-events: auto;
   }
 }
-
-/* ============================================
-   PHASE 2 - SHARED SEARCH AND ICON CONTROL POLISH
-   ============================================ */
 
 .sidebar-search-btn {
   min-height: 44px;
@@ -315,11 +299,6 @@
   background: var(--gold-04);
   color: var(--text-primary);
 }
-
-/* ============================================
-   PHASE 7 - SIDEBAR MOBILE POLISH
-   Safe-area aware navigation only.
-   ============================================ */
 
 @media (max-width: 768px) {
   .sidebar {

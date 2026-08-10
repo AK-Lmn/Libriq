@@ -1,8 +1,3 @@
-/* ============================================
-   LIBRIQ REALTIME SYNC BETA
-   Books-only sync namespace separate from backup.
-   ============================================ */
-
 import { Navigation } from './navigation.js';
 import { LIBRIQ, createBook } from './data.js';
 import { Storage } from './storage.js';

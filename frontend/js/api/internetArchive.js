@@ -1,9 +1,3 @@
-/* ============================================
-   LIBRIQ — internetArchive.js
-   Internet Archive link enrichment only.
-   No discovery. No main search integration.
-   ============================================ */
-
 import { fetchJson } from '../shared/fetchClient.js';
 
 export const InternetArchiveAPI = (() => {
