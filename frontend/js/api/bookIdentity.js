@@ -46,15 +46,6 @@ export function normalizeSource(source) {
   return value;
 }
 
-export function firstNonEmpty(values) {
-  for (const value of values) {
-    if (value === null || value === undefined) continue;
-    const normalized = String(value).trim();
-    if (normalized) return normalized;
-  }
-  return '';
-}
-
 export function collectSourceIds(book = {}) {
   const sourceIds = {};
   const sourceIdList = [];
@@ -145,16 +136,6 @@ export function buildMatchCandidates(book = {}) {
     sourceIdList,
     primarySource: normalizeSource(book.source || book.primarySource || ''),
   };
-}
-
-export function buildCompositeKey(book = {}) {
-  const candidate = buildMatchCandidates(book);
-  return [
-    candidate.isbns[0] || '',
-    candidate.sourceIdList.map(entry => `${entry.source}:${entry.id}`).join('|'),
-    candidate.title,
-    candidate.author,
-  ].join('::');
 }
 
 export function isSameBook(left, right) {

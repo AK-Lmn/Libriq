@@ -59,7 +59,6 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/__libriq_test_api/doc') {
       const pathValue = parsed.query.path;
-      const coll = collectionKey(pathValue);
       const segments = String(pathValue || '').split('/');
       const id = segments.pop();
       const collectionPath = segments.join('/');

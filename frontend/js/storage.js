@@ -2,7 +2,6 @@ import {
   LIBRIQ,
   createBook,
   createProfile,
-  SEED_BOOKS,
 } from './data.js';
 
 export const Storage = (() => {
@@ -258,12 +257,6 @@ export const Storage = (() => {
       quotesCount: books.reduce((sum, book) => sum + (Array.isArray(book?.quotes) ? book.quotes.length : 0), 0),
       activityCount: activity.length,
     };
-  }
-
-  function _seedSampleData() {
-    const books = SEED_BOOKS.map(b => createBook(b));
-    _write(_key('BOOKS'), books);
-    _write(_key('STREAK'), { current: 5, longest: 14, lastRead: new Date().toISOString() });
   }
 
   function getBooks() {
