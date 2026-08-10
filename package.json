@@ -22,6 +22,7 @@
     "test:help-page": "node scripts/test-help-page.mjs",
     "test:goals-page": "node scripts/test-goals-page.mjs",
     "test:library-shelves-page": "node scripts/test-library-shelves-page.mjs",
+    "test:library-page": "node scripts/test-library-page.mjs",
     "test:statistics-calculations": "node scripts/test-statistics-calculations.mjs",
     "test:statistics-page": "node scripts/test-statistics-page.mjs",
     "test:settings-page": "node scripts/test-settings-page.mjs",

@@ -14,7 +14,7 @@ import { createLibraryPage } from './features/library/libraryPage.js';
 import { createActivityPage } from './features/activity/activityPage.js';
 import { createHelpPage } from './features/help/helpPage.js';
 import { createGoalsPage } from './features/goals/goalsPage.js';
-import { buildLibraryShelfEmpty, createLibraryShelvesPage } from './features/library/libraryShelvesPage.js';
+import { createLibraryShelvesPage } from './features/library/libraryShelvesPage.js';
 import { createStatisticsPage } from './features/statistics/statisticsPage.js';
 import { createSettingsPage } from './features/settings/settingsPage.js';
 import { createRecommendationsPage } from './features/recommendations/recommendationsPage.js';
@@ -45,6 +45,7 @@ const importExportService = createImportExportService({
   clock: () => new Date(),
   createId: () => crypto.randomUUID(),
 });
+let profileFeature;
 export const Navigation = (() => {
   let _currentPage = 'dashboard';
   const SESSION_PREF_KEY = 'libriq_session_pref';
@@ -128,7 +129,7 @@ export const Navigation = (() => {
     openSearch: () => Search.open(),
     openManualEntry: () => Search.openManualEntry(),
     importBackup: () => promptImportData(),
-    clearSearch: () => clearLibrarySearch(),
+    clearSearch: () => libraryFeature.clearSearch(),
     showBookDetails: (bookId) => Library.showDetailsModal(bookId),
     updateProgress: (bookId) => Library.showProgressModal(bookId),
     toggleFavorite: (bookId) => {
@@ -144,7 +145,7 @@ export const Navigation = (() => {
       if (input) input.value = yearly;
     },
     refreshGoals: () => renderGoalsPage(goalsFeature),
-    getLibraryState: () => _getLibraryState(),
+    getLibraryState: () => libraryFeature.getState(),
     buildMonthlyChart,
     buildGenreRow,
     isOnline: () => globalThis.navigator?.onLine !== false,
@@ -235,11 +236,12 @@ export const Navigation = (() => {
     },
   };
   const goalsFeature = createGoalsPage({ storage: Storage, utils: Utils, actions: featureActions });
+  const libraryFeature = createLibraryPage({ storage: Storage, library: Library, utils: Utils, constants: LIBRIQ, actions: featureActions });
   const libraryShelvesFeature = createLibraryShelvesPage({ storage: Storage, library: Library, utils: Utils, actions: featureActions });
   const statisticsFeature = createStatisticsPage({ storage: Storage, utils: Utils, constants: LIBRIQ, actions: featureActions });
   const settingsFeature = createSettingsPage({ storage: Storage, utils: Utils, constants: LIBRIQ, actions: settingsActions });
   const recommendationsFeature = createRecommendationsPage({ storage: Storage, library: Library, bookApi: BookAPI, utils: Utils, constants: LIBRIQ, actions: featureActions });
-  const profileFeature = createProfilePage({ storage: Storage, utils: Utils, constants: LIBRIQ, actions: featureActions });
+  profileFeature = createProfilePage({ storage: Storage, utils: Utils, constants: LIBRIQ, actions: featureActions });
 
   function lazyFeature(load, factoryName, render) {
     let pagePromise;
@@ -256,7 +258,7 @@ export const Navigation = (() => {
     boot:      () => renderBootPage(),
     session:   () => renderSessionChoicePage(),
     dashboard: createDashboardPage({ dashboard: Dashboard, actions: featureActions }),
-    library:   createLibraryPage({ render: renderLibraryPage, actions: featureActions }),
+    library:   libraryFeature,
     reading:   () => libraryShelvesFeature.renderStatusPage(LIBRIQ.STATUS.READING,  'Currently Reading', 'ph-book-open'),
     wishlist:  () => libraryShelvesFeature.renderStatusPage(LIBRIQ.STATUS.WISHLIST, 'Want to Read',      'ph-bookmark'),
     finished:  () => libraryShelvesFeature.renderStatusPage(LIBRIQ.STATUS.FINISHED, 'Finished Books',    'ph-check-circle'),
@@ -592,7 +594,7 @@ export const Navigation = (() => {
     shouldResumeAccountMode,
     resumeAccountModeIfAllowed,
     clearAccountResume,
-    clearLibrarySearch,
+    clearLibrarySearch: () => libraryFeature.clearSearch(),
     clearLocalCache,
     confirmDeleteLibraryData,
     confirmDeleteAccount,
@@ -1159,257 +1161,6 @@ Navigation.promptImportData = promptImportData;
 Navigation.importDataFromFile = importDataFromFile;
 Navigation.clearAllData = clearAllData;
 
-function renderLibraryPage() {
-  const main  = document.getElementById('mainContent');
-  if (!main) {
-    console.error('[LibriQ] Missing #mainContent while rendering library page.');
-    return;
-  }
-  const books = Storage.getBooks();
-  const state = _getLibraryState();
-  const shelves = _getLibraryShelves(books);
-  const counts = {
-    all: books.length,
-    reading: books.filter(b => b.status === LIBRIQ.STATUS.READING).length,
-    wishlist: books.filter(b => b.status === LIBRIQ.STATUS.WISHLIST).length,
-    finished: books.filter(b => b.status === LIBRIQ.STATUS.FINISHED).length,
-    favorites: books.filter(b => b.isFavorite).length,
-    needsMetadata: books.filter(b => _bookNeedsMetadata(b).length > 0).length,
-  };
-
-  main.innerHTML = `
-    <div class="page" id="libraryPage">
-      <div class="page-header library-header">
-        <div class="library-heading">
-          <span class="library-eyebrow">Personal collection</span>
-          <h1 class="page-title">My Library</h1>
-          <p class="page-subtitle">${books.length} book${books.length !== 1 ? 's' : ''} total</p>
-        </div>
-        <button class="btn btn-primary" type="button" data-action="open-search">
-          <i class="ph ph-plus"></i> Add Book
-        </button>
-      </div>
-
-      <div class="library-tools">
-        <div class="library-search-wrap">
-          <i class="ph ph-magnifying-glass library-search-icon"></i>
-          <input
-            type="search"
-            id="librarySearchInput"
-            class="library-search-input"
-            placeholder="Search your library..."
-            value="${Utils.sanitize(state.query)}"
-            autocomplete="off"
-            spellcheck="false"
-          />
-          <button type="button" class="library-search-clear" id="clearLibrarySearch" aria-label="Clear search" ${state.query ? '' : 'hidden'}>
-            <i class="ph ph-x"></i>
-          </button>
-        </div>
-
-        <div class="library-sort-wrap">
-          <label class="library-sort-label" for="librarySortSelect">Sort by</label>
-          <select id="librarySortSelect" class="library-sort-select">
-            <option value="recently-added" ${state.sort === 'recently-added' ? 'selected' : ''}>Recently added</option>
-            <option value="title-az" ${state.sort === 'title-az' ? 'selected' : ''}>Title A–Z</option>
-            <option value="author-az" ${state.sort === 'author-az' ? 'selected' : ''}>Author A–Z</option>
-            <option value="highest-rated" ${state.sort === 'highest-rated' ? 'selected' : ''}>Highest rated</option>
-            <option value="reading-progress" ${state.sort === 'reading-progress' ? 'selected' : ''}>Reading progress</option>
-            <option value="recently-updated" ${state.sort === 'recently-updated' ? 'selected' : ''}>Recently updated</option>
-          </select>
-        </div>
-
-        ${shelves.length ? `
-        <div class="library-sort-wrap">
-          <label class="library-sort-label" for="libraryShelfSelect">Shelf</label>
-          <select id="libraryShelfSelect" class="library-sort-select">
-            <option value="all" ${state.shelf === 'all' ? 'selected' : ''}>All shelves</option>
-            ${shelves.map(shelf => `<option value="${Utils.sanitize(shelf)}" ${state.shelf === shelf ? 'selected' : ''}>${Utils.sanitize(shelf)}</option>`).join('')}
-          </select>
-        </div>` : ''}
-      </div>
-
-      <div class="chip-group library-filters" id="libraryFilters">
-        <button class="chip active" data-filter="all">All <span>${counts.all}</span></button>
-        <button class="chip" data-filter="reading">Reading <span>${counts.reading}</span></button>
-        <button class="chip" data-filter="wishlist">Want to Read <span>${counts.wishlist}</span></button>
-        <button class="chip" data-filter="finished">Finished <span>${counts.finished}</span></button>
-        <button class="chip" data-filter="favorites">Favorites <span>${counts.favorites}</span></button>
-        <button class="chip" data-filter="needs-metadata">Needs Metadata <span>${counts.needsMetadata}</span></button>
-      </div>
-
-      <div class="books-grid" id="libraryGrid">
-        ${books.length === 0
-          ? buildLibraryEmpty()
-          : ''
-        }
-      </div>
-    </div>`;
-
-  renderLibraryGrid(books);
-  initLibraryFilters();
-  initLibraryTools();
-}
-
-function _getLibraryState() {
-  return {
-    filter: sessionStorage.getItem('libriq_library_filter') || 'all',
-    query: sessionStorage.getItem('libriq_library_query') || '',
-    sort: sessionStorage.getItem('libriq_library_sort') || 'recently-added',
-    shelf: sessionStorage.getItem('libriq_library_shelf') || 'all',
-  };
-}
-
-function _setLibraryState(updates) {
-  if ('filter' in updates) sessionStorage.setItem('libriq_library_filter', updates.filter);
-  if ('query' in updates) sessionStorage.setItem('libriq_library_query', updates.query);
-  if ('sort' in updates) sessionStorage.setItem('libriq_library_sort', updates.sort);
-  if ('shelf' in updates) sessionStorage.setItem('libriq_library_shelf', updates.shelf);
-}
-
-function _getLibraryShelves(books) {
-  return Array.from(new Set(
-    (books || [])
-      .flatMap(book => Array.isArray(book.tags) ? book.tags : [])
-      .map(tag => String(tag || '').trim())
-      .filter(Boolean)
-  )).sort((a, b) => a.localeCompare(b));
-}
-
-function renderLibraryGrid(books) {
-  const grid = document.getElementById('libraryGrid');
-  if (!grid) return;
-  const state = _getLibraryState();
-
-  const filtered = _filterAndSortLibraryBooks(books, state);
-
-  if (filtered.length === 0) {
-    grid.innerHTML = buildLibraryEmpty(state.filter, state.query);
-    return;
-  }
-
-  grid.innerHTML = '';
-  filtered.forEach(book => {
-    grid.appendChild(Library.renderBookCard(book));
-  });
-}
-
-function initLibraryFilters() {
-  const filters = document.getElementById('libraryFilters');
-  if (!filters) return;
-  const books = Storage.getBooks();
-  const state = _getLibraryState();
-
-  filters.querySelectorAll('.chip').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.filter === state.filter);
-    btn.addEventListener('click', () => {
-      filters.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-      btn.classList.add('active');
-      _setLibraryState({ filter: btn.dataset.filter });
-      renderLibraryGrid(books);
-    });
-  });
-}
-
-function initLibraryTools() {
-  const searchInput = document.getElementById('librarySearchInput');
-  const sortSelect = document.getElementById('librarySortSelect');
-  const shelfSelect = document.getElementById('libraryShelfSelect');
-  const clearBtn = document.getElementById('clearLibrarySearch');
-  const books = Storage.getBooks();
-  const state = _getLibraryState();
-
-  searchInput?.addEventListener('input', Utils.debounce((e) => {
-    const query = e.target.value.trim();
-    _setLibraryState({ query });
-    if (clearBtn) clearBtn.hidden = !query;
-    renderLibraryGrid(books);
-  }, 150));
-
-  sortSelect?.addEventListener('change', (e) => {
-    _setLibraryState({ sort: e.target.value });
-    renderLibraryGrid(books);
-  });
-
-  shelfSelect?.addEventListener('change', (e) => {
-    _setLibraryState({ shelf: e.target.value });
-    renderLibraryGrid(books);
-  });
-
-  clearBtn?.addEventListener('click', () => {
-    _setLibraryState({ query: '' });
-    if (searchInput) searchInput.value = '';
-    clearBtn.hidden = true;
-    renderLibraryGrid(books);
-  });
-
-  if (searchInput && state.query) searchInput.focus();
-}
-
-function clearLibrarySearch() {
-  _setLibraryState({ query: '' });
-  renderLibraryPage();
-}
-
-function _filterAndSortLibraryBooks(books, state) {
-  const q = (state.query || '').toLowerCase();
-  let filtered = books.slice();
-
-  if (state.shelf && state.shelf !== 'all') {
-    filtered = filtered.filter(book => Array.isArray(book.tags) && book.tags.includes(state.shelf));
-  }
-
-  if (state.filter === 'favorites') filtered = filtered.filter(b => b.isFavorite);
-  else if (state.filter === 'needs-metadata') filtered = filtered.filter(b => _bookNeedsMetadata(b).length > 0);
-  else if (state.filter !== 'all') filtered = filtered.filter(b => b.status === state.filter);
-
-  if (q) {
-    filtered = filtered.filter(book => {
-      const haystack = [
-        book.title,
-        book.author,
-        (book.genres || []).join(' '),
-        book.description || '',
-      ].join(' ').toLowerCase();
-      return haystack.includes(q);
-    });
-  }
-
-  return _sortLibraryBooks(filtered, state.sort);
-}
-
-function _sortLibraryBooks(books, sort) {
-  const list = books.slice();
-  const byDate = (field) => (a, b) => new Date(b[field] || 0) - new Date(a[field] || 0);
-
-  switch (sort) {
-    case 'title-az':
-      return list.sort((a, b) => a.title.localeCompare(b.title));
-    case 'author-az':
-      return list.sort((a, b) => a.author.localeCompare(b.author));
-    case 'highest-rated':
-      return list.sort((a, b) => (b.rating || 0) - (a.rating || 0) || new Date(b.dateAdded || 0) - new Date(a.dateAdded || 0));
-    case 'reading-progress':
-      return list.sort((a, b) => Utils.readingProgress(b.currentPage, b.pageCount) - Utils.readingProgress(a.currentPage, a.pageCount));
-    case 'recently-updated':
-      return list.sort((a, b) => {
-        const aTime = new Date(a.notesUpdatedAt || a.dateFinished || a.dateStarted || a.dateAdded || 0).getTime();
-        const bTime = new Date(b.notesUpdatedAt || b.dateFinished || b.dateStarted || b.dateAdded || 0).getTime();
-        return bTime - aTime;
-      });
-    case 'recently-added':
-    default:
-      return list.sort(byDate('dateAdded'));
-  }
-}
-
-function buildLibraryEmpty(filter = 'all', query = '') {
-  return buildLibraryShelfEmpty(filter, query, _getLibraryState());
-}
-
-
-
-
 function renderGoalsPage(renderGoalsFeature) {
   renderGoalsFeature();
 }
@@ -1636,19 +1387,6 @@ async function confirmAndMergeCloud(docData, plan, currentSummary) {
     return;
   }
   await mergeCloudWithThisDevice(docData, plan);
-}
-
-function _bookNeedsMetadata(book) {
-  if (!book) return [];
-  const gaps = [];
-  if (!book.coverUrl) gaps.push('cover');
-  if (!book.description) gaps.push('description');
-  if (!book.pageCount) gaps.push('pageCount');
-  if (!Array.isArray(book.genres) || book.genres.length === 0) gaps.push('genres');
-  if (!book.publishYear) gaps.push('publishYear');
-  if (!book.publisher) gaps.push('publisher');
-  if (!book.language) gaps.push('language');
-  return gaps;
 }
 
 function _hasGoogleBooksKey() {
