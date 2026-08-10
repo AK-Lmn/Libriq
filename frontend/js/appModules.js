@@ -38,16 +38,7 @@ window.LibriqStorage = Storage;
 window.LibriqFirebase = LibriqFirebase;
 window.LibriqSyncBeta = LibriqSyncBeta;
 window.LibriqCloudBackup = LibriqCloudBackup;
-const firebaseTestMode = new URLSearchParams(globalThis.location?.search || '').get('libriq_e2e_test_mode') === '1'
-  || localStorage.getItem('libriq_e2e_test_mode') === '1';
-const storedSessionMode = localStorage.getItem('libriq_preferred_session_mode')
-  || localStorage.getItem('libriq_session_pref');
-const shouldRestoreAccount = storedSessionMode === 'account'
-  || storedSessionMode === 'google'
-  || Boolean(localStorage.getItem('libriq_active_uid'));
-
-if (firebaseTestMode || shouldRestoreAccount) LibriqFirebase.init();
-else LibriqFirebase.defer();
+LibriqFirebase.init();
 LibriqSyncBeta.init();
 LibriqCloudBackup.init({
   getSessionPreference: () => Navigation.getSessionPreference(),
