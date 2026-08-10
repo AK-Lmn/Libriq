@@ -1,13 +1,5 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import vm from 'node:vm';
-
-const source = fs.readFileSync(path.join(process.cwd(), 'frontend/js/library.js'), 'utf8');
-const start = source.indexOf('  function showDetailsModal(bookId) {');
-const end = source.indexOf('  function closeDetailsModal() {', start);
-assert.ok(start >= 0 && end > start);
-const showDetailsSource = source.slice(start, end);
+import { createBookDetailsPage } from '../frontend/js/features/bookDetails/bookDetailsPage.js';
 
 function createElement(id = '') {
   return {
@@ -81,35 +73,41 @@ function createHarness(initialBook) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
-  const context = {
-    document: documentRoot,
-    Storage: storage,
-    Utils: {
+  const utils = {
       sanitize,
       readingProgress: () => 0,
       formatDate: value => String(value || ''),
       buildCover: () => '',
-      buildStars: () => '',
       statusBadgeClass: () => '',
       statusLabel: value => value,
       show: element => { element.hidden = false; },
+      hide: element => { element.hidden = true; },
       toast: (message, type) => toasts.push({ message, type }),
-    },
-    LIBRIQ: { STATUS: { READING: 'reading', FINISHED: 'finished' } },
-    BookAPI: { getSourceLabels: () => [], normalizeSource: value => value },
-    Navigation: { updateBadges() {}, renderCurrentPage() {} },
-    Library: { showProgressModal() {}, setStatus() {}, refreshMetadata: async () => ({ status: 'no-new' }), toggleFavorite() {} },
-    _getMetadataQuality: () => ({ className: 'ok', label: 'OK' }),
-    _logActivity() {},
-    closeDetailsModal() {},
-    confirm: () => true,
-    crypto: { randomUUID: (() => { let id = 0; return () => `generated-${++id}`; })() },
-    Date,
-    console,
   };
-  vm.runInNewContext(showDetailsSource, context, { filename: 'book-details-kindle-quotes.js' });
+  let generatedId = 0;
+  const feature = createBookDetailsPage({
+    storage,
+    utils,
+    constants: { STATUS: { READING: 'reading', FINISHED: 'finished' } },
+    bookApi: { getSourceLabels: () => [], normalizeSource: value => value },
+    documentRoot,
+    createId: () => `generated-${++generatedId}`,
+    confirmAction: () => true,
+    actions: {
+      getMetadataQuality: () => ({ className: 'ok', label: 'OK' }),
+      parseShelfInput: value => String(value || '').split(',').map(item => item.trim()).filter(Boolean),
+      showProgressModal() {},
+      setStatus() {},
+      setRating() {},
+      refreshMetadata: async () => ({ status: 'no-new' }),
+      toggleFavorite() {},
+      updateBadges() {},
+      renderCurrentPage() {},
+      logActivity() {},
+    },
+  });
   return {
-    show: () => context.showDetailsModal(book.id),
+    show: () => feature.render(book.id),
     element: id => elements.get(id),
     getBook: () => book,
     updates,

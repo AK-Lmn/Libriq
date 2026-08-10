@@ -20,6 +20,7 @@ import { createSettingsPage } from './features/settings/settingsPage.js';
 import { createRecommendationsPage } from './features/recommendations/recommendationsPage.js';
 import { createProfilePage } from './features/profile/profilePage.js';
 import { createKindleImportPage } from './features/kindleImport/kindleImportPage.js';
+import { createQuotesPage } from './features/quotes/quotesPage.js';
 import { createImportMerge } from './services/importMerge.js';
 import { createExportPayload, parseBackupText, serializeBackup, validateBackup } from './services/backupSerialization.js';
 import { createBrowserDownloadFile, createImportExportService, readBrowserFileText } from './services/importExportService.js';
@@ -314,6 +315,7 @@ export const Navigation = (() => {
   const libraryFeature = createLibraryPage({ storage: Storage, library: Library, utils: Utils, constants: LIBRIQ, actions: featureActions });
   const libraryShelvesFeature = createLibraryShelvesPage({ storage: Storage, library: Library, utils: Utils, actions: featureActions });
   const statisticsFeature = createStatisticsPage({ storage: Storage, utils: Utils, constants: LIBRIQ, actions: featureActions });
+  const quotesFeature = createQuotesPage({ storage: Storage, utils: Utils, actions: featureActions });
   const kindleImportService = createKindleImportService({
     createBook,
     createId: () => crypto.randomUUID(),
@@ -359,6 +361,7 @@ export const Navigation = (() => {
     favorites: () => libraryShelvesFeature.renderFavoritesPage(),
     stats:     statisticsFeature,
     activity:  createActivityPage({ storage: Storage, utils: Utils, actions: featureActions }),
+    quotes:    quotesFeature,
     goals:     () => renderGoalsPage(goalsFeature),
     recommendations: recommendationsFeature,
     help:      createHelpPage({ storage: Storage, actions: featureActions }),
