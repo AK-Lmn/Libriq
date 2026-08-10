@@ -392,6 +392,17 @@
   </div>
 
   <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+  <aside class="install-prompt" id="installPrompt" aria-label="Install LibriQ" hidden>
+    <div class="install-prompt-icon"><i class="ph ph-download-simple" aria-hidden="true"></i></div>
+    <div class="install-prompt-copy">
+      <strong>Install LibriQ</strong>
+      <span>Add it to your device for a focused, app-like reading space.</span>
+    </div>
+    <button class="btn btn-primary btn-sm" id="installPromptAction" type="button">Install</button>
+    <button class="install-prompt-dismiss" id="installPromptDismiss" type="button" aria-label="Dismiss install suggestion">
+      <i class="ph ph-x" aria-hidden="true"></i>
+    </button>
+  </aside>
 
   <script src="js/config.js"></script>
   <script>

@@ -17,6 +17,7 @@
     "test:dashboard-modules": "node scripts/test-dashboard-modules.mjs",
     "test:navigation-modules": "node scripts/test-navigation-modules.mjs",
     "test:app-modules": "node scripts/test-app-modules.mjs",
+    "test:install-prompt": "node scripts/test-install-prompt.mjs",
     "test:phase1-modules": "node scripts/test-phase1-modules.mjs",
     "test:activity-page": "node scripts/test-activity-page.mjs",
     "test:help-page": "node scripts/test-help-page.mjs",
