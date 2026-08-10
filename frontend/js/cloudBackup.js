@@ -30,16 +30,6 @@ let getSessionPreference = () => null;
 let getCurrentPage = () => null;
 let getSyncState = () => ({});
 
-function debugEnabled() {
-  return Boolean(globalThis.localStorage?.getItem('libriq_debug_auto_backup'));
-}
-
-function logDebug(message, details = null) {
-  if (!debugEnabled()) return;
-  if (details == null) console.debug('[LibriQ][AutoBackup]', message);
-  else console.debug('[LibriQ][AutoBackup]', message, details);
-}
-
 function emitState() {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('libriq:cloud-backup-status-changed', { detail: getState() }));

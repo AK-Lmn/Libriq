@@ -1,22 +1,3 @@
-/* ============================================
-   LIBRIQ - api/index.js
-   Public BookAPI facade.
-
-   The ONLY file that search.js (or any UI code)
-   should ever call. All provider details are
-   encapsulated in the modules below.
-
-   Public API:
-     BookAPI.searchBooks(query)  -> Object[]
-     BookAPI.lookupISBN(isbn)    -> Object|null
-
-   Adding a future provider (e.g. ISBNdb):
-     1. Create js/api/isbndb.js
-     2. Call it inside _fetchExternal() below
-     3. Pass results to MergeBooks.merge()
-     search.js never needs to change.
-   ============================================ */
-
 import * as BookIdentity from './bookIdentity.js';
 import { NormalizeBook } from './normalizeBook.js';
 import { OpenLibraryAPI } from './openLibrary.js';

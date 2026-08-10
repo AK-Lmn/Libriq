@@ -1,8 +1,3 @@
-/* ============================================
-   LIBRIQ SEARCH
-   Open Library API integration + local search
-   ============================================ */
-
 import { Storage } from './storage.js';
 import { Utils } from './utils.js';
 
@@ -145,7 +140,6 @@ export const Search = (() => {
     }
   }
 
-  /** Search the user's local library */
   function searchLocal(query) {
     const q = query.toLowerCase();
     return Promise.resolve(
@@ -486,4 +480,3 @@ export const Search = (() => {
 })();
 
 if (typeof window !== 'undefined') window.Search = Search;
-

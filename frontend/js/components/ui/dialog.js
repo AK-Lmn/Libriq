@@ -12,7 +12,6 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
-/** Accessible controller for an existing dialog/overlay element. */
 export class AccessibleDialog {
   static #openDialogs = [];
   static #scrollState = null;

@@ -806,12 +806,6 @@ function addPendingActivityEvent(event) {
   return true;
 }
 
-function clearPendingActivityEvent(id) {
-  if (!id) return;
-  const queue = getPendingActivityQueue().filter(event => event?.id !== id);
-  setPendingActivityQueue(queue);
-}
-
 function hasActiveUser() {
   return TEST_MODE ? Boolean(testUser?.uid) : Boolean(getVisibleUser()?.uid);
 }

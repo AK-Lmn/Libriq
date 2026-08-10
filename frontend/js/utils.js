@@ -1,8 +1,3 @@
-/* ============================================
-   LIBRIQ UTILITIES
-   Pure functions, no side effects
-   ============================================ */
-
 import { LIBRIQ } from './data.js';
 import { AccessibleDialog } from './components/ui/dialog.js';
 
@@ -40,15 +35,10 @@ function _inlineString(value) {
 
 export const Utils = {
 
-  // ── DOM ──────────────────────────────────
-
-  /** Select one element */
   $: (selector, parent = document) => parent.querySelector(selector),
 
-  /** Select all elements */
   $$: (selector, parent = document) => [...parent.querySelectorAll(selector)],
 
-  /** Create element with optional properties */
   createElement(tag, props = {}, children = []) {
     const el = document.createElement(tag);
     const { className, dataset, style, ...attrs } = props;
@@ -72,7 +62,6 @@ export const Utils = {
     return el;
   },
 
-  /** Show/hide with hidden attribute */
   show(el) {
     if (!el) return;
     const dialog = _getDialogController(el);
@@ -90,34 +79,27 @@ export const Utils = {
     force ? Utils.show(el) : Utils.hide(el);
   },
 
-  /** Detect Apple platforms for shortcut labels and key handling */
   isApplePlatform() {
     const platform = navigator.userAgentData?.platform || navigator.platform || '';
     const ua = navigator.userAgent || '';
     return /Mac|iPhone|iPad|iPod/.test(platform) || /iPhone|iPad|iPod/.test(ua);
   },
 
-  /** Return the visible search shortcut label */
   getSearchShortcutLabel() {
     return Utils.isApplePlatform() ? '⌘K' : 'Ctrl K';
   },
 
-  // ── Formatting ───────────────────────────
-
-  /** Format page count */
   formatPages(n) {
     if (!n) return '–';
     return n.toLocaleString() + ' pages';
   },
 
-  /** Format a date to readable string */
   formatDate(isoString) {
     if (!isoString) return '–';
     const d = new Date(isoString);
     return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   },
 
-  /** Format a date as relative time */
   timeAgo(isoString) {
     if (!isoString) return '';
     const seconds = Math.floor((Date.now() - new Date(isoString)) / 1000);
@@ -128,22 +110,18 @@ export const Utils = {
     return Utils.formatDate(isoString);
   },
 
-  /** Calculate reading progress as percentage */
   readingProgress(currentPage, totalPages) {
     if (!totalPages || totalPages === 0) return 0;
     return Math.min(100, Math.round((currentPage / totalPages) * 100));
   },
 
-  /** Truncate text to n characters */
   truncate(text, n = 80) {
     if (!text || text.length <= n) return text || '';
     return text.slice(0, n).trimEnd() + '…';
   },
 
-  /** Capitalize first letter */
   capitalize: (s) => s ? s[0].toUpperCase() + s.slice(1) : '',
 
-  /** Debounce a function */
   debounce(fn, delay = 300) {
     let timer;
     return (...args) => {
@@ -152,7 +130,6 @@ export const Utils = {
     };
   },
 
-  /** Sanitize HTML to prevent XSS */
   sanitize(str) {
     return String(str ?? '')
       .replace(/&/g, '&amp;')
@@ -162,7 +139,6 @@ export const Utils = {
       .replace(/'/g, '&#39;');
   },
 
-  /** Turn an account handle into a friendly display name */
   formatDisplayName(value) {
     const raw = String(value || '').trim();
     if (!raw) return '';
@@ -175,7 +151,6 @@ export const Utils = {
       .join(' ');
   },
 
-  /** Extract a safe fallback name from an email prefix */
   formatEmailPrefixName(email) {
     const prefix = String(email || '').split('@')[0].trim();
     if (!prefix) return '';
@@ -186,9 +161,6 @@ export const Utils = {
     return Utils.formatDisplayName(fallback);
   },
 
-  // ── Book helpers ─────────────────────────
-
-  /** Get status label */
   statusLabel(status) {
     const map = {
       [LIBRIQ.STATUS.READING]:  'Reading',
@@ -199,7 +171,6 @@ export const Utils = {
     return map[status] || 'Unknown';
   },
 
-  /** Get status badge CSS class */
   statusBadgeClass(status) {
     const map = {
       [LIBRIQ.STATUS.READING]:  'badge-reading',
@@ -210,7 +181,6 @@ export const Utils = {
     return map[status] || '';
   },
 
-  /** Get status icon */
   statusIcon(status) {
     const map = {
       [LIBRIQ.STATUS.READING]:  'ph-book-open',
@@ -221,7 +191,6 @@ export const Utils = {
     return map[status] || 'ph-book';
   },
 
-  /** Build cover HTML */
   buildCover(book, sizeClass = 'cover-md') {
     const coverUrl = _safeCoverUrl(book.coverUrl);
     if (coverUrl) {
@@ -247,7 +216,6 @@ export const Utils = {
       </div>`;
   },
 
-  /** Build star rating HTML */
   buildStars(rating, interactive = false, bookId = null) {
     const stars = [1,2,3,4,5].map(n => {
       const filled = rating !== null && n <= rating ? 'filled' : '';
@@ -260,13 +228,6 @@ export const Utils = {
     return `<div class="star-rating ${interactive ? '' : 'readonly'}">${stars}</div>`;
   },
 
-  // ── Toast ─────────────────────────────────
-
-  /**
-   * Show a toast notification
-   * @param {string} message
-   * @param {'success'|'error'|'info'|'warning'} type
-   */
   toast(message, type = 'success') {
     const container = document.getElementById('toastContainer');
     if (!container) return;
@@ -293,8 +254,6 @@ export const Utils = {
     }, 3500);
   },
 
-  // ── Genre color map ───────────────────────
-
   genreColor(genre) {
     const colors = {
       'Fantasy':          '#7C6CD4',
@@ -315,8 +274,6 @@ export const Utils = {
     };
     return colors[genre] || '#9896A4';
   },
-
-  // ── Number formatting ─────────────────────
 
   formatNumber(n) {
     if (n >= 1000) return (n / 1000).toFixed(1) + 'k';

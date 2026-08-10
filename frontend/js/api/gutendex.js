@@ -1,9 +1,3 @@
-/* ============================================
-   LIBRIQ — gutendex.js
-   Gutendex / Project Gutenberg discovery helpers.
-   Discovery only. No main search integration.
-   ============================================ */
-
 import * as BookIdentity from './bookIdentity.js';
 import { NormalizeBook } from './normalizeBook.js';
 import { fetchJson } from '../shared/fetchClient.js';

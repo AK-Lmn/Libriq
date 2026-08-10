@@ -366,8 +366,6 @@ function getQuickNoteText(profile, recentActivity, featuredBook) {
   return 'Add a book to start building your reading workspace.';
 }
 
-// Dashboard helpers
-
 function buildReadingCard(book) {
   const pct = Utils.readingProgress(book.currentPage, book.pageCount);
   return `
@@ -567,5 +565,3 @@ export function buildGenreRow(genre, count, total) {
       </div>
     </div>`;
 }
-
-

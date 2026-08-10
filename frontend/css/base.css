@@ -1,7 +1,3 @@
-/* ============================================
-   LIBRIQ BASE STYLES
-   ============================================ */
-
 body {
   font-family: var(--font-sans);
   font-size: var(--text-base);
@@ -11,7 +7,6 @@ body {
   background-color: var(--bg-base);
 }
 
-/* ── App Shell Layout ─────────────────────── */
 .app-shell {
   display: block;
   min-height: 100dvh;
@@ -64,7 +59,6 @@ html.theme-switching *::after {
   animation-delay: 0ms !important;
 }
 
-/* ── Typography ───────────────────────────── */
 .display-serif {
   font-family: var(--font-display);
   font-weight: var(--weight-semi);
@@ -113,7 +107,6 @@ h4, .h4 {
 .text-danger    { color: var(--color-danger); }
 .text-mono      { font-family: var(--font-mono); }
 
-/* ── Page Container ───────────────────────── */
 .page {
   display: block;
   position: relative;
@@ -147,7 +140,6 @@ h4, .h4 {
   color: var(--text-secondary);
 }
 
-/* ── Section Labels ───────────────────────── */
 .section-label {
   font-size: var(--t-eyebrow);
   font-weight: var(--weight-medium);
@@ -156,7 +148,6 @@ h4, .h4 {
   color: var(--text-muted);
 }
 
-/* ── Divider ──────────────────────────────── */
 .divider {
   height: 1px;
   background: var(--border-subtle);
@@ -164,7 +155,6 @@ h4, .h4 {
   margin: var(--space-6) 0;
 }
 
-/* ── kbd styling ──────────────────────────── */
 kbd {
   display: inline-flex;
   align-items: center;
@@ -180,7 +170,6 @@ kbd {
   line-height: 1.6;
 }
 
-/* ── Utility ──────────────────────────────── */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -201,7 +190,6 @@ kbd {
 .gap-3 { gap: var(--space-3); }
 .gap-4 { gap: var(--space-4); }
 
-/* ── Mobile topbar (hidden on desktop) ───── */
 .mobile-topbar {
   display: none;
 }
@@ -210,7 +198,6 @@ kbd {
   display: none;
 }
 
-/* ── Responsive ───────────────────────────── */
 @media (max-width: 768px) {
   .app-shell {
     display: block;
@@ -290,11 +277,6 @@ kbd {
     padding-top: var(--space-4);
   }
 }
-
-/* ============================================
-   PHASE 7 - GLOBAL MOBILE POLISH
-   Responsive shell only; no behavior changes.
-   ============================================ */
 
 html, body {
   overflow-x: hidden;

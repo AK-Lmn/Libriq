@@ -1,8 +1,3 @@
-/* ============================================
-   LIBRIQ STORAGE
-   All read/write to localStorage goes here.
-   ============================================ */
-
 import {
   LIBRIQ,
   createBook,
@@ -11,10 +6,6 @@ import {
 } from './data.js';
 
 export const Storage = (() => {
-  // INSTALL_KEY  — written once on first launch, never cleared.
-  // DATA_KEYS    — everything the user can clear. resetAll()
-  //                removes only these keys, then re-runs
-  //                _writeDefaults() to restore valid empty state.
   const INSTALL_KEY = 'libriq_installed';
 
   const DATA_KEYS = {
@@ -24,7 +15,6 @@ export const Storage = (() => {
     GOALS:   'libriq_goals',
     ACTIVITY:'libriq_activity',
     DEVICE_ID: 'libriq_device_id',
-    // Local backup metadata used only for Settings/Data copy and import preview.
     BACKUP:  'libriq_backup_meta',
     CLOUD_BACKUP: 'libriq_cloud_backup_meta',
     SYNC_META: 'libriq_sync_meta',
@@ -108,11 +98,6 @@ export const Storage = (() => {
       _write(_key('CLOUD_BACKUP'), DEFAULTS.cloudBackup());
     }
   }
-
-  // Decision tree:
-  //   INSTALL_KEY absent  → first launch ever → mark installed, create empty defaults
-  //   INSTALL_KEY present → returning user or post-reset → restore defaults only,
-  //                         leave books array as-is (empty after reset, intact otherwise)
 
   function bootstrap() {
     if (bootstrapped) return;
@@ -275,14 +260,11 @@ export const Storage = (() => {
     };
   }
 
-  // Kept for future opt-in demos / screenshots without affecting real first runs.
   function _seedSampleData() {
     const books = SEED_BOOKS.map(b => createBook(b));
     _write(_key('BOOKS'), books);
     _write(_key('STREAK'), { current: 5, longest: 14, lastRead: new Date().toISOString() });
   }
-
-  // ── Books ────────────────────────────────
 
   function getBooks() {
     const data = _read(_key('BOOKS'));
@@ -599,8 +581,6 @@ export const Storage = (() => {
     _dispatchChange('reset', {});
   }
 
-  // ── Stats ────────────────────────────────
-
   function getStats() {
     const books    = getBooks();
     const thisYear = new Date().getFullYear();
@@ -633,7 +613,6 @@ export const Storage = (() => {
       ? (rated.reduce((sum, b) => sum + b.rating, 0) / rated.length).toFixed(1)
       : null;
 
-    // Genre breakdown
     const genreMap = {};
     books.forEach(b => {
       (b.genres || []).forEach(g => { genreMap[g] = (genreMap[g] || 0) + 1; });
@@ -642,7 +621,6 @@ export const Storage = (() => {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
 
-    // Monthly finished count for current year
     const monthlyData = Array(12).fill(0);
     finishedBooksWithDates.forEach(({ finishedDate }) => {
       const d = new Date(finishedDate);
@@ -656,13 +634,10 @@ export const Storage = (() => {
     };
   }
 
-  // ── Event bus ────────────────────────────
-
   function _dispatchChange(event, detail) {
     window.dispatchEvent(new CustomEvent(`libriq:${event}`, { detail }));
   }
 
-  // ── Public API ───────────────────────────
   return {
     bootstrap,
     resetAll,

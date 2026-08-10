@@ -1,8 +1,3 @@
-/* ============================================
-   LIBRIQ SERVICE WORKER
-   App shell caching only. No API response caching.
-   ============================================ */
-
 importScripts('./js/version-classic.js');
 const CACHE_VERSION = `libriq-v${self.LIBRIQ_APP_VERSION}`;
 const CACHE_NAME = `${CACHE_VERSION}-shell-v2`;

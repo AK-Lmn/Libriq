@@ -1,12 +1,3 @@
-/* ============================================
-   LIBRIQ — googleBooks.js
-   Google Books API communication only.
-   No UI logic. No state. Pure data fetching.
-
-   Uses the public volumes endpoint — no API key
-   required for basic search (1000 req/day per IP).
-   ============================================ */
-
 import { NormalizeBook } from './normalizeBook.js';
 import { fetchJson } from '../shared/fetchClient.js';
 
@@ -16,15 +7,6 @@ export const GoogleBooksAPI = (() => {
   const TIMEOUT_MS = 8000;
   let _lastFetchFailed = false;
 
-  // ── Search ────────────────────────────────
-
-  /**
-   * Search Google Books by any query string.
-   * Returns an array of normalized book objects,
-   * or an empty array on failure.
-   * @param {string} query
-   * @returns {Promise<Object[]>}
-   */
   async function search(query) {
     if (!query || query.trim().length < 3) return [];
     _lastFetchFailed = false;
@@ -54,12 +36,6 @@ export const GoogleBooksAPI = (() => {
     }
   }
 
-  /**
-   * Look up a single book by ISBN via Google Books.
-   * Returns a normalized book object or null.
-   * @param {string} isbn
-   * @returns {Promise<Object|null>}
-   */
   async function lookupISBN(isbn) {
     if (!isbn) return null;
     const clean = isbn.replace(/[^0-9X]/gi, '');
@@ -83,8 +59,6 @@ export const GoogleBooksAPI = (() => {
       return null;
     }
   }
-
-  // ── Internal ──────────────────────────────
 
   async function _fetch(url) {
     const requestUrl = _cacheBust(url);

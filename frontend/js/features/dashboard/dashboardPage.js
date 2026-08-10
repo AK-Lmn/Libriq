@@ -1,4 +1,3 @@
-/** Dashboard route boundary and delegated UI actions. */
 export function createDashboardPage({ dashboard, actions }) {
   if (!dashboard?.render) throw new TypeError('createDashboardPage requires a dashboard renderer.');
 

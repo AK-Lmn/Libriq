@@ -1,7 +1,3 @@
-/* ============================================
-   LIBRIQ RESET
-   ============================================ */
-
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -52,14 +48,12 @@ p, h1, h2, h3, h4, h5, h6 {
   overflow-wrap: break-word;
 }
 
-/* Focus visible - keyboard only */
 :focus-visible {
   outline: 2px solid var(--gold);
   outline-offset: 2px;
   border-radius: inherit;
 }
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -75,13 +69,11 @@ p, h1, h2, h3, h4, h5, h6 {
   background: var(--text-tertiary);
 }
 
-/* Selection */
 ::selection {
   background: var(--accent-dim);
   color: var(--text-primary);
 }
 
-/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

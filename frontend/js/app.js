@@ -1,8 +1,3 @@
-/* ============================================
-   LIBRIQ APP.JS
-   Entry point — bootstraps the application
-   ============================================ */
-
 import { Navigation } from './navigation.js';
 import { Library } from './library.js';
 import { Search } from './search.js';
@@ -163,8 +158,6 @@ function getReleaseNotes() {
     if (_booted) return;
     _booted = true;
 
-    // Privacy guard: never send book titles, authors, ISBNs, notes, search terms,
-    // reading progress, or private library data to analytics.
     Storage.bootstrap();
 
     resetShellUI();
@@ -249,7 +242,3 @@ function getReleaseNotes() {
 export function isAppBooted() {
   return _booted;
 }
-
-
-
-
