@@ -119,7 +119,7 @@ export function createKindleImportPage({
     }
   }
 
-  function handleClick(event) {
+  async function handleClick(event) {
     const trigger = event.target.closest?.('[data-action]');
     if (!trigger) return;
     const action = trigger.dataset.action;
@@ -128,7 +128,15 @@ export function createKindleImportPage({
       close({ notify: true });
     } else if (action === 'continue-kindle-import' && previewResult) {
       event.preventDefault?.();
-      actions.continueImport?.(previewResult);
+      setContinueEnabled(false);
+      try {
+        const result = await actions.continueImport?.(previewResult);
+        if (result !== false) close();
+        else setContinueEnabled(true);
+      } catch (error) {
+        setContinueEnabled(true);
+        actions.executionError?.(error, previewResult);
+      }
     }
   }
 
