@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { createStatisticsPage } from '../frontend/js/features/statistics/statisticsPage.js';
 
 const currentYear = new Date().getFullYear();
@@ -63,6 +64,10 @@ assert.match(main.innerHTML, /Yearly Recap/);
 assert.match(main.innerHTML, /Finished Book/);
 assert.match(main.innerHTML, /stats-chart-grid/);
 assert.match(main.innerHTML, /monthlyChartStub/);
+const source = fs.readFileSync('frontend/js/features/statistics/statisticsPage.js', 'utf8');
+assert.match(source, /stats-rating-empty-icon/);
+assert.match(source, /ph-calendar-warning/);
+assert.doesNotMatch(source, /ph-hourglass-medium/);
 
 listeners.get('change')({ target: { value: String(currentYear) } });
 assert.equal(sessionStorage.getItem('libriq_stats_recap_year'), String(currentYear));
