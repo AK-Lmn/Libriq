@@ -19,7 +19,7 @@ export function createImportMerge({ createBook, statuses, now, createId }) {
   };
 }
 
-export function countRecords(list, filterFn) {
+function countRecords(list, filterFn) {
   return Array.isArray(list) ? list.filter(filterFn).length : 0;
 }
 

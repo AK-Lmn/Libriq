@@ -71,7 +71,7 @@ export async function request(url, options = {}) {
   }
 }
 
-export function normalizeFetchError(error, url = '') {
+function normalizeFetchError(error, url = '') {
   if (error instanceof FetchClientError) return error;
   if (error?.name === 'AbortError') {
     return new FetchClientError('Request was cancelled.', {

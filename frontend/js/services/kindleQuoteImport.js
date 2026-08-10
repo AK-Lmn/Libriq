@@ -55,7 +55,7 @@ export function applyKindleImportPlan({ importPlan, existingQuotesByBookId = {} 
   };
 }
 
-export function importEntries(entries, existingQuotes, { createId, now } = {}) {
+function importEntries(entries, existingQuotes, { createId, now } = {}) {
   if (typeof createId !== 'function' || typeof now !== 'function') {
     throw new TypeError('importEntries requires createId and now dependencies.');
   }
@@ -91,7 +91,7 @@ export function importEntries(entries, existingQuotes, { createId, now } = {}) {
   return { quotes, importedQuotes, skippedQuotes };
 }
 
-export function kindleEntryToQuoteData(entry) {
+function kindleEntryToQuoteData(entry) {
   if (!entry || typeof entry !== 'object') return null;
   const type = String(entry.type || '').toLowerCase();
   const value = String(entry.text || '').trim();
@@ -111,12 +111,12 @@ export function extractKindlePage(location) {
   return Number.isSafeInteger(page) ? page : null;
 }
 
-export function quoteIdentityKey(quote) {
+function quoteIdentityKey(quote) {
   const page = extractStoredPage(quote?.page);
   return [normalizeQuoteValue(quote?.text), normalizeQuoteValue(quote?.note), page == null ? '' : String(page)].join('\u0000');
 }
 
-export function normalizeQuoteValue(value) {
+function normalizeQuoteValue(value) {
   const input = String(value || '').trim();
   const normalized = normalizeMergeText(input);
   if (normalized || !input) return normalized;

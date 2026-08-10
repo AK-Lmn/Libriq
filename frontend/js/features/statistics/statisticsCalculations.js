@@ -1,4 +1,4 @@
-export function getEffectiveFinishedDate(book, finishedStatus) {
+function getEffectiveFinishedDate(book, finishedStatus) {
   if (!book || book.status !== finishedStatus) return null;
   const candidates = [
     book.dateFinished,

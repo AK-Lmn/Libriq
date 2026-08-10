@@ -28,7 +28,7 @@ import { parseKindleClippings } from './services/kindleClippingsParser.js';
 import { createKindleImportService } from './services/kindleImportService.js';
 import { createKindleQuoteImport } from './services/kindleQuoteImport.js';
 
-export function executeKindleImport({ previewResult, storage } = {}) {
+function executeKindleImport({ previewResult, storage } = {}) {
   if (!storage || typeof storage.updateBook !== 'function' || typeof storage.addBook !== 'function') {
     throw new TypeError('executeKindleImport requires Storage book APIs.');
   }
