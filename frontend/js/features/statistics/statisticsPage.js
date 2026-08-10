@@ -73,10 +73,12 @@ export function createStatisticsPage({ storage, utils, constants, actions, docum
           </div>
 
           ${recap.missingFinishDates ? `
-            <div class="empty-state stats-empty-state block-offset-md">
-              <div class="empty-state-icon"><i class="ph ph-hourglass-medium"></i></div>
-              <div class="empty-state-title">${recap.missingFinishDates} finished book${recap.missingFinishDates !== 1 ? 's are' : ' is'} missing a finish date</div>
-              <div class="empty-state-body">Statistics is using the best available local metadata so your finished books still appear here.</div>
+            <div class="stats-metadata-notice block-offset-md">
+              <i class="ph ph-calendar-warning" aria-hidden="true"></i>
+              <div>
+                <div class="empty-state-title">${recap.missingFinishDates} finished book${recap.missingFinishDates !== 1 ? 's are' : ' is'} missing a finish date</div>
+                <div class="empty-state-body">Statistics is using the best available local metadata so your finished books still appear here.</div>
+              </div>
             </div>
           ` : ''}
 
@@ -179,7 +181,7 @@ export function createStatisticsPage({ storage, utils, constants, actions, docum
                 </div>
               ` : `
                 <div class="empty-state stats-empty-state">
-                  <div class="empty-state-icon"><i class="ph ph-star"></i></div>
+                  <div class="empty-state-icon stats-rating-empty-icon"><i class="ph ph-star"></i></div>
                   <div class="empty-state-title">No ratings yet</div>
                   <div class="empty-state-body">Rate books in Book Details to include them in the recap.</div>
                 </div>
@@ -254,7 +256,7 @@ export function createStatisticsPage({ storage, utils, constants, actions, docum
                   ${ratedBooks.map((book, index) => buildRatedBookRow(book, index + 1)).join('')}
                 </div>` : `
                 <div class="empty-state stats-empty-state">
-                  <div class="empty-state-icon"><i class="ph ph-star"></i></div>
+                  <div class="empty-state-icon stats-rating-empty-icon"><i class="ph ph-star"></i></div>
                   <div class="empty-state-title">No ratings yet</div>
                   <div class="empty-state-body">Rate a few books in Book Details and they will appear here.</div>
                 </div>`}
