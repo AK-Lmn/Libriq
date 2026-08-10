@@ -799,10 +799,11 @@ export const Library = (() => {
 
     function normalizeQuotes(list) {
       return (Array.isArray(list) ? list : []).map(quote => ({
+        ...quote,
         id: quote.id || crypto.randomUUID(),
         text: String(quote.text || ''),
         page: quote.page ?? null,
-        note: quote.note ?? '',
+        note: String(quote.note || ''),
         createdAt: quote.createdAt || new Date().toISOString(),
         updatedAt: quote.updatedAt || quote.createdAt || new Date().toISOString(),
       }));
@@ -816,21 +817,29 @@ export const Library = (() => {
         return;
       }
 
-      quotesList.innerHTML = safeQuotes.map(quote => `
+      quotesList.innerHTML = safeQuotes.map(quote => {
+        const quoteText = quote.text.trim();
+        const noteText = quote.note.trim();
+        const isKindle = quote.source === 'kindle';
+        const primaryText = quoteText || noteText || 'Untitled quote';
+        const details = [
+          isKindle ? (quoteText ? 'Kindle highlight' : 'Kindle note') : '',
+          quote.page !== null && quote.page !== '' ? `p. ${Utils.sanitize(String(quote.page))}` : '',
+          quoteText && noteText ? Utils.sanitize(noteText) : '',
+        ].filter(Boolean);
+        return `
         <div class="activity-item quote-list-item">
           <div class="activity-text quote-list-copy">
-            <div class="activity-title quote-list-text">${Utils.sanitize(quote.text)}</div>
-            ${quote.page || quote.note ? `<div class="activity-subtitle">${[
-              quote.page ? `p. ${Utils.sanitize(String(quote.page))}` : '',
-              quote.note ? Utils.sanitize(quote.note) : '',
-            ].filter(Boolean).join(' · ')}</div>` : ''}
+            <div class="activity-title quote-list-text">${Utils.sanitize(primaryText)}</div>
+            ${details.length ? `<div class="activity-subtitle">${details.join(' · ')}</div>` : ''}
           </div>
           <div class="activity-time quote-list-actions">
             <button type="button" class="btn btn-ghost btn-sm" data-quote-action="edit" data-quote-id="${quote.id}">Edit</button>
             <button type="button" class="btn btn-ghost btn-sm" data-quote-action="delete" data-quote-id="${quote.id}">Delete</button>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
     function persistQuotes(nextQuotes, eventType, payload = {}) {
@@ -842,9 +851,10 @@ export const Library = (() => {
       return updated;
     }
 
-    function validateQuoteInput(text, pageValue) {
+    function validateQuoteInput(text, pageValue, noteValue, allowNoteOnly = false) {
       const quoteText = String(text || '').trim();
-      if (!quoteText) return 'Quote text is required.';
+      const quoteNote = String(noteValue || '').trim();
+      if (!quoteText && !(allowNoteOnly && quoteNote)) return 'Quote text is required.';
 
       if (pageValue) {
         const page = parseInt(pageValue, 10);
@@ -859,13 +869,14 @@ export const Library = (() => {
       const text = quoteTextInput?.value || '';
       const pageValue = quotePageInput?.value || '';
       const noteValue = quoteNoteInput?.value || '';
-      const validationError = validateQuoteInput(text, pageValue);
+      const currentQuotes = normalizeQuotes(Storage.getBookById(book.id)?.quotes || []);
+      const editingQuote = quoteId ? currentQuotes.find(quote => quote.id === quoteId) : null;
+      const validationError = validateQuoteInput(text, pageValue, noteValue, editingQuote?.source === 'kindle');
       if (validationError) {
         Utils.toast(validationError, 'error');
         return null;
       }
 
-      const currentQuotes = normalizeQuotes(Storage.getBookById(book.id)?.quotes || []);
       const now = new Date().toISOString();
       const page = pageValue ? parseInt(pageValue, 10) : null;
 
