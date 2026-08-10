@@ -177,12 +177,6 @@
     var(--bg-elevated);
 }
 
-.session-card-secondary {
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
-    var(--bg-surface);
-}
-
 .session-card-unavailable {
   cursor: default;
 }
@@ -245,11 +239,6 @@
   background: var(--gold-18);
 }
 
-.session-card-secondary .session-card-icon {
-  background: var(--bg-overlay);
-  color: var(--text-primary);
-}
-
 .session-card-content {
   flex: 1;
   min-width: 0;
@@ -271,24 +260,6 @@
   color: var(--text-tertiary);
   flex: 0 0 auto;
   font-size: 1.05rem;
-}
-
-.session-divider {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  color: var(--text-dim);
-  font-size: var(--text-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.session-divider::before,
-.session-divider::after {
-  content: '';
-  height: 1px;
-  flex: 1;
-  background: var(--border-divider);
 }
 
 .session-fineprint {

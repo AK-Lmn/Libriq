@@ -24,30 +24,6 @@
   text-transform: uppercase;
 }
 
-.settings-header-card {
-  padding: var(--space-4);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-hairline);
-  background: linear-gradient(180deg, var(--bg-surface), var(--bg-elevated));
-  box-shadow: var(--shadow-sm);
-  align-self: start;
-}
-
-.settings-header-card-label {
-  color: var(--text-muted);
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.settings-header-card-value {
-  margin-top: var(--space-2);
-  font-family: var(--font-serif);
-  font-size: var(--text-xl);
-  color: var(--text-strong);
-}
-
-.settings-header-card-note,
 .settings-panel-subtitle {
   margin-top: var(--space-1);
   font-size: var(--text-sm);
@@ -395,7 +371,6 @@ html[data-theme="dark"] #settingsPage {
   color: #e2e8f0;
 }
 
-html[data-theme="dark"] #settingsPage .settings-header-card,
 html[data-theme="dark"] #settingsPage .settings-panel,
 html[data-theme="dark"] #settingsPage .settings-diagnostics {
   background:
@@ -409,15 +384,12 @@ html[data-theme="dark"] #settingsPage .settings-row {
   border-top-color: rgba(148, 163, 184, 0.12);
 }
 
-html[data-theme="dark"] #settingsPage .settings-header-card-label,
-html[data-theme="dark"] #settingsPage .settings-header-card-note,
 html[data-theme="dark"] #settingsPage .settings-panel-subtitle,
 html[data-theme="dark"] #settingsPage .settings-row .activity-subtitle,
 html[data-theme="dark"] #settingsPage .settings-row-danger .activity-subtitle {
   color: #cbd5e1;
 }
 
-html[data-theme="dark"] #settingsPage .settings-header-card-value,
 html[data-theme="dark"] #settingsPage .settings-row .activity-title,
 html[data-theme="dark"] #settingsPage .settings-row-danger .activity-title,
 html[data-theme="dark"] #settingsPage .settings-diagnostics summary {

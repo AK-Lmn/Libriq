@@ -311,7 +311,6 @@ html, body {
 }
 
 @media (max-width: 768px) {
-  .dashboard-header,
   .section-header,
   .goal-header,
   .page-header,
@@ -324,7 +323,6 @@ html, body {
     flex-wrap: wrap;
   }
 
-  .dashboard-header,
   .page-header,
   .section-header,
   .goal-header,
