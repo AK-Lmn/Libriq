@@ -40,6 +40,7 @@ const SHELL_ASSETS = [
   './js/dashboard.js',
   './js/navigation.js',
   './js/app.js',
+  './js/installPrompt.js',
   './js/sync.js',
   './js/app/router.js',
   './js/components/ui/dialog.js',

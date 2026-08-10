@@ -7,6 +7,7 @@ import { Utils } from './utils.js';
 import { LibriqSyncBeta } from './sync.js';
 import { LibriqFirebase } from './firebase-client.js';
 import { LibriqCloudBackup } from './cloudBackup.js';
+import { initInstallPrompt } from './installPrompt.js';
 
 let _booted = false;
 let _whatsNewTimer = null;
@@ -170,6 +171,7 @@ function getReleaseNotes() {
     Search.init();
 
     wireGlobalEvents();
+    initInstallPrompt();
     scheduleWhatsNew();
 
     document.getElementById('whatsNewContinue')?.addEventListener('click', dismissWhatsNew);

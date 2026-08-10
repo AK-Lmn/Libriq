@@ -877,16 +877,20 @@ function renderSessionChoicePage() {
         <div class="session-hero-orb session-hero-orb-b"></div>
 
         <div class="session-copy">
-          <span class="session-eyebrow">Welcome to LibriQ</span>
-          <h1 class="session-title">Sign in to LibriQ</h1>
+          <a class="session-brand" href="./" aria-label="LibriQ home">
+            <span class="session-brand-mark">Q</span>
+            <span><strong>LibriQ</strong><small>Your reading life, in one place</small></span>
+          </a>
+          <span class="session-eyebrow"><i class="ph ph-book-open-text"></i> A calmer way to track what you read</span>
+          <h1 class="session-title">Build a reading life worth remembering.</h1>
           <p class="session-subtitle">
-            Continue with an account so your reading life can move with you. If the connection drops, an offline fallback may appear so you can keep using the app on this device.
+            Keep your library, progress, notes, quotes, and reading patterns together in a private space designed around books.
           </p>
 
           <div class="session-points">
             <div class="session-point">
-              <i class="ph ph-cloud-check"></i>
-              <span>Account mode enables cloud backup and Account Sync for signed-in devices.</span>
+              <i class="ph ph-lock-key"></i>
+              <span>Your library stays private and under your control.</span>
             </div>
             ${inAppBrowser ? `
             <div class="session-point session-point-warning">
@@ -894,13 +898,35 @@ function renderSessionChoicePage() {
               <span>Google sign-in may not work inside this app browser.</span>
             </div>` : ''}
             <div class="session-point">
-              <i class="ph ph-shield-check"></i>
-              <span>Continue offline only appears when LibriQ cannot reach account services.</span>
+              <i class="ph ph-cloud-check"></i>
+              <span>Account Sync keeps your reading space available across signed-in devices.</span>
             </div>
+          </div>
+
+          <div class="session-product-preview" aria-label="Preview of the LibriQ reading dashboard">
+            <div class="session-preview-topbar">
+              <span>Good evening, Reader</span>
+              <span class="session-preview-avatar">R</span>
+            </div>
+            <div class="session-preview-heading">Your reading rhythm</div>
+            <div class="session-preview-grid">
+              <div class="session-preview-book">
+                <span class="session-preview-cover"><i class="ph ph-book-open"></i></span>
+                <span><small>Reading now</small><strong>Continue your current book</strong></span>
+              </div>
+              <div class="session-preview-stat"><strong>12</strong><span>books this year</span></div>
+              <div class="session-preview-stat"><strong>7</strong><span>day streak</span></div>
+            </div>
+            <div class="session-preview-progress"><span style="width: 68%"></span></div>
           </div>
         </div>
 
-        <div class="session-card-stack">
+        <div class="session-card-stack session-auth-panel">
+          <div class="session-auth-heading">
+            <span>Welcome to LibriQ</span>
+            <h2>${hasUser ? `Continue your library` : 'Start your reading space'}</h2>
+            <p>${hasUser ? 'Your account is ready on this device.' : 'Sign in or create an account to begin.'}</p>
+          </div>
           ${loading ? `
             <div class="session-loading-card" aria-live="polite">
               <div class="session-loading-spinner"></div>
