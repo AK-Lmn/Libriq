@@ -64,6 +64,8 @@ let book = {
   rating: 4,
   genres: ['Science Fiction'],
   tags: ['Classic'],
+  archiveUrl: 'javascript:alert(1)',
+  readableSourceLinks: ['https://archive.org/details/dune', 'https://openlibrary.org/books/fixture', 'javascript:alert(1)'],
   notes: '',
   quotes: [{ id: 'kindle-note', text: '', note: 'Kindle note', page: 44, source: 'kindle' }],
 };
@@ -120,6 +122,13 @@ assert.match(body.html, /4\/5/);
 assert.match(elements.get('bookQuotesList').innerHTML, /Kindle note/);
 assert.match(elements.get('bookQuotesList').innerHTML, /p\. 44/);
 assert.doesNotMatch(body.html, /onclick\s*=/i);
+assert.doesNotMatch(body.html, /href="javascript:/i);
+assert.match(body.html, /href="https:\/\/archive.org\/details\/dune"/);
+assert.match(body.html, /href="https:\/\/openlibrary.org\/books\/fixture"/);
+assert.match(body.html, /role="progressbar"[^>]*aria-valuenow="40"/);
+assert.match(body.html, /for="bookQuoteTextInput"/);
+assert.match(body.html, /for="bookQuotePageInput"/);
+assert.match(body.html, /for="bookQuoteNoteInput"/);
 
 elements.get('bookNotesTextarea').value = 'Updated thoughts';
 elements.get('saveBookNoteBtn').listeners.click();
@@ -131,6 +140,12 @@ elements.get('bookQuoteNoteInput').value = 'Context';
 elements.get('saveBookQuoteBtn').listeners.click();
 assert.equal(book.quotes[0].text, 'New quote');
 const createdId = book.quotes[0].id;
+const quoteCount = book.quotes.length;
+elements.get('bookQuoteTextInput').value = 'Invalid page quote';
+elements.get('bookQuotePageInput').value = '1.5';
+elements.get('saveBookQuoteBtn').listeners.click();
+assert.equal(book.quotes.length, quoteCount);
+assert.ok(toasts.some(toast => toast.message === 'Page number must be a positive number.'));
 
 elements.get('bookQuotesList').listeners.click({ target: { closest: () => ({ dataset: { quoteAction: 'edit', quoteId: createdId } }) } });
 elements.get('bookQuoteTextInput').value = 'Edited quote';
@@ -141,6 +156,10 @@ elements.get('bookQuotesList').listeners.click({ target: { closest: () => ({ dat
 assert.equal(book.quotes.some(quote => quote.id === createdId), false);
 
 elements.get('bookDetailsRating').listeners.click({ target: { closest: () => ({ dataset: { rating: '5' } }) } });
+assert.equal(calls.rating, 1);
+for (const rating of ['0', '6', '2.5', 'not-a-rating']) {
+  elements.get('bookDetailsRating').listeners.click({ target: { closest: () => ({ dataset: { rating } }) } });
+}
 assert.equal(calls.rating, 1);
 
 function findButton(fragment) {
