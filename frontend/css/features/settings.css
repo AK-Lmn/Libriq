@@ -1031,3 +1031,92 @@ html[data-theme="dark"] #profilePage .stat-card {
     background: var(--surface-3);
   }
 }
+
+html[data-theme] #settingsPage { max-width: none; color: var(--text-body); padding: 48px 64px 32px; }
+html[data-theme] #settingsPage :is(h2, h3, p) { margin: 0; }
+html[data-theme] #settingsPage .settings-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 32px; }
+html[data-theme] #settingsPage .settings-heading { display: grid; gap: 12px; }
+html[data-theme] #settingsPage .settings-eyebrow { font: 500 12px var(--font-sans); letter-spacing: 1.8px; color: var(--text-body); }
+html[data-theme] #settingsPage .page-title { font: 400 44px/1.15 var(--font-serif); margin: 0; letter-spacing: -0.8px; }
+html[data-theme] #settingsPage .page-subtitle { font: 400 14px/1.6 var(--font-sans); color: var(--text-body); }
+html[data-theme] #settingsPage .settings-device-label { font: 400 11px var(--font-mono); color: var(--text-body); white-space: nowrap; }
+html[data-theme] #settingsPage .settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; }
+html[data-theme] #settingsPage .settings-column { display: grid; gap: 24px; min-width: 0; }
+html[data-theme] #settingsPage .settings-panel { padding: 24px; margin: 0; min-width: 0; border-radius: 20px; background: var(--glass-fill-3); border: 1px solid var(--glass-border); border-top-color: var(--glass-highlight); box-shadow: var(--shadow-glass); backdrop-filter: blur(calc(var(--glass-blur-card) / 2)); -webkit-backdrop-filter: blur(calc(var(--glass-blur-card) / 2)); }
+html[data-theme] #settingsPage .goal-header { margin: 0 0 20px; }
+html[data-theme] #settingsPage .goal-title { display: flex; align-items: center; gap: 12px; font: 400 22px var(--font-serif); color: var(--text-strong); }
+html[data-theme] #settingsPage .settings-panel-subtitle { font-size: 13px; line-height: 1.5; color: var(--text-body); margin-top: 8px; }
+html[data-theme] #settingsPage .settings-icon { display: inline-block; flex-shrink: 0; vertical-align: middle; }
+html[data-theme] #settingsPage .settings-theme-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+html[data-theme] #settingsPage .settings-theme-choice { padding: 0; border: 0; background: transparent; color: var(--text-strong); cursor: pointer; font: 500 13px var(--font-sans); text-align: left; }
+html[data-theme] #settingsPage .settings-theme-preview { display: flex; flex-direction: column; gap: 12px; height: 104px; padding: 12px; border: 1px solid var(--glass-border); border-radius: 12px; font-size: 11px; }
+html[data-theme] #settingsPage .settings-theme-preview--dark { background: #0b0e14; color: #f2f5fb; }
+html[data-theme] #settingsPage .settings-theme-preview--light { background: #eef1f6; color: #1a1e2a; }
+html[data-theme] #settingsPage .settings-theme-choice[aria-pressed="true"] .settings-theme-preview { border-color: var(--indigo); box-shadow: 0 0 0 1px var(--indigo); }
+html[data-theme] #settingsPage .settings-preview-books { display: flex; gap: 8px; height: 52px; }
+html[data-theme] #settingsPage .settings-preview-books span { width: 32px; border-radius: 4px; background: rgba(124, 140, 248, .18); }
+html[data-theme] #settingsPage .settings-preview-books span:nth-child(2) { background: rgba(94, 234, 212, .14); }
+html[data-theme] #settingsPage .settings-preview-books span:nth-child(3) { background: rgba(138, 148, 166, .18); }
+html[data-theme] #settingsPage .settings-theme-label { display: flex; justify-content: space-between; align-items: center; padding: 12px 4px; }
+html[data-theme] #settingsPage .settings-motion { display: grid; gap: 8px; padding: 16px 0; border-top: 1px solid var(--glass-border); font-size: 12px; line-height: 1.5; }
+html[data-theme] #settingsPage .settings-preference-row { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+html[data-theme] #settingsPage .settings-system-label { font: 400 12px var(--font-mono); }
+html[data-theme] #settingsPage .settings-solid-preview { padding: 12px; border-radius: 12px; background: var(--glass-solid-3); font-size: 12px; line-height: 1.5; border-top: 1px solid var(--glass-highlight); }
+html[data-theme] #settingsPage .settings-solid-preview strong { display: block; color: var(--text-strong); margin-bottom: 4px; }
+html[data-theme] #settingsPage :is(.activity-title, .settings-copy strong) { color: var(--text-strong); }
+html[data-theme] #settingsPage :is(.activity-subtitle, .settings-copy, .settings-callout, .settings-safety-copy) { font-size: 13px; line-height: 1.6; color: var(--text-body); overflow-wrap: anywhere; }
+html[data-theme] #settingsPage :is(.activity-item, .settings-row, .settings-account-row) { background: transparent; padding: 12px 0; border-radius: 0; }
+html[data-theme] #settingsPage .settings-account-identity { display: flex; align-items: center; gap: 12px; }
+html[data-theme] #settingsPage .account-avatar { width: 44px; height: 44px; background: var(--glass-fill-2); color: var(--text-strong); font: 400 18px var(--font-serif); }
+html[data-theme] #settingsPage .settings-account-copy { min-width: 0; overflow-wrap: anywhere; }
+html[data-theme] #settingsPage .settings-account-copy > .activity-title { font: 400 20px var(--font-serif); }
+html[data-theme] #settingsPage .settings-account-row { flex-direction: column; align-items: flex-start; gap: 8px; border-bottom: 1px solid var(--glass-border); }
+html[data-theme] #settingsPage .settings-account-row:has(#changeEmailInput) { align-items: stretch; }
+html[data-theme] #settingsPage .settings-account-actions { gap: 0; }
+html[data-theme] #settingsPage .settings-session-actions { margin-top: 16px; }
+html[data-theme] #settingsPage :is(.settings-export-actions, .settings-cloud-actions, .settings-danger-actions) { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+html[data-theme] #settingsPage .btn { min-height: 40px; padding: 10px 12px; font-size: 12px; line-height: 1.3; white-space: normal; border-radius: 10px; }
+html[data-theme] #settingsPage .btn-secondary { background: var(--glass-fill-2); border: 1px solid var(--glass-border); color: var(--text-strong); }
+html[data-theme] #settingsPage .btn-primary { background: var(--indigo); color: var(--text-inverse); }
+html[data-theme] #settingsPage .btn.btn-danger { background: var(--glass-fill-1); border: 1px solid var(--color-danger); color: var(--text-strong); }
+html[data-theme] #settingsPage .btn.btn-danger:hover { background: var(--color-danger-dim); color: var(--text-strong); }
+html[data-theme] #settingsPage .settings-danger-zone { border-top: 1px solid var(--glass-border); margin-top: 20px; padding-top: 20px; }
+html[data-theme] #settingsPage .settings-danger-zone h3 { font: 500 13px var(--font-sans); color: var(--text-strong); margin-bottom: 8px; }
+html[data-theme] #settingsPage .settings-danger-zone p { font-size: 12px; line-height: 1.5; }
+html[data-theme] #settingsPage .settings-safety-copy { margin-top: 16px; }
+html[data-theme] #settingsPage :is(.settings-snapshot, .settings-library-count) { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12px; border-top: 1px solid var(--glass-border); padding-top: 12px; margin-top: 16px; }
+html[data-theme] #settingsPage .settings-backup-history { margin-top: 16px; font-size: 12px; line-height: 1.6; }
+html[data-theme] #settingsPage :is(.settings-backup-history, .settings-diagnostics) summary { padding: 8px 0; cursor: pointer; }
+html[data-theme] #settingsPage .settings-diagnostics { background: transparent; border: 0; border-top: 1px solid var(--glass-border); padding: 12px 0 0; margin-top: 16px; }
+html[data-theme] #settingsPage .settings-diagnostics .sync-health-row { padding: 8px 0; border-bottom: 1px solid var(--glass-border); }
+html[data-theme] #settingsPage .settings-version { font: 400 12px var(--font-mono); color: var(--text-strong); margin-bottom: 12px; }
+html[data-theme] #settingsPage .settings-panel-about .settings-copy { margin-top: 12px; }
+html[data-theme] #settingsPage a { color: var(--text-strong); text-decoration: underline; text-underline-offset: 3px; }
+html[data-theme] #settingsPage .form-input { width: 100%; color: var(--text-strong); background: var(--glass-solid-2); caret-color: var(--indigo); }
+html[data-theme] #settingsPage .settings-footer { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 32px; font-size: 12px; }
+html[data-theme] #settingsPage .settings-footer span { font: 400 10px var(--font-mono); letter-spacing: 1px; }
+@media (max-width: 767px) {
+  html[data-theme] #settingsPage { padding: 24px 16px calc(88px + env(safe-area-inset-bottom)); }
+  html[data-theme] #settingsPage .settings-device-label, html[data-theme] #settingsPage .settings-eyebrow { display: none; }
+  html[data-theme] #settingsPage .settings-header { margin-bottom: 24px; }
+  html[data-theme] #settingsPage .page-title { font-size: 36px; }
+  html[data-theme] #settingsPage .settings-grid { display: flex; flex-direction: column; gap: 16px; }
+  html[data-theme] #settingsPage .settings-column { display: contents; }
+  html[data-theme] #settingsPage .settings-panel { width: 100%; padding: 20px; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  html[data-theme] #settingsPage .settings-panel-theme { order: 1; }
+  html[data-theme] #settingsPage .settings-panel-account { order: 2; }
+  html[data-theme] #settingsPage .settings-panel-cloud { order: 3; }
+  html[data-theme] #settingsPage .settings-panel-sync { order: 4; }
+  html[data-theme] #settingsPage .settings-panel-data { order: 5; }
+  html[data-theme] #settingsPage .settings-panel-privacy { order: 6; }
+  html[data-theme] #settingsPage .settings-panel-about { order: 7; }
+  html[data-theme] #settingsPage .btn { min-height: 44px; }
+  html[data-theme] #settingsPage :is(.settings-backup-history, .settings-diagnostics) summary { min-height: 44px; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  html[data-theme] #settingsPage .settings-panel { background: var(--glass-solid-3); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html[data-theme] #settingsPage .settings-panel { background: var(--glass-solid-3); }
+}
+@media (prefers-reduced-motion: reduce) { html[data-theme] #settingsPage * { transition: none !important; animation: none !important; } }

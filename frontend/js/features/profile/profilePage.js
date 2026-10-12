@@ -16,16 +16,57 @@ export function createProfilePage({ storage, utils, constants, actions = {}, doc
       return;
     }
     const profile = storage.getProfile();
-    const displayName = resolveAccountDisplayName(profile, actions.getFirebaseState?.().user);
+    const user = actions.getFirebaseState?.().user;
+    const displayName = resolveAccountDisplayName(profile, user);
     const stats = storage.getStats();
+    const streak = storage.getStreak?.();
+    const creationTime = user?.metadata?.creationTime;
+    const joined = creationTime && Number.isFinite(new Date(creationTime).getTime())
+      ? `Joined ${new Date(creationTime).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
+      : 'Join date unavailable';
+    const icon = name => `<img class="profile-icon" src="assets/revamp/account/20-1118-${name}.svg" alt="" aria-hidden="true" />`;
+    const totals = [
+      ['library', 'Total books', stats.total ?? 0, 'Your personal library'],
+      ['book-check', 'Books finished', stats.finished ?? 0, `${stats.finishedThisYear ?? 0} finished this year`],
+      ['files', 'Pages read', utils.formatNumber(stats.totalPages ?? 0), 'Across finished books'],
+      ['flame', 'Longest streak', streak?.best ?? '–', 'Consecutive reading days', 'days'],
+      ['star', 'Avg rating', stats.avgRating || '–', `${stats.ratedCount ?? 0} rated books`, '/ 5'],
+    ];
 
     main.innerHTML = `
-      <div class="page profile-page page--narrow" id="profilePage">
-        <div class="page-header page-header--spaced">
+      <div class="page profile-page" id="profilePage">
+        <header class="profile-header">
+          <span class="profile-eyebrow">Your private workspace</span>
           <h1 class="page-title">Profile</h1>
-        </div>
+          <p class="profile-subtitle">A little space for a lifetime of reading.</p>
+        </header>
 
-        <div class="goal-widget goal-widget--section-sm">
+        <section class="profile-identity" aria-label="Account identity">
+          <div class="profile-identity-row">
+            ${user?.photoURL ? `<img class="profile-avatar" src="${utils.sanitize(user.photoURL)}" alt="" referrerpolicy="no-referrer" />` : `<div class="profile-avatar profile-avatar--fallback" aria-hidden="true">${utils.sanitize(displayName.slice(0, 1).toUpperCase())}</div>`}
+            <div class="profile-account-copy">
+              <h2>${utils.sanitize(displayName)}</h2>
+              <p>${utils.sanitize(user?.email || 'Account email unavailable')}</p>
+            </div>
+            <span class="profile-private">${icon('lock-keyhole1')} Private account</span>
+          </div>
+          <div class="profile-membership">${icon('calendar-days')} ${utils.sanitize(joined)}</div>
+        </section>
+
+        <section class="profile-stats" aria-labelledby="profileStatsTitle">
+          <header><h2 id="profileStatsTitle">Your reading at a glance</h2><p>All time · Every page adds up.</p></header>
+          <div class="profile-stats-grid">
+            ${totals.map(([symbol, label, value, description, unit]) => `
+              <article class="profile-stat">
+                <h3><span class="profile-icon-well">${icon(symbol)}</span>${label}</h3>
+                <div class="profile-stat-value">${utils.sanitize(value)}${unit ? `<small>${unit}</small>` : ''}</div>
+                <p>${description}</p>
+              </article>`).join('')}
+          </div>
+        </section>
+
+        <details class="profile-editor">
+          <summary>Edit profile</summary>
           <form id="profileForm" class="add-book-form" data-action="save-profile">
             <div class="form-group">
               <label class="form-label" for="profileName">Display name</label>
@@ -44,17 +85,8 @@ export function createProfilePage({ storage, utils, constants, actions = {}, doc
               <i class="ph ph-floppy-disk"></i> Save Profile
             </button>
           </form>
-        </div>
-
-        <div class="goal-widget profile-stats-card">
-          <div class="goal-header"><div class="goal-title">Reading Stats</div></div>
-          <div class="stats-row profile-stats-row profile-stats-grid">
-            <div class="stat-card"><div class="stat-card-value">${stats.total}</div><div class="stat-card-label">Books tracked</div></div>
-            <div class="stat-card"><div class="stat-card-value">${stats.finished}</div><div class="stat-card-label">Books finished</div></div>
-            <div class="stat-card"><div class="stat-card-value">${utils.formatNumber(stats.totalPages)}</div><div class="stat-card-label">Pages read</div></div>
-            <div class="stat-card"><div class="stat-card-value">${stats.avgRating || '–'}</div><div class="stat-card-label">Avg rating</div></div>
-          </div>
-        </div>
+        </details>
+        <footer class="profile-footer">${icon('lock-keyhole')} Your books. Your space. Always private.</footer>
       </div>`;
 
     if (boundMain === main) return;
