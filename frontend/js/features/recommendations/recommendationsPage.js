@@ -5,99 +5,127 @@ export function createRecommendationsPage({ storage, library, bookApi, utils, co
   const pageDocument = documentRoot || globalThis.document;
   const recommendationBooks = new Map();
   let boundMain = null;
+  let renderVersion = 0;
+  let selectedFilter = 'all';
+  let discoveries = [];
+  let discoveryLoading = false;
+  let filters = [];
 
   function renderRecommendationsPage() {
     const main = pageDocument.getElementById('mainContent');
     if (!main) {
       console.error('[LibriQ] Missing #mainContent while rendering recommendations page.');
-      return;
+      return Promise.resolve();
     }
-    const books = storage.getBooks();
-    const recState = _buildRecommendationState(books);
-
+    const version = ++renderVersion;
+    const books = (storage.getBooks() || []).filter(Boolean);
+    const state = _buildRecommendationState(books);
+    const rated = books.filter(book => typeof book.rating === 'number' && book.rating > 0);
+    const average = rated.length ? (rated.reduce((sum, book) => sum + book.rating, 0) / rated.length).toFixed(1) : '—';
+    const saved = _savedPicks(books, state);
+    const rails = _buildSubjectDiscoveryState(books).rails;
+    filters = [{ key: 'all', label: 'For you' }, ...rails.slice(0, 2).map(rail => ({ key: rail.subjectKey, label: rail.label })), { key: 'gutenberg-classics', label: 'Free classics' }];
+    if (!filters.some(filter => filter.key === selectedFilter)) selectedFilter = 'all';
+    recommendationBooks.clear();
+    discoveries = [];
+    discoveryLoading = state.hasSignal && actions.isOnline();
     main.innerHTML = `
-      <div class="page recommendations-page" id="recommendationsPage">
-        <div class="page-header recommendations-header">
-          <div class="recommendations-heading recommendations-hero-heading">
-            <span class="library-eyebrow">Library-based suggestions</span>
-            <h1 class="page-title">Recommendations</h1>
-            <p class="page-subtitle">Suggestions built from the books you’ve already saved in LibriQ.</p>
+      <div class="page recommendations-page discover-page" id="recommendationsPage">
+        <header class="discover-introduction">
+          <div class="discover-state-row">
+            <span class="discover-eyebrow">${state.hasSignal ? '<span class="discover-state-dark">DARK · GLASS</span><span class="discover-state-light">LIGHT · GLASS</span><span class="discover-state-solid">REDUCED TRANSPARENCY · SOLID</span>' : 'EMPTY LIBRARY SIGNAL'}</span>
+            <span class="discover-privacy">${buildDiscoverIcon('lock-keyhole', 12)} Just for you</span>
           </div>
-        </div>
-
-        <section class="recommendations-intro recommendations-hero">
-          <div class="recommendations-intro-copy">
-            <div class="recommendations-intro-kicker">From your library</div>
-            <div class="recommendations-intro-title">Built from your saved books, favorite authors, and reading shelves.</div>
-            <div class="recommendations-intro-body">Suggestions are grounded in your saved books, favorites, ratings, and reading shelves so they reflect what you already read, rate, and keep close.</div>
-            <div class="recommendations-intro-meta">
-              <span class="badge badge-accent">Library-based</span>
-              <span class="recommendations-intro-meta-text">Built from favorites, ratings, authors, and Want to Read shelves</span>
+          <h1 class="discover-title">Your next chapter.</h1>
+          <div class="discover-signals discover-glass">
+            <div class="discover-summary">
+              <p>${state.hasSignal ? 'A few books that feel like you.' : 'A space for discoveries that feel like you.'}</p>
+              <p>${state.hasSignal ? 'Drawn from your favorites, ratings, authors and want-to-read shelf.' : 'Recommendations grow from the books you save.'}</p>
             </div>
+            ${state.hasSignal ? `<dl class="discover-metrics">
+              <div><dt>saved</dt><dd>${books.length}</dd></div>
+              <div><dt>favorites</dt><dd>${books.filter(book => book.isFavorite).length.toString().padStart(2, '0')}</dd></div>
+              <div><dt>avg. rating</dt><dd>${average}</dd></div>
+            </dl>` : ''}
           </div>
+        </header>
+        ${state.hasSignal ? `<section class="discover-picks" aria-labelledby="discoverPickedTitle">
+          <div class="discover-section-header"><h2 id="discoverPickedTitle">Picked for you</h2><div class="discover-refresh-group"><span id="discoverPickCount" class="discover-eyebrow">PICKING BOOKS</span><button type="button" class="discover-refresh" data-action="refresh-recommendations">Refresh</button></div></div>
+          <div id="discoverFilters" class="discover-filters" aria-label="Reading interests">${buildDiscoverFilters()}</div>
+          <div id="subjectDiscoveryRoot" class="recommendation-card-grid discover-grid" aria-live="polite" aria-busy="true"></div>
+          <div id="gutenbergDiscoveryRoot" class="discover-sr-only" role="status"></div>
         </section>
-
-        ${recState.hasSignal ? `
-          <div class="recommendations-groups recommendations-sections stagger">
-            ${recState.groups.map(group => buildRecommendationGroup(group)).join('')}
-          </div>
-          <div class="recommendations-helper-note">Add more favorites, finished books, and Want to Read titles to improve your library-based suggestions.</div>
-        ` : `
-          <div class="empty-state recommendations-empty-state recommendations-empty">
-            <div class="empty-state-icon"><i class="ph ph-sparkle"></i></div>
-            <div class="empty-state-title">Save a few more books to improve your library-based suggestions.</div>
-            <div class="empty-state-body">Recommendations are built from your saved books, favorites, ratings, and Want to Read titles.</div>
-            <div class="recommendations-empty-actions">
-              <button class="btn btn-primary" type="button" data-action="open-search">
-                <i class="ph ph-magnifying-glass"></i> Search Books
-              </button>
-              <button class="btn btn-secondary" type="button" data-action="open-library">
-                <i class="ph ph-books"></i> Open Library
-              </button>
-            </div>
-            <div class="recommendations-empty-hint">Add books, favorite a few, finish a few, or move books to Want to Read.</div>
-          </div>
-        `}
-        <div id="subjectDiscoveryRoot" class="recommendations-subject-discovery"></div>
-        <div id="gutenbergDiscoveryRoot" class="recommendations-subject-discovery"></div>
+        ${saved.length ? `<section class="discover-saved" aria-labelledby="discoverSavedTitle"><div class="discover-section-header"><h2 id="discoverSavedTitle">Waiting on your shelf</h2><p>${saved.every(pick => pick.book.status === constants.STATUS.WISHLIST) ? 'From your want-to-read list' : 'From your saved books'}</p></div><div class="discover-saved-grid">${saved.map(({ book, reason }) => buildRecommendationCard(book, reason)).join('')}</div></section>` : ''}` : buildDiscoverEmpty(books.length)}
+        <p class="discover-private-note">${buildDiscoverIcon('lock-keyhole', 12)}<span>Your library is the signal. No public profiles. No popularity rankings.</span></p>
       </div>`;
-
     bindRecommendationActions(main);
-    _hydrateSubjectDiscovery(books);
-    _hydrateGutendexDiscovery(books);
+    if (!state.hasSignal) return Promise.resolve();
+    return hydrateDiscoveries(books, rails, version, main);
   }
 
-  async function _hydrateSubjectDiscovery(books) {
+  async function hydrateDiscoveries(books, rails, version, main) {
+    const root = pageDocument.getElementById('subjectDiscoveryRoot');
+    const classicsRoot = pageDocument.getElementById('gutenbergDiscoveryRoot');
+    if (!root) return;
+    root.setAttribute?.('aria-busy', 'true');
+    if (!actions.isOnline()) {
+      root.innerHTML = '<p class="discover-message">Connect to the internet to discover new books. Your saved books are still available below.</p>';
+      root.setAttribute?.('aria-busy', 'false');
+      if (classicsRoot) classicsRoot.innerHTML = '';
+      return;
+    }
+    root.innerHTML = '<p class="discover-message">Loading subject picks from Open Library…</p>';
+    if (classicsRoot) classicsRoot.innerHTML = 'Loading free classics…';
+    const requests = [...rails.map(rail => ({ ...rail, load: () => bookApi.searchBySubject(rail.subjectKey, { limit: rail.limit }) })), { subjectKey: 'gutenberg-classics', label: 'Free classics', load: () => bookApi.searchCuratedClassics({ limit: 6, topic: 'classics' }) }];
+    const results = await Promise.allSettled(requests.map(request => Promise.resolve().then(request.load)));
+    if (version !== renderVersion || (typeof main.querySelector === 'function' && !main.querySelector('#recommendationsPage'))) return;
+    const seen = [];
+    // Interleave providers so one subject cannot crowd out the other reading signals.
+    for (let index = 0; index < 6; index++) {
+      results.forEach((result, railIndex) => {
+        const book = result.status === 'fulfilled' && Array.isArray(result.value) ? result.value[index] : null;
+        if (!book || books.some(saved => bookApi.isSameBook(saved, book))) return;
+        const request = requests[railIndex];
+        const existing = seen.find(pick => bookApi.isSameBook(pick.book, book));
+        if (existing) {
+          if (!existing.filters.includes(request.subjectKey)) existing.filters.push(request.subjectKey);
+          return;
+        }
+        seen.push({ book, filters: [request.subjectKey], reason: request.subjectKey === 'gutenberg-classics' ? 'A free classic from Project Gutenberg.' : `More to explore from your ${request.label.toLowerCase()} reading interests.` });
+      });
+    }
+    discoveries = seen;
+    discoveryLoading = false;
+    if (classicsRoot) classicsRoot.innerHTML = results.at(-1).status === 'rejected' ? 'Free classics are unavailable right now.' : 'Free classics loaded.';
+    renderDiscoveryCards();
+  }
+
+  function renderDiscoveryCards() {
     const root = pageDocument.getElementById('subjectDiscoveryRoot');
     if (!root) return;
-    if (!actions.isOnline()) {
-      root.innerHTML = '';
-      return;
-    }
+    const filtersRoot = pageDocument.getElementById('discoverFilters');
+    if (filtersRoot) filtersRoot.innerHTML = buildDiscoverFilters();
+    if (discoveryLoading) return;
+    const picks = discoveries.filter(pick => selectedFilter === 'all' || pick.filters.includes(selectedFilter)).slice(0, 4);
+    root.innerHTML = picks.length ? picks.map(pick => buildRecommendationCard(pick.book, pick.reason)).join('') : '<div class="discover-message"><p>No new picks are available for this interest right now.</p><p>Try another interest, refresh, or search for your next book.</p><button type="button" class="discover-add" data-action="open-search">Search books</button></div>';
+    root.setAttribute?.('aria-busy', 'false');
+    const count = pageDocument.getElementById('discoverPickCount');
+    if (count) count.textContent = `${picks.length.toString().padStart(2, '0')} BOOKS`;
+  }
 
-    const discoveryState = _buildSubjectDiscoveryState(books);
-    if (!discoveryState.rails.length) {
-      root.innerHTML = '';
-      return;
-    }
+  function buildDiscoverFilters() {
+    return filters.map(filter => `<button type="button" class="discover-filter" data-action="filter-recommendations" data-filter="${utils.sanitize(filter.key)}" aria-pressed="${selectedFilter === filter.key}">${utils.sanitize(filter.label)}</button>`).join('');
+  }
 
-    root.innerHTML = `
-      <div class="recommendations-groups recommendations-sections stagger">
-        ${discoveryState.rails.map(rail => buildSubjectDiscoveryRail(rail)).join('')}
-      </div>`;
-
-    const railNodes = Array.from(root.querySelectorAll('[data-subject-key]'));
-    await Promise.all(railNodes.map(async (node) => {
-      const subjectKey = node.dataset.subjectKey;
-      const limit = Number(node.dataset.limit || 6);
-      const booksForRail = await bookApi.searchBySubject(subjectKey, { limit });
-      const filtered = _filterSubjectDiscoveryBooks(booksForRail, books, limit);
-      if (!filtered.length) {
-        node.innerHTML = `<div class="recommendations-helper-note">This subject is unavailable right now.</div>`;
-        return;
-      }
-      node.querySelector('.recommendation-card-grid').innerHTML = filtered.map(book => buildRecommendationCard(book, 'Open Library subject')).join('');
-    }));
+  function buildDiscoverEmpty(count) {
+    return `<section class="discover-empty discover-glass" aria-labelledby="discoverEmptyTitle">
+      <div class="discover-empty-message">
+        <div class="discover-book-silhouettes" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="discover-invitation"><span class="discover-eyebrow">A LITTLE MORE TO GO ON</span><h2 id="discoverEmptyTitle">Let your shelf lead the way.</h2><p>Save a few books you love, then add a rating or a favorite. Discover will find its direction from your reading, not from everyone else’s.</p><div class="discover-threshold"><span>${Math.min(count, 3).toString().padStart(2, '0')} / 03</span><progress max="3" value="${Math.min(count, 3)}" aria-label="Books saved toward your first three"></progress><span>books saved</span></div><button type="button" class="discover-add" data-action="open-search">${buildDiscoverIcon('plus', 16)} Add a book</button></div>
+      </div>
+      <div class="discover-suggestions">${[['bookmark', 'Save three books', 'Read, reading or want to read.'], ['heart', 'Mark a favorite', 'A book you would happily read again.'], ['star', 'Add a rating', 'A small signal of what stays with you.']].map(([icon, title, body]) => `<div>${buildDiscoverIcon(icon, 20)}<h3>${title}</h3><p>${body}</p></div>`).join('')}</div>
+      <button class="discover-library-link" type="button" data-action="open-library">Open Library</button>
+    </section>`;
   }
 
   function _buildSubjectDiscoveryState(books) {
@@ -143,106 +171,6 @@ export function createRecommendationsPage({ storage, library, bookApi, utils, co
     return Array.from(new Set(values.map(value => String(value || '').trim()).filter(Boolean)));
   }
 
-  function _filterSubjectDiscoveryBooks(books, savedBooks, limit = 6) {
-    const safeBooks = Array.isArray(books) ? books.filter(Boolean) : [];
-    const saved = Array.isArray(savedBooks) ? savedBooks.filter(Boolean) : [];
-    const filtered = [];
-    for (const book of safeBooks) {
-      if (saved.some(savedBook => bookApi.isSameBook(savedBook, book))) continue;
-      if (filtered.some(existing => bookApi.isSameBook(existing, book))) continue;
-      filtered.push(book);
-      if (filtered.length >= limit) break;
-    }
-    return filtered;
-  }
-
-  function buildSubjectDiscoveryRail(rail) {
-    return `
-      <section class="goal-widget recommendations-section" data-subject-key="${utils.sanitize(rail.subjectKey)}" data-limit="${rail.limit}">
-        <div class="goal-header recommendations-section-header">
-          <div class="recommendation-group-heading">
-            <div class="goal-title">Explore ${utils.sanitize(rail.label)}</div>
-            <div class="stats-section-meta">Powered by Open Library subjects</div>
-          </div>
-        </div>
-        <div class="recommendation-card-grid recommendations-item-grid">
-          <div class="recommendations-helper-note recommendations-subject-loading">
-            <span class="spinner spinner--inline" aria-hidden="true"></span>
-            <span>Loading subject picks from Open Library…</span>
-          </div>
-        </div>
-      </section>`;
-  }
-
-  async function _hydrateGutendexDiscovery(books) {
-    const root = pageDocument.getElementById('gutenbergDiscoveryRoot');
-    if (!root) return;
-    if (!actions.isOnline()) {
-      root.innerHTML = '';
-      return;
-    }
-
-    const rail = _buildGutendexDiscoveryState(books);
-    if (!rail) {
-      root.innerHTML = '';
-      return;
-    }
-
-    root.innerHTML = buildGutendexDiscoveryRail(rail);
-
-    const cardsNode = root.querySelector('[data-gutendex-rail]');
-    if (!cardsNode) return;
-
-    const booksForRail = await bookApi.searchCuratedClassics({ limit: rail.limit, topic: rail.topic });
-    const filtered = _filterDiscoveryBooks(booksForRail, books, rail.limit);
-    if (!filtered.length) {
-      cardsNode.innerHTML = `<div class="recommendations-helper-note">Free classics are unavailable right now.</div>`;
-      return;
-    }
-    cardsNode.querySelector('.recommendation-card-grid').innerHTML = filtered.map(book => buildRecommendationCard(book, 'Project Gutenberg')).join('');
-  }
-
-  function _buildGutendexDiscoveryState(books) {
-    const safeBooks = Array.isArray(books) ? books.filter(Boolean) : [];
-    const hasSignal = safeBooks.length > 0;
-    return {
-      label: 'Free Classics',
-      topic: 'classics',
-      limit: 6,
-      hasSignal,
-    };
-  }
-
-  function _filterDiscoveryBooks(books, savedBooks, limit = 6) {
-    const safeBooks = Array.isArray(books) ? books.filter(Boolean) : [];
-    const saved = Array.isArray(savedBooks) ? savedBooks.filter(Boolean) : [];
-    const filtered = [];
-    for (const book of safeBooks) {
-      if (saved.some(savedBook => bookApi.isSameBook(savedBook, book))) continue;
-      if (filtered.some(existing => bookApi.isSameBook(existing, book))) continue;
-      filtered.push(book);
-      if (filtered.length >= limit) break;
-    }
-    return filtered;
-  }
-
-  function buildGutendexDiscoveryRail(rail) {
-    return `
-      <section class="goal-widget recommendations-section" data-gutendex-rail="true" data-limit="${rail.limit}" data-topic="${utils.sanitize(rail.topic)}">
-        <div class="goal-header recommendations-section-header">
-          <div class="recommendation-group-heading">
-            <div class="goal-title">Free Classics</div>
-            <div class="stats-section-meta">Public-domain picks through Project Gutenberg metadata</div>
-          </div>
-        </div>
-        <div class="recommendation-card-grid recommendations-item-grid">
-          <div class="recommendations-helper-note recommendations-subject-loading">
-            <span class="spinner spinner--inline" aria-hidden="true"></span>
-            <span>Loading free classics…</span>
-          </div>
-        </div>
-      </section>`;
-  }
 
   function _buildRecommendationState(books) {
     const safeBooks = Array.isArray(books) ? books.filter(Boolean) : [];
@@ -347,47 +275,37 @@ export function createRecommendationsPage({ storage, library, bookApi, utils, co
     };
   }
 
-  function buildRecommendationGroup(group) {
-    const cards = group.books.map(book => buildRecommendationCard(book, group.showCardReason === false ? '' : group.label)).join('');
-    const groupClass = group.books.length === 1 ? 'recommendation-group recommendation-group-single' : 'recommendation-group';
-    return `
-      <section class="goal-widget ${groupClass} recommendations-section">
-        <div class="goal-header recommendations-section-header">
-          <div class="recommendation-group-heading">
-            <div class="goal-title">${utils.sanitize(group.title)}</div>
-            <div class="stats-section-meta">${utils.sanitize(group.label)}</div>
-          </div>
-        </div>
-        <div class="recommendation-card-grid recommendations-item-grid">
-          ${cards}
-        </div>
-      </section>`;
+
+  function _savedPicks(books, state) {
+    const ordered = [...books.filter(book => book.status === constants.STATUS.WISHLIST), ...state.groups.flatMap(group => group.books)];
+    const seen = new Set();
+    return ordered.filter(book => {
+      if (seen.has(book.id)) return false;
+      seen.add(book.id);
+      return true;
+    }).slice(0, 2).map(book => ({ book, reason: book.status === constants.STATUS.WISHLIST ? 'Already on your list. A next read from your want-to-read shelf.' : 'Already in your library. Revisit a book you have saved.' }));
+  }
+
+  function buildDiscoverIcon(name, size) {
+    const hasLight = ['plus', 'lock-keyhole', 'bookmark-check', 'arrow-up-right'].includes(name);
+    return `<span class="discover-icon ${hasLight ? 'discover-icon-switch' : ''}" aria-hidden="true" data-icon="${name}"><img class="discover-icon-dark" src="assets/revamp/discover/dark-${name}.svg" width="${size}" height="${size}" alt="">${hasLight ? `<img class="discover-icon-light" src="assets/revamp/discover/light-${name}.svg" width="${size}" height="${size}" alt="">` : ''}</span>`;
+  }
+
+  function _resolveSavedBook(book) {
+    return storage.getBookById(book.id) || (storage.getBooks?.() || []).find(saved => bookApi.isSameBook(saved, book));
   }
 
   function buildRecommendationCard(book, reasonLabel) {
-    recommendationBooks.set(String(book.id || ''), book);
-    const isSaved = !!storage.getBookById(book.id);
-    const statusLabel = isSaved ? utils.statusLabel(book.status) : '';
-    const statusClass = isSaved ? `badge ${utils.statusBadgeClass(book.status)}` : '';
-    const sourceBadges = Array.isArray(book.sourceBadges) && book.sourceBadges.length
-      ? `<div class="recommendation-card-source-badges">${book.sourceBadges.map(label => `<span class="badge badge-accent">${utils.sanitize(label)}</span>`).join('')}</div>`
-      : '';
-    const actionLabel = isSaved ? `Open details for ${book.title}` : `Open details and add ${book.title} to your library`;
-    return `
-      <button type="button" class="recommendation-card recommendations-item" data-action="open-recommendation" data-book-id="${utils.sanitize(String(book.id || ''))}" data-book-saved="${isSaved ? '1' : '0'}" aria-label="${utils.sanitize(actionLabel)}">
-        <div class="recommendation-card-cover">
-          ${utils.buildCover(book, 'cover-sm')}
-        </div>
-        <div class="recommendation-card-body">
-          <div class="recommendation-card-topline">
-            ${reasonLabel ? `<div class="recommendation-card-reason recommendations-reason">${utils.sanitize(reasonLabel)}</div>` : '<div class="recommendation-card-reason recommendations-reason">Library-based match</div>'}
-            ${isSaved ? `<span class="${statusClass}">${statusLabel}</span><span class="badge badge-accent">Already in Library</span>` : '<span class="badge badge-accent">Add to Library</span>'}
-          </div>
-          <div class="recommendation-card-title">${utils.sanitize(book.title)}</div>
-          <div class="recommendation-card-author">${utils.sanitize(book.author)}</div>
-          ${sourceBadges}
-        </div>
-      </button>`;
+    const key = String(book.id || `discovery-${recommendationBooks.size}`);
+    recommendationBooks.set(key, book);
+    const isSaved = !!_resolveSavedBook(book);
+    const actionLabel = isSaved ? `Open details for ${book.title}` : `Add to Library: ${book.title}`;
+    const sourceBadges = Array.isArray(book.sourceBadges) && book.sourceBadges.length ? `<span class="discover-sources">${book.sourceBadges.map(label => `<span>${utils.sanitize(label)}</span>`).join('')}</span>` : '';
+    return `<button type="button" class="recommendation-card discover-card discover-glass ${isSaved ? 'discover-saved-card' : ''}" data-action="open-recommendation" data-book-id="${utils.sanitize(key)}" data-book-saved="${isSaved ? '1' : '0'}" aria-label="${utils.sanitize(actionLabel)}">
+      <span class="discover-cover">${utils.buildCover(book, 'cover-sm')}</span>
+      <span class="discover-book-info">${isSaved ? `<span class="discover-saved-label">${buildDiscoverIcon('bookmark-check', 14)} In your library</span>` : ''}<span class="discover-book-title">${utils.sanitize(book.title)}</span><span class="discover-book-author">${utils.sanitize(book.author)}</span><span class="discover-reason">${utils.sanitize(reasonLabel || 'Library-based match')}</span>${sourceBadges}${isSaved ? `<span class="discover-details">Book details ${buildDiscoverIcon('arrow-up-right', 14)}</span>` : ''}</span>
+      ${isSaved ? '' : `<span class="discover-add">${buildDiscoverIcon('plus', 16)}<span class="discover-add-desktop">Add to library</span><span class="discover-add-mobile">Add book</span></span>`}
+    </button>`;
   }
 
   function _prepareRecommendationBook(book) {
@@ -461,18 +379,28 @@ export function createRecommendationsPage({ storage, library, bookApi, utils, co
     return Number.isFinite(ts) ? ts : 0;
   }
 
+
   function bindRecommendationActions(main) {
     if (boundMain === main) return;
     boundMain = main;
     main.addEventListener('click', event => {
       const trigger = event.target.closest?.('[data-action]');
-      if (!trigger) return;
+      if (!trigger || (typeof main.contains === 'function' && !main.contains(trigger))) return;
       if (trigger.dataset.action === 'open-search') actions.openSearch?.();
       if (trigger.dataset.action === 'open-library') actions.navigate?.('library');
+      if (trigger.dataset.action === 'refresh-recommendations') renderRecommendationsPage().then(() => main.querySelector?.('[data-action="refresh-recommendations"]')?.focus());
+      if (trigger.dataset.action === 'filter-recommendations') {
+        if (!filters.some(filter => filter.key === trigger.dataset.filter)) return;
+        selectedFilter = trigger.dataset.filter;
+        renderDiscoveryCards();
+        const buttons = pageDocument.getElementById('discoverFilters')?.querySelectorAll?.('[data-filter]') || [];
+        Array.from(buttons).find(button => button.dataset.filter === selectedFilter)?.focus();
+      }
       if (trigger.dataset.action === 'open-recommendation') {
         const book = recommendationBooks.get(String(trigger.dataset.bookId || ''));
         if (!book) return;
-        if (trigger.dataset.bookSaved === '1') library.showDetailsModal(book.id);
+        const saved = _resolveSavedBook(book);
+        if (saved) library.showDetailsModal(saved.id);
         else library.showAddModal(_prepareRecommendationBook(book));
       }
     });
