@@ -29,19 +29,10 @@
   <link rel="stylesheet" href="css/tokens.css" />
   <link rel="stylesheet" href="css/reset.css" />
   <link rel="stylesheet" href="css/base.css" />
-  <link rel="stylesheet" href="css/components/button.css" />
-  <link rel="stylesheet" href="css/components/card.css" />
-  <link rel="stylesheet" href="css/components/toast.css" />
-  <link rel="stylesheet" href="css/components/form.css" />
-  <link rel="stylesheet" href="css/components/polish.css" />
-  <link rel="stylesheet" href="css/components/utilities.css" />
-  <link rel="stylesheet" href="css/features/settings.css" />
-  <link rel="stylesheet" href="css/features/library.css" />
-  <link rel="stylesheet" href="css/features/insights.css" />
-  <link rel="stylesheet" href="css/features/session.css" />
+  <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/sidebar.css" />
   <link rel="stylesheet" href="css/features/dashboard.css" />
-  <link rel="stylesheet" href="css/components/dialog.css" />
+  <link rel="stylesheet" href="css/navigation-chrome.css" />
   <link rel="stylesheet" href="css/animations.css" />
 </head>
 <body class="auth-booting">
@@ -62,8 +53,9 @@
       </button>
 
       <nav class="sidebar-nav">
-        <span class="nav-section-label">Library</span>
-        <ul class="nav-list" role="list">
+        <details class="nav-hub" open>
+          <summary class="nav-section-label">Library</summary>
+          <ul class="nav-list" role="list">
           <li>
             <button class="nav-item active" data-page="dashboard" aria-current="page">
               <i class="ph ph-house"></i>
@@ -103,10 +95,13 @@
               <i class="ph ph-heart"></i>
               <span>Favorites</span>
             </button>
+          </li>
         </ul>
+        </details>
 
-        <span class="nav-section-label">Insights</span>
-        <ul class="nav-list" role="list">
+        <details class="nav-hub" open>
+          <summary class="nav-section-label">Insights</summary>
+          <ul class="nav-list" role="list">
           <li>
             <button class="nav-item" data-page="stats">
               <i class="ph ph-chart-bar"></i>
@@ -126,9 +121,11 @@
             </button>
           </li>
         </ul>
+        </details>
 
-        <span class="nav-section-label">Discover</span>
-        <ul class="nav-list" role="list">
+        <details class="nav-hub" open>
+          <summary class="nav-section-label">Discover</summary>
+          <ul class="nav-list" role="list">
           <li>
             <button class="nav-item" data-page="recommendations">
               <i class="ph ph-sparkle"></i>
@@ -142,9 +139,11 @@
             </button>
           </li>
         </ul>
+        </details>
 
-        <span class="nav-section-label">Account</span>
-        <ul class="nav-list" role="list">
+        <details class="nav-hub" open>
+          <summary class="nav-section-label">Account</summary>
+          <ul class="nav-list" role="list">
           <li>
             <button class="nav-item" data-page="profile">
               <i class="ph ph-user-circle"></i>
@@ -158,6 +157,7 @@
             </button>
           </li>
         </ul>
+        </details>
       </nav>
 
       <div class="sidebar-streak" id="streakWidget">

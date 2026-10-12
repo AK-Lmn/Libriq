@@ -114,13 +114,13 @@ assert.equal(modal.hidden, false);
 assert.equal(countButtons('Update Progress'), 1);
 assert.equal(countButtons('Mark Finished'), 1);
 assert.equal(countButtons('Refresh metadata'), 1);
-assert.equal(countButtons('ph-trash'), 1);
+assert.equal(countButtons('Remove book'), 1);
 
 feature.render('book-1');
 assert.equal(countButtons('Update Progress'), 1);
 assert.equal(countButtons('Mark Finished'), 1);
 assert.equal(countButtons('Refresh metadata'), 1);
-assert.equal(countButtons('ph-trash'), 1);
+assert.equal(countButtons('Remove book'), 1);
 
 closeButton.listeners.click();
 assert.equal(modal.hidden, true);

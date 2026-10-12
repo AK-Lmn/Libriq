@@ -1,3 +1,5 @@
+#quotesPage .activity-subtitle, #quotesPage .btn-ghost { color: var(--text-body); }
+#quotesPage .chip.active { color: var(--text-strong); }
 /* Legacy shared structures belong to deferred pages, not the redesigned Dashboard. */
 :where(.page:not(.dashboard-page)) .stats-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); margin-bottom: var(--space-8); }
 :where(.page:not(.dashboard-page)) .stat-card { display: flex; flex-direction: column; justify-content: space-between; min-height: 160px; gap: var(--space-3); padding: var(--space-5); background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); }
