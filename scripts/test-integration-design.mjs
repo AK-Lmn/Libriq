@@ -21,9 +21,9 @@ await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 await fs.mkdir(output, { recursive: true });
 const browser = await chromium.launch();
 const results = [];
-const routes = ['dashboard', 'library', 'reading', 'wishlist', 'finished', 'favorites', 'stats', 'goals', 'activity', 'recommendations', 'settings', 'profile', 'help', 'quotes'];
+const routes = ['dashboard', 'library', 'reading', 'wishlist', 'finished', 'favorites', 'abandoned', 'stats', 'goals', 'activity', 'recommendations', 'settings', 'profile', 'help', 'quotes'];
 const overlays = ['details', 'search', 'add', 'manual', 'progress', 'kindle', 'whats-new', 'backup', 'danger', 'signin', 'signup', 'reset', 'boot', 'session-fallback'];
-const designed = new Set([...routes.filter(route => route !== 'quotes'), 'details']);
+const designed = new Set([...routes.filter(route => !['quotes', 'abandoned'].includes(route)), 'details']);
 
 async function render(page, window, theme, state) {
   await page.evaluate(async ({ window: target, theme, state }) => {
@@ -44,6 +44,7 @@ async function render(page, window, theme, state) {
     globalThis.LibriqSyncBeta = { refresh() {}, getState: () => ({ enabled: false, status: 'off' }) };
     Storage.setActiveAccountUid(user.uid);
     const books = Array.from({ length: 8 }, (_, i) => createBook({ id: `fixture-${i}`, title: state === 'long' ? 'A very long book title with Unicode café 日本語 and a continuing chapter '.repeat(4) : `Fixture reading volume ${i + 1}`, author: state === 'long' ? 'An author with a deliberately lengthy name '.repeat(3) : `Fixture author ${i + 1}`, status: ['reading', 'wishlist', 'finished'][i % 3], pageCount: 304, currentPage: i % 3 === 2 ? 304 : 108, rating: 4, isFavorite: i % 2 === 0, genres: ['Fiction'], tags: ['Owned'], dateFinished: '2026-10-01', notes: 'Private notes from a fixture account.', quotes: [{ id: `quote-${i}`, text: 'A fixture quote for a private reading workspace.', page: 23, source: 'manual' }] }));
+    if (target === 'abandoned') books.forEach(book => { book.status = 'abandoned'; });
     Storage.saveBooks(state === 'empty' && target !== 'details' && target !== 'progress' ? [] : books);
     Storage.saveProfile({ name: 'Fixture Reader', theme });
     Storage.saveGoals({ yearly: 12, year: 2026 });
@@ -68,7 +69,7 @@ async function render(page, window, theme, state) {
         document.getElementById('emailAuthForm').requestSubmit();
       }
     } else if (target === 'boot') Navigation.goTo('boot');
-    else if (['dashboard', 'library', 'reading', 'wishlist', 'finished', 'favorites', 'stats', 'goals', 'activity', 'recommendations', 'settings', 'profile', 'help', 'quotes'].includes(target)) Navigation.goTo(target);
+    else if (['dashboard', 'library', 'reading', 'wishlist', 'finished', 'favorites', 'abandoned', 'stats', 'goals', 'activity', 'recommendations', 'settings', 'profile', 'help', 'quotes'].includes(target)) Navigation.goTo(target);
     else {
       Navigation.goTo(['kindle', 'backup', 'danger'].includes(target) ? 'settings' : 'library');
       if (target === 'details') Library.showDetailsModal(books[0].id);
@@ -150,12 +151,12 @@ try {
       await render(page, window, theme, state);
       if (routes.includes(window)) await page.waitForFunction(({ window, width }) => {
         const top = width > 768 && ['library', 'recommendations', 'settings', 'help'].includes(window);
-        const x = width > 768 && !top ? window === 'profile' ? 208 : window === 'activity' ? 224 : ['reading', 'wishlist', 'finished', 'favorites'].includes(window) ? 232 : 240 : 0;
+        const x = width > 768 && !top ? window === 'profile' ? 208 : window === 'activity' ? 224 : ['reading', 'wishlist', 'finished', 'favorites', 'abandoned'].includes(window) ? 232 : 240 : 0;
         return document.getElementById('mainContent').getBoundingClientRect().x === x;
       }, { window, width }, { timeout: 5000 });
       const result = await inspect(page);
       const name = `${window}-${variant}`;
-      const modalWindow = ['details', 'search', 'add', 'manual', 'progress', 'kindle', 'whats-new', 'backup', 'danger'].includes(window);
+      const modalWindow = ['details', 'search', 'add', 'manual', 'progress', 'kindle', 'whats-new', 'backup', 'danger', 'session-fallback'].includes(window);
       await page.screenshot({ path: path.join(output, `${name}.png`), fullPage: !modalWindow });
       assert.deepEqual(errors, [], `${name}: script errors`);
       assert.equal(result.rootOverflow, false, `${name}: document overflow`);
