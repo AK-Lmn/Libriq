@@ -38,5 +38,10 @@ listeners.get('click')({ target: { closest: () => ({ dataset: { filter: 'notes' 
 assert.equal(session.value, 'notes');
 assert.match(main.innerHTML, /1 event/);
 assert.doesNotMatch(main.innerHTML, /onclick=/);
+assert.match(main.innerHTML, /Activity Log/);
+assert.match(main.innerHTML, /aria-pressed="true"/);
+assert.match(main.innerHTML, /activity-notebook-pen1.svg/);
+assert.equal(filterActivityEvents([{ type: 'quote_saved' }], 'notes').length, 1);
+assert.doesNotMatch(main.innerHTML, /style="background:|color-warning/);
 
 console.log('Activity page tests passed');
