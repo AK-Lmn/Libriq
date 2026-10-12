@@ -11,9 +11,9 @@
 }
 
 .badge-reading  { background: var(--color-info-dim);    color: var(--status-reading);  }
-.badge-finished { background: var(--color-success-dim); color: var(--status-finished); }
-.badge-wishlist { background: var(--accent-dim);        color: var(--status-wishlist); }
-.badge-dnf      { background: var(--bg-overlay);       color: var(--status-dnf);      }
+.badge-finished { background: var(--color-success-dim); color: var(--status-finished-text); }
+.badge-wishlist { background: var(--accent-dim);        color: var(--status-wishlist-text); }
+.badge-dnf      { background: var(--bg-overlay);       color: var(--status-dnf-text);      }
 .badge-accent   { background: var(--accent-dim);        color: var(--text-accent);     }
 
 

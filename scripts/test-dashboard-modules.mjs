@@ -110,6 +110,23 @@ Storage.getGoals = () => ({ yearly: 0 });
 Dashboard.render();
 assert.doesNotMatch(main.innerHTML, /NaN|Infinity/);
 
+const RealDate = globalThis.Date;
+const originalTimezone = process.env.TZ;
+try {
+  process.env.TZ = 'America/Los_Angeles';
+  globalThis.Date = class extends RealDate {
+    constructor(...args) {
+      super(...(args.length ? args : ['2026-10-13T06:30:00Z']));
+    }
+  };
+  Dashboard.render();
+  assert.match(main.innerHTML, /<time datetime="2026-10-12">Monday, October 12, 2026<\/time>/);
+} finally {
+  globalThis.Date = RealDate;
+  if (originalTimezone === undefined) delete process.env.TZ;
+  else process.env.TZ = originalTimezone;
+}
+
 assert.equal(globalThis.Dashboard, undefined);
 
 const source = fs.readFileSync('frontend/js/dashboard.js', 'utf8');

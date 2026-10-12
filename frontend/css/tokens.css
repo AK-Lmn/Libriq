@@ -184,6 +184,9 @@
   --status-finished: var(--green);
   --status-wishlist: #8A94A6;
   --status-dnf: #5A6072;
+  --status-finished-text: var(--status-finished);
+  --status-wishlist-text: var(--status-wishlist);
+  --status-dnf-text: var(--text-body);
 
   --chart-1: var(--indigo);
   --chart-2: var(--teal);
@@ -286,6 +289,8 @@
   --status-finished: var(--green);
   --status-wishlist: #8A94A6;
   --status-dnf: #5A6072;
+  --status-finished-text: var(--text-body);
+  --status-wishlist-text: var(--text-body);
 
   --scrollbar-track: var(--surface-3);
   --scrollbar-thumb: #DCE1EC;

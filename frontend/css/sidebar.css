@@ -350,6 +350,7 @@
   padding: 28px 20px;
 }
 .sidebar-logo { gap: 12px; padding: 0 8px; margin-bottom: 12px; }
+.sidebar-nav { gap: 0; }
 .logo-mark { width: 40px; height: 40px; border-radius: 12px; background: var(--glass-fill-2); border-color: var(--glass-highlight); box-shadow: none; }
 .logo-icon { width: 20px; height: 20px; }
 .logo-text { font: 400 28px var(--font-serif); }
@@ -360,6 +361,8 @@
 .nav-item { border: 1px solid transparent; border-radius: 8px; color: var(--text-body); min-height: 36px; font-size: 12px; }
 .nav-item.active { background: var(--glass-fill-2); border-color: var(--indigo-22); color: var(--text-strong); }
 .nav-item.active i { color: var(--indigo); }
+.nav-item[data-page="reading"] i, .nav-item[data-page="goals"] i { color: var(--indigo); }
+.nav-item[data-page="finished"] i { color: var(--teal); }
 .nav-item:hover { background: var(--glass-fill-2); }
 .nav-badge, .nav-badge.reading, .nav-badge.success { background: var(--glass-fill-1); color: var(--text-body); font-size: 9px; border-radius: 8px; }
 .sidebar-streak { margin-top: 28px; padding: 16px; border-radius: 20px; background: var(--glass-fill-3); border-top-color: var(--glass-highlight); }
@@ -503,6 +506,12 @@
 }
 
 @media (max-width: 768px) {
+  .sidebar {
+    padding-top: calc(28px + env(safe-area-inset-top));
+    padding-bottom: calc(28px + env(safe-area-inset-bottom));
+    padding-left: calc(20px + env(safe-area-inset-left));
+    padding-right: calc(20px + env(safe-area-inset-right));
+  }
   .mobile-topbar {
     background: var(--glass-fill-3);
     border-bottom-color: var(--glass-highlight);

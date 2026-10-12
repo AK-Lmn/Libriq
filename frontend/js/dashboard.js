@@ -44,7 +44,9 @@ export const Dashboard = {
                 ? 'Sync on'
                 : 'Ready';
 
-    const hour = new Date().getHours();
+    const now = new Date();
+    const localDate = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+    const hour = now.getHours();
     const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
     const goalPct = goals.yearly > 0 ? Math.min(100, Math.round((stats.finishedThisYear / goals.yearly) * 100)) : 0;
     const ringOffset = Math.round(283 - (283 * goalPct / 100));
@@ -56,7 +58,7 @@ export const Dashboard = {
         <div class="dashboard-topbar">
           <div class="dashboard-page-context">
             <strong>Dashboard</strong>
-            <time datetime="${new Date().toISOString().slice(0, 10)}">${new Date().toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</time>
+            <time datetime="${localDate}">${now.toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</time>
           </div>
           <div class="dashboard-actions">
           <div class="dashboard-sync">
@@ -140,6 +142,7 @@ export const Dashboard = {
                 </div>
               </div>
             </section>
+            <p class="dashboard-privacy dashboard-privacy-main">${dashboardIcon('lock-keyhole')} A private record of a reading life. Only you can see your library.</p>
           </div>
 
           <aside class="dashboard-aside">
@@ -230,13 +233,13 @@ export const Dashboard = {
             }
           </aside>
         </div>
-        <p class="dashboard-privacy">${dashboardIcon('lock-keyhole')} A private record of a reading life. Only you can see your library.</p>
+        <p class="dashboard-privacy dashboard-privacy-mobile">${dashboardIcon('lock-keyhole')} A private record of a reading life. Only you can see your library.</p>
       </div>`;
   },
 };
 
 function dashboardIcon(name) {
-  return `<img class="dashboard-icon" src="./assets/dashboard/desktop-${name}.svg" alt="" aria-hidden="true" />`;
+  return `<span class="dashboard-icon" data-icon="${name}" aria-hidden="true"></span>`;
 }
 
 function pickFeaturedReadingBook(reading) {
@@ -279,7 +282,7 @@ function buildFeaturedReadingHero(book) {
           <button class="btn btn-secondary" type="button" data-action="show-book-details" data-book-id="${Utils.sanitize(book.id)}">
             View Details
           </button>
-          <button class="btn btn-ghost btn-sm" type="button" data-action="toggle-favorite" data-book-id="${Utils.sanitize(book.id)}" aria-label="${book.isFavorite ? 'Remove from favorites' : 'Add to favorites'}">
+          <button class="btn btn-ghost btn-sm" type="button" data-action="toggle-favorite" data-book-id="${Utils.sanitize(book.id)}" aria-pressed="${Boolean(book.isFavorite)}" aria-label="${book.isFavorite ? 'Remove from favorites' : 'Add to favorites'}">
             ${dashboardIcon('heart')}
           </button>
         </div>
@@ -439,10 +442,14 @@ function buildActivityItem(activity) {
     started: 'Started reading',
     added: 'Added to wishlist',
   };
+  const icon = {
+    'ph-book-open': 'book-open', 'ph-check-circle': 'circle-check', 'ph-heart': 'heart',
+    'ph-notebook': 'notebook-pen', 'ph-quote': 'notebook-pen', 'ph-bookmark': 'bookmark',
+  }[activity.icon] || 'plus';
   return `
     <div class="activity-item">
-      <div class="activity-icon" style="background:${activity.iconBg}; color:${activity.iconColor}">
-        <i class="ph ${activity.icon}"></i>
+      <div class="activity-icon" data-icon="${icon}">
+        ${dashboardIcon(icon)}
       </div>
       <div class="activity-text">
         <div class="activity-title">${Utils.sanitize(activity.label || labels[activity.type] || activity.subtitle || '')}${activity.payloadText ? ` • ${Utils.sanitize(activity.payloadText)}` : ''}</div>
