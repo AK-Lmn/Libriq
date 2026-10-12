@@ -1,4 +1,5 @@
 import { buildLibraryShelfEmpty } from './libraryShelvesPage.js';
+import { customShelves, libraryIcon, libraryTools, sortLibraryBooks } from './libraryDesign.js';
 
 export function createLibraryPage({ storage, library, utils, constants, actions = {}, documentRoot } = {}) {
   let boundMain = null;
@@ -34,10 +35,7 @@ export function createLibraryPage({ storage, library, utils, constants, actions 
   }
 
   function getShelves(books) {
-    return Array.from(new Set(
-      (books || []).flatMap(book => Array.isArray(book.tags) ? book.tags : [])
-        .map(tag => String(tag || '').trim()).filter(Boolean)
-    )).sort((a, b) => a.localeCompare(b));
+    return customShelves(books || []);
   }
 
   function bookNeedsMetadata(book) {
@@ -68,25 +66,11 @@ export function createLibraryPage({ storage, library, utils, constants, actions 
   }
 
   function sortBooks(books, sort) {
-    const list = books.slice();
-    const byDate = field => (a, b) => new Date(b[field] || 0) - new Date(a[field] || 0);
-    switch (sort) {
-      case 'title-az': return list.sort((a, b) => a.title.localeCompare(b.title));
-      case 'author-az': return list.sort((a, b) => a.author.localeCompare(b.author));
-      case 'highest-rated': return list.sort((a, b) => (b.rating || 0) - (a.rating || 0) || new Date(b.dateAdded || 0) - new Date(a.dateAdded || 0));
-      case 'reading-progress': return list.sort((a, b) => utils.readingProgress(b.currentPage, b.pageCount) - utils.readingProgress(a.currentPage, a.pageCount));
-      case 'recently-updated': return list.sort((a, b) => {
-        const aTime = new Date(a.notesUpdatedAt || a.dateFinished || a.dateStarted || a.dateAdded || 0).getTime();
-        const bTime = new Date(b.notesUpdatedAt || b.dateFinished || b.dateStarted || b.dateAdded || 0).getTime();
-        return bTime - aTime;
-      });
-      case 'recently-added':
-      default: return list.sort(byDate('dateAdded'));
-    }
+    return sortLibraryBooks(books, sort, utils);
   }
 
   function buildEmpty(filter = 'all', query = '') {
-    return buildLibraryShelfEmpty(filter, query, getState());
+    return buildLibraryShelfEmpty(filter, query, { ...getState(), sanitize: utils.sanitize });
   }
 
   function renderGrid(books = storage.getBooks()) {
@@ -94,6 +78,12 @@ export function createLibraryPage({ storage, library, utils, constants, actions 
     if (!grid) return;
     const state = getState();
     const filtered = filterAndSortBooks(books, state);
+    const summary = getDocument()?.getElementById?.('libraryResultCount');
+    if (summary) summary.textContent = `Showing ${state.filter === 'all' && !state.query && state.shelf === 'all' ? 'all ' : ''}${filtered.length} book${filtered.length === 1 ? '' : 's'}`;
+    const total = getDocument()?.getElementById?.('libraryVisibleTotal');
+    if (total) total.textContent = `${filtered.length} / ${books.length}`;
+    const order = getDocument()?.getElementById?.('librarySortSummary');
+    if (order) order.textContent = state.sort === 'recently-added' ? 'Your latest additions first' : 'Your collection, your order';
     if (filtered.length === 0) {
       grid.innerHTML = buildEmpty(state.filter, state.query);
       return;
@@ -129,33 +119,9 @@ export function createLibraryPage({ storage, library, utils, constants, actions 
             <h1 class="page-title">My Library</h1>
             <p class="page-subtitle">${books.length} book${books.length !== 1 ? 's' : ''} total</p>
           </div>
-          <button class="btn btn-primary" type="button" data-action="open-search"><i class="ph ph-plus"></i> Add Book</button>
+          <button class="btn btn-primary library-add-book" type="button" data-action="open-search">${libraryIcon('plus')} Add Book</button>
         </div>
-        <div class="library-tools">
-          <div class="library-search-wrap">
-            <i class="ph ph-magnifying-glass library-search-icon"></i>
-            <input type="search" id="librarySearchInput" class="library-search-input" placeholder="Search your library..." value="${utils.sanitize(state.query)}" autocomplete="off" spellcheck="false" />
-            <button type="button" class="library-search-clear" id="clearLibrarySearch" data-action="clear-library-search" aria-label="Clear search" ${state.query ? '' : 'hidden'}><i class="ph ph-x"></i></button>
-          </div>
-          <div class="library-sort-wrap">
-            <label class="library-sort-label" for="librarySortSelect">Sort by</label>
-            <select id="librarySortSelect" class="library-sort-select">
-              <option value="recently-added" ${state.sort === 'recently-added' ? 'selected' : ''}>Recently added</option>
-              <option value="title-az" ${state.sort === 'title-az' ? 'selected' : ''}>Title A–Z</option>
-              <option value="author-az" ${state.sort === 'author-az' ? 'selected' : ''}>Author A–Z</option>
-              <option value="highest-rated" ${state.sort === 'highest-rated' ? 'selected' : ''}>Highest rated</option>
-              <option value="reading-progress" ${state.sort === 'reading-progress' ? 'selected' : ''}>Reading progress</option>
-              <option value="recently-updated" ${state.sort === 'recently-updated' ? 'selected' : ''}>Recently updated</option>
-            </select>
-          </div>
-          ${shelves.length ? `<div class="library-sort-wrap">
-            <label class="library-sort-label" for="libraryShelfSelect">Shelf</label>
-            <select id="libraryShelfSelect" class="library-sort-select">
-              <option value="all" ${state.shelf === 'all' ? 'selected' : ''}>All shelves</option>
-              ${shelves.map(shelf => `<option value="${utils.sanitize(shelf)}" ${state.shelf === shelf ? 'selected' : ''}>${utils.sanitize(shelf)}</option>`).join('')}
-            </select>
-          </div>` : ''}
-        </div>
+        ${libraryTools(utils, state, shelves).replace('id="librarySearchClear"', 'id="clearLibrarySearch"')}
         <div class="chip-group library-filters" id="libraryFilters">
           <button class="chip${state.filter === 'all' ? ' active' : ''}" data-action="filter-library" data-filter="all">All <span>${counts.all}</span></button>
           <button class="chip${state.filter === 'reading' ? ' active' : ''}" data-action="filter-library" data-filter="reading">Reading <span>${counts.reading}</span></button>
@@ -164,10 +130,13 @@ export function createLibraryPage({ storage, library, utils, constants, actions 
           <button class="chip${state.filter === 'favorites' ? ' active' : ''}" data-action="filter-library" data-filter="favorites">Favorites <span>${counts.favorites}</span></button>
           <button class="chip${state.filter === 'needs-metadata' ? ' active' : ''}" data-action="filter-library" data-filter="needs-metadata">Needs Metadata <span>${counts.needsMetadata}</span></button>
         </div>
+        <div class="library-grid-summary"><span id="libraryResultCount" role="status"></span><span id="librarySortSummary"></span></div>
         <div class="books-grid" id="libraryGrid">${books.length === 0 ? buildEmpty() : ''}</div>
+        <footer class="library-footer"><span>${libraryIcon('shield')} Your books. Your space.</span><span id="libraryVisibleTotal"></span></footer>
       </div>`;
 
     bindEvents(main, pageDocument);
+    main.querySelectorAll?.('[data-action="filter-library"]').forEach(chip => chip.setAttribute('aria-pressed', String(chip.dataset.filter === state.filter)));
     renderGrid(books);
     if (pageDocument.getElementById('librarySearchInput') && state.query) pageDocument.getElementById('librarySearchInput').focus();
   }
@@ -184,13 +153,20 @@ export function createLibraryPage({ storage, library, utils, constants, actions 
         'open-manual-entry': () => actions.openManualEntry?.(),
         'import-backup': () => actions.importBackup?.(),
         'clear-library-search': () => clearSearch(),
+        'reset-library-filters': () => {
+          setState({ filter: 'all', shelf: 'all', query: '' });
+          renderLibraryPage();
+        },
         'show-book-details': () => actions.showBookDetails?.(bookId),
         'update-progress': () => actions.updateProgress?.(bookId),
         'toggle-favorite': () => actions.toggleFavorite?.(bookId),
         'remove-book': () => actions.removeBook?.(bookId),
         'filter-library': () => {
           setState({ filter: trigger.dataset.filter });
-          main.querySelectorAll?.('.chip').forEach(chip => chip.classList.toggle('active', chip === trigger));
+          main.querySelectorAll?.('.chip').forEach(chip => {
+            chip.classList.toggle('active', chip === trigger);
+            chip.setAttribute('aria-pressed', String(chip === trigger));
+          });
           renderGrid();
         },
       };
