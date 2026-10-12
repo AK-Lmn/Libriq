@@ -168,7 +168,7 @@ try {
         const top = width > 768 && ['library', 'recommendations', 'settings', 'help'].includes(window);
         assert.equal(result.navigation, top ? 'top' : 'side', name);
         assert.deepEqual(result.navs, width > 768 ? ['.sidebar'] : ['.mobile-topbar', '.mobile-bottom-nav'], `${name}: no duplicate chrome`);
-        assert.equal(result.content.x, width > 768 && !top ? window === 'profile' ? 208 : window === 'activity' ? 224 : ['reading', 'wishlist', 'finished', 'favorites'].includes(window) ? 232 : 240 : 0, `${name}: source gutter`);
+        assert.equal(result.content.x, width > 768 && !top ? window === 'profile' ? 208 : window === 'activity' ? 224 : ['reading', 'wishlist', 'finished', 'favorites', 'abandoned'].includes(window) ? 232 : 240 : 0, `${name}: source gutter`);
         if (width <= 768) assert.equal(result.bottom, 'fixed');
       }
       if (window === 'library' && variant === 'desktop-dark') {
