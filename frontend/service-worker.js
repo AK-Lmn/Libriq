@@ -1,11 +1,37 @@
 importScripts('./js/version-classic.js');
 const CACHE_VERSION = `libriq-v${self.LIBRIQ_APP_VERSION}`;
-const CACHE_NAME = `${CACHE_VERSION}-shell-v2`;
+const CACHE_NAME = `${CACHE_VERSION}-shell-v3`;
 const IS_LOCAL_DEV = ['localhost', '127.0.0.1', '::1'].includes(self.location.hostname);
 
 const SHELL_ASSETS = [
   './index.html',
   './manifest.json',
+  './assets/fonts/fonts.css',
+  './assets/fonts/inter-latin.woff2',
+  './assets/fonts/lora-latin.woff2',
+  './assets/fonts/lora-italic-latin.woff2',
+  './assets/fonts/ibm-plex-mono-latin.woff2',
+  './assets/dashboard/desktop-arrow-up-right.svg',
+  './assets/dashboard/desktop-book-open.svg',
+  './assets/dashboard/desktop-book-pedestal-shadow.svg',
+  './assets/dashboard/desktop-bookmark.svg',
+  './assets/dashboard/desktop-chart-no-axes-combined.svg',
+  './assets/dashboard/desktop-circle-check.svg',
+  './assets/dashboard/desktop-circle-help.svg',
+  './assets/dashboard/desktop-flame.svg',
+  './assets/dashboard/desktop-heart.svg',
+  './assets/dashboard/desktop-history.svg',
+  './assets/dashboard/desktop-layout-dashboard.svg',
+  './assets/dashboard/desktop-library.svg',
+  './assets/dashboard/desktop-lock-keyhole.svg',
+  './assets/dashboard/desktop-notebook-pen.svg',
+  './assets/dashboard/desktop-plus.svg',
+  './assets/dashboard/desktop-settings2.svg',
+  './assets/dashboard/desktop-sparkles.svg',
+  './assets/dashboard/desktop-target.svg',
+  './assets/dashboard/desktop-timer.svg',
+  './assets/dashboard/desktop-user-round.svg',
+  './assets/dashboard/mobile-house.svg',
   './assets/icons/icon.svg',
   './assets/icons/favicon-16x16.png',
   './assets/icons/favicon-32x32.png',
