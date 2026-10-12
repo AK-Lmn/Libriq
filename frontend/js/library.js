@@ -635,116 +635,103 @@ export const Library = (() => {
   }
 
   function renderBookCard(book) {
-    const pct     = Utils.readingProgress(book.currentPage, book.pageCount);
+    const currentPage = Math.max(0, Number(book.currentPage) || 0);
+    const pageCount = Math.max(0, Number(book.pageCount) || 0);
+    const pct = Utils.readingProgress(currentPage, pageCount);
     const isReading = book.status === LIBRIQ.STATUS.READING;
     const isFinished = book.status === LIBRIQ.STATUS.FINISHED;
-
+    const statusIcon = {
+      [LIBRIQ.STATUS.READING]: 'reading', [LIBRIQ.STATUS.FINISHED]: 'finished',
+      [LIBRIQ.STATUS.WISHLIST]: 'wishlist', [LIBRIQ.STATUS.DNF]: 'dnf',
+    }[book.status] || 'wishlist';
+    const icon = name => `<span class="library-icon library-icon--${name}" aria-hidden="true"></span>`;
     const card = document.createElement('div');
     card.className = `book-card ${isFinished ? 'book-card--finished' : ''} ${isReading ? 'book-card--reading' : ''}`.trim();
     card.dataset.bookId = book.id;
-
-    const genreBadges = (book.genres || []).slice(0, 2)
-      .map(g => `<span class="badge badge-genre">${Utils.sanitize(g)}</span>`)
-      .join('');
     const metadataQuality = _getMetadataQuality(book);
+    const genreBadges = (book.genres || []).slice(0, 2)
+      .map(genre => `<span class="badge badge-genre">${Utils.sanitize(genre)}</span>`).join('');
+    const progressText = isReading
+      ? `${currentPage} / ${pageCount || '?'} pages`
+      : isFinished && pageCount ? `${pageCount} / ${pageCount} pages` : pageCount ? `${pageCount} pages` : 'Page count unavailable';
 
     card.innerHTML = `
       ${Utils.buildCover(book, 'cover-md')}
       <div class="book-card-info">
-        <div class="book-card-title">${Utils.sanitize(book.title)}</div>
-        <div class="book-card-author">${Utils.sanitize(book.author)}</div>
+        <button type="button" class="btn btn-icon btn-sm card-fav-btn ${book.isFavorite ? 'active' : ''}" data-action="toggle-favorite" aria-label="${book.isFavorite ? 'Unfavorite' : 'Favorite'} ${Utils.sanitize(book.title)}" aria-pressed="${Boolean(book.isFavorite)}">
+          ${icon(book.isFavorite ? 'heart-active' : 'heart')}${icon(book.isFavorite ? 'bookmark-active' : 'bookmark')}<i class="${book.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart'}" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="btn btn-ghost book-card-title card-details-btn" data-action="show-book-details" aria-label="Details for ${Utils.sanitize(book.title)}">${Utils.sanitize(book.title)}</button>
+        <div class="book-card-author">${Utils.sanitize(book.author || 'Author not added')}</div>
         <div class="book-card-meta">
           <span class="badge ${Utils.statusBadgeClass(book.status)}">
-            ${Utils.statusLabel(book.status)}
+            ${icon(`status-${statusIcon}`)}${Utils.statusLabel(book.status)}
           </span>
-          <span class="badge badge-metadata badge-metadata-${metadataQuality.className}">${metadataQuality.label}</span>
           ${book.rating ? Utils.buildStars(book.rating) : ''}
-          ${genreBadges}
         </div>
-
-        ${isReading ? `
-          <div class="reading-progress">
-            <div class="progress-label">
-              <span class="progress-text">Page ${book.currentPage} of ${book.pageCount || '?'}</span>
-              <span class="progress-pct">${pct}%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" style="width:${pct}%"></div>
-            </div>
-          </div>` : isFinished ? `
-          <div class="book-card-complete">
-            <i class="ph ph-check-circle"></i>
-            Finished and ready for the next shelf.
+        <div class="library-card-progress ${isReading ? 'reading-progress' : ''}">
+          <div class="progress-label">
+            <span class="progress-text">${progressText}</span>
+            <span class="progress-pct">${isReading ? pageCount ? `${pct}%` : '—' : isFinished && pageCount ? '100%' : '—'}</span>
+          </div>
+          ${isReading || isFinished ? `<div class="progress-bar" role="progressbar" aria-label="Reading progress for ${Utils.sanitize(book.title)}" aria-valuemin="0" aria-valuemax="100" ${pageCount ? `aria-valuenow="${isFinished ? 100 : pct}"` : ''} aria-valuetext="${progressText}">
+            <div class="progress-fill" style="width:${pageCount ? isFinished ? 100 : pct : 0}%"></div>
           </div>` : ''}
-
-        <div class="book-card-actions">
-          <div class="book-card-actions-primary"></div>
-          <div class="book-card-actions-secondary"></div>
         </div>
+        ${metadataQuality.className !== 'complete' ? `<div class="library-card-metadata-note">${icon('alert')} Needs metadata</div>` : ''}
+        <details class="library-card-disclosure">
+          <summary>Book actions</summary>
+          <div class="library-card-extra">
+            <span class="badge badge-metadata badge-metadata-${metadataQuality.className}">${metadataQuality.label}</span>
+            ${genreBadges}
+          </div>
+          <div class="book-card-actions">
+            ${isReading ? '<button type="button" class="btn btn-secondary btn-sm card-progress-btn" data-action="update-progress">Update Progress</button>' : ''}
+            ${!isFinished && !isReading ? '<button type="button" class="btn btn-secondary btn-sm card-start-btn" data-action="start-reading">Start Reading</button>' : ''}
+            ${isReading ? '<button type="button" class="btn btn-secondary btn-sm card-finish-btn" data-action="finish-book">Finish</button>' : ''}
+            <button type="button" class="btn btn-danger btn-sm card-remove-btn" data-action="remove-book">Remove</button>
+          </div>
+        </details>
       </div>`;
 
-    const primaryActions = card.querySelector('.book-card-actions-primary');
-    const secondaryActions = card.querySelector('.book-card-actions-secondary');
-
-    if (isReading) {
-      const updateBtn = document.createElement('button');
-      updateBtn.className = 'btn btn-primary btn-sm';
-      updateBtn.innerHTML = '<i class="ph ph-pencil"></i> Update';
-      updateBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        Library.showProgressModal(book.id);
-      });
-      primaryActions.appendChild(updateBtn);
-    }
-
-    if (book.status !== LIBRIQ.STATUS.FINISHED) {
-      const finishBtn = document.createElement('button');
-      finishBtn.className = 'btn btn-secondary btn-sm book-card-primary-action';
-      finishBtn.innerHTML = `<i class="ph ph-check"></i> ${
-        isReading ? 'Finish' : 'Start Reading'
-      }`;
-      finishBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (isReading) {
-          Library.setStatus(book.id, LIBRIQ.STATUS.FINISHED);
-        } else {
-          Library.setStatus(book.id, LIBRIQ.STATUS.READING);
-        }
-        Navigation.renderCurrentPage();
-      });
-      primaryActions.appendChild(finishBtn);
-    }
-
-    const favBtn = document.createElement('button');
-    favBtn.className = 'btn btn-ghost btn-sm btn-icon';
-    favBtn.title = book.isFavorite ? 'Unfavorite' : 'Favorite';
-    favBtn.innerHTML = `<i class="${book.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart'}"></i>`;
-    favBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-
-  Library.toggleFavorite(book.id);
-
-  Navigation.updateBadges();
-  Navigation.renderCurrentPage();
-});
-    secondaryActions.appendChild(favBtn);
-
-    const removeBtn = document.createElement('button');
-    removeBtn.className = 'btn btn-ghost btn-sm btn-icon';
-    removeBtn.title = 'Remove';
-    removeBtn.innerHTML = '<i class="ph ph-trash"></i>';
-    removeBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
+    card.addEventListener('click', event => {
+      if (event.target.closest('button, details, a, input, select')) return;
+      Library.showDetailsModal(book.id);
+    });
+    card.querySelector('.card-details-btn').addEventListener('click', event => {
+      event.stopPropagation();
+      Library.showDetailsModal(book.id);
+    });
+    const favBtn = card.querySelector('.card-fav-btn');
+    favBtn.addEventListener('click', event => {
+      event.stopPropagation();
+      Library.toggleFavorite(book.id);
+      const updated = Storage.getBookById(book.id);
+      favBtn.classList.toggle('active', Boolean(updated.isFavorite));
+      favBtn.setAttribute('aria-pressed', String(Boolean(updated.isFavorite)));
+      favBtn.setAttribute('aria-label', `${updated.isFavorite ? 'Unfavorite' : 'Favorite'} ${book.title}`);
+      favBtn.innerHTML = `${icon(updated.isFavorite ? 'heart-active' : 'heart')}${icon(updated.isFavorite ? 'bookmark-active' : 'bookmark')}<i class="${updated.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart'}" aria-hidden="true"></i>`;
+      Navigation.updateBadges();
+      Navigation.renderCurrentPage();
+    });
+    card.querySelector('.card-progress-btn')?.addEventListener('click', event => {
+      event.stopPropagation();
+      Library.showProgressModal(book.id);
+    });
+    card.querySelector('.card-start-btn')?.addEventListener('click', event => {
+      event.stopPropagation();
+      Library.setStatus(book.id, LIBRIQ.STATUS.READING);
+      Navigation.renderCurrentPage();
+    });
+    card.querySelector('.card-finish-btn')?.addEventListener('click', event => {
+      event.stopPropagation();
+      Library.setStatus(book.id, LIBRIQ.STATUS.FINISHED);
+      Navigation.renderCurrentPage();
+    });
+    card.querySelector('.card-remove-btn').addEventListener('click', event => {
+      event.stopPropagation();
       Library.removeBook(book.id, book.title);
     });
-    secondaryActions.appendChild(removeBtn);
-
-    card.addEventListener('click', (e) => {
-      if (!e.target.closest('.book-card-actions')) {
-        Library.showDetailsModal(book.id);
-      }
-    });
-
     return card;
   }
 
