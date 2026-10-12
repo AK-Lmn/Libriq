@@ -1,156 +1,105 @@
 export function createHelpPage({ storage, actions, documentRoot }) {
   if (!storage) throw new TypeError('createHelpPage requires storage.');
   const pageDocument = documentRoot || globalThis.document;
+  let boundMain = null;
+  const icon = name => `<img class="help-icon" src="assets/revamp/account/18-4308-${name}.svg" alt="" aria-hidden="true" />`;
+  const paragraph = (heading, body) => `<div class="help-prose"><h3>${heading}</h3><p>${body}</p></div>`;
+  const question = (title, answer, open = false) => `<details class="help-question" ${open ? 'open' : ''}><summary>${title}<span class="help-expand">${icon('plus')}</span></summary><p>${answer}</p></details>`;
+  const returnActions = () => `<div class="help-return-actions">
+    <button class="btn btn-primary" type="button" data-action="open-search">${icon('search1')} Back to Search</button>
+    <button class="btn btn-secondary" type="button" data-action="open-library">${icon('library1')} Back to Library</button>
+  </div>`;
 
   return function renderHelpPage() {
     const main = pageDocument?.getElementById('mainContent');
     if (!main) return;
     const syncReadiness = storage.getSyncReadiness?.() || { syncReady: false };
-
-    const guideSections = [
-      {
-        icon: 'ph-seal-check',
-        title: 'Getting Started',
-        body: 'Start by searching for a book, then add it to your library. From there you can mark reading status, track progress, rate it, and come back to it anytime.',
-      },
-      {
-        icon: 'ph-magnifying-glass',
-        title: 'Searching for Books',
-        body: 'Use the search bar or press Cmd/Ctrl + K. LibriQ checks Open Library and Google Books, then merges the best match into one result list.',
-      },
-      {
-        icon: 'ph-pencil-simple',
-        title: 'Adding Books Manually',
-        body: 'If a title is missing from the search results, choose Manual Entry and fill in the details yourself. Manual books work like any other saved book.',
-      },
-      {
-        icon: 'ph-books',
-        title: 'Managing the Library',
-        body: 'Use My Library to filter by status or favorites, sort the shelf, open book details, and keep your collection organized as it grows.',
-      },
-      {
-        icon: 'ph-chart-line-up',
-        title: 'Tracking Reading Progress',
-        body: 'Open Book Details to update your current page. LibriQ turns that into progress so you can see how far along you are in each book.',
-      },
-      {
-        icon: 'ph-notebook',
-        title: 'Using Private Notes',
-        body: 'Private Notes are saved only in your browser. They are perfect for thoughts, quotes, reflections, and reading journal entries you want to keep to yourself.',
-      },
-      {
-        icon: 'ph-arrow-down',
-        title: 'Importing and Exporting Backups',
-        body: 'Use Settings to export a JSON backup or import one later. This helps protect your local library if you switch browsers or want a safety copy.',
-      },
-      {
-        icon: 'ph-hard-drives',
-        title: 'Understanding storage and backups',
-        body: 'LibriQ is designed around account-backed reading data. When account services are unavailable, an offline fallback may appear so you can keep using the app on this device.',
-      },
-      {
-        icon: 'ph-arrows-clockwise',
-        title: 'Sync Foundation',
-        body: 'Account Sync keeps books updated across signed-in devices. Cloud backup, restore, merge, and JSON export/import remain separate safety tools.',
-      },
-      {
-        icon: 'ph-arrows-left-right',
-        title: 'Manual Cloud Merge',
-        body: 'Merge is safer when you have books on both this device and your cloud backup. LibriQ adds cloud-only items and keeps this device\'s version when something looks different.',
-      },
-    ];
-
-    const faqItems = [
-      ['Why did my books disappear?', 'They may be stored in a different browser or device. Local-first storage stays with the browser profile that saved it.'],
-      ['Can I use LibriQ offline?', 'If account services are unavailable, LibriQ may show an offline fallback so you can keep reading on this device.'],
-      ['Will notes sync across devices?', 'Private notes stay on the saved library data path and should be treated as account-backed data when synced or backed up.'],
-      ['What if search returns no results?', 'Try a different title spelling, search by author, or use Manual Entry to add the book by hand.'],
+    const sections = [
+      ['Getting started', `
+        <p>Your Library holds the books you want to read, the ones you are reading, and the ones you have put down. Begin with a single book.</p>
+        <ol class="help-steps">
+          <li>${paragraph('Find a book', 'Open Search and enter a title, author, or ISBN. Check the edition and page count before adding it. If there is no useful match, use manual entry.')}</li>
+          <li>${paragraph('Make it yours', 'Add the book to your Library and choose a reading status. Start with Want to read, or choose Reading if you have already begun.')}</li>
+          <li>${paragraph('Return as you read', 'Open the book in your Library to update your current page and save a note. Small updates are enough; there is no reading schedule to keep.')}</li>
+        </ol>
+        ${question('How do I install LibriQ as an app?', 'For an app-like reading space, use your browser’s Install app or Add to Home Screen option, when available. Open LibriQ from its icon to use it in a standalone window.')}`],
+      ['Search &amp; manual entry', `
+        ${paragraph('Search for the edition you own', 'Try the full title or the author’s name. An ISBN can help narrow the results to a specific edition. Compare language, format, and page count; different editions may track progress differently.')}
+        ${paragraph('No match? Add it manually.', 'Choose manual entry and enter the title and author. Add an ISBN and total pages if you know them. Review the details before saving; you can correct a book’s information later from its Library entry.')}
+        <aside class="help-callout">${icon('info')}<div><strong>Check before adding again</strong><p>Look in your Library first. A different cover or edition may still be the same book you have already saved.</p></div></aside>`],
+      ['Library management', `
+        <p>Use a book’s status to describe where it sits in your reading life. You can change it whenever your plans change.</p>
+        <div class="help-statuses"><span>Reading</span><span>Finished</span><span>Want to read</span><span>Did not finish</span></div>
+        ${paragraph('Find, filter, and tidy', 'Search within your Library or filter by status or favorites to narrow your shelves. Sort the shelf and open a book to edit its details. Before removing an entry, check its progress and notes and save anything you want to keep.')}
+        ${question('What should I do with duplicate editions?', 'Compare the edition, ISBN, progress and notes before removing anything. Export a backup first. A manual cloud merge skips duplicates and keeps this device’s version where details conflict.')}`],
+      ['Progress &amp; notes', `
+        ${paragraph('Keep your place', 'Open a book and enter your current page. Check that the total pages match your edition so the progress percentage is meaningful. For a book without a reliable page count, use the reading status and notes instead.')}
+        ${paragraph('Capture a thought, not a performance', 'Save a short reflection, a quotation, or a page reference in the book’s notes. Review the saved entry before leaving. Mark a book Finished when you are done, or Did not finish if you choose to stop. Notes are part of your library data when included in a backup or sync.')}
+        ${question('Why does my progress percentage look wrong?', 'Check your current page and the edition’s total pages. Different editions can have different page counts. Correct the book details from its Library entry before updating progress.')}`],
+      ['Backup &amp; cloud-merge', `
+        ${paragraph('A backup is not the same as sync', 'A backup is a saved snapshot at a point in time. Sync keeps account-backed changes aligned between sessions or devices. Neither should be treated as a guarantee that deleted data can be recovered.')}
+        ${paragraph('Before you import or merge', 'Export a fresh JSON backup of your current Library from Settings and keep the original backup file unchanged. Check the file’s date and source account. If sync is pending, let it complete before comparing your local and account-backed data.')}
+        ${paragraph('Review differences before confirming', 'Inspect conflicting book details, reading progress, and notes in the preview. Restore replaces this device’s library after confirmation. Manual cloud merge adds safe cloud-only books and keeps this device’s version of conflicts; it does not let you select each conflicting value. Review possible duplicates, confirm only when ready, then check the resulting Library and sync state.')}
+        <aside class="help-callout">${icon('info')}<p>Keep the pre-merge backup until you have verified the result.</p></aside>
+        ${question('Can I use an older backup without replacing everything?', 'Use the import or cloud merge preview to review what will be added. Keep a fresh export first. Do not choose Restore unless you intend to replace this device’s library.')}`],
+      ['Account-backed storage', `
+        ${paragraph('Use the same account on each device', 'LibriQ requires an account. Check the signed-in account before expecting your Library to appear elsewhere. A different account can show a different Library. Your installed app and another session should use the same account if you want the same books.')}
+        ${paragraph('Check the sync state, not just the connection', 'Reconnect if you are offline and inspect the sync status. Pending or failed changes may not yet be visible on another device. Wait for completion, then reopen the Library. Keep a backup before signing out, clearing app data, or reinstalling. Offline access keeps your existing account’s books on this device; it does not bypass account creation.')}
+        <aside class="help-callout">${icon('info')}<div><strong>If books still seem to be missing</strong><p>Check your account and Library filters first. Do not immediately import an older backup; compare the data and review conflicts before making another change.</p></div></aside>`],
+      ['FAQ / troubleshooting', `
+        ${question('My Library looks empty. Where should I start?', 'Clear active filters and search terms, confirm you are in the same account, and check the sync state. If a device still has your books, preserve a backup there before trying an import or merge.', true)}
+        ${question('Can I reduce motion?', 'Yes. Enable reduced motion in your device’s accessibility settings. LibriQ respects prefers-reduced-motion: animated transitions and spring movement are removed or made immediate. Reading and navigation remain available.', true)}
+        ${question('Can I turn off the glass effect?', 'Use reduced transparency in your device’s accessibility settings where available. The solid-surface fallback replaces translucent cards with opaque surfaces and removes background blur while keeping the same text, contrast, and layout.', true)}
+        <aside class="help-solid-preview"><strong>Solid surfaces · same quiet space</strong><p>No transparency. No backdrop blur. Guidance stays readable.</p></aside>
+        ${question('Why are search results not loading?', 'Check your connection, try a different title spelling or search by author or ISBN. Search uses Open Library and Google Books; either service may be temporarily unavailable. Use Manual Entry if there is no useful match. Cmd/Ctrl + K opens Search.')}
+        ${question('Is my Library a public profile?', 'No. LibriQ is your personal reading space, not a public profile or a shared shelf. Private notes and quotes remain part of your library data when included in a backup or sync.')}
+        <details class="help-question"><summary>Sync readiness<span class="help-expand">${icon('plus')}</span></summary><dl class="help-readiness">${[
+          ['Has device ID', syncReadiness.hasDeviceId ? 'Yes' : 'No'],
+          ['UpdatedAt coverage', syncReadiness.hasUpdatedAtCoverage ? 'Good coverage' : 'Partial coverage'],
+          ['DeletedAt support', syncReadiness.hasDeletedAtSupport ? 'Supported' : 'Not yet consistent'],
+          ['Backup metadata', syncReadiness.hasBackupMetadata ? 'Present' : 'Missing'],
+          ['Sync ready', syncReadiness.syncReady ? 'Yes' : 'No, foundation only'],
+        ].map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`).join('')}</dl></details>`],
     ];
 
     main.innerHTML = `
-      <div class="page" id="helpPage">
-        <div class="page-header help-header">
-          <div class="help-heading">
-            <span class="library-eyebrow">Beginner guide</span>
-            <h1 class="page-title">Help & Guide Center</h1>
-            <p class="page-subtitle">A calm walkthrough for using LibriQ with confidence.</p>
+      <div class="page help-page" id="helpPage">
+        <aside class="help-contents">
+          <nav aria-label="In this guide"><h2>IN THIS GUIDE</h2>
+            ${sections.map(([title], i) => `<a href="#help-section-${i + 1}" data-action="open-guide-section" data-section-id="help-section-${i + 1}"><span>${String(i + 1).padStart(2, '0')}</span>${title}</a>`).join('')}
+          </nav>
+          <div class="help-personal-note">${icon('book-heart')}<h3>Just you and your books.</h3><p>LibriQ is your personal reading space. No public profile, no shared shelves, no pressure to keep pace.</p></div>
+          <p>Read at your own pace. Each section can be opened on its own.</p>
+        </aside>
+        <div class="help-reading-column">
+          <header class="help-introduction">
+            <span class="help-eyebrow">${icon('compass')} A LITTLE GUIDANCE</span>
+            <h1 class="page-title">Help &amp; Guide Center</h1>
+            <p>A quieter way to keep track of your reading. Find your next book, tend your library, and keep your progress close.</p>
+            ${returnActions()}
+          </header>
+          <div class="help-sections">
+            ${sections.map(([title, body], i) => `<details class="help-section" id="help-section-${i + 1}" open>
+              <summary><span class="help-section-number">${String(i + 1).padStart(2, '0')}</span><h2>${title}</h2><span class="help-chevron">${icon('chevron-up')}</span></summary>
+              <div class="help-section-body">${body}</div>
+            </details>`).join('')}
           </div>
-        </div>
-
-        <div class="help-intro-card">
-          <div class="help-intro-icon"><i class="ph ph-book-open-text"></i></div>
-          <div class="help-intro-copy">
-            <h2 class="help-intro-title">A calm place to learn the app</h2>
-            <p class="text-secondary prose-copy">
-              LibriQ stays simple and local-first. This guide covers the core features, backups, and account behavior so you can build your reading space without needing a long tutorial.
-            </p>
-          </div>
-        </div>
-
-        <div class="help-grid stagger">
-          ${guideSections.map(section => `
-            <article class="help-card">
-              <div class="help-card-icon"><i class="ph ${section.icon}"></i></div>
-              <h3 class="help-card-title">${section.title}</h3>
-              <p class="help-card-body">${section.body}</p>
-            </article>
-          `).join('')}
-        </div>
-
-        <div class="help-grid help-grid-wide">
-          <section class="goal-widget help-faq-card">
-            <div class="goal-header"><div class="goal-title">FAQ / Troubleshooting</div></div>
-            <div class="help-faq-list">
-              ${faqItems.map(([question, answer]) => `
-                <div class="help-faq-item">
-                  <div class="help-faq-question">${question}</div>
-                  <div class="help-faq-answer">${answer}</div>
-                </div>
-              `).join('')}
-            </div>
-          </section>
-
-          <section class="goal-widget help-faq-card">
-            <div class="goal-header"><div class="goal-title">Sync readiness</div></div>
-            <div class="help-faq-list">
-              ${[
-                ['Restore behavior', 'Restore replaces this device\'s library after confirmation.'],
-                ['Merge behavior', 'Merge adds safe cloud-only items without replacing local conflicts.'],
-                ['Account sync', 'Books sync automatically in signed-in account mode.'],
-                ['Has device ID', syncReadiness.hasDeviceId ? 'Yes' : 'No'],
-                ['UpdatedAt coverage', syncReadiness.hasUpdatedAtCoverage ? 'Good coverage' : 'Partial coverage'],
-                ['DeletedAt support', syncReadiness.hasDeletedAtSupport ? 'Supported' : 'Not yet consistent'],
-                ['Backup metadata', syncReadiness.hasBackupMetadata ? 'Present' : 'Missing'],
-                ['Sync ready', syncReadiness.syncReady ? 'Yes' : 'No, foundation only'],
-              ].map(([question, answer]) => `
-                <div class="help-faq-item">
-                  <div class="help-faq-question">${question}</div>
-                  <div class="help-faq-answer">${answer}</div>
-                </div>
-              `).join('')}
-            </div>
-          </section>
-
-          <section class="goal-widget help-next-step-card">
-            <div class="goal-header"><div class="goal-title">A quick first step</div></div>
-            <div class="help-next-step">
-              <p class="help-next-step-text">
-                Search for your first book, add it to the library, and open the details panel to try progress tracking and private notes.
-              </p>
-              <div class="help-next-step-actions">
-                <button class="btn btn-primary" type="button" data-action="open-search">
-                  <i class="ph ph-magnifying-glass"></i> Search Books
-                </button>
-                <button class="btn btn-secondary" type="button" data-action="open-library">
-                  <i class="ph ph-books"></i> Open Library
-                </button>
-              </div>
-            </div>
-          </section>
+          <section class="help-return-card"><h2>Back to your next chapter.</h2><p>Find something new or pick up where you left off. This is your personal reading space, not a public profile or a shared shelf.</p>${returnActions()}</section>
+          <footer class="help-footer"><span>LibriQ · A quiet place for your books</span><span>HELP / GUIDE</span></footer>
         </div>
       </div>`;
 
-    main.querySelector('[data-action="open-search"]')?.addEventListener('click', () => actions?.openSearch?.());
-    main.querySelector('[data-action="open-library"]')?.addEventListener('click', () => actions?.navigate?.('library'));
+    if (boundMain === main) return;
+    boundMain = main;
+    main.addEventListener('click', event => {
+      const trigger = event.target.closest?.('[data-action]');
+      if (!trigger) return;
+      if (trigger.dataset.action === 'open-search') actions?.openSearch?.();
+      if (trigger.dataset.action === 'open-library') actions?.navigate?.('library');
+      if (trigger.dataset.action === 'open-guide-section') {
+        const section = pageDocument.getElementById(trigger.dataset.sectionId);
+        if (section) section.open = true;
+      }
+    });
   };
 }
