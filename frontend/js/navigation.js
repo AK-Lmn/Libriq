@@ -28,6 +28,7 @@ import { parseKindleClippings } from './services/kindleClippingsParser.js';
 import { createKindleImportService } from './services/kindleImportService.js';
 import { createKindleQuoteImport } from './services/kindleQuoteImport.js';
 import { resolveAccountDisplayName } from './accountDisplayName.js';
+import { applyNavigationChrome, initializeNavigationChrome } from './navigationChrome.js';
 
 function executeKindleImport({ previewResult, storage } = {}) {
   if (!storage || typeof storage.updateBook !== 'function' || typeof storage.addBook !== 'function') {
@@ -377,6 +378,7 @@ export const Navigation = (() => {
     beforeNavigate: ({ name }) => {
       _currentPage = name;
       applyAuthShellStateForPage(name);
+      applyNavigationChrome(name);
 
       Utils.$$('.nav-item').forEach(el => {
         const active = el.dataset.page === name;
@@ -385,12 +387,12 @@ export const Navigation = (() => {
         else el.removeAttribute('aria-current');
       });
       Utils.$$('.mobile-bottom-item').forEach(el => {
-        const tab = el.dataset.tab;
+        const tab = el.dataset.tab || el.dataset.page;
         let active = false;
         if (tab === 'dashboard' && name === 'dashboard') active = true;
-        else if (tab === 'library' && ['library', 'reading', 'wishlist', 'finished', 'abandoned'].includes(name)) active = true;
+        else if (tab === 'library' && ['library', 'reading', 'wishlist', 'finished', 'favorites', 'abandoned', 'quotes', 'kindle'].includes(name)) active = true;
         else if (tab === 'stats' && ['stats', 'goals', 'activity'].includes(name)) active = true;
-        else if (tab === 'settings' && ['settings', 'help'].includes(name)) active = true;
+        else if (tab === 'settings' && ['settings', 'profile', 'help'].includes(name)) active = true;
         el.classList.toggle('active', active);
         if (active) el.setAttribute('aria-current', 'page');
         else el.removeAttribute('aria-current');
@@ -511,15 +513,22 @@ export const Navigation = (() => {
     const sidebar  = document.getElementById('sidebar');
     const overlay  = document.getElementById('sidebarOverlay');
     if (!sidebar || !overlay) return;
+    sidebar.inert = false;
+    sidebar.setAttribute('aria-hidden', 'false');
     sidebar.classList.add('open');
     overlay.classList.add('visible');
     document.body.style.overflow = 'hidden';
+    sidebar.querySelector('.nav-item.active')?.focus();
   }
 
   function closeMobileSidebar() {
     const sidebar  = document.getElementById('sidebar');
     const overlay  = document.getElementById('sidebarOverlay');
     if (!sidebar || !overlay) return;
+    const mobile = globalThis.matchMedia?.('(max-width: 768px)').matches ?? false;
+    if (mobile && sidebar.contains(document.activeElement)) document.getElementById('mobileMenuBtn')?.focus();
+    sidebar.inert = mobile;
+    sidebar.setAttribute('aria-hidden', String(mobile));
     sidebar.classList.remove('open');
     overlay.classList.remove('visible');
     document.body.style.overflow = '';
@@ -609,13 +618,18 @@ export const Navigation = (() => {
   function init() {
     if (initialized) return;
     initialized = true;
+    initializeNavigationChrome(() => _currentPage);
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && document.getElementById('sidebar')?.classList.contains('open')) closeMobileSidebar();
+    });
     Utils.$$('.nav-item').forEach(btn => {
       btn.addEventListener('click', () => goTo(btn.dataset.page));
     });
 
     Utils.$$('.mobile-bottom-item').forEach(btn => {
       btn.addEventListener('click', () => {
-        if (btn.dataset.tab) goTo(btn.dataset.tab);
+        const destination = btn.dataset.tab || btn.dataset.page;
+        if (destination) goTo(destination);
       });
     });
     document.getElementById('mobileBottomSearchBtn')?.addEventListener('click', () => {

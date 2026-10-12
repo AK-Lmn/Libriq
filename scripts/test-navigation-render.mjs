@@ -82,6 +82,7 @@ const documentStub = {
         if (selector === '.book-card-actions') return actionsNode;
         if (selector === '.book-card-actions-primary') return primaryActionsNode;
         if (selector === '.book-card-actions-secondary') return secondaryActionsNode;
+        if (/^\.card-(details|fav|progress|start|finish|remove)-btn$/.test(selector)) return createNode(selector);
         return null;
       },
       querySelectorAll: () => [],
@@ -308,7 +309,7 @@ const main = document.getElementById('mainContent');
 const checks = [
   ['dashboard', 'dashboardPage', 'dashboard-page', ['welcome back', 'books in library', 'currently reading'], () => nav.goTo('dashboard')],
   ['library', 'libraryPage', null, ['my library', 'personal collection'], () => nav.goTo('library')],
-  ['reading', 'statusPage', null, ['currently reading', 'reading queue'], () => nav.goTo('reading')],
+  ['reading', 'statusPage', null, ['reading now', 'currently reading', 'reading queue'], () => nav.goTo('reading')],
   ['settings', 'settingsPage', null, ['settings', 'app preferences'], () => nav.goTo('settings')],
   ['boot', 'session-page', null, ['opening libriq'], () => nav.goTo('boot')],
 ];
@@ -342,10 +343,10 @@ for (const [name, expectedToken, expectedClass, visibleTokens, run] of checks) {
 
 main.innerHTML = '';
 nav.goTo('recommendations');
-for (let attempt = 0; attempt < 100 && !main.innerHTML.includes('Library-based suggestions'); attempt += 1) {
+for (let attempt = 0; attempt < 100 && !main.innerHTML.includes('discover-introduction'); attempt += 1) {
   await new Promise(resolve => setImmediate(resolve));
 }
-if (!main.innerHTML.includes('Library-based suggestions')) {
+if (!main.innerHTML.includes('discover-introduction') || !main.innerHTML.includes('Your next chapter.')) {
   throw new Error('recommendations page did not render its local recommendation shell');
 }
 if (/\bai recommendations\b|gemini/i.test(main.innerHTML)) {
@@ -365,7 +366,7 @@ await new Promise(resolve => setTimeout(resolve, 0));
 if (!main.innerHTML.includes('data-action="open-recommendation"') || !main.innerHTML.includes('data-book-saved="1"')) {
   throw new Error('saved recommendation cards should use delegated detail actions');
 }
-if (!main.innerHTML.includes('Already in Library')) {
+if (!main.innerHTML.includes('In your library')) {
   throw new Error('saved recommendation cards should show already-in-library state');
 }
 
@@ -588,7 +589,7 @@ for (const book of sampleBooks) {
     wishlist: 'badge-wishlist',
     finished: 'badge-finished',
   }[book.status];
-  const badgeMatch = html.match(new RegExp(`<span class="badge ${className}">\\s*([^<]+)\\s*</span>`));
+  const badgeMatch = html.match(new RegExp(`<span class="badge ${className}">\\s*(?:<span[^>]*><\\/span>)?\\s*([^<]+)\\s*</span>`));
   if (!badgeMatch) {
     throw new Error(`status badge not found for ${book.id}`);
   }

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
+import { createRecommendationsPage } from '../frontend/js/features/recommendations/recommendationsPage.js';
 
 const repoRoot = process.cwd();
 const source = fs.readFileSync(path.join(repoRoot, 'frontend/js/features/recommendations/recommendationsPage.js'), 'utf8');
@@ -35,8 +36,7 @@ context.window = context;
 vm.runInNewContext(
   [
     extract('function _buildSubjectDiscoveryState(books) {', 'function _subjectCandidatesFromBook(book) {'),
-    extract('function _subjectCandidatesFromBook(book) {', 'function _filterSubjectDiscoveryBooks(books, savedBooks, limit = 6) {'),
-    extract('function _filterSubjectDiscoveryBooks(books, savedBooks, limit = 6) {', 'function buildSubjectDiscoveryRail(rail) {'),
+    extract('function _subjectCandidatesFromBook(book) {', 'function _buildRecommendationState(books) {'),
   ].join('\n'),
   context,
   { filename: 'navigation-subject-snippet.js' }
@@ -52,17 +52,29 @@ const selectedRails = context._buildSubjectDiscoveryState([
 assert.ok(selectedRails.includes('mystery'));
 assert.ok(selectedRails.includes('science fiction'));
 
-const filtered = context._filterSubjectDiscoveryBooks(
-  [
-    { title: 'Alpha' },
-    { title: 'Alpha' },
-    { title: 'Beta' },
-  ],
-  [{ title: 'Beta' }],
-  6
-);
-assert.equal(filtered.length, 1);
-assert.equal(filtered[0].title, 'Alpha');
+const main = { innerHTML: '', addEventListener() {} };
+const nodes = new Map(['subjectDiscoveryRoot', 'gutenbergDiscoveryRoot', 'discoverFilters', 'discoverPickCount'].map(id => [id, { innerHTML: '', setAttribute() {} }]));
+const saved = { id: 'beta', title: 'Beta', author: 'Author', genres: ['Fiction'], isFavorite: true };
+const render = createRecommendationsPage({
+  storage: { getBooks: () => [saved], getBookById: () => null },
+  library: {}, constants: context.constants,
+  utils: { ...context.utils, buildCover: () => '' },
+  bookApi: {
+    ...context.bookApi, buildSourceBadgeData: () => ({}),
+    searchBySubject: async (subject, options) => {
+      assert.equal(options.limit, 6);
+      return [{ id: 'alpha', title: 'Alpha', author: 'Author' }, { id: 'alpha-copy', title: 'Alpha', author: 'Author' }, saved];
+    },
+    searchCuratedClassics: async () => [],
+  },
+  actions: { isOnline: () => true },
+  documentRoot: { getElementById: id => id === 'mainContent' ? main : nodes.get(id) || null },
+});
+await render();
+const filtered = nodes.get('subjectDiscoveryRoot').innerHTML;
+assert.equal((filtered.match(/data-action="open-recommendation"/g) || []).length, 1);
+assert.match(filtered, /Alpha/);
+assert.doesNotMatch(filtered, /Beta/);
 
 const subjectList = context._subjectCandidatesFromBook({
   subjects: ['Fantasy', 'Fantasy'],

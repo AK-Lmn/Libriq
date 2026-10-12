@@ -1,3 +1,8 @@
+.session-page, .session-fallback-card {
+  --text-tertiary: var(--text-body);
+  --text-dim: var(--text-body);
+  --text-muted: var(--text-body);
+}
 .session-page {
   min-height: 100dvh;
   width: 100%;
@@ -7,7 +12,7 @@
   place-items: center;
   padding: clamp(var(--space-6), 4vw, var(--space-10));
   background:
-    radial-gradient(circle at top left, rgba(201,168,76,0.16), transparent 28%),
+    radial-gradient(circle at top left, var(--indigo-12), transparent 28%),
     radial-gradient(circle at bottom right, rgba(123,157,201,0.12), transparent 26%),
     linear-gradient(180deg, rgba(255,255,255,0.02), transparent 34%),
     var(--bg-base);
@@ -37,7 +42,7 @@
   width: 360px;
   height: 360px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(201,168,76,0.16), transparent 68%);
+  background: radial-gradient(circle, var(--indigo-18), transparent 68%);
   pointer-events: none;
 }
 
@@ -53,7 +58,7 @@
   left: -56px;
   width: 220px;
   height: 220px;
-  background: radial-gradient(circle, rgba(201,168,76,0.22), transparent 72%);
+  background: radial-gradient(circle, var(--indigo-18), transparent 72%);
 }
 
 .session-hero-orb-b {
@@ -183,13 +188,13 @@
   padding: clamp(var(--space-5), 3vw, var(--space-7));
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
-  background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
+  background: var(--glass-fill-3);
   box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(var(--glass-blur-card));
 }
 
 .session-auth-heading span {
-  color: var(--text-accent);
+  color: var(--text-strong);
   font-size: var(--text-xs);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.08em;
@@ -214,7 +219,7 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
   background:
-    radial-gradient(circle at top right, rgba(201,168,76,0.14), transparent 34%),
+    radial-gradient(circle at top right, var(--indigo-12), transparent 34%),
     var(--bg-elevated);
   box-shadow: var(--shadow-lg);
   transform: rotate(-1deg);
@@ -239,7 +244,7 @@
   place-items: center;
   border-radius: 50%;
   background: var(--gold-18);
-  color: var(--text-accent);
+  color: var(--text-strong);
   font-weight: var(--weight-semibold);
 }
 
@@ -337,9 +342,9 @@
   padding: var(--space-3);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-xl);
-  background: color-mix(in srgb, var(--bg-elevated) 94%, transparent);
+  background: var(--glass-fill-3);
   box-shadow: var(--shadow-frame);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(var(--glass-blur-card));
   animation: installPromptIn 280ms var(--ease-out);
 }
 
@@ -434,7 +439,7 @@
 
 .session-card-primary {
   background:
-    linear-gradient(180deg, rgba(201,168,76,0.08), rgba(255,255,255,0.02)),
+    linear-gradient(180deg, var(--indigo-12), rgba(255,255,255,0.02)),
     var(--bg-elevated);
 }
 
@@ -565,7 +570,7 @@
   margin-top: calc(var(--space-1) * -1);
   border: 0;
   background: transparent;
-  color: var(--text-accent);
+  color: var(--text-strong);
   font: inherit;
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
@@ -638,7 +643,7 @@
 
 .session-auth-error {
   margin: 0;
-  color: var(--color-danger);
+  color: var(--text-strong);
   font-size: var(--text-sm);
   line-height: var(--leading-normal);
 }
@@ -651,7 +656,7 @@
   place-items: center;
   padding: var(--space-4);
   background: rgba(8, 7, 6, 0.72);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(var(--glass-blur-modal));
 }
 
 .session-fallback-modal[hidden] {
