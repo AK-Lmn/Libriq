@@ -88,7 +88,7 @@ export function buildYearlyRecap(books, year, { finishedStatus, monthLabels }) {
     topBucket = { ...topGenre, type: 'genre' };
   }
 
-  return { finishedCount, pagesRead, avgRating, activeMonthLabel, longestBook, highestRatedBooks, topBucket, missingFinishDates };
+  return { finishedCount, pagesRead, avgRating, ratedCount: ratedBooks.length, monthCounts, activeMonthLabel, longestBook, highestRatedBooks, topBucket, missingFinishDates };
 }
 
 function incrementCount(counts, value) {
