@@ -40,7 +40,7 @@ try {
     ['dashboard-light-solid', 390, 'light', false, true],
     ['dashboard-narrow', 320, 'dark', false, false],
   ]) {
-    const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
+    const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: name === 'dashboard-narrow' ? 'reduce' : 'no-preference' });
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -82,6 +82,14 @@ try {
       document.getElementById('streakCount').textContent = '12';
     }, { theme, empty });
     await page.evaluate(() => document.fonts.ready);
+    await page.waitForLoadState('networkidle');
+    const maskAssets = await page.locator('.dashboard-icon').evaluateAll(icons => [...new Set(icons.map(icon => getComputedStyle(icon).maskImage))]);
+    for (const mask of maskAssets) {
+      assert.notEqual(mask, 'none');
+      const url = mask.match(/url\("([^"]+)"\)/)?.[1];
+      assert.ok(url && url.includes('/assets/dashboard/'));
+      assert.equal((await page.request.get(url)).status(), 200);
+    }
     await page.locator('#dashboardPage').waitFor();
     assert.deepEqual(errors, [], name);
     const geometry = await page.evaluate(() => ({
@@ -98,6 +106,27 @@ try {
     assert.equal(geometry.columns, width > 768 ? 2 : 1, `${name}: responsive columns`);
     assert.ok(geometry.assets, `${name}: local Figma assets loaded`);
     assert.ok(geometry.font, `${name}: local fonts loaded`);
+    const contrastFailures = await page.evaluate(() => {
+      const rgba = color => color.match(/[\d.]+/g).map(Number);
+      const blend = (front, back) => front.slice(0, 3).map((v, i) => v * (front[3] ?? 1) + back[i] * (1 - (front[3] ?? 1)));
+      const luminance = color => color.reduce((sum, value, i) => {
+        const v = value / 255;
+        return sum + (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4) * [0.2126, 0.7152, 0.0722][i];
+      }, 0);
+      const selectors = '.dashboard-mini-label, .dashboard-mini-value small, .dashboard-recent-status, .activity-subtitle, .activity-time, .dashboard-privacy, .greeting-subtitle, .dashboard-progress-meta, .dashboard-page-count, .dashboard-goal-copy p, .dashboard-hero-quote, .section-action';
+      return [...document.querySelectorAll(`#dashboardPage :is(${selectors})`)].filter(el => el.getClientRects().length).flatMap(el => {
+        let background = [255, 255, 255];
+        const ancestors = [];
+        for (let node = el; node; node = node.parentElement) ancestors.unshift(node);
+        for (const node of ancestors) background = blend(rgba(getComputedStyle(node).backgroundColor), background);
+        const foreground = blend(rgba(getComputedStyle(el).color), background);
+        const levels = [luminance(background), luminance(foreground)].sort((a, b) => a - b);
+        const ratio = (levels[1] + 0.05) / (levels[0] + 0.05);
+        return ratio < 4.5 ? [`${el.className}: ${ratio.toFixed(2)}:1`] : [];
+      });
+    });
+    assert.deepEqual(contrastFailures, [], `${name}: WCAG AA body text`);
+    assert.equal(await page.locator('.dashboard-add-book').evaluate(el => getComputedStyle(el).backgroundImage), 'none');
     if (reduced) {
       assert.ok(geometry.reduced);
       assert.ok(geometry.fill.startsWith('rgb('), `${name}: opaque surface`);
@@ -106,6 +135,34 @@ try {
     await page.screenshot({ path: path.join(output, `${name}.png`), fullPage: true });
     console.log(`${name}: passed`);
     await context.close();
+  }
+  for (const width of [1440, 390]) {
+    const page = await browser.newPage({ viewport: { width, height: 900 } });
+    await page.goto(base);
+    await page.evaluate(async () => {
+      const { buildMonthlyChart } = await import('./js/dashboard.js');
+      const charts = [buildMonthlyChart([12, 6, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]), buildMonthlyChart([300, 150, 75, 0, 0, 0, 0, 0, 0, 0, 0, 0])];
+      document.getElementById('mainContent').innerHTML = `<div class="page" id="statsPage"><div class="dashboard-grid stats-layout"><div class="stats-chart-grid">${charts.map(chart => `<div class="goal-widget">${chart}</div>`).join('')}</div><aside>Summary</aside></div></div>`;
+    });
+    const result = await page.evaluate(() => ({
+      grid: getComputedStyle(document.querySelector('.stats-layout')).display,
+      columns: getComputedStyle(document.querySelector('.stats-layout')).gridTemplateColumns.split(' ').length,
+      charts: [...document.querySelectorAll('.monthly-chart')].map(chart => ({
+        display: getComputedStyle(chart).display,
+        bars: chart.querySelectorAll('.chart-bar').length,
+        first: chart.querySelector('.chart-bar').getBoundingClientRect().height,
+        second: chart.querySelectorAll('.chart-bar')[1].getBoundingClientRect().height,
+      })),
+    }));
+    assert.equal(result.grid, 'grid');
+    assert.equal(result.columns, width > 1100 ? 2 : 1);
+    for (const chart of result.charts) {
+      assert.equal(chart.display, 'flex');
+      assert.equal(chart.bars, 12);
+      assert.ok(chart.first > chart.second && chart.second > 4);
+    }
+    console.log(`Statistics shared CSS at ${width}px: passed`);
+    await page.close();
   }
 } finally {
   await browser.close();
