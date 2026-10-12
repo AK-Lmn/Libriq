@@ -579,6 +579,7 @@ export const Navigation = (() => {
   }
 
   function _updateThemeToggleUI(theme) {
+    document.querySelector?.('meta[name="theme-color"]')?.setAttribute('content', theme === 'light' ? '#EEF1F6' : '#0B0E14');
     const icon  = document.getElementById('themeIcon');
     const label = document.getElementById('themeLabel');
     const iconDesktop = document.getElementById('themeIconDesktop');

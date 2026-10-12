@@ -92,10 +92,23 @@ Dashboard.render();
 assert.match(main.innerHTML, /Reading Book/);
 assert.match(main.innerHTML, /Finished this year/);
 assert.match(main.innerHTML, /Finished Book/);
-assert.match(main.innerHTML, /3 Days/);
+assert.match(main.innerHTML, /3 <small>Days<\/small>/);
 assert.match(main.innerHTML, /data-action="update-progress" data-book-id="reading-1"/);
 assert.match(main.innerHTML, /data-action="show-book-details" data-book-id="reading-1"/);
 assert.doesNotMatch(main.innerHTML, /onclick=/);
+assert.match(main.innerHTML, /Page 40 \/ 200/);
+assert.match(main.innerHTML, /A quiet moment\. A few more pages\./);
+assert.doesNotMatch(main.innerHTML, /monthly reading goal|Active focus session/);
+assert.match(main.innerHTML, /id="goalRingFill"/);
+
+books = books.filter(book => book.status !== 'reading');
+Dashboard.render();
+assert.match(main.innerHTML, /Your next session starts here/);
+assert.doesNotMatch(main.innerHTML, /data-action="update-progress"/);
+
+Storage.getGoals = () => ({ yearly: 0 });
+Dashboard.render();
+assert.doesNotMatch(main.innerHTML, /NaN|Infinity/);
 
 assert.equal(globalThis.Dashboard, undefined);
 

@@ -23,7 +23,7 @@ export const Dashboard = {
     const profile = Storage.getProfile();
     const reading = Storage.getBooksByStatus(LIBRIQ.STATUS.READING);
     const books = Storage.getBooks();
-    const featuredBook = pickFeaturedReadingBook(reading, books);
+    const featuredBook = pickFeaturedReadingBook(reading);
     const recentBooks = buildRecentBooks(books);
     const recentActivity = buildRecentActivity();
     const topGenres = stats.topGenres || [];
@@ -46,7 +46,7 @@ export const Dashboard = {
 
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-    const goalPct = Math.min(100, Math.round((stats.finishedThisYear / goals.yearly) * 100));
+    const goalPct = goals.yearly > 0 ? Math.min(100, Math.round((stats.finishedThisYear / goals.yearly) * 100)) : 0;
     const ringOffset = Math.round(283 - (283 * goalPct / 100));
     const booksLeft = Math.max(0, goals.yearly - stats.finishedThisYear);
     const weeksLeft = Math.ceil((new Date(new Date().getFullYear(), 11, 31) - new Date()) / 604800000);
@@ -54,13 +54,17 @@ export const Dashboard = {
     main.innerHTML = `
       <div class="page dashboard-page" id="dashboardPage">
         <div class="dashboard-topbar">
+          <div class="dashboard-page-context">
+            <strong>Dashboard</strong>
+            <time datetime="${new Date().toISOString().slice(0, 10)}">${new Date().toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</time>
+          </div>
+          <div class="dashboard-actions">
           <div class="dashboard-sync">
             <span class="dashboard-sync-dot"></span>
             <span>${syncLabel}</span>
           </div>
-          <div class="dashboard-actions">
             <button class="btn btn-primary dashboard-add-book" type="button" data-action="open-search">
-              <i class="ph ph-plus"></i>
+              ${dashboardIcon('plus')}
               Add Book
             </button>
           </div>
@@ -69,17 +73,17 @@ export const Dashboard = {
         <div class="dashboard-hero-shell">
           <div class="dashboard-greeting">
             <span class="greeting-label">${greeting}</span>
-            <h1 class="greeting-title">Welcome back, <span>${Utils.sanitize(accountName)}</span></h1>
-            <p class="greeting-subtitle">You&apos;ve reached <strong>${goalPct}%</strong> of your monthly reading goal.</p>
+            <h1 class="greeting-title">Welcome back, <span>${Utils.sanitize(accountName)}</span>.</h1>
+            <p class="greeting-subtitle">A quiet moment. A few more pages.</p>
           </div>
           <div class="dashboard-micro-stats">
             <div class="dashboard-mini-card">
-              <span class="dashboard-mini-label">Streak</span>
-              <div class="dashboard-mini-value">${streak.current} ${streak.current === 1 ? 'Day' : 'Days'}</div>
+              <span class="dashboard-mini-label">${dashboardIcon('flame')} Day streak</span>
+              <div class="dashboard-mini-value">${streak.current} <small>${streak.current === 1 ? 'Day' : 'Days'}</small></div>
             </div>
             <div class="dashboard-mini-card">
-              <span class="dashboard-mini-label">Yearly goal</span>
-              <div class="dashboard-mini-value">${goals.yearly > 0 ? `${stats.finishedThisYear}/${goals.yearly}` : `${stats.finishedThisYear}`}</div>
+              <span class="dashboard-mini-label">${dashboardIcon('target')} ${new Date().getFullYear()} goal</span>
+              <div class="dashboard-mini-value">${goals.yearly > 0 ? `${stats.finishedThisYear}/${goals.yearly}` : `${stats.finishedThisYear}`} <small>books</small></div>
             </div>
           </div>
         </div>
@@ -91,7 +95,7 @@ export const Dashboard = {
             <section class="dashboard-panel dashboard-feature-panel">
               <div class="section-header dashboard-section-header">
                 <h2 class="section-title">Reading Now</h2>
-                <button class="section-action" type="button" data-action="navigate" data-route="reading">View all</button>
+                <button class="section-action" type="button" data-action="navigate" data-route="reading">${reading.length} ${reading.length === 1 ? 'book' : 'books'} ${dashboardIcon('arrow-up-right')}</button>
               </div>
               ${featuredBook ? buildFeaturedReadingHero(featuredBook) : buildFeaturedEmptyHero()}
             </section>
@@ -111,21 +115,25 @@ export const Dashboard = {
               </div>
               <div class="dashboard-compact-grid">
                 <div class="dashboard-compact-card">
+                  ${dashboardIcon('library')}
                   <span class="dashboard-compact-label">Books in library</span>
                   <strong>${stats.total}</strong>
                   <span>All saved titles</span>
                 </div>
                 <div class="dashboard-compact-card">
+                  ${dashboardIcon('book-open')}
                   <span class="dashboard-compact-label">Currently reading</span>
                   <strong>${stats.reading}</strong>
                   <span>Active progress updates</span>
                 </div>
                 <div class="dashboard-compact-card">
+                  ${dashboardIcon('circle-check')}
                   <span class="dashboard-compact-label">Finished this year</span>
                   <strong>${stats.finishedThisYear}</strong>
                   <span>${booksLeft} left to goal</span>
                 </div>
                 <div class="dashboard-compact-card">
+                  ${dashboardIcon('flame')}
                   <span class="dashboard-compact-label">Day streak</span>
                   <strong>${streak.current}</strong>
                   <span>Consecutive reading days</span>
@@ -138,25 +146,22 @@ export const Dashboard = {
             <section class="dashboard-panel dashboard-quick-panel">
               <div class="section-header dashboard-section-header">
                 <h2 class="section-title">Quick Workspace</h2>
-                <button class="section-action" type="button" data-action="navigate" data-route="activity">Activity</button>
+                <button class="section-action" type="button" data-action="navigate" data-route="activity">View Activity ${dashboardIcon('arrow-up-right')}</button>
               </div>
               <div class="dashboard-quick-note">
-                <div class="dashboard-quote-label">Latest capture</div>
+                <div class="dashboard-quote-label">${dashboardIcon('notebook-pen')} Latest capture</div>
                 <p>${Utils.sanitize(getQuickNoteText(profile, recentActivity, featuredBook))}</p>
               </div>
               <div class="dashboard-quick-meta">
-                <span><i class="ph ph-dot"></i> Active focus session: ${formatFocusTime(streak)}</span>
+                <span>${dashboardIcon('timer')} ${recentActivity.length ? `Last update: ${Utils.timeAgo(recentActivity[0].date)}` : 'Your next session awaits'}</span>
                 <span>${stats.avgRating ? `Average rating ${stats.avgRating}` : 'No ratings yet'}</span>
               </div>
-              <button class="btn btn-primary dashboard-note-button" type="button" data-action="navigate" data-route="activity">
-                <i class="ph ph-clock-counter-clockwise"></i>
-                View Activity
-              </button>
             </section>
 
             <section class="dashboard-panel dashboard-activity-panel">
               <div class="section-header dashboard-section-header">
                 <h2 class="section-title">Recent Activity</h2>
+                <button class="section-action" type="button" data-action="navigate" data-route="activity">View all ${dashboardIcon('arrow-up-right')}</button>
               </div>
               <div class="activity-list dashboard-activity-list">
                 ${recentActivity.length
@@ -175,7 +180,7 @@ export const Dashboard = {
               </div>
               <div class="goal-progress-ring dashboard-goal-ring">
                 <div class="goal-ring-wrap">
-                  <svg class="goal-ring-svg" viewBox="0 0 100 100">
+                  <svg class="goal-ring-svg" viewBox="0 0 100 100" role="img" aria-label="${goalPct}% of yearly reading goal complete">
                     <circle class="goal-ring-bg" cx="50" cy="50" r="45"></circle>
                     <circle class="goal-ring-fill ${goalPct >= 100 ? 'complete' : ''}"
                       cx="50" cy="50" r="45"
@@ -183,9 +188,14 @@ export const Dashboard = {
                       id="goalRingFill"></circle>
                   </svg>
                   <div class="goal-ring-text">
-                    <span class="goal-ring-value">${stats.finishedThisYear}</span>
-                    <span class="goal-ring-total">of ${goals.yearly}</span>
+                    <span class="goal-ring-value">${stats.finishedThisYear}/${goals.yearly}</span>
+                    <span class="goal-ring-total">books finished</span>
                   </div>
+                </div>
+                <div class="dashboard-goal-copy">
+                  <span class="dashboard-quote-label">${new Date().getFullYear()} challenge</span>
+                  <h3>${booksLeft > 0 ? `${booksLeft} more ${booksLeft === 1 ? 'story' : 'stories'}.` : 'Every story counts.'}</h3>
+                  <p>${goalPct >= 100 ? 'Your goal is complete. Keep exploring.' : 'Keep reading at your own pace.'}</p>
                 </div>
                 <div class="goal-stats">
                   <div class="goal-stat">
@@ -220,13 +230,17 @@ export const Dashboard = {
             }
           </aside>
         </div>
+        <p class="dashboard-privacy">${dashboardIcon('lock-keyhole')} A private record of a reading life. Only you can see your library.</p>
       </div>`;
   },
 };
 
-function pickFeaturedReadingBook(reading, books) {
-  const source = reading?.length ? reading : (books || []);
-  return source
+function dashboardIcon(name) {
+  return `<img class="dashboard-icon" src="./assets/dashboard/desktop-${name}.svg" alt="" aria-hidden="true" />`;
+}
+
+function pickFeaturedReadingBook(reading) {
+  return (reading || [])
     .slice()
     .filter(Boolean)
     .sort((a, b) => {
@@ -249,23 +263,24 @@ function buildFeaturedReadingHero(book) {
         <h3 class="dashboard-hero-title">${Utils.sanitize(book.title)}</h3>
         <p class="dashboard-hero-author">by ${Utils.sanitize(book.author || 'Unknown author')}${timeLeft !== null ? ` • ${timeLeft} pages left` : ''}</p>
         <div class="dashboard-progress-meta">
-          <span>Progress</span>
+          <span>${timeLeft !== null ? `${timeLeft} pages left` : 'Progress'}</span>
           <strong>${pct}%</strong>
         </div>
         <div class="progress-bar dashboard-progress-bar">
           <div class="progress-fill ${pct >= 100 ? 'complete' : ''}" style="width:${pct}%"></div>
         </div>
+        <p class="dashboard-page-count">Page ${book.currentPage || 0} / ${book.pageCount || '–'}</p>
         <p class="dashboard-hero-quote">${Utils.sanitize(buildFeaturedQuote(book))}</p>
         <div class="dashboard-hero-actions">
           <button class="btn btn-primary" type="button" data-action="update-progress" data-book-id="${Utils.sanitize(book.id)}">
-            <i class="ph ph-play"></i>
+            ${dashboardIcon('book-open')}
             Resume Reading
           </button>
           <button class="btn btn-secondary" type="button" data-action="show-book-details" data-book-id="${Utils.sanitize(book.id)}">
             View Details
           </button>
           <button class="btn btn-ghost btn-sm" type="button" data-action="toggle-favorite" data-book-id="${Utils.sanitize(book.id)}" aria-label="${book.isFavorite ? 'Remove from favorites' : 'Add to favorites'}">
-            <i class="${book.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart'}"></i>
+            ${dashboardIcon('heart')}
           </button>
         </div>
       </div>
@@ -275,6 +290,7 @@ function buildFeaturedReadingHero(book) {
 function buildFeaturedEmptyHero() {
   return `
     <div class="dashboard-hero-card dashboard-hero-card-empty">
+      <div class="dashboard-hero-cover dashboard-empty-cover">${dashboardIcon('book-open')}</div>
       <div class="dashboard-hero-content">
         <span class="dashboard-pill">Reading now</span>
         <h3 class="dashboard-hero-title">Your next session starts here</h3>
@@ -311,6 +327,8 @@ function buildRecentBooksRow(books) {
           <div class="dashboard-recent-copy">
             <strong>${Utils.sanitize(book.title)}</strong>
             <span>${Utils.formatDate(book.dateUpdated || book.dateStarted || book.dateAdded || new Date())}</span>
+            <span class="dashboard-recent-author">${Utils.sanitize(book.author || 'Unknown author')}</span>
+            <span class="dashboard-recent-status" data-status="${Utils.sanitize(book.status || '')}">${Utils.sanitize(book.status || 'Saved').replaceAll('_', ' ')}</span>
           </div>
         </button>
       `).join('')}
@@ -333,11 +351,6 @@ function buildActivityEmptyState() {
       <div class="empty-state-title">No activity yet</div>
       <div class="empty-state-body">Progress updates and book changes will show up here once you start reading.</div>
     </div>`;
-}
-
-function formatFocusTime(streak) {
-  const minutes = Math.max(15, Math.min(90, (streak.current || 0) * 15));
-  return `${minutes}m`;
 }
 
 function buildRecentBooks(books) {
@@ -432,10 +445,10 @@ function buildActivityItem(activity) {
         <i class="ph ${activity.icon}"></i>
       </div>
       <div class="activity-text">
-        <div class="activity-title">${Utils.sanitize(activity.title)}</div>
-        <div class="activity-subtitle">${Utils.sanitize(activity.label || labels[activity.type] || activity.subtitle || '')}${activity.payloadText ? ` • ${Utils.sanitize(activity.payloadText)}` : ''}</div>
+        <div class="activity-title">${Utils.sanitize(activity.label || labels[activity.type] || activity.subtitle || '')}${activity.payloadText ? ` • ${Utils.sanitize(activity.payloadText)}` : ''}</div>
+        <div class="activity-subtitle">${Utils.sanitize(activity.title)}</div>
+        <div class="activity-time">${Utils.timeAgo(activity.date)}</div>
       </div>
-      <div class="activity-time">${Utils.timeAgo(activity.date)}</div>
     </div>`;
 }
 
