@@ -1,4 +1,4 @@
-#mainContent > #helpPage { display: grid; grid-template-columns: 248px minmax(0, 1fr); gap: 40px; max-width: 1280px; color: var(--text-body); padding: 48px 80px 64px; }
+#mainContent > #helpPage { display: grid; grid-template-columns: 248px minmax(0, 1fr); gap: 40px; max-width: 1280px; color: var(--text-body); padding: 40px 48px 64px; }
 #helpPage :is(h1, h2, h3, p) { margin: 0; }
 #helpPage .help-contents { display: grid; align-content: start; gap: 32px; }
 #helpPage .help-contents nav { display: grid; gap: 8px; }
