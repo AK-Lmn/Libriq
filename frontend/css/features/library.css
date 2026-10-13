@@ -351,12 +351,21 @@
 #libraryPage .library-card-disclosure[open] .library-card-extra { margin-top: 12px; }
 
 #statusPage .book-card-meta .badge { border-radius: 999px; padding: 6px 10px; min-height: 30px; font-size: 12px; }
-#statusPage .shelf-filters { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); }
+#statusPage .shelf-filters { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); }
 #statusPage .shelf-filters .chip { border-radius: 12px; min-height: 44px; padding: 0 12px; justify-content: space-between; }
 #statusPage .card-fav-btn { top: 288px; right: 8px; border: 0; background: transparent; }
 #statusPage .library-card-disclosure { margin: 0; }
 #statusPage .library-card-disclosure summary { position: absolute; right: 16px; top: 16px; width: 44px; height: 44px; justify-content: center; font-size: 0; background: var(--glass-solid-2); border-radius: 12px; }
 #statusPage .library-card-disclosure summary::after { content: "⋯"; margin: 0; font-size: 20px; }
+#statusPage[data-shelf="dnf"] .status-heading { min-width: 0; max-width: 640px; }
+#statusPage[data-shelf="dnf"] .library-eyebrow { color: var(--library-secondary); }
+#statusPage .shelf-status-note { display: inline-flex; align-self: flex-start; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); margin: var(--space-1) 0 var(--space-4); border: 1px solid var(--glass-border); border-radius: var(--r-pill); background: var(--glass-fill-2); color: var(--text-body); font: 400 12px/1.5 var(--font-sans); }
+#statusPage .shelf-status-note .library-icon { width: 5px; height: 5px; }
+#statusPage[data-shelf="dnf"] .empty-state-icon { color: var(--text-body); background: var(--glass-fill-2); }
+#statusPage .chip[data-status="dnf"].active { color: var(--text-strong); border-color: var(--text-body); background: var(--glass-fill-3); }
+#statusPage[data-shelf="dnf"] .badge-dnf { color: var(--text-body); border-color: var(--glass-border); background: var(--glass-fill-2); }
+#statusPage[data-shelf="dnf"] :is(.book-card-title, .cover-title) { overflow-wrap: anywhere; }
+#statusPage[data-shelf="dnf"] .book-card-actions .btn { white-space: normal; }
 @media (max-width: 1199px) {
   :is(#libraryPage, #statusPage) { padding: 32px; }
   :is(#libraryPage, #statusPage) .library-tools { grid-template-columns: minmax(0,1fr) 176px 176px; }
@@ -421,6 +430,12 @@
 }
 @media (prefers-reduced-transparency: reduce) {
   :is(#libraryPage, #statusPage) .book-card { background: var(--glass-solid-3); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (max-width: 359px) {
+  #statusPage[data-shelf="dnf"] .books-grid { grid-template-columns: minmax(0, 1fr); }
+  #statusPage[data-shelf="dnf"] .shelf-filters { grid-template-columns: minmax(0, 1fr); }
+  #statusPage[data-shelf="dnf"] .library-tools { grid-template-columns: minmax(0, 1fr); }
+  #statusPage[data-shelf="dnf"] .library-footer { flex-wrap: wrap; gap: var(--space-2); }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   :is(#libraryPage, #statusPage) .book-card { background: var(--glass-solid-3); backdrop-filter: none; -webkit-backdrop-filter: none; }

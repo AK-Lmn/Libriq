@@ -66,31 +66,50 @@ export function createProfilePage({ storage, utils, constants, actions = {}, doc
         </section>
 
         <details class="profile-editor">
-          <summary>Edit profile</summary>
-          <form id="profileForm" class="add-book-form" data-action="save-profile">
+          <summary><span class="profile-editor-title">Edit profile</span><span class="profile-editor-hint">Make this space yours</span></summary>
+          <div class="profile-editor-body">
+          <div class="profile-editor-intro">
+            <span class="profile-icon-well">${icon('lock-keyhole1')}</span>
+            <h2>Your reading identity</h2>
+            <p>A name and a few words for your private workspace. Only you can see your profile.</p>
+          </div>
+          <form id="profileForm" class="add-book-form profile-editor-form" data-action="save-profile">
             <div class="form-group">
               <label class="form-label" for="profileName">Display name</label>
               <input type="text" id="profileName" name="name"
                 class="form-input" value="${utils.sanitize(displayName)}"
-                placeholder="Your name" maxlength="40" />
-              <div class="text-xs text-tertiary field-help">Use any name you want LibriQ to call you.</div>
+                placeholder="Your name" maxlength="40" aria-describedby="profileNameHelp" autocomplete="nickname" />
+              <div id="profileNameHelp" class="field-help">Use any name you want LibriQ to call you. Up to 40 characters.</div>
             </div>
             <div class="form-group">
               <label class="form-label" for="profileBio">Bio <span class="text-tertiary">(optional)</span></label>
               <textarea id="profileBio" name="bio" class="form-input form-textarea"
                 placeholder="A few words about your reading life…"
-                maxlength="200">${utils.sanitize(profile.bio || '')}</textarea>
+                maxlength="200" rows="4" aria-describedby="profileBioHelp">${utils.sanitize(profile.bio || '')}</textarea>
+              <div id="profileBioHelp" class="field-help">A short note about you and your books. Up to 200 characters.</div>
             </div>
+            <div class="profile-editor-actions">
+            <span>${icon('lock-keyhole')} Always private</span>
             <button type="submit" class="btn btn-primary">
-              <i class="ph ph-floppy-disk"></i> Save Profile
+              Save Profile
             </button>
+            </div>
           </form>
+          </div>
         </details>
         <footer class="profile-footer">${icon('lock-keyhole')} Your books. Your space. Always private.</footer>
       </div>`;
 
     if (boundMain === main) return;
     boundMain = main;
+    main.addEventListener('keydown', event => {
+      if (event.key !== 'Escape') return;
+      const editor = event.target.closest?.('.profile-editor[open]');
+      if (!editor) return;
+      event.preventDefault();
+      editor.open = false;
+      editor.querySelector('summary')?.focus();
+    });
     main.addEventListener('submit', event => {
       if (!event.target.matches?.('[data-action="save-profile"]')) return;
       event.preventDefault();
