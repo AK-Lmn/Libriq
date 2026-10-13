@@ -12,7 +12,7 @@ assert.equal(new Set(assets).size, assets.length, 'precache paths must be unique
 for (const asset of assets) assert.ok((await fs.stat(path.resolve(root, asset))).size > 0, `${asset} exists and is nonempty`);
 assert.ok(assets.includes('./css/components.css'));
 assert.ok(assets.includes('./js/navigationChrome.js'));
-assert.match(worker, /shell-v4-glass/);
+assert.match(worker, /shell-v5-complete-glass/);
 const files = await fs.readdir(root, { recursive: true });
 for (const file of files.filter(file => /\.(?:css|js|svg)$/.test(file))) {
   if (/^assets\/revamp\//.test(file)) assert.ok(assets.includes(`./${file}`), `${file} is precached`);
@@ -56,7 +56,7 @@ try {
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
   const cached = await page.evaluate(async () => {
     const keys = await caches.keys();
-    const cache = await caches.open(keys.find(key => key.endsWith('-shell-v4-glass')));
+    const cache = await caches.open(keys.find(key => key.endsWith('-shell-v5-complete-glass')));
     return { keys, paths: (await cache.keys()).map(request => new URL(request.url).pathname) };
   });
   assert.ok(!cached.keys.includes('libriq-obsolete-integration-fixture'), 'obsolete cache retired');

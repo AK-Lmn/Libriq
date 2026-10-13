@@ -152,7 +152,7 @@ elements.get('bookQuoteTextInput').value = 'Edited quote';
 elements.get('saveBookQuoteBtn').listeners.click();
 assert.equal(book.quotes.find(quote => quote.id === createdId).text, 'Edited quote');
 
-elements.get('bookQuotesList').listeners.click({ target: { closest: () => ({ dataset: { quoteAction: 'delete', quoteId: createdId } }) } });
+await elements.get('bookQuotesList').listeners.click({ target: { closest: () => ({ dataset: { quoteAction: 'delete', quoteId: createdId } }) } });
 assert.equal(book.quotes.some(quote => quote.id === createdId), false);
 
 elements.get('bookDetailsRating').listeners.click({ target: { closest: () => ({ dataset: { rating: '5' } }) } });

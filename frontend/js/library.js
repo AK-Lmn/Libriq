@@ -4,6 +4,7 @@ import { Storage } from './storage.js';
 import { Utils } from './utils.js';
 import { LibriqFirebase } from './firebase-client.js';
 import { createBookDetailsPage } from './features/bookDetails/bookDetailsPage.js';
+import { confirmAction } from './components/ui/confirmation.js';
 
 export const Library = (() => {
   const Identity = {
@@ -449,8 +450,8 @@ export const Library = (() => {
   }
 
 
-  function removeBook(bookId, title) {
-    if (!confirm(`Remove "${title}" from your library?`)) return;
+  async function removeBook(bookId, title) {
+    if (!await confirmAction(`Remove "${title}" from your library?`, { title: 'Remove book?', confirmLabel: 'Remove book' })) return;
     Storage.removeBook(bookId);
     Utils.toast(`"${title}" removed`, 'info');
     Navigation.updateBadges();
@@ -545,6 +546,7 @@ export const Library = (() => {
   }
 
   const bookDetailsFeature = createBookDetailsPage({
+    confirmAction,
     storage: Storage,
     utils: Utils,
     constants: LIBRIQ,
