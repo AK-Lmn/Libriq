@@ -10,9 +10,6 @@
 .theme-toggle { --chrome-icon: url('../assets/revamp/account/23-5548-moon.svg'); }
 
 @media (min-width: 769px) {
-  body[data-route="reading"], body[data-route="wishlist"], body[data-route="finished"], body[data-route="favorites"], body[data-route="abandoned"] { --sidebar-width: 232px; }
-  body[data-route="activity"] { --sidebar-width: 224px; }
-  body[data-route="profile"] { --sidebar-width: 208px; }
   body[data-route="profile"] .main-content { padding-top: 0; }
 
   body[data-navigation="top"] { --route-nav-height: 80px; }

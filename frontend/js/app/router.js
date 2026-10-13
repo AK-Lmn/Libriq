@@ -66,7 +66,6 @@ export class Router {
     const root = this.#getRoot();
     this.#cleanup?.();
     this.#cleanup = null;
-    if (root) root.replaceChildren?.();
 
     try {
       const result = this.#routes.get(name)({ name, root, router: this, ...context });
