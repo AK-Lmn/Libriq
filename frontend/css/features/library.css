@@ -444,3 +444,337 @@
   :is(#libraryPage, #statusPage) *, :is(#libraryPage, #statusPage) *::before, :is(#libraryPage, #statusPage) *::after { animation: none !important; transition: none !important; }
   :is(#libraryPage, #statusPage) .book-card:hover { transform: none; }
 }
+
+/* ==========================================================================
+   3D DIGITAL BOOKSHELF & SPINE DISPLAY SYSTEM
+   ========================================================================== */
+
+.library-view-switcher {
+  display: inline-flex;
+  align-items: center;
+  background: var(--glass-fill-2);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  padding: 3px;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.view-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-body);
+  font: 500 11px/1 var(--font-sans);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.view-switch-btn i {
+  font-size: 14px;
+}
+
+.view-switch-btn:hover {
+  color: var(--text-strong);
+  background: var(--glass-fill-3);
+}
+
+.view-switch-btn.active {
+  background: var(--glass-fill-4);
+  color: var(--text-strong);
+  border-color: var(--glass-highlight);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Bookshelf Showcase Container */
+.books-shelf-mode {
+  display: block !important;
+  width: 100% !important;
+}
+
+.bookshelf-showcase {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+  width: 100%;
+  margin: 32px 0 48px;
+  perspective: 1200px;
+}
+
+.bookshelf-tier {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  position: relative;
+}
+
+.bookshelf-spines {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 0 32px;
+  position: relative;
+  z-index: 2;
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: thin;
+  padding-bottom: 2px;
+  min-height: 240px;
+}
+
+/* Individual 3D Book Spine */
+.book-spine {
+  width: var(--spine-width, 36px);
+  height: var(--spine-height, 210px);
+  background: var(--spine-bg);
+  border: 1px solid var(--spine-border);
+  border-radius: 4px 4px 1px 1px;
+  box-shadow:
+    -3px 0 5px rgba(0, 0, 0, 0.35) inset,
+    2px 0 4px rgba(255, 255, 255, 0.08) inset,
+    4px 6px 12px rgba(0, 0, 0, 0.3);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s;
+  user-select: none;
+  outline: none;
+}
+
+.book-spine:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 4px;
+}
+
+.book-spine:hover,
+.book-spine:focus-visible {
+  transform: translateY(-20px) scale(1.03);
+  box-shadow:
+    0 24px 36px rgba(0, 0, 0, 0.55),
+    -3px 0 6px rgba(0, 0, 0, 0.45) inset,
+    2px 0 6px rgba(255, 255, 255, 0.12) inset;
+  z-index: 25;
+}
+
+/* Spine Bookmark Ribbon */
+.spine-ribbon {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 9px;
+  height: 14px;
+  background: var(--spine-accent, #E2C275);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 70%, 0 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Embossed Accents & Bands */
+.spine-top-accent,
+.spine-bottom-accent {
+  width: 76%;
+  height: 2px;
+  background: var(--spine-accent, #E2C275);
+  opacity: 0.8;
+  border-radius: 1px;
+}
+
+.spine-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  min-height: 0;
+  width: 100%;
+}
+
+.spine-title {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  color: var(--spine-text, #F8FAFC);
+  font: 500 12px/1.2 var(--font-serif);
+  letter-spacing: 0.6px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  max-height: 140px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: center;
+  padding: 4px 0;
+}
+
+.spine-author {
+  font: 600 8px/1 var(--font-mono);
+  color: var(--spine-accent, #E2C275);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  opacity: 0.85;
+  max-width: calc(var(--spine-width, 36px) - 6px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spine-favorite-star {
+  position: absolute;
+  bottom: 18px;
+  color: #FBBF24;
+  font-size: 10px;
+  text-shadow: 0 0 6px rgba(251, 191, 36, 0.6);
+}
+
+/* Floating Popover on Hover */
+.spine-popover {
+  position: absolute;
+  bottom: calc(100% + 16px);
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  width: 240px;
+  padding: 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-highlight);
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), var(--shadow-glass);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s, transform 0.22s;
+  display: flex;
+  gap: 12px;
+  z-index: 60;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.book-spine:hover .spine-popover,
+.book-spine:focus-visible .spine-popover {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.spine-popover-cover {
+  width: 48px;
+  height: 72px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  background: var(--glass-fill-1);
+}
+
+.spine-popover-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.spine-popover-no-cover {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 20px;
+}
+
+.spine-popover-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.spine-popover-title {
+  color: var(--text-strong);
+  font: 600 13px/1.3 var(--font-serif);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spine-popover-author {
+  color: var(--text-body);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spine-popover-meta {
+  margin-top: 4px;
+}
+
+.spine-status-badge {
+  display: inline-block;
+  font: 500 10px/1 var(--font-mono);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+}
+
+.spine-status-badge.reading {
+  background: var(--indigo-12);
+  color: var(--indigo);
+}
+
+.spine-status-badge.finished {
+  background: var(--color-success-dim);
+  color: var(--teal);
+}
+
+.spine-status-badge.wishlist {
+  background: var(--glass-fill-2);
+  color: var(--text-muted);
+}
+
+.spine-popover-hint {
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+/* 3D Physical Shelf Plank */
+.bookshelf-plank {
+  width: 100%;
+  height: 18px;
+  position: relative;
+  z-index: 1;
+}
+
+.bookshelf-plank-top {
+  height: 6px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08));
+  border-top: 1px solid var(--glass-highlight);
+  border-radius: 2px 2px 0 0;
+}
+
+.bookshelf-plank-face {
+  height: 12px;
+  background: linear-gradient(180deg, var(--glass-fill-4), var(--bg-surface));
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 12px 24px -2px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .bookshelf-plank-top {
+  background: linear-gradient(90deg, #DCE1EC, #FFFFFF, #DCE1EC);
+}
+
+[data-theme="light"] .bookshelf-plank-face {
+  background: linear-gradient(180deg, #E2E8F0, #CBD5E1);
+  box-shadow: 0 10px 20px -2px rgba(0, 0, 0, 0.12);
+}

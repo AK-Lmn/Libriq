@@ -1,4 +1,4 @@
-import { customShelves, libraryIcon, libraryTools, sortLibraryBooks } from './libraryDesign.js';
+import { customShelves, libraryIcon, libraryTools, sortLibraryBooks, renderBookshelfView } from './libraryDesign.js';
 
 const escapeText = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 const shelfCopy = {
@@ -53,7 +53,7 @@ export function createLibraryShelvesPage({ storage, library, utils, actions = {}
   if (!storage || !library || !utils) throw new TypeError('createLibraryShelvesPage requires storage, library, and utils.');
   const pageDocument = documentRoot || globalThis.document;
   const pageUtils = { ...utils, sanitize: utils.sanitize || escapeText, readingProgress: utils.readingProgress || ((current, total) => total ? current / total : 0) };
-  const state = { status: 'reading', query: '', sort: 'recently-updated', shelf: 'all' };
+  const state = { status: 'reading', query: '', sort: 'recently-updated', shelf: 'all', viewMode: 'grid' };
   let boundMain = null;
 
   function shelfBooks() {
@@ -69,9 +69,17 @@ export function createLibraryShelvesPage({ storage, library, utils, actions = {}
       (state.shelf === 'all' || (book.tags || []).includes(state.shelf)) &&
       (!query || [book.title, book.author, (book.genres || []).join(' '), book.description].join(' ').toLowerCase().includes(query))
     ), state.sort, pageUtils);
-    grid.innerHTML = '';
-    if (filtered.length) filtered.forEach(book => grid.appendChild(library.renderBookCard(book)));
-    else grid.innerHTML = buildLibraryShelfEmpty(state.status, state.query, { ...state, sanitize: pageUtils.sanitize, isShelfPage: true });
+    if (state.viewMode === 'shelf' && filtered.length) {
+      grid.classList?.add?.('books-shelf-mode');
+      renderBookshelfView(filtered, grid, pageUtils, {
+        showBookDetails: id => actions.showBookDetails?.(id),
+      });
+    } else {
+      grid.classList?.remove?.('books-shelf-mode');
+      grid.innerHTML = '';
+      if (filtered.length) filtered.forEach(book => grid.appendChild(library.renderBookCard(book)));
+      else grid.innerHTML = buildLibraryShelfEmpty(state.status, state.query, { ...state, sanitize: pageUtils.sanitize, isShelfPage: true });
+    }
     const count = pageDocument.getElementById('shelfResultCount');
     if (count) count.textContent = `${String(filtered.length).padStart(2, '0')} books${state.status === 'reading' ? ' in progress' : ' on this shelf'}`;
     const total = pageDocument.getElementById('shelfPageTotal');
@@ -139,6 +147,14 @@ export function createLibraryShelvesPage({ storage, library, utils, actions = {}
         'switch-shelf': () => {
           renderStatusPage(trigger.dataset.status);
           actions.navigate?.(trigger.dataset.status === 'dnf' ? 'abandoned' : trigger.dataset.status);
+        },
+        'set-shelf-view': () => {
+          const nextView = trigger.dataset.view === 'shelf' ? 'shelf' : 'grid';
+          state.viewMode = nextView;
+          main.querySelectorAll?.('[data-action="set-shelf-view"]').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === nextView);
+          });
+          renderGrid();
         },
       };
       if (!handlers[trigger.dataset.action]) return;
