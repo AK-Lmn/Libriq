@@ -184,8 +184,15 @@ export const Navigation = (() => {
     const forgot = document.getElementById('forgotPasswordLink');
     const resetMode = document.getElementById('sessionResetMode');
     const signinMode = document.getElementById('sessionSigninMode');
+    const title = document.getElementById('sessionAuthTitle');
+    const copy = document.getElementById('sessionAuthCopy');
+    const passwordHelp = document.getElementById('sessionPasswordHelp');
     form?.setAttribute('data-auth-mode', nextMode);
+    form?.setAttribute('aria-labelledby', nextMode === 'signup' ? 'sessionSignupTab' : 'sessionSigninTab');
     password?.setAttribute('autocomplete', nextMode === 'signup' ? 'new-password' : 'current-password');
+    if (title) title.textContent = nextMode === 'signup' ? 'Make room for your next chapter.' : nextMode === 'reset' ? 'Find your way back.' : 'Welcome back, reader.';
+    if (copy) copy.textContent = nextMode === 'signup' ? 'Create a private space for your books, notes, and reading progress.' : nextMode === 'reset' ? 'We’ll send a reset link to your account email.' : 'Sign in to pick up where you left off.';
+    if (passwordHelp) passwordHelp.hidden = nextMode !== 'signup';
     if (submit) {
       const label = submit.querySelector('span');
       if (label) label.textContent = nextMode === 'signup' ? 'Create account' : 'Sign in with Email';
@@ -197,6 +204,7 @@ export const Navigation = (() => {
       const active = btn.dataset.authMode === nextMode || (nextMode === 'reset' && btn.dataset.authMode === 'signin');
       btn.classList.toggle('active', active);
       btn.setAttribute('aria-selected', active ? 'true' : 'false');
+      btn.tabIndex = active ? 0 : -1;
     });
     return nextMode;
   }
@@ -744,17 +752,23 @@ function renderBootPage() {
   if (!main) return;
   main.hidden = false;
   main.innerHTML = `
-    <div class="session-page">
-      <section class="session-hero">
-        <div class="session-card-stack session-card-stack--compact">
-          <div class="session-loading-card" aria-live="polite">
-            <div class="session-loading-spinner"></div>
-            <div>
-              <div class="session-card-title">Opening LibriQ</div>
-              <div class="session-card-body">Checking your account before loading your library.</div>
-            </div>
+    <div class="session-page session-page--boot">
+      <section class="session-boot-card" aria-labelledby="sessionBootTitle" aria-busy="true">
+        <a class="session-brand" href="./" aria-label="LibriQ home">
+          <span class="session-brand-mark">Q</span><strong>LibriQ</strong>
+        </a>
+        <div class="session-boot-art" aria-hidden="true"><i class="ph ph-book-open-text"></i></div>
+        <span class="session-eyebrow">Your reading space</span>
+        <h1 id="sessionBootTitle">A moment between chapters.</h1>
+        <p>Checking your account before loading your private library.</p>
+        <div class="session-loading-card" role="status" aria-live="polite">
+          <div class="session-loading-spinner" aria-hidden="true"></div>
+          <div>
+            <div class="session-card-title">${LibriqFirebase.getState().restoringSession ? 'Restoring your session' : 'Opening LibriQ'}</div>
+            <div class="session-card-body">Your saved reading space will be here shortly.</div>
           </div>
         </div>
+        <p class="session-fineprint"><i class="ph ph-lock-key" aria-hidden="true"></i> Your books. Your space.</p>
       </section>
     </div>`;
 }
@@ -820,18 +834,18 @@ async function maybeShowNewDeviceCloudPrompt() {
     if (!main || !document.body.classList.contains('session-choice-active')) return;
 
     const card = document.createElement('div');
-    card.className = 'goal-widget';
+    card.className = 'session-backup-callout';
     card.id = 'newDeviceCloudPrompt';
-    card.style.marginTop = 'var(--space-6)';
     card.innerHTML = `
-      <div class="goal-header"><div class="goal-title">Cloud backup found</div></div>
-      <div class="activity-item activity-item--static">
-        <div class="activity-text">
-          <div class="activity-title">We found a cloud backup for your account.</div>
-          <div class="activity-subtitle">Restore here or keep this device empty for now.</div>
+      <div class="session-backup-heading">
+        <span class="session-card-icon" aria-hidden="true"><i class="ph ph-cloud-check"></i></span>
+        <div>
+          <span class="session-eyebrow">A familiar reading space</span>
+          <h2>Cloud backup found</h2>
+          <p>We found a cloud backup for your account. Restore here or keep this device empty for now.</p>
         </div>
       </div>
-      <div class="inline-actions">
+      <div class="session-backup-actions">
         <button class="btn btn-primary btn-sm" id="newDeviceCloudRestoreBtn" type="button">Restore here</button>
         <button class="btn btn-secondary btn-sm" id="newDeviceCloudDismissBtn" type="button">Keep this device empty for now</button>
       </div>
@@ -856,6 +870,7 @@ function renderSessionChoicePage() {
     console.error('[LibriQ] Missing #mainContent while rendering session choice page.');
     return;
   }
+  window.LibriqSessionFallback?.close?.();
   main.hidden = false;
   const firebase = LibriqFirebase.getState();
   if (!Navigation.shouldRenderSessionScreen?.(firebase)) {
@@ -881,7 +896,7 @@ function renderSessionChoicePage() {
   const sessionContext = LibriqFirebase.getSessionContext();
   const hasUser = Boolean(firebase.user);
   const accountName = getDisplayNameForAccount(firebase.user);
-  const loading = !firebase.initialized || (firebase.available && !firebase.ready);
+  const loading = !firebase.ready || firebase.restoringSession;
   const inAppBrowser = Boolean(sessionContext.isInAppBrowser);
   const signInButtonLabel = hasUser ? `Continue as ${Utils.sanitize(accountName)}` : 'Continue with Google';
   const signInButtonHelp = inAppBrowser
@@ -908,14 +923,125 @@ function renderSessionChoicePage() {
   main.innerHTML = `
     <div class="session-page">
       <section class="session-hero">
-        <div class="session-hero-orb session-hero-orb-a"></div>
-        <div class="session-hero-orb session-hero-orb-b"></div>
-
-        <div class="session-copy">
+        <header class="session-masthead">
           <a class="session-brand" href="./" aria-label="LibriQ home">
             <span class="session-brand-mark">Q</span>
             <span><strong>LibriQ</strong><small>Your reading life, in one place</small></span>
           </a>
+          <span class="session-privacy"><i class="ph ph-lock-key" aria-hidden="true"></i> A private space for readers</span>
+        </header>
+        <div class="session-card-stack session-auth-panel">
+          <div class="session-auth-heading">
+            <span>Welcome to LibriQ</span>
+            <h2 id="sessionAuthTitle">${hasUser ? `Continue your library` : 'Welcome back, reader.'}</h2>
+            <p id="sessionAuthCopy">${hasUser ? 'Your account is ready on this device.' : 'Sign in to pick up where you left off.'}</p>
+          </div>
+          ${inAppBrowser ? `
+            <div class="session-inapp-notice" role="alert">
+              <div class="session-inapp-icon"><i class="ph ph-warning-circle"></i></div>
+              <div class="session-inapp-body">
+                <strong>You’re in a social-app browser</strong>
+                <p>Google sign-in is blocked in some social apps. Use email below, or continue in your system browser.</p>
+                <a class="session-inapp-link" href="${openInBrowserHref}" target="_blank" rel="noopener noreferrer">
+                  <i class="ph ph-arrow-square-out"></i> Open in Safari / Chrome
+                </a>
+              </div>
+            </div>
+          ` : ''}
+          ${loading ? `
+            <div class="session-loading-card" aria-live="polite">
+              <div class="session-loading-spinner"></div>
+              <div>
+                <div class="session-card-title">Checking your sign-in status</div>
+                <div class="session-card-body">Just a moment while LibriQ checks whether you are already signed in.</div>
+              </div>
+            </div>
+          ` : ''}
+
+          ${loading ? '' : hasUser ? `
+            <button class="session-card session-card-primary" id="googleContinueBtn" type="button">
+              <div class="session-card-icon"><i class="ph ph-user-circle"></i></div>
+              <div class="session-card-content">
+                <div class="session-card-title">Continue as ${Utils.sanitize(accountName)}</div>
+                <div class="session-card-body">Your signed-in account is ready. Continue to your private library with existing backup and sync settings.</div>
+              </div>
+              <div class="session-card-action"><i class="ph ph-arrow-right"></i></div>
+            </button>
+          ` : !firebase.available ? `
+            <div class="session-card session-card-unavailable">
+              <div class="session-card-icon"><i class="ph ph-warning-circle"></i></div>
+              <div class="session-card-content">
+                <div class="session-card-title">Account sign-in unavailable</div>
+                <div class="session-card-body">LibriQ cannot reach account services right now.</div>
+                <button class="btn btn-secondary" id="sessionServiceRetryBtn" type="button">Retry account services</button>
+              </div>
+            </div>
+          ` : ''}
+
+          ${!loading && !hasUser && firebase.initialized && firebase.available ? `
+            <div class="session-auth-tabs" role="tablist" aria-label="Email account options">
+              <button class="session-auth-tab active" id="sessionSigninTab" role="tab" aria-controls="emailAuthForm" type="button" data-auth-mode="signin" aria-selected="true">Sign in with Email</button>
+              <button class="session-auth-tab" id="sessionSignupTab" role="tab" aria-controls="emailAuthForm" type="button" data-auth-mode="signup" aria-selected="false" tabindex="-1">Create account</button>
+            </div>
+            <form class="session-email-form" id="emailAuthForm" role="tabpanel" aria-labelledby="sessionSigninTab" novalidate>
+              <div class="session-reset-mode" id="sessionResetMode" hidden>
+                <label class="session-field-label" for="sessionResetEmailInput">Account email</label>
+                <input class="form-input" id="sessionResetEmailInput" type="email" placeholder="Email address" autocomplete="email" />
+                <button class="btn btn-primary" id="sessionResetSubmit" type="button">
+                  <i class="ph ph-envelope-simple"></i>
+                  <span>Send reset email</span>
+                </button>
+                <button class="btn btn-secondary" id="sessionResetBackBtn" type="button">
+                  Back to sign in
+                </button>
+              </div>
+              <div class="session-signin-mode" id="sessionSigninMode">
+                <label class="session-field-label" for="sessionEmailInput">Email address</label>
+                <input class="form-input" id="sessionEmailInput" type="email" placeholder="Email address" autocomplete="email" required />
+                <label class="session-field-label" for="sessionPasswordInput">Password</label>
+                <input class="form-input" id="sessionPasswordInput" type="password" placeholder="Password" autocomplete="current-password" required />
+                <p class="session-field-help" id="sessionPasswordHelp" hidden>Use at least 6 characters.</p>
+                <button class="btn btn-primary" id="emailAuthSubmit" type="submit">
+                  <i class="ph ph-envelope-simple"></i>
+                  <span>Sign in with Email</span>
+                </button>
+                <button class="session-link-btn" id="forgotPasswordLink" type="button">Forgot password?</button>
+              </div>
+              <p class="session-auth-error" id="sessionAuthError" role="alert" hidden></p>
+              <p class="session-auth-status" id="sessionAuthStatus" role="status" hidden></p>
+            </form>
+          ` : ''}
+
+          ${!loading && !hasUser && firebase.initialized && firebase.available ? `
+            <div class="session-provider-divider"><span>or continue with</span></div>
+            <button class="session-card session-google-card ${inAppBrowser ? 'session-card-disabled' : ''}" id="googleSignInBtn" type="button" ${inAppBrowser ? 'disabled aria-describedby="googleSignInHelp"' : ''}>
+              <div class="session-card-icon"><i class="ph ph-google-logo"></i></div>
+              <div class="session-card-content">
+                <div class="session-card-title">${signInButtonLabel}</div>
+                <div class="session-card-body" id="googleSignInHelp">${Utils.sanitize(signInButtonHelp)}</div>
+              </div>
+              <div class="session-card-action"><i class="ph ph-arrow-right"></i></div>
+            </button>
+          ` : ''}
+
+          ${browserHelp ? `
+            <div class="session-help-callout">
+              <div class="session-help-copy">${Utils.sanitize(browserHelp)}</div>
+              <a class="session-help-link" href="${openInBrowserHref}" target="_blank" rel="noopener noreferrer">Open in browser</a>
+            </div>
+          ` : ''}
+
+          ${hasUser ? `
+            <button class="session-link-btn" id="switchAccountBtn" type="button">
+              Use another account
+            </button>
+          ` : ''}
+
+          <p class="session-fineprint">
+            <i class="ph ph-lock-key" aria-hidden="true"></i> Your library is private. Sign in to save and sync across devices.
+          </p>
+        </div>
+        <div class="session-copy">
           <span class="session-eyebrow"><i class="ph ph-book-open-text"></i> A calmer way to track what you read</span>
           <h1 class="session-title">Build a reading life worth remembering.</h1>
           <p class="session-subtitle">
@@ -940,7 +1066,7 @@ function renderSessionChoicePage() {
 
           <div class="session-product-preview" aria-label="Preview of the LibriQ reading dashboard">
             <div class="session-preview-topbar">
-              <span>Good evening, Reader</span>
+              <span>A glimpse of your reading space</span>
               <span class="session-preview-avatar">R</span>
             </div>
             <div class="session-preview-heading">Your reading rhythm</div>
@@ -962,7 +1088,7 @@ function renderSessionChoicePage() {
             </div>
             <div class="session-demo-searchbar">
               <i class="ph ph-magnifying-glass session-demo-search-icon"></i>
-              <input type="text" id="sessionDemoInput" class="session-demo-input" placeholder="Search title or author (e.g. Dune)..." autocomplete="off" />
+              <input type="text" id="sessionDemoInput" class="session-demo-input" aria-label="Search books by title or author" placeholder="Search a title or author…" autocomplete="off" />
               <span class="session-demo-spinner" id="sessionDemoSpinner" hidden></span>
             </div>
             <div class="session-demo-tags">
@@ -971,119 +1097,19 @@ function renderSessionChoicePage() {
               <button type="button" class="session-demo-tag" data-query="Atomic Habits">Atomic Habits</button>
               <button type="button" class="session-demo-tag" data-query="Dune">Dune</button>
             </div>
-            <div class="session-demo-results" id="sessionDemoResults" hidden></div>
+            <p class="session-demo-caption">Explore books here. An account is required to save them to your private library.</p>
+            <div class="session-demo-results" id="sessionDemoResults" aria-live="polite" hidden></div>
           </div>
-        </div>
-
-        <div class="session-card-stack session-auth-panel">
-          <div class="session-auth-heading">
-            <span>Welcome to LibriQ</span>
-            <h2>${hasUser ? `Continue your library` : 'Start your reading space'}</h2>
-            <p>${hasUser ? 'Your account is ready on this device.' : 'Sign in or create an account to begin.'}</p>
-          </div>
-          ${inAppBrowser ? `
-            <div class="session-inapp-notice" role="alert">
-              <div class="session-inapp-icon"><i class="ph ph-warning-circle"></i></div>
-              <div class="session-inapp-body">
-                <strong>In-App Browser Detected</strong>
-                <p>Social apps (Instagram, Reddit, TikTok) block Google sign-in. Use email sign-up below or open in your system browser.</p>
-                <a class="session-inapp-link" href="${openInBrowserHref}" target="_blank" rel="noopener noreferrer">
-                  <i class="ph ph-arrow-square-out"></i> Open in Safari / Chrome
-                </a>
-              </div>
-            </div>
-          ` : ''}
-          ${loading ? `
-            <div class="session-loading-card" aria-live="polite">
-              <div class="session-loading-spinner"></div>
-              <div>
-                <div class="session-card-title">Checking your sign-in status</div>
-                <div class="session-card-body">Just a moment while LibriQ checks whether you are already signed in.</div>
-              </div>
-            </div>
-          ` : ''}
-
-          ${loading ? '' : hasUser ? `
-            <button class="session-card session-card-primary" id="googleContinueBtn" type="button">
-              <div class="session-card-icon"><i class="ph ph-user-circle"></i></div>
-              <div class="session-card-content">
-                <div class="session-card-title">Continue as ${Utils.sanitize(accountName)}</div>
-                <div class="session-card-body">Enter LibriQ with your current Google account. Automatic cloud backup is enabled for this session.</div>
-              </div>
-              <div class="session-card-action"><i class="ph ph-arrow-right"></i></div>
-            </button>
-          ` : firebase.initialized ? `
-            <button class="session-card session-card-primary ${inAppBrowser ? 'session-card-disabled' : ''}" id="googleSignInBtn" type="button" ${inAppBrowser ? 'aria-describedby="googleSignInHelp"' : ''}>
-              <div class="session-card-icon"><i class="ph ph-google-logo"></i></div>
-              <div class="session-card-content">
-                <div class="session-card-title">${signInButtonLabel}</div>
-                <div class="session-card-body" id="googleSignInHelp">${Utils.sanitize(signInButtonHelp)}</div>
-              </div>
-              <div class="session-card-action"><i class="ph ph-arrow-right"></i></div>
-            </button>
-          ` : `
-            <div class="session-card session-card-unavailable">
-              <div class="session-card-icon"><i class="ph ph-warning-circle"></i></div>
-              <div class="session-card-content">
-                <div class="session-card-title">Account sign-in unavailable</div>
-                <div class="session-card-body">LibriQ cannot reach account services right now.</div>
-              </div>
-            </div>
-          `}
-
-          ${!loading && !hasUser && firebase.initialized && firebase.available ? `
-            <div class="session-auth-tabs" role="tablist" aria-label="Email account options">
-              <button class="session-auth-tab active" type="button" data-auth-mode="signin" aria-selected="true">Sign in with Email</button>
-              <button class="session-auth-tab" type="button" data-auth-mode="signup" aria-selected="false">Create account</button>
-            </div>
-            <form class="session-email-form" id="emailAuthForm" novalidate>
-              <div class="session-reset-mode" id="sessionResetMode" hidden>
-                <input class="form-input" id="sessionResetEmailInput" type="email" placeholder="Email address" autocomplete="email" />
-                <button class="btn btn-primary" id="sessionResetSubmit" type="button">
-                  <i class="ph ph-envelope-simple"></i>
-                  <span>Send reset email</span>
-                </button>
-                <button class="btn btn-secondary" id="sessionResetBackBtn" type="button">
-                  Back to sign in
-                </button>
-              </div>
-              <div class="session-signin-mode" id="sessionSigninMode">
-                <input class="form-input" id="sessionEmailInput" type="email" placeholder="Email address" autocomplete="email" required />
-                <input class="form-input" id="sessionPasswordInput" type="password" placeholder="Password" autocomplete="current-password" required />
-                <p class="session-auth-error" id="sessionAuthError" role="alert" hidden></p>
-                <button class="btn btn-primary" id="emailAuthSubmit" type="submit">
-                  <i class="ph ph-envelope-simple"></i>
-                  <span>Sign in with Email</span>
-                </button>
-                <button class="session-link-btn" id="forgotPasswordLink" type="button">Forgot password?</button>
-              </div>
-            </form>
-          ` : ''}
-
-          ${browserHelp ? `
-            <div class="session-help-callout">
-              <div class="session-help-copy">${Utils.sanitize(browserHelp)}</div>
-              <a class="session-help-link" href="${openInBrowserHref}" target="_blank" rel="noopener noreferrer">Open in browser</a>
-            </div>
-          ` : ''}
-
-          ${hasUser ? `
-            <button class="session-link-btn" id="switchAccountBtn" type="button">
-              Use another account
-            </button>
-          ` : ''}
-
-          <p class="session-fineprint">
-            Account mode keeps existing backup and sync behavior. Offline mode remains available when the network is unavailable.
-          </p>
         </div>
       </section>
-      <div class="session-fallback-modal" id="sessionFallbackModal" role="dialog" aria-modal="true" aria-labelledby="sessionFallbackTitle" hidden>
+      <div class="session-fallback-modal" id="sessionFallbackModal" role="dialog" aria-modal="true" aria-labelledby="sessionFallbackTitle" aria-describedby="sessionFallbackCopy" hidden>
         <div class="session-fallback-card">
+          <button class="session-fallback-close" id="sessionFallbackClose" type="button" aria-label="Back to sign in" data-dialog-initial-focus><i class="ph ph-x" aria-hidden="true"></i></button>
           <div class="session-card-icon"><i class="ph ph-wifi-slash"></i></div>
           <div>
+            <span class="session-eyebrow">Your reading space can wait</span>
             <h2 class="session-fallback-title" id="sessionFallbackTitle">No internet connection</h2>
-            <p class="session-fallback-copy">LibriQ needs internet to sign in and sync your library. You can continue offline on this device, and your changes will stay local.</p>
+            <p class="session-fallback-copy" id="sessionFallbackCopy">LibriQ needs internet to sign in and sync your library. An existing offline session can continue on this device; changes stay local until you reconnect.</p>
           </div>
           <div class="session-fallback-actions">
             <button class="btn btn-primary" id="authRetryBtn" type="button"><i class="ph ph-arrow-clockwise"></i> Retry</button>
@@ -1093,22 +1119,32 @@ function renderSessionChoicePage() {
       </div>
     </div>`;
 
+  const fallbackModal = document.getElementById('sessionFallbackModal');
+  const sessionHero = main.querySelector('.session-hero');
   const continueOffline = () => {
+    hideFallback();
     Navigation.setSessionPreference('offline');
     window.LibriqSyncBeta?.pauseForOffline?.();
     Navigation.goTo('dashboard');
   };
   const hideFallback = () => {
-    const modal = document.getElementById('sessionFallbackModal');
+    const modal = fallbackModal;
     if (!modal) return;
-    modal.hidden = true;
+    Utils.hide(modal);
+    sessionHero?.removeAttribute('inert');
     fallbackState.modalVisible = false;
     fallbackState.dismissAt = Date.now();
   };
-  const showFallback = () => {
-    const modal = document.getElementById('sessionFallbackModal');
-    if (!modal) return;
-    modal.hidden = false;
+  const showFallback = (reason = 'network') => {
+    const modal = fallbackModal;
+    if (!modal?.isConnected) return;
+    const serviceUnavailable = reason === 'service' || !firebase.available;
+    document.getElementById('sessionFallbackTitle').textContent = serviceUnavailable ? 'Account services unavailable' : 'Connection interrupted';
+    document.getElementById('sessionFallbackCopy').textContent = serviceUnavailable
+      ? 'LibriQ cannot reach account services right now. Try again shortly. An existing offline session can stay on this device without syncing.'
+      : 'LibriQ needs internet to sign in and sync your library. An existing offline session can continue on this device; changes stay local until you reconnect.';
+    Utils.show(modal);
+    sessionHero?.setAttribute('inert', '');
     fallbackState.modalVisible = true;
     fallbackState.dismissAt = 0;
   };
@@ -1119,6 +1155,7 @@ function renderSessionChoicePage() {
     }
   };
   const shouldShowBlockingOffline = () => {
+    if (Navigation.currentPage !== 'session') return false;
     if (typeof navigator === 'undefined') return false;
     if (navigator.onLine !== false) return false;
     if (document.visibilityState && document.visibilityState !== 'visible') return false;
@@ -1163,6 +1200,8 @@ function renderSessionChoicePage() {
     if (!errorEl) return;
     errorEl.textContent = '';
     errorEl.hidden = true;
+    const statusEl = document.getElementById('sessionAuthStatus');
+    if (statusEl) { statusEl.textContent = ''; statusEl.hidden = true; }
   };
   const retryAuth = () => {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
@@ -1178,16 +1217,19 @@ function renderSessionChoicePage() {
     clearAuthError();
     if (resetEmail && currentEmail) resetEmail.value = currentEmail;
     Navigation.setEmailAuthMode?.('reset');
+    resetEmail?.focus();
   };
   const showSigninMode = () => {
     Navigation.setEmailAuthMode?.('signin');
     clearAuthError();
+    document.getElementById('sessionEmailInput')?.focus();
   };
 
   if (!firebase.initialized) {
     hideFallback();
   } else if (authUnavailable && !loading) {
-    scheduleFallback('initial');
+    if (!firebase.available) showFallback('service');
+    else scheduleFallback('initial');
   } else {
     hideFallback();
   }
@@ -1229,6 +1271,14 @@ function renderSessionChoicePage() {
       clearAuthError();
       Navigation.setEmailAuthMode?.(btn.dataset.authMode);
     });
+    btn.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const tabs = Utils.$$('.session-auth-tab');
+      const next = event.key === 'Home' ? tabs[0] : event.key === 'End' ? tabs[tabs.length - 1] : tabs.find(tab => tab !== btn);
+      next?.click();
+      next?.focus();
+    });
   });
 
   document.getElementById('forgotPasswordLink')?.addEventListener('click', () => {
@@ -1245,6 +1295,12 @@ function renderSessionChoicePage() {
 
   document.getElementById('sessionResetSubmit')?.addEventListener('click', async () => {
     const email = String(document.getElementById('sessionResetEmailInput')?.value || '').trim();
+    const submit = document.getElementById('sessionResetSubmit');
+    const label = submit?.querySelector('span');
+    clearAuthError();
+    submit?.setAttribute('disabled', '');
+    submit?.setAttribute('aria-busy', 'true');
+    if (label) label.textContent = 'Sending reset link…';
     try {
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         throw Object.assign(new Error('Enter a valid email address.'), { code: 'auth/invalid-email' });
@@ -1252,6 +1308,11 @@ function renderSessionChoicePage() {
       await LibriqFirebase.sendPasswordResetToEmail(email);
       Utils.toast('Password reset email sent if an account exists for that address.', 'success');
       showSigninMode();
+      const statusEl = document.getElementById('sessionAuthStatus');
+      if (statusEl) {
+        statusEl.textContent = 'Password reset email sent if an account exists for that address. Check your inbox before signing in.';
+        statusEl.hidden = false;
+      }
     } catch (err) {
       const code = String(err?.code || '').toLowerCase();
       const message = code.includes('invalid-email')
@@ -1262,6 +1323,10 @@ function renderSessionChoicePage() {
             ? 'Check your connection and try again.'
             : 'Something went wrong. Please try again.';
       showAuthError(message);
+    } finally {
+      submit?.removeAttribute('disabled');
+      submit?.removeAttribute('aria-busy');
+      if (label) label.textContent = 'Send reset email';
     }
   });
 
@@ -1269,11 +1334,15 @@ function renderSessionChoicePage() {
     event.preventDefault();
     clearAuthError();
     const form = event.currentTarget;
+    const authTrigger = document.activeElement;
     const mode = form?.getAttribute('data-auth-mode') === 'signup' ? 'signup' : 'signin';
     const email = document.getElementById('sessionEmailInput')?.value || '';
     const password = document.getElementById('sessionPasswordInput')?.value || '';
     const submit = document.getElementById('emailAuthSubmit');
+    const label = submit?.querySelector('span');
     submit?.setAttribute('disabled', '');
+    form?.setAttribute('aria-busy', 'true');
+    if (label) label.textContent = mode === 'signup' ? 'Creating your account…' : 'Signing you in…';
     try {
       if (mode === 'signup') {
         await LibriqFirebase.createAccountWithEmail(email, password);
@@ -1287,15 +1356,28 @@ function renderSessionChoicePage() {
     } catch (err) {
       console.warn('[Libriq] Email auth failed:', { code: err?.code || '', message: err?.message || '' });
       const message = getFriendlyAuthError(err, mode);
-      if (isAuthNetworkError(err)) showFallback();
+      if (isAuthNetworkError(err)) {
+        submit?.removeAttribute('disabled');
+        authTrigger?.focus?.({ preventScroll: true });
+        showFallback();
+      }
       showAuthError(message);
     } finally {
       submit?.removeAttribute('disabled');
+      form?.removeAttribute('aria-busy');
+      if (label) label.textContent = mode === 'signup' ? 'Create account' : 'Sign in with Email';
     }
   });
 
   document.getElementById('authRetryBtn')?.addEventListener('click', retryAuth);
+  document.getElementById('sessionServiceRetryBtn')?.addEventListener('click', retryAuth);
   document.getElementById('fallbackOfflineBtn')?.addEventListener('click', continueOffline);
+  document.getElementById('sessionFallbackClose')?.addEventListener('click', hideFallback);
+  document.getElementById('sessionFallbackModal')?.addEventListener('dialog:close', () => {
+    sessionHero?.removeAttribute('inert');
+    fallbackState.modalVisible = false;
+    fallbackState.dismissAt = Date.now();
+  });
 
   document.getElementById('switchAccountBtn')?.addEventListener('click', async () => {
     try {
@@ -1309,9 +1391,7 @@ function renderSessionChoicePage() {
     }
   });
 
-  if (inAppBrowser) {
-    Navigation.setEmailAuthMode?.('signup');
-  }
+  if (document.getElementById('emailAuthForm')) Navigation.setEmailAuthMode?.(inAppBrowser ? 'signup' : 'signin');
 
   // Interactive Live Book Search Preview handlers
   const demoInput = document.getElementById('sessionDemoInput');
@@ -1322,7 +1402,7 @@ function renderSessionChoicePage() {
   const triggerSignupForBook = (title) => {
     Navigation.setEmailAuthMode?.('signup');
     const form = document.getElementById('emailAuthForm');
-    if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (form) form.scrollIntoView({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
     document.getElementById('sessionEmailInput')?.focus();
     Utils.toast?.(`Create an account to save "${title}" to your library!`, 'info');
   };
@@ -1376,6 +1456,10 @@ function renderSessionChoicePage() {
       });
     } catch (err) {
       if (demoSpinner) demoSpinner.hidden = true;
+      if (demoResults) {
+        demoResults.innerHTML = '<div class="session-demo-empty" role="alert">Book search is unavailable right now. Try another search in a moment.</div>';
+        demoResults.hidden = false;
+      }
       console.warn('[Libriq] Demo search error:', err);
     }
   };
@@ -1394,11 +1478,17 @@ function renderSessionChoicePage() {
     });
   });
 
-  if (!window.LibriqSessionFallback.listenersAttached) {
-    window.addEventListener('online', reconcileFallback);
-    window.addEventListener('offline', () => scheduleFallback('offline-event'));
-    document.addEventListener('visibilitychange', reconcileFallback);
-    window.LibriqSessionFallback.listenersAttached = true;
+  fallbackState.reconcile = reconcileFallback;
+  fallbackState.schedule = scheduleFallback;
+  fallbackState.close = () => { clearFallbackTimer(); hideFallback(); };
+  if (!fallbackState.listenersAttached) {
+    window.addEventListener('online', () => fallbackState.reconcile());
+    window.addEventListener('offline', () => fallbackState.schedule('offline-event'));
+    document.addEventListener('visibilitychange', () => fallbackState.reconcile());
+    window.addEventListener('libriq:page-changed', event => {
+      if (event.detail?.page !== 'session') fallbackState.close();
+    });
+    fallbackState.listenersAttached = true;
   }
 }
 
