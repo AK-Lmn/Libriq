@@ -1,0 +1,102 @@
+#quotesPage {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-8) var(--space-16);
+  color: var(--text-body);
+}
+
+#quotesPage .quotes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: var(--space-8);
+  margin-bottom: var(--space-8);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-2xl);
+  background: var(--glass-fill-2);
+  box-shadow: var(--shadow-glass);
+  backdrop-filter: blur(var(--glass-blur-card));
+  -webkit-backdrop-filter: blur(var(--glass-blur-card));
+}
+
+#quotesPage .quotes-heading { min-width: 0; }
+#quotesPage .quotes-eyebrow { display: flex; align-items: center; gap: var(--space-2); font: 500 var(--t-xs)/1.6 var(--font-mono); color: var(--text-body); letter-spacing: .08em; text-transform: uppercase; }
+#quotesPage .page-title { color: var(--text-strong); font: 400 clamp(30px, 4vw, 40px)/1.25 var(--font-serif); margin: var(--space-3) 0 var(--space-2); }
+#quotesPage .page-subtitle { margin: 0; color: var(--text-body); max-width: 42ch; }
+#quotesPage .quotes-total { display: flex; align-items: center; gap: var(--space-4); flex-shrink: 0; }
+#quotesPage .quotes-total > i { font-size: 36px; color: var(--indigo); }
+#quotesPage .quotes-total > span { display: grid; gap: var(--space-1); }
+#quotesPage .quotes-total strong { font: 500 32px/1.2 var(--font-mono); color: var(--text-strong); }
+#quotesPage .quotes-total span span { color: var(--text-body); font-size: var(--t-sm); }
+#quotesPage .quotes-search-label { display: block; font-weight: 500; color: var(--text-strong); margin-bottom: var(--space-2); }
+#quotesPage .quotes-search-wrap { display: flex; align-items: center; gap: var(--space-3); padding-left: var(--space-4); min-height: 52px; border: 1px solid var(--glass-border); border-radius: var(--r-md); background: var(--glass-fill-1); }
+#quotesPage .quotes-search-wrap > i { color: var(--text-body); font-size: 20px; }
+#quotesPage .quotes-search-input { flex: 1; min-width: 0; width: 100%; height: 50px; background: transparent; border: 0; color: var(--text-strong); font: inherit; padding-right: var(--space-3); }
+#quotesPage .quotes-search-input::placeholder { color: var(--text-body); opacity: 1; }
+#quotesPage .quotes-search-clear { flex-shrink: 0; width: 44px; min-height: 44px; background: transparent; border: 0; border-radius: var(--r-sm); color: var(--text-body); cursor: pointer; font-size: 20px; }
+#quotesPage .quotes-search-clear[hidden] { display: none; }
+#quotesPage .quotes-filters { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-5); }
+#quotesPage .chip { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 44px; max-width: 100%; padding: var(--space-2) var(--space-4); border: 1px solid var(--glass-border); border-radius: var(--r-pill); color: var(--text-body); background: var(--glass-fill-1); font: 500 var(--t-sm)/1.4 var(--font-ui); cursor: pointer; }
+#quotesPage .chip.active { color: var(--text-strong); background: var(--indigo-12); border-color: var(--indigo); }
+#quotesPage .quotes-filter-count { font: 400 var(--t-xs)/1.5 var(--font-mono); color: var(--text-body); }
+#quotesPage .quotes-results-status { font: 400 var(--t-sm)/1.6 var(--font-mono); margin: var(--space-5) 0 var(--space-4); color: var(--text-body); }
+#quotesPage .quotes-list { display: grid; gap: var(--space-5); }
+#quotesPage .quote-list-item { min-width: 0; overflow-wrap: anywhere; padding: var(--space-6); border: 1px solid var(--glass-border); border-radius: var(--r-xl); background: var(--glass-fill-1); box-shadow: var(--shadow-glass); }
+#quotesPage .quote-card-meta { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-5); }
+#quotesPage .quote-source { display: inline-flex; align-items: center; gap: var(--space-2); background: var(--indigo-12); border-radius: var(--r-pill); padding: var(--space-1) var(--space-3); color: var(--text-strong); font: 500 var(--t-xs)/1.8 var(--font-ui); }
+#quotesPage .quote-source i { color: var(--indigo); font-size: 16px; }
+#quotesPage .quote-list-item--note .quote-source { background: var(--glass-fill-2); }
+#quotesPage .quote-list-item--note .quote-source i { color: var(--teal); }
+#quotesPage .quote-page { font: 400 var(--t-xs)/1.7 var(--font-mono); color: var(--text-body); }
+#quotesPage .quote-list-copy { min-width: 0; }
+#quotesPage .quote-list-text { margin: 0; color: var(--text-strong); font: 400 clamp(18px, 2vw, 22px)/1.65 var(--font-serif); white-space: pre-wrap; overflow-wrap: anywhere; }
+#quotesPage .quote-list-item--note .quote-list-text { font-family: var(--font-ui); font-size: var(--t-body); }
+#quotesPage .quote-note { margin-top: var(--space-5); padding-left: var(--space-4); border-left: 2px solid var(--teal); }
+#quotesPage .quote-note span { font: 500 var(--t-xs)/1.7 var(--font-mono); color: var(--text-body); text-transform: uppercase; letter-spacing: .05em; }
+#quotesPage .quote-note p { white-space: pre-wrap; margin: var(--space-1) 0 0; color: var(--text-body); }
+#quotesPage .quote-citation { display: flex; gap: var(--space-2); align-items: baseline; margin-top: var(--space-5); color: var(--text-body); font-size: var(--t-sm); }
+#quotesPage .quote-citation i { flex-shrink: 0; color: var(--indigo); }
+#quotesPage .quote-list-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--glass-border); }
+#quotesPage .quote-list-actions .btn { min-height: 44px; max-width: 100%; white-space: normal; color: var(--text-body); background: var(--glass-fill-1); border: 1px solid var(--glass-border); border-radius: var(--r-sm); padding: var(--space-2) var(--space-3); font: 500 var(--t-sm)/1.5 var(--font-ui); }
+#quotesPage .quote-list-actions [data-action="open-quote-book"] { margin-left: auto; color: var(--text-strong); border-color: var(--indigo); background: var(--indigo-12); }
+#quotesPage .quote-empty-state { padding: var(--space-12) var(--space-6); border: 1px dashed var(--glass-border); border-radius: var(--r-xl); background: var(--glass-fill-1); }
+#quotesPage .empty-state-icon { color: var(--indigo); }
+#quotesPage .empty-state-title { color: var(--text-strong); }
+#quotesPage .empty-state-body { color: var(--text-body); }
+#quotesPage :is(button, input):focus-visible { outline: 2px solid var(--indigo); outline-offset: 3px; }
+#quotesPage button:hover { background: var(--indigo-12); }
+#quotesPage .ph { display: inline-block; width: 1em; height: 1em; flex-shrink: 0; background: currentColor; mask: var(--quote-icon) center / contain no-repeat; -webkit-mask: var(--quote-icon) center / contain no-repeat; }
+#quotesPage .ph::before { content: none; }
+#quotesPage .ph-lock-simple { --quote-icon: url('../../assets/dashboard/desktop-lock-keyhole.svg'); }
+#quotesPage .ph-magnifying-glass { --quote-icon: url('../../assets/revamp/library/search.svg'); }
+#quotesPage .ph-book-open { --quote-icon: url('../../assets/dashboard/desktop-book-open.svg'); }
+#quotesPage .ph-pencil-simple { --quote-icon: url('../../assets/dashboard/desktop-notebook-pen.svg'); }
+#quotesPage .ph-book-bookmark { --quote-icon: url('../../assets/dashboard/desktop-bookmark.svg'); }
+#quotesPage :is(.ph-x, .ph-quotes) { background: none; mask: none; -webkit-mask: none; font-family: var(--font-serif); font-style: normal; }
+#quotesPage .ph-x::before { content: '×'; display: block; font: 400 24px/1 var(--font-ui); }
+#quotesPage .ph-quotes::before { content: '“'; display: block; font: 500 1.5em/1 var(--font-serif); }
+
+@media (max-width: 768px) {
+  #quotesPage { padding: var(--space-5) var(--space-4) calc(var(--space-16) + env(safe-area-inset-bottom)); }
+  #quotesPage .quotes-header { align-items: flex-start; flex-direction: column; gap: var(--space-5); padding: var(--space-6); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  #quotesPage .quotes-total { gap: var(--space-3); }
+  #quotesPage .quotes-total > span { display: flex; align-items: baseline; gap: var(--space-2); }
+  #quotesPage .quotes-total strong { font-size: 24px; }
+  #quotesPage .quotes-total > i { font-size: 24px; }
+  #quotesPage .quote-list-item { padding: var(--space-5); }
+  #quotesPage .quote-list-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #quotesPage .quote-list-actions [data-action="open-quote-book"] { margin-left: 0; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  #quotesPage :is(.quotes-header, .quote-list-item, .quote-empty-state, .quotes-search-wrap, .chip, .quote-list-actions .btn, .quote-source) { background: var(--glass-solid-1); backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  #quotesPage :is(.quotes-header, .quote-list-item, .quote-empty-state, .quotes-search-wrap, .chip, .quote-list-actions .btn, .quote-source) { background: var(--glass-solid-1); backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #quotesPage *, #quotesPage *::before, #quotesPage *::after { animation: none !important; transition: none !important; }
+}
