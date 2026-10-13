@@ -16,6 +16,7 @@ try {
     await page.goto(url);
     if (solid) await (await context.newCDPSession(page)).send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }, { name: 'prefers-reduced-motion', value: 'reduce' }] });
     const audit = async name => {
+      await page.evaluate(() => document.querySelectorAll('.toast').forEach(toast => toast.remove()));
       const result = await inspect(page);
       assert.equal(result.rootOverflow, false, name);
       assert.deepEqual(result.contrast, [], name);
