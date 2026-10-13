@@ -11,7 +11,8 @@ const toasts = [];
 const profilePage = createProfilePage({
   storage: {
     getProfile: () => ({ name: 'Signed In Reader', bio: 'Book lover' }),
-    getStats: () => ({ total: 12, finished: 7, totalPages: 3456, avgRating: 4.5 }),
+    getStats: () => ({ total: 12, finished: 7, finishedThisYear: 3, totalPages: 3456, avgRating: 4.5, ratedCount: 6 }),
+    getStreak: () => ({ best: 19 }),
     saveProfile: profile => saved.push(profile),
   },
   utils: {
@@ -28,7 +29,19 @@ profilePage();
 assert.match(main.innerHTML, /id="profilePage"/);
 assert.match(main.innerHTML, /value="Signed In Reader"/);
 assert.match(main.innerHTML, /Book lover/);
+assert.match(main.innerHTML, /<details class="profile-editor">/);
+assert.match(main.innerHTML, /maxlength="40" aria-describedby="profileNameHelp"/);
+assert.match(main.innerHTML, /maxlength="200" rows="4" aria-describedby="profileBioHelp"/);
+assert.match(main.innerHTML, /class="profile-editor-body"/);
+assert.doesNotMatch(main.innerHTML, /type="file"|name="email"|name="location"/);
 assert.match(main.innerHTML, /formatted:3456/);
+assert.match(main.innerHTML, /3 finished this year/);
+assert.match(main.innerHTML, /6 rated books/);
+assert.match(main.innerHTML, /Longest streak[\s\S]*19/);
+assert.equal((main.innerHTML.match(/class="profile-stat"/g) || []).length, 5);
+assert.match(main.innerHTML, /Account email unavailable/);
+assert.match(main.innerHTML, /Join date unavailable/);
+assert.doesNotMatch(main.innerHTML, /Eleanor Hayes|January 12, 2024|eleanor.hayes/);
 assert.doesNotMatch(main.innerHTML, /onclick=|onsubmit=/);
 assert.equal(profilePage.getDisplayNameForAccount({ displayName: 'Account Reader' }), 'Signed In Reader');
 
@@ -54,11 +67,14 @@ const firebaseProfilePage = createProfilePage({
     getStats: () => ({ total: 0, finished: 0, totalPages: 0, avgRating: 0 }),
   },
   utils: { sanitize: value => String(value ?? ''), formatNumber: value => String(value ?? 0) },
-  actions: { getFirebaseState: () => ({ user: { displayName: 'Account Reader', email: 'account@example.com' } }) },
+  actions: { getFirebaseState: () => ({ user: { displayName: 'Account Reader', email: 'account@example.com', metadata: { creationTime: '2025-06-17T12:00:00Z' } } }) },
   documentRoot: { getElementById: id => id === 'mainContent' ? firebaseProfileMain : null },
 });
 firebaseProfilePage();
 assert.match(firebaseProfileMain.innerHTML, /value="Account Reader"/);
+assert.match(firebaseProfileMain.innerHTML, /account@example\.com/);
+assert.match(firebaseProfileMain.innerHTML, /Joined June 17, 2025/);
+assert.match(firebaseProfileMain.innerHTML, /0 rated books/);
 const dashboardSource = fs.readFileSync('frontend/js/dashboard.js', 'utf8');
 assert.match(dashboardSource, /resolveAccountDisplayName\(profile, LibriqFirebase\.getState\(\)\.user\)/);
 
@@ -70,4 +86,11 @@ listeners.get('submit')({
 assert.equal(prevented, true);
 assert.deepEqual(saved, [{ name: 'Updated Reader', bio: 'Always reading.' }]);
 assert.deepEqual(toasts, [['Profile saved', 'success']]);
+let focused = false;
+const editor = { open: true, querySelector: () => ({ focus: () => { focused = true; } }) };
+listeners.get('keydown')({ key: 'Escape', target: { closest: () => editor }, preventDefault() {} });
+assert.equal(editor.open, false);
+assert.equal(focused, true);
+profilePage();
+assert.equal(listeners.size, 2);
 console.log('Profile page tests passed');

@@ -27,6 +27,7 @@ globalThis.sessionStorage = {
 };
 const classList = { add() {}, remove() {}, toggle() {}, contains: () => false };
 globalThis.document = {
+  addEventListener: (type) => listeners.push(`document:${type}`),
   body: { classList, style: {} },
   documentElement: { classList, getAttribute: () => 'dark', setAttribute() {} },
   getElementById: () => null,

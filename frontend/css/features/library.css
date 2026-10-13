@@ -1,890 +1,446 @@
-﻿#libraryPage {
-  max-width: 1320px;
-  padding-top: var(--space-4);
-  padding-bottom: var(--space-8);
-}
-
-#libraryPage .library-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-6);
-  margin-bottom: var(--space-6);
-}
-
-#libraryPage .library-heading {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-#libraryPage .library-eyebrow {
-  color: var(--text-muted);
-  font-size: var(--t-eyebrow);
-  font-weight: var(--weight-medium);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-#libraryPage .page-title {
-  font-family: var(--font-serif);
-  font-size: clamp(3rem, 5vw, 4.6rem);
+/* Library and shelves: geometry from the LibriQ revamp frames. */
+:is(#libraryPage, #statusPage) {
+  --library-secondary: #c2c8d6;
+  --library-reading: #aab5ff;
+  --library-finished: #80ddd4;
+  --library-border: rgba(255,255,255,.10);
   color: var(--text-strong);
-  letter-spacing: 0;
-  line-height: 0.95;
+  max-width: none;
+  padding: 48px;
 }
-
-#libraryPage .page-subtitle {
-  color: var(--text-secondary);
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+#libraryPage { padding: 48px 64px 32px; }
+[data-theme="light"] :is(#libraryPage, #statusPage) {
+  --library-secondary: #444b5c;
+  --library-reading: #404bb1;
+  --library-finished: #216a62;
+  --library-border: rgba(20,24,36,.12);
 }
-
-#libraryPage .library-filters {
-  margin-bottom: var(--space-6);
-  padding: var(--space-2);
-  background: rgba(255,255,255,0.62);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-lg);
+:is(#libraryPage, #statusPage) .library-icon {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  mask: var(--library-icon) center / contain no-repeat;
+  -webkit-mask: var(--library-icon) center / contain no-repeat;
 }
-
-#libraryPage .library-tools {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: var(--space-3);
-  align-items: end;
-  margin: var(--space-4) 0 var(--space-5);
-}
-
-#libraryPage .library-search-wrap {
+:is(#libraryPage, #statusPage) .library-icon--alert { --library-icon: url("../../assets/revamp/library/alert.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--bookmark-active { --library-icon: url("../../assets/revamp/library/bookmark-active.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--bookmark { --library-icon: url("../../assets/revamp/library/bookmark.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--books { --library-icon: url("../../assets/revamp/library/books.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--chevron { --library-icon: url("../../assets/revamp/library/chevron.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--grid { --library-icon: url("../../assets/revamp/library/grid.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--heart-active { --library-icon: url("../../assets/revamp/library/heart-active.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--heart { --library-icon: url("../../assets/revamp/library/heart.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--lock { --library-icon: url("../../assets/revamp/library/lock.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--plus { --library-icon: url("../../assets/revamp/library/plus.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--search { --library-icon: url("../../assets/revamp/library/search.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--shelf-search { --library-icon: url("../../assets/revamp/library/shelf-search.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--shield { --library-icon: url("../../assets/revamp/library/shield.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--sort { --library-icon: url("../../assets/revamp/library/sort.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--status-dnf { --library-icon: url("../../assets/revamp/library/status-dnf.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--status-finished { --library-icon: url("../../assets/revamp/library/status-finished.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--status-reading { --library-icon: url("../../assets/revamp/library/status-reading.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--status-wishlist { --library-icon: url("../../assets/revamp/library/status-wishlist.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--shelf-empty-favorites { --library-icon: url("../../assets/revamp/library/shelf-empty-favorites.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--shelf-empty-finished { --library-icon: url("../../assets/revamp/library/shelf-empty-finished.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--shelf-empty-reading { --library-icon: url("../../assets/revamp/library/shelf-empty-reading.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--shelf-empty-wishlist { --library-icon: url("../../assets/revamp/library/shelf-empty-wishlist.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--x { --library-icon: url("../../assets/revamp/library/x.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--search,
+:is(#libraryPage, #statusPage) .library-icon--shelf-search { width: 18px; height: 18px; }
+:is(#libraryPage, #statusPage) .library-icon--shield { width: 14px; height: 14px; }
+:is(#libraryPage, #statusPage) .library-header,
+:is(#libraryPage, #statusPage) .status-header {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  min-height: 48px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--border-default);
-  border-radius: 12px;
-  background: var(--surface-3);
+  justify-content: space-between;
+  margin-bottom: 28px;
+  gap: 20px;
 }
-
-#libraryPage .library-search-icon {
-  color: var(--text-dim);
-  flex-shrink: 0;
+:is(#libraryPage, #statusPage) .page-title {
+  margin: 0 0 8px;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 48px;
+  letter-spacing: -.8px;
+  line-height: 1.2;
 }
-
-#libraryPage .library-search-input {
-  flex: 1;
-  min-width: 0;
-  background: transparent;
-  color: var(--text-primary);
-  font: inherit;
+#statusPage .page-title { font-size: 38px; letter-spacing: -1px; }
+:is(#libraryPage, #statusPage) .page-subtitle {
+  margin: 0;
+  color: var(--library-secondary);
+  font-size: 14px;
+  line-height: 21px;
 }
-
-#libraryPage .library-search-input::placeholder {
-  color: var(--text-dim);
+#libraryPage .page-subtitle { font-family: var(--font-mono); font-size: 12px; }
+:is(#libraryPage, #statusPage) .btn-primary {
+  background: var(--glass-fill-3);
+  border: 1px solid var(--library-border);
+  color: var(--text-strong);
+  box-shadow: var(--shadow-sm);
 }
-
-#libraryPage .library-search-clear {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-md);
-  color: var(--text-dim);
+:is(#libraryPage, #statusPage) .btn-primary:hover { border-color: var(--indigo); background: var(--glass-fill-4); }
+:is(#libraryPage, #statusPage) .library-add-book { min-height: 44px; padding: 0 18px; font-size: 13px; }
+:is(#libraryPage, #statusPage) .library-tools {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 216px 200px;
+  gap: 12px;
+  margin-bottom: 24px;
 }
-
-#libraryPage .library-sort-wrap {
+:is(#libraryPage, #statusPage) .library-search-wrap,
+:is(#libraryPage, #statusPage) .library-sort-wrap {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 210px;
-}
-
-#libraryPage .library-sort-label {
-  font-size: var(--text-xs);
-  color: var(--text-dim);
-  font-weight: var(--weight-medium);
-}
-
-#libraryPage .library-sort-select {
-  min-height: 48px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--border-default);
+  align-items: center;
+  min-width: 0;
+  height: 48px;
+  border: 1px solid var(--library-border);
   border-radius: 12px;
-  background: var(--surface-3);
-  color: var(--text-primary);
-  font: inherit;
+  background: var(--glass-fill-2);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
 }
-
-#libraryPage .library-filters .chip {
-  min-height: 38px;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-full);
+:is(#libraryPage, #statusPage) .library-search-wrap > .library-icon { position: absolute; left: 16px; color: var(--library-secondary); pointer-events: none; }
+:is(#libraryPage, #statusPage) .library-search-input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0 48px 0 44px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-strong);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  box-shadow: none;
 }
-
-#libraryPage .library-filters .chip span {
+:is(#libraryPage, #statusPage) .library-search-input::placeholder { color: var(--library-secondary); opacity: 1; }
+:is(#libraryPage, #statusPage) .library-search-input::-webkit-search-cancel-button { -webkit-appearance: none; }
+:is(#libraryPage, #statusPage) .library-search-clear {
+  position: absolute;
+  right: 2px;
+  top: 1px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--library-secondary);
+  cursor: pointer;
+}
+:is(#libraryPage, #statusPage) .library-search-clear[hidden] { display: none; }
+:is(#libraryPage, #statusPage) .library-sort-wrap { display: block; padding: 6px 16px; }
+:is(#libraryPage, #statusPage) .library-sort-label { display: block; font-size: 10px; line-height: 14px; color: var(--library-secondary); pointer-events: none; }
+:is(#libraryPage, #statusPage) .library-sort-select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 20px 32px 6px 16px;
+  border: 0;
+  border-radius: 12px;
+  box-shadow: none;
+  appearance: none;
+  background: transparent;
+  color: var(--text-strong);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  cursor: pointer;
+}
+:is(#libraryPage, #statusPage) .library-sort-select option { background: var(--glass-solid-2); color: var(--text-strong); }
+:is(#libraryPage, #statusPage) .library-sort-wrap > .library-icon { position: absolute; right: 12px; top: 16px; pointer-events: none; color: var(--library-secondary); }
+:is(#libraryPage, #statusPage) .library-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+:is(#libraryPage, #statusPage) .chip {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-full);
-  background: rgba(255,255,255,0.04);
-  color: var(--text-dim);
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--library-border);
+  border-radius: 999px;
+  background: var(--glass-fill-1);
+  color: var(--library-secondary);
+  font-size: 12px;
+  cursor: pointer;
 }
-
-#libraryPage .library-filters .chip.active span {
-  background: var(--gold-18);
-  color: var(--gold);
+:is(#libraryPage, #statusPage) .chip.active {
+  background: var(--indigo-12);
+  color: var(--library-reading);
+  border-color: var(--indigo);
 }
-
-#libraryPage .books-grid {
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: var(--space-6);
+:is(#libraryPage, #statusPage) .chip span { font-family: var(--font-mono); font-size: 10px; }
+:is(#libraryPage, #statusPage) .library-grid-summary,
+:is(#libraryPage, #statusPage) .library-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: var(--library-secondary);
+  font-size: 11px;
+  line-height: 18px;
+}
+:is(#libraryPage, #statusPage) .library-grid-summary { margin-bottom: 16px; }
+:is(#libraryPage, #statusPage) .library-footer { border-top: 1px solid var(--library-border); margin-top: 28px; padding-top: 20px; }
+:is(#libraryPage, #statusPage) .library-footer > span { display: flex; align-items: center; gap: 8px; }
+:is(#libraryPage, #statusPage) .books-grid { display: grid; gap: 24px; grid-template-columns: repeat(3, minmax(0,1fr)); }
+#statusPage .books-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 20px; }
+#statusPage .book-card { padding: 16px; }
+:is(#libraryPage, #statusPage) .book-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
   align-items: stretch;
-}
-
-#libraryPage .book-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
   min-width: 0;
-  padding: var(--space-3);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 24px;
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
+  padding: 0;
+  gap: 0;
+  overflow: visible;
+  border: 1px solid var(--library-border);
+  border-radius: 16px;
+  background: var(--glass-fill-3);
+  backdrop-filter: blur(var(--glass-blur-card));
+  -webkit-backdrop-filter: blur(var(--glass-blur-card));
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--shadow-glass);
+  transition: transform 200ms var(--ease-out), border-color 200ms ease, box-shadow 200ms ease;
 }
-
-#libraryPage .book-card:hover {
-  background: var(--bg-elevated);
-  border-color: var(--gold-18);
-  box-shadow: var(--shadow-card);
-  transform: translateY(-2px);
+:is(#libraryPage, #statusPage) .book-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--indigo);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 14px 36px var(--indigo-12);
 }
-
-#libraryPage .book-card > .book-cover {
+:is(#libraryPage, #statusPage) .book-card > .book-cover {
+  position: relative;
+  display: grid;
+  place-items: center;
   width: 100%;
-  height: auto;
-  aspect-ratio: 2 / 3;
-  border-radius: 18px;
+  height: 260px;
+  min-height: 260px;
+  border: 0;
+  border-radius: 15px 15px 0 0;
+  background: linear-gradient(145deg,var(--indigo-08),transparent 80%), var(--glass-fill-1);
+  box-shadow: none;
+  overflow: hidden;
+  transform: none;
+}
+#statusPage .book-card > .book-cover { height: 264px; min-height: 264px; border-radius: 8px; }
+:is(#libraryPage, #statusPage) .book-card > .book-cover::after { content: none; }
+:is(#libraryPage, #statusPage) .book-card > .book-cover::before { content: none; }
+:is(#libraryPage, #statusPage) .book-card .book-cover img {
+  width: auto;
+  height: 228px;
+  max-width: 82%;
+  max-height: 88%;
+  object-fit: contain;
+  border-radius: 4px;
   box-shadow: var(--shadow-cover);
+  transform: none;
 }
+:is(#libraryPage, #statusPage) .book-card .book-cover-placeholder { width: 152px; height: 228px; max-width: 82%; max-height: 88%; border-radius: 4px; }
+:is(#libraryPage, #statusPage) .book-card-info { display: block; gap: 0; padding: 20px; min-width: 0; width: 100%; }
+#statusPage .book-card-info { display: flex; flex-direction: column; padding: 20px 0 0; }
+#statusPage .book-card-meta { order: -1; padding-right: 32px; }
 
-#libraryPage .book-card-info {
-  gap: var(--space-2);
-  min-height: 0;
-}
 
-#libraryPage .book-card-title {
+#statusPage .card-fav-btn :is(.library-icon--heart, .library-icon--heart-active),
+#libraryPage .card-fav-btn :is(.library-icon--bookmark, .library-icon--bookmark-active) { display: none; }
+
+#statusPage .library-card-disclosure[open] .library-card-extra { margin-top: 12px; }
+:is(#libraryPage, #statusPage) .book-card-title {
+  display: -webkit-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 26px;
+  padding: 0;
+  margin: 0 0 8px;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
   color: var(--text-strong);
+  text-align: left;
   font-family: var(--font-serif);
-  font-size: var(--text-lg);
-  font-weight: var(--weight-semi);
-  line-height: var(--leading-snug);
-}
-
-#libraryPage .book-card-author {
-  color: var(--text-body);
-  font-size: var(--text-sm);
-  line-height: var(--leading-normal);
-  white-space: nowrap;
+  font-size: 21px;
+  font-weight: 400;
+  line-height: 26px;
+  letter-spacing: -.3px;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
   overflow: hidden;
-  text-overflow: ellipsis;
+  cursor: pointer;
 }
-
-#libraryPage .book-card-meta {
-  gap: var(--space-2);
-  margin-top: 2px;
-}
-
-#libraryPage .book-card-meta .star-rating {
-  margin-left: 0;
-}
-
-#libraryPage .badge {
-  min-height: 24px;
-}
-
-#libraryPage .reading-progress {
-  margin-top: var(--space-2);
-  padding: var(--space-2);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-md);
-  background: var(--bg-elevated);
-}
-
-#libraryPage .progress-label {
-  gap: var(--space-2);
-}
-
-#libraryPage .progress-text {
-  color: var(--text-dim);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-#libraryPage .progress-pct {
-  flex-shrink: 0;
-  color: var(--gold);
-}
-
-#libraryPage .book-card-actions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  margin-top: var(--space-1);
-  padding-top: 6px;
-  border-top: 1px solid var(--border-divider);
-}
-
-#libraryPage .book-card-actions-primary,
-#libraryPage .book-card-actions-secondary {
-  display: flex;
+:is(#libraryPage, #statusPage) .book-card-author { margin-bottom: 12px; color: var(--library-secondary); font-size: 12px; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:is(#libraryPage, #statusPage) .book-card-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 0; margin: 0 0 14px; }
+:is(#libraryPage, #statusPage) .book-card-meta .badge {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  width: 100%;
-  min-width: 0;
+  width: fit-content;
+  min-height: 22px;
+  padding: 3px 8px;
+  border: 1px solid var(--library-border);
+  border-radius: 6px;
+  background: var(--glass-fill-2);
+  color: var(--library-secondary);
+  font-size: 10px;
+  line-height: 14px;
 }
-
-#libraryPage .book-card-actions-primary {
-  flex-wrap: wrap;
-}
-
-#libraryPage .book-card-actions-secondary {
-  flex-wrap: nowrap;
-}
-
-#libraryPage .book-card-actions .btn:not(.btn-icon) {
-  flex: 1 1 0;
-  min-width: 0;
-  padding-left: 10px;
-  padding-right: 10px;
-  white-space: nowrap;
-}
-
-#libraryPage .book-card--finished .book-card-actions {
-  margin-top: var(--space-1);
-}
-
-#libraryPage .book-card--finished .book-card-complete {
-  margin-top: var(--space-1);
-  padding: 2px var(--space-2);
-}
-
-#libraryPage .book-card--finished .book-card-meta {
-  min-height: 40px;
-}
-
-#libraryPage .book-card-actions .btn-icon {
-  flex: 0 0 36px;
-  width: 36px;
-  min-width: 36px;
-  max-width: 36px;
-}
-
-#libraryPage .book-card-actions .btn-ghost.btn-icon {
-  background: var(--gold-04);
-  border-color: var(--gold-08);
-  color: var(--text-body);
-}
-
-#libraryPage .book-card-actions .btn-ghost.btn-icon:hover,
-#libraryPage .book-card-actions .btn-ghost.btn-icon:focus-visible {
-  background: var(--gold-12);
-  border-color: var(--gold-18);
+:is(#libraryPage, #statusPage) .book-card-meta .badge-reading { color: var(--library-reading); border-color: var(--indigo-20); }
+:is(#libraryPage, #statusPage) .book-card-meta .badge-finished { color: var(--library-finished); border-color: var(--teal); }
+:is(#libraryPage, #statusPage) .book-card-meta .library-icon { width: 5px; height: 5px; }
+:is(#libraryPage, #statusPage) .card-fav-btn {
+  position: absolute;
+  z-index: 1;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border: 1px solid var(--library-border);
+  border-radius: 12px;
+  background: var(--glass-solid-2);
   color: var(--text-strong);
 }
+:is(#libraryPage, #statusPage) .card-fav-btn.active { color: var(--library-reading); border-color: var(--indigo); }
+:is(#libraryPage, #statusPage) .card-fav-btn .ph { display: none; }
+:is(#libraryPage, #statusPage) .card-fav-btn:hover { background: var(--glass-solid-3); }
+:is(#libraryPage, #statusPage) .library-card-progress { margin: 0; padding: 0; }
+:is(#libraryPage, #statusPage) .progress-label { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 0 0 8px; }
+:is(#libraryPage, #statusPage) :is(.progress-text, .progress-pct) { font-family: var(--font-mono); font-size: 10px; line-height: 14px; color: var(--library-secondary); }
+:is(#libraryPage, #statusPage) .progress-pct { color: var(--library-reading); }
+:is(#libraryPage, #statusPage) .progress-bar { height: 3px; border-radius: 999px; background: var(--indigo-12); overflow: hidden; }
+:is(#libraryPage, #statusPage) .progress-fill { height: 100%; min-width: 0; border-radius: 999px; box-shadow: none; background: var(--indigo); }
+:is(#libraryPage, #statusPage) .book-card--finished .progress-fill { background: var(--teal); }
+:is(#libraryPage, #statusPage) .star-rating .star.filled { color: var(--library-reading); }
+:is(#libraryPage, #statusPage) .library-card-metadata-note { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 10px; line-height: 14px; color: var(--library-secondary); }
+:is(#libraryPage, #statusPage) .library-card-metadata-note .library-icon { width: 12px; height: 12px; }
+:is(#libraryPage, #statusPage) .library-card-disclosure { margin-top: 12px; color: var(--library-secondary); }
+:is(#libraryPage, #statusPage) .library-card-disclosure summary { width: fit-content; min-height: 44px; display: flex; align-items: center; font-size: 11px; cursor: pointer; }
+:is(#libraryPage, #statusPage) .library-card-disclosure summary::after { content: "⌄"; margin-left: 8px; }
+:is(#libraryPage, #statusPage) .library-card-disclosure[open] summary::after { content: "⌃"; }
+:is(#libraryPage, #statusPage) .library-card-disclosure summary::-webkit-details-marker { display: none; }
+:is(#libraryPage, #statusPage) .library-card-extra { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+:is(#libraryPage, #statusPage) .library-card-extra .badge { color: var(--library-secondary); background: var(--glass-fill-2); }
+:is(#libraryPage, #statusPage) .book-card-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 0; border: 0; }
+:is(#libraryPage, #statusPage) .book-card-actions .btn { min-height: 44px; font-size: 11px; color: var(--text-strong); }
+:is(#libraryPage, #statusPage) .library-breadcrumb { display: flex; align-items: center; gap: 8px; margin-bottom: 32px; color: var(--library-secondary); font-size: 11px; }
+#statusPage .library-breadcrumb .btn-ghost { padding: 0; min-height: 44px; color: var(--library-secondary); font-size: 11px; }
+#statusPage .library-breadcrumb .library-add-book { margin-left: auto; }
+:is(#libraryPage, #statusPage) .library-eyebrow { display: block; margin-bottom: 12px; color: var(--library-finished); font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.4px; }
+#statusPage .shelf-summary { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+#statusPage .shelf-summary > span { font-family: var(--font-mono); font-size: 21px; }
+#statusPage .shelf-summary small { font-size: 11px; color: var(--library-secondary); }
+:is(#libraryPage, #statusPage) .empty-state { grid-column: 1 / -1; min-height: 416px; padding: 32px; border: 1px solid var(--library-border); border-radius: 24px; background: var(--glass-fill-2); box-shadow: inset 0 1px 0 var(--glass-highlight); }
+:is(#libraryPage, #statusPage) .library-empty-context { font-family: var(--font-mono); font-size: 11px; color: var(--library-secondary); }
+:is(#libraryPage, #statusPage) .empty-state-icon { display: grid; place-items: center; width: 80px; height: 80px; margin: 32px auto 20px; border: 1px solid var(--library-border); border-radius: 20px; color: var(--library-reading); background: var(--glass-fill-3); }
+:is(#libraryPage, #statusPage) .empty-state-icon .library-icon { width: 28px; height: 28px; }
+:is(#libraryPage, #statusPage) .empty-state-title { margin: 0 0 12px; color: var(--text-strong); font-family: var(--font-serif); font-size: 26px; font-weight: 500; }
+:is(#libraryPage, #statusPage) .empty-state-body { max-width: 440px; margin: 0 auto 24px; color: var(--library-secondary); font-size: 14px; line-height: 24px; }
+:is(#libraryPage, #statusPage) .library-empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+:is(#libraryPage, #statusPage) .empty-state > .btn { margin-top: 12px; color: var(--library-secondary); }
+:is(#libraryPage, #statusPage) :is(button, select, input, summary):focus-visible { outline: 2px solid var(--indigo); outline-offset: 3px; }
+#statusPage .book-card { padding: 16px; }
+#libraryPage .book-card { min-height: 436px; }
+#libraryPage .library-card-disclosure { margin: 0; }
+#libraryPage .library-card-disclosure summary { position: absolute; right: 12px; top: 60px; width: 44px; height: 44px; justify-content: center; font-size: 0; background: var(--glass-solid-2); border-radius: 12px; }
+#libraryPage .library-card-disclosure summary::after { content: "⋯"; margin: 0; font-size: 20px; }
+#libraryPage .library-card-disclosure[open] .library-card-extra { margin-top: 12px; }
 
-#libraryPage .book-card-actions .ph-fill.ph-heart {
-  color: var(--gold) !important;
-  opacity: 1;
+#statusPage .book-card-meta .badge { border-radius: 999px; padding: 6px 10px; min-height: 30px; font-size: 12px; }
+#statusPage .shelf-filters { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); }
+#statusPage .shelf-filters .chip { border-radius: 12px; min-height: 44px; padding: 0 12px; justify-content: space-between; }
+#statusPage .card-fav-btn { top: 288px; right: 8px; border: 0; background: transparent; }
+#statusPage .library-card-disclosure { margin: 0; }
+#statusPage .library-card-disclosure summary { position: absolute; right: 16px; top: 16px; width: 44px; height: 44px; justify-content: center; font-size: 0; background: var(--glass-solid-2); border-radius: 12px; }
+#statusPage .library-card-disclosure summary::after { content: "⋯"; margin: 0; font-size: 20px; }
+#statusPage[data-shelf="dnf"] .status-heading { min-width: 0; max-width: 640px; }
+#statusPage[data-shelf="dnf"] .library-eyebrow { color: var(--library-secondary); }
+#statusPage .shelf-status-note { display: inline-flex; align-self: flex-start; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); margin: var(--space-1) 0 var(--space-4); border: 1px solid var(--glass-border); border-radius: var(--r-pill); background: var(--glass-fill-2); color: var(--text-body); font: 400 12px/1.5 var(--font-sans); }
+#statusPage .shelf-status-note .library-icon { width: 5px; height: 5px; }
+#statusPage[data-shelf="dnf"] .empty-state-icon { color: var(--text-body); background: var(--glass-fill-2); }
+#statusPage .chip[data-status="dnf"].active { color: var(--text-strong); border-color: var(--text-body); background: var(--glass-fill-3); }
+#statusPage[data-shelf="dnf"] .badge-dnf { color: var(--text-body); border-color: var(--glass-border); background: var(--glass-fill-2); }
+#statusPage[data-shelf="dnf"] :is(.book-card-title, .cover-title) { overflow-wrap: anywhere; }
+#statusPage[data-shelf="dnf"] .book-card-actions .btn { white-space: normal; }
+@media (max-width: 1199px) {
+  :is(#libraryPage, #statusPage) { padding: 32px; }
+  :is(#libraryPage, #statusPage) .library-tools { grid-template-columns: minmax(0,1fr) 176px 176px; }
+  #statusPage .books-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
 }
-
-#libraryPage .empty-state {
-  min-height: 360px;
-  padding: var(--space-12) var(--space-6);
-  background: linear-gradient(180deg, var(--gold-04), rgba(255,255,255,0.01));
+@media (max-width: 1023px) and (min-width: 768px) {
+  :is(#libraryPage, #statusPage) .books-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  :is(#libraryPage, #statusPage) .library-tools { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  :is(#libraryPage, #statusPage) .library-search-wrap { grid-column: 1 / -1; }
 }
-
-#libraryPage .empty-state-icon {
-  width: 56px;
-  height: 56px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-lg);
-  background: var(--surface-3);
-  border: 1px solid var(--gold-12);
-  color: var(--gold);
-  font-size: 1.65rem;
+@media (max-width: 767px) {
+  :is(#libraryPage, #statusPage) { padding: 28px 20px 32px; }
+  :is(#libraryPage, #statusPage) .page-title { font-size: 30px; line-height: 36px; letter-spacing: -.6px; }
+  #statusPage .page-title { font-size: 34px; letter-spacing: -.7px; }
+  :is(#libraryPage, #statusPage) .library-header { align-items: flex-start; margin-bottom: 24px; gap: 10px; }
+  :is(#libraryPage, #statusPage) .library-add-book { min-width: 44px; padding: 0 10px; font-size: 11px; white-space: nowrap; }
+  :is(#libraryPage, #statusPage) .library-tools { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin-bottom: 20px; }
+  :is(#libraryPage, #statusPage) .library-search-wrap { grid-column: 1 / -1; }
+  :is(#libraryPage, #statusPage) .library-sort-wrap { border-radius: 16px; }
+  :is(#libraryPage, #statusPage) .library-filters { gap: 8px; margin-bottom: 20px; }
+  :is(#libraryPage, #statusPage) .chip { min-height: 36px; padding: 0 12px; font-size: 11px; }
+  :is(#libraryPage, #statusPage) .library-grid-summary { margin-bottom: 16px; font-size: 10px; }
+  #libraryPage .library-grid-summary > span:last-child { display: none; }
+  #libraryPage .books-grid { grid-template-columns: minmax(0,1fr); gap: 16px; }
+  :is(#libraryPage, #statusPage) .book-card { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  #libraryPage .book-card { flex-direction: row; min-height: 152px; padding: 16px; gap: 16px; }
+  #libraryPage .book-card > .book-cover { width: 80px; height: 120px; min-height: 120px; flex: 0 0 80px; border-radius: 8px; }
+  #libraryPage .book-card .book-cover img,
+  #libraryPage .book-card .book-cover-placeholder { width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: cover; }
+  #libraryPage .book-card-info { flex: 1; padding: 0; }
+  #libraryPage .book-card-title { font-size: 18px; line-height: 23px; margin-bottom: 4px; padding-right: 24px; }
+  #libraryPage .book-card-author { font-size: 11px; line-height: 16px; margin-bottom: 8px; padding-right: 24px; }
+  #libraryPage .book-card-meta { margin-bottom: 12px; }
+  #libraryPage .book-card-meta .star-rating { display: none; }
+  #libraryPage .card-fav-btn { right: 4px; top: 4px; width: 44px; height: 44px; border: 0; background: transparent; }
+  #libraryPage .library-card-disclosure { margin-top: 0; }
+  #libraryPage .library-card-disclosure summary { position: absolute; top: 48px; right: 4px; width: 44px; height: 44px; justify-content: center; font-size: 0; background: transparent; }
+  #libraryPage .library-card-disclosure summary::after { content: "⋯"; margin: 0; font-size: 20px; }
+  #libraryPage .library-card-disclosure[open] .library-card-extra { margin-top: 12px; }
+  #statusPage .library-breadcrumb { margin-bottom: 16px; }
+  #statusPage .status-header { align-items: flex-start; margin-bottom: 24px; }
+  #statusPage .shelf-summary { display: none; }
+  #statusPage .library-eyebrow { margin-bottom: 8px; }
+  #statusPage .books-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+  #statusPage .book-card { padding: 12px; }
+  #statusPage .shelf-filters { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  #statusPage .book-card-meta .badge { font-size: 10px; min-height: 28px; padding: 4px 8px; }
+  #statusPage .book-card > .book-cover { height: 190px; min-height: 190px; border-radius: 8px; }
+  #statusPage .book-card .book-cover img,
+  #statusPage .book-card .book-cover-placeholder { height: 190px; max-width: 100%; max-height: 100%; }
+  #statusPage .book-card-info { padding: 16px 0 0; }
+  #statusPage .book-card-title { font-size: 16px; line-height: 20px; }
+  #statusPage .book-card-author { font-size: 10px; line-height: 16px; }
+  #statusPage .book-card-meta { margin-bottom: 12px; gap: 4px; }
+  #statusPage .book-card-meta .star-rating { display: none; }
+  #statusPage .card-fav-btn { top: 207px; right: 4px; }
+  #statusPage .progress-label { flex-wrap: wrap; gap: 4px; }
+  :is(#libraryPage, #statusPage) .empty-state { padding: 24px 16px; min-height: 440px; }
+  :is(#libraryPage, #statusPage) .empty-state-title { font-size: 24px; }
+  :is(#libraryPage, #statusPage) .library-empty-actions { flex-direction: column; align-items: stretch; }
+  :is(#libraryPage, #statusPage) .library-footer { font-size: 10px; }
 }
-
-#libraryPage .empty-state-title {
-  font-family: var(--font-serif);
-  color: var(--text-strong);
-  font-size: var(--t-card);
+@media (prefers-reduced-transparency: reduce) {
+  :is(#libraryPage, #statusPage) .book-card { background: var(--glass-solid-3); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
-
-#libraryPage .book-card > .book-cover {
-  background: linear-gradient(180deg, var(--bg-elevated), var(--bg-surface));
-  border: 1px solid var(--border-subtle);
+@media (max-width: 359px) {
+  #statusPage[data-shelf="dnf"] .books-grid { grid-template-columns: minmax(0, 1fr); }
+  #statusPage[data-shelf="dnf"] .shelf-filters { grid-template-columns: minmax(0, 1fr); }
+  #statusPage[data-shelf="dnf"] .library-tools { grid-template-columns: minmax(0, 1fr); }
+  #statusPage[data-shelf="dnf"] .library-footer { flex-wrap: wrap; gap: var(--space-2); }
 }
-
-#libraryPage .book-cover-placeholder {
-  padding: var(--space-3);
-  background:
-    radial-gradient(circle at top, rgba(67, 56, 202, 0.1), transparent 44%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 252, 0.96));
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  color: var(--text-secondary);
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :is(#libraryPage, #statusPage) .book-card { background: var(--glass-solid-3); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
-
-#libraryPage .book-cover-placeholder .cover-title {
-  color: var(--text-secondary);
-  letter-spacing: 0.04em;
-}
-
-#libraryPage .book-cover-placeholder i {
-  color: #4338ca;
-  opacity: 0.5;
-}
-
-html[data-theme="dark"] #libraryPage {
-  color: #e2e8f0;
-}
-
-html[data-theme="dark"] #libraryPage .page-title,
-html[data-theme="dark"] #libraryPage .book-card-title,
-html[data-theme="dark"] #libraryPage .empty-state-title {
-  color: #f8fafc;
-}
-
-html[data-theme="dark"] #libraryPage .page-subtitle,
-html[data-theme="dark"] #libraryPage .library-sort-label,
-html[data-theme="dark"] #libraryPage .library-search-icon,
-html[data-theme="dark"] #libraryPage .library-search-input::placeholder,
-html[data-theme="dark"] #libraryPage .library-search-clear,
-html[data-theme="dark"] #libraryPage .book-card-author,
-html[data-theme="dark"] #libraryPage .progress-text,
-html[data-theme="dark"] #libraryPage .empty-state-body {
-  color: #94a3b8;
-}
-
-html[data-theme="dark"] #libraryPage .library-filters,
-html[data-theme="dark"] #libraryPage .library-search-wrap,
-html[data-theme="dark"] #libraryPage .library-sort-select,
-html[data-theme="dark"] #libraryPage .book-card,
-html[data-theme="dark"] #libraryPage .empty-state {
-  background: rgba(15, 23, 42, 0.88);
-  border-color: rgba(148, 163, 184, 0.14);
-  box-shadow: 0 20px 50px rgba(2, 6, 23, 0.28);
-}
-
-html[data-theme="dark"] #libraryPage .library-filters .chip {
-  background: rgba(15, 23, 42, 0.82);
-  border-color: rgba(148, 163, 184, 0.16);
-}
-
-html[data-theme="dark"] #libraryPage .library-filters .chip span {
-  background: rgba(148, 163, 184, 0.12);
-  color: #cbd5e1;
-}
-
-html[data-theme="dark"] #libraryPage .library-filters .chip.active span {
-  background: rgba(67, 56, 202, 0.18);
-  color: #c7d2fe;
-}
-
-html[data-theme="dark"] #libraryPage .book-card-actions .btn-ghost.btn-icon {
-  background: rgba(148, 163, 184, 0.1);
-  border-color: rgba(148, 163, 184, 0.16);
-  color: #e2e8f0;
-}
-
-html[data-theme="dark"] #libraryPage .book-card-actions .btn-ghost.btn-icon:hover,
-html[data-theme="dark"] #libraryPage .book-card-actions .btn-ghost.btn-icon:focus-visible {
-  background: rgba(67, 56, 202, 0.16);
-  border-color: rgba(67, 56, 202, 0.3);
-}
-
-html[data-theme="dark"] #libraryPage .reading-progress {
-  background: rgba(15, 23, 42, 0.76);
-  border-color: rgba(148, 163, 184, 0.16);
-}
-
-html[data-theme="dark"] #libraryPage .progress-bar {
-  background: rgba(148, 163, 184, 0.12);
-}
-
-html[data-theme="dark"] #libraryPage .progress-fill {
-  background: linear-gradient(90deg, #5b63f6, #4338ca);
-  box-shadow: none;
-}
-
-html[data-theme="dark"] #libraryPage .empty-state-icon {
-  background: rgba(67, 56, 202, 0.12);
-  border-color: rgba(67, 56, 202, 0.18);
-  color: #c7d2fe;
-}
-
-html[data-theme="dark"] #libraryPage .book-card:hover,
-html[data-theme="dark"] #libraryPage .book-card:focus-within {
-  background: rgba(15, 23, 42, 0.96);
-  border-color: rgba(99, 102, 241, 0.28);
-}
-
-html[data-theme="dark"] #libraryPage .book-card-actions {
-  border-top-color: rgba(148, 163, 184, 0.14);
-}
-
-html[data-theme="dark"] #libraryPage .book-cover-placeholder {
-  background:
-    radial-gradient(circle at top, rgba(99, 102, 241, 0.16), transparent 44%),
-    linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.94));
-  border-color: rgba(148, 163, 184, 0.16);
-  color: #cbd5e1;
-}
-
-html[data-theme="dark"] #libraryPage .book-cover-placeholder .cover-title {
-  color: #cbd5e1;
-}
-
-html[data-theme="dark"] #libraryPage .book-cover-placeholder i {
-  color: #c7d2fe;
-  opacity: 0.7;
-}
-
-html[data-theme="dark"] .btn-primary {
-  background: linear-gradient(180deg, #5b63f6, #4338ca);
-  color: #f8fafc;
-  box-shadow: 0 10px 24px rgba(67, 56, 202, 0.24);
-}
-
-html[data-theme="dark"] .btn-primary:hover,
-html[data-theme="dark"] .btn-primary:focus-visible {
-  filter: none;
-  background: linear-gradient(180deg, #6b72ff, #4f46e5);
-  box-shadow: 0 12px 30px rgba(67, 56, 202, 0.28);
-}
-
-html[data-theme="dark"] .btn-secondary {
-  background: rgba(15, 23, 42, 0.9);
-  border-color: rgba(148, 163, 184, 0.18);
-  color: #e2e8f0;
-}
-
-html[data-theme="dark"] .btn-secondary:hover,
-html[data-theme="dark"] .btn-secondary:focus-visible {
-  background: rgba(30, 41, 59, 0.96);
-  border-color: rgba(99, 102, 241, 0.34);
-  color: #f8fafc;
-}
-
-html[data-theme="dark"] .btn-ghost {
-  color: #cbd5e1;
-}
-
-html[data-theme="dark"] .btn-ghost:hover,
-html[data-theme="dark"] .btn-ghost:focus-visible {
-  background: rgba(148, 163, 184, 0.08);
-  color: #f8fafc;
-}
-
-html[data-theme="dark"] .btn:disabled,
-html[data-theme="dark"] .btn[aria-disabled="true"] {
-  background: rgba(15, 23, 42, 0.7);
-  border-color: rgba(148, 163, 184, 0.12);
-  color: #94a3b8;
-  opacity: 0.78;
-  box-shadow: none;
-}
-
-html[data-theme="dark"] #statusPage {
-  color: #e2e8f0;
-}
-
-html[data-theme="dark"] #statusPage .page-title,
-html[data-theme="dark"] #statusPage .book-card-title,
-html[data-theme="dark"] #statusPage .empty-state-title {
-  color: #f8fafc;
-}
-
-html[data-theme="dark"] #statusPage .page-subtitle,
-html[data-theme="dark"] #statusPage .library-eyebrow,
-html[data-theme="dark"] #statusPage .book-card-author,
-html[data-theme="dark"] #statusPage .empty-state-body,
-html[data-theme="dark"] #statusPage .progress-text {
-  color: #94a3b8;
-}
-
-html[data-theme="dark"] #statusPage .book-card,
-html[data-theme="dark"] #statusPage .empty-state {
-  background: rgba(15, 23, 42, 0.88);
-  border-color: rgba(148, 163, 184, 0.14);
-  box-shadow: 0 20px 50px rgba(2, 6, 23, 0.28);
-}
-
-html[data-theme="dark"] #statusPage .book-card:hover,
-html[data-theme="dark"] #statusPage .book-card:focus-within {
-  background: rgba(15, 23, 42, 0.96);
-  border-color: rgba(99, 102, 241, 0.28);
-}
-
-html[data-theme="dark"] #statusPage .book-card-actions {
-  border-top-color: rgba(148, 163, 184, 0.14);
-}
-
-html[data-theme="dark"] #statusPage .book-card-actions .btn-ghost.btn-icon {
-  background: rgba(148, 163, 184, 0.1);
-  border-color: rgba(148, 163, 184, 0.16);
-  color: #e2e8f0;
-}
-
-html[data-theme="dark"] #statusPage .book-card-actions .btn-ghost.btn-icon:hover,
-html[data-theme="dark"] #statusPage .book-card-actions .btn-ghost.btn-icon:focus-visible {
-  background: rgba(67, 56, 202, 0.16);
-  border-color: rgba(67, 56, 202, 0.3);
-}
-
-html[data-theme="dark"] #statusPage .book-card-actions .btn:not(.btn-icon) {
-  box-shadow: none;
-}
-
-html[data-theme="dark"] #statusPage .book-card-actions .btn-secondary {
-  background: rgba(15, 23, 42, 0.92);
-  border-color: rgba(148, 163, 184, 0.18);
-  color: #e2e8f0;
-}
-
-html[data-theme="dark"] #statusPage .book-card-actions .btn-secondary:hover,
-html[data-theme="dark"] #statusPage .book-card-actions .btn-secondary:focus-visible {
-  background: rgba(30, 41, 59, 0.96);
-  border-color: rgba(99, 102, 241, 0.34);
-  color: #f8fafc;
-}
-
-html[data-theme="dark"] #statusPage .book-card > .book-cover {
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.94));
-  border-color: rgba(148, 163, 184, 0.16);
-}
-
-html[data-theme="dark"] #statusPage .empty-state-icon {
-  background: rgba(67, 56, 202, 0.12);
-  border-color: rgba(67, 56, 202, 0.18);
-  color: #c7d2fe;
-}
-
-@media (max-width: 820px) {
-  #statusPage .status-header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  #statusPage .books-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-3);
-  }
-
-  #statusPage .book-card {
-    padding: var(--space-3);
-    border-radius: var(--radius-md);
-  }
-
-  #statusPage .book-card-actions {
-    margin-top: auto;
-  }
-
-  #statusPage .book-card-actions .btn:not(.btn-icon) {
-    flex: 1 0 100%;
-    min-width: 100%;
-  }
-
-  #statusPage .book-card-actions .btn-icon {
-    flex-basis: 44px;
-    width: 44px;
-    min-width: 44px;
-  }
-}
-
-@media (max-width: 430px) {
-  #statusPage .books-grid {
-    grid-template-columns: 1fr;
-  }
-
-  #statusPage .book-card {
-    display: grid;
-    grid-template-columns: 96px minmax(0, 1fr);
-    gap: var(--space-4);
-  }
-
-  #statusPage .book-card > .book-cover {
-    width: 96px;
-    height: 144px;
-  }
-
-  #statusPage .book-card-actions {
-    grid-column: 1 / -1;
-  }
-
-  #statusPage .book-card-actions-primary,
-  #statusPage .book-card-actions-secondary {
-    min-height: 0;
-  }
-}
-
-@media (min-width: 1280px) {
-  #libraryPage .books-grid {
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  #libraryPage .library-tools {
-    grid-template-columns: 1fr;
-  }
-
-  #libraryPage .library-sort-wrap {
-    min-width: 0;
-  }
-}
-
-@media (max-width: 820px) {
-  #libraryPage .library-header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  #libraryPage .library-header .btn {
-    width: 100%;
-  }
-
-  #libraryPage .books-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-3);
-  }
-
-  #libraryPage .book-card {
-    padding: var(--space-3);
-    border-radius: var(--radius-md);
-  }
-
-  #libraryPage .book-card-actions .btn:not(.btn-icon) {
-    flex: 1 0 100%;
-    min-width: 100%;
-  }
-
-  #libraryPage .book-card-actions .btn-icon {
-    flex-basis: 44px;
-    width: 44px;
-    min-width: 44px;
-  }
-}
-
-@media (max-width: 430px) {
-  #libraryPage {
-    overflow-x: clip;
-  }
-
-  #libraryPage .library-header {
-    gap: var(--space-3);
-    margin-bottom: var(--space-4);
-  }
-
-  #libraryPage .library-heading {
-    gap: var(--space-1);
-  }
-
-  #libraryPage .page-title {
-    font-size: clamp(2rem, 9vw, 2.6rem);
-    line-height: 0.96;
-  }
-
-  #libraryPage .page-subtitle {
-    letter-spacing: 0.14em;
-  }
-
-  #libraryPage .library-tools {
-    gap: var(--space-2);
-    margin: var(--space-3) 0 var(--space-4);
-  }
-
-  #libraryPage .library-search-wrap,
-  #libraryPage .library-sort-select {
-    min-height: 44px;
-  }
-
-  #libraryPage .library-search-wrap {
-    padding: 0 var(--space-3);
-  }
-
-  #libraryPage .library-sort-label {
-    font-size: 0.65rem;
-    letter-spacing: 0.1em;
-  }
-
-  #libraryPage .library-sort-select {
-    padding: 0 var(--space-3);
-  }
-
-  #libraryPage .library-filters {
-    display: flex;
-    gap: 6px;
-    padding: var(--space-2);
-    margin-bottom: var(--space-4);
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  #libraryPage .library-filters::-webkit-scrollbar {
-    display: none;
-  }
-
-  #libraryPage .library-filters .chip {
-    flex: 0 0 auto;
-    min-height: 36px;
-    padding: 0 var(--space-3);
-    white-space: nowrap;
-  }
-
-  #libraryPage .library-filters .chip span {
-    min-width: 20px;
-    height: 20px;
-    padding: 0 7px;
-  }
-
-  #libraryPage .books-grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-2);
-  }
-
-  #libraryPage .book-card {
-    display: grid;
-    grid-template-columns: 84px minmax(0, 1fr);
-    gap: var(--space-2);
-    padding: 10px;
-    border-radius: 18px;
-  }
-
-  #libraryPage .book-card > .book-cover {
-    width: 84px;
-    height: 126px;
-    border-radius: 14px;
-  }
-
-  #libraryPage .book-card-title {
-    font-size: 0.95rem;
-    line-height: 1.2;
-  }
-
-  #libraryPage .book-card-author {
-    font-size: var(--text-xs);
-  }
-
-  #libraryPage .book-card-meta {
-    gap: 4px;
-    margin-top: 0;
-  }
-
-  #libraryPage .badge {
-    min-height: 20px;
-  }
-
-  #libraryPage .badge-metadata-missing-description {
-    display: none;
-  }
-
-  #libraryPage .reading-progress {
-    padding: 8px 10px;
-    margin-top: 4px;
-  }
-
-  #libraryPage .book-card-actions {
-    grid-column: 1 / -1;
-    gap: 4px;
-    padding-top: 8px;
-  }
-
-  #libraryPage .book-card-actions-primary,
-  #libraryPage .book-card-actions-secondary {
-    gap: 4px;
-  }
-
-  #libraryPage .book-card-actions .btn:not(.btn-icon) {
-    min-height: 34px;
-    padding: 0 var(--space-3);
-    font-size: var(--text-xs);
-  }
-
-  #libraryPage .book-card-actions .btn-icon {
-    flex-basis: 36px;
-    width: 36px;
-    min-width: 36px;
-  }
-
-  #libraryPage .empty-state {
-    padding: var(--space-5);
-    border-radius: 18px;
-  }
-
-  #libraryPage .empty-state-title {
-    font-size: var(--text-lg);
-  }
-}
-
-@media (max-width: 390px) {
-  #libraryPage .page-title {
-    font-size: clamp(1.8rem, 8.5vw, 2.25rem);
-  }
-
-  #libraryPage .book-card {
-    grid-template-columns: 76px minmax(0, 1fr);
-    gap: var(--space-3);
-  }
-
-  #libraryPage .book-card > .book-cover {
-    width: 76px;
-    height: 114px;
-  }
-
-  #libraryPage .book-card-actions .btn:not(.btn-icon) {
-    min-height: 32px;
-  }
-}
-
-@media (max-width: 360px) {
-  #libraryPage .library-search-wrap,
-  #libraryPage .library-sort-select {
-    min-height: 42px;
-  }
-
-  #libraryPage .book-card {
-    grid-template-columns: 72px minmax(0, 1fr);
-    padding: 9px;
-  }
-
-  #libraryPage .book-card > .book-cover {
-    width: 72px;
-    height: 108px;
-  }
-
-  #libraryPage .book-card-actions .btn-icon {
-    flex-basis: 34px;
-    width: 34px;
-    min-width: 34px;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  #libraryPage .book-card,
-  #libraryPage .book-card > .book-cover {
-    transition-duration: 0.01ms !important;
-  }
+  :is(#libraryPage, #statusPage) *, :is(#libraryPage, #statusPage) *::before, :is(#libraryPage, #statusPage) *::after { animation: none !important; transition: none !important; }
+  :is(#libraryPage, #statusPage) .book-card:hover { transform: none; }
 }

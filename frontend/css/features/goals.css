@@ -1,0 +1,56 @@
+html #goalsPage.goals-page {
+  width: 100%;
+  max-width: 528px;
+  margin-inline: auto;
+  padding: var(--space-20) var(--space-6);
+  color: var(--text-body);
+}
+html #goalsPage.goals-page .page-header { text-align: center; margin: 0 0 var(--space-10); }
+html #goalsPage.goals-page .page-title { font-size: 38px; font-weight: 400; letter-spacing: -1px; line-height: 1.3; }
+html #goalsPage.goals-page .page-subtitle { color: var(--text-body); margin-top: var(--space-3); font-size: 14px; letter-spacing: 0; line-height: 1.65; }
+html #goalsPage.goals-page .goal-widget {
+  background: var(--glass-fill-3);
+  border: 0;
+  border-top: 1px solid var(--glass-highlight);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-glass);
+  backdrop-filter: blur(var(--glass-blur-card));
+  -webkit-backdrop-filter: blur(var(--glass-blur-card));
+  padding: var(--space-8);
+  margin: 0 0 var(--space-6);
+}
+html #goalsPage.goals-page .add-book-form { display: flex; flex-direction: column; gap: var(--space-6); }
+html #goalsPage.goals-page .form-group { margin: 0; }
+html #goalsPage.goals-page .form-label { display: block; font-size: 14px; font-weight: 400; margin: 0 0 var(--space-3); color: var(--text-body); letter-spacing: 0; }
+html #goalsPage.goals-page .goal-number-field { position: relative; }
+html #goalsPage.goals-page .form-input { height: 64px; padding: 0 48px 0 var(--space-4); background: var(--glass-fill-2); border: 1px solid var(--glass-highlight); border-radius: var(--r-md); font: 20px var(--font-mono); color: var(--text-strong); width: 100%; appearance: textfield; }
+html #goalsPage.goals-page .form-input::-webkit-inner-spin-button, html #goalsPage.goals-page .form-input::-webkit-outer-spin-button { appearance: none; margin: 0; }
+html #goalsPage.goals-page .goal-stepper { position: absolute; right: 8px; top: 10px; display: flex; flex-direction: column; }
+html #goalsPage.goals-page .goal-stepper button { display: grid; place-items: center; width: 32px; height: 22px; }
+html #goalsPage.goals-page .goal-presets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-2); margin: 0; }
+html #goalsPage.goals-page .btn { background: var(--glass-fill-2); color: var(--text-strong); border: 1px solid var(--glass-highlight); border-radius: var(--r-sm); font-size: 12px; font-weight: 500; min-height: 44px; padding: 8px 4px; justify-content: center; }
+html #goalsPage.goals-page .btn[aria-pressed="true"], html #goalsPage.goals-page .btn-primary { border-color: var(--indigo); background: var(--glass-fill-3); }
+html #goalsPage.goals-page .btn-primary { width: 100%; min-height: 48px; font-size: 14px; margin: 0 !important; border-radius: var(--r-md); }
+html #goalsPage.goals-page :is(button, input):focus-visible { outline: 2px solid var(--indigo); outline-offset: 3px; }
+html #goalsPage.goals-page .goal-header { display: flex; align-items: center; justify-content: space-between; margin: 0 0 var(--space-5); }
+html #goalsPage.goals-page .goal-header::before { content: none; }
+html #goalsPage.goals-page .goal-title { font: 400 28px/1.3 var(--font-display); color: var(--text-strong); }
+html #goalsPage.goals-page .goal-completion { width: 48px; height: 48px; position: relative; display: grid; place-items: center; font: 14px var(--font-mono); color: var(--text-strong); }
+html #goalsPage.goals-page .goal-completion img { position: absolute; inset: 0; }
+/* The supplied track is static; the completion segment reflects the saved goal. */
+html #goalsPage.goals-page .goal-completion::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(var(--teal) var(--goal-progress), transparent 0); mask: radial-gradient(transparent 22.8px, #000 22.8px); }
+html #goalsPage.goals-page .activity-list { gap: 0; }
+html #goalsPage.goals-page .activity-item { display: flex; justify-content: space-between; align-items: center; min-height: 44px; padding: 0; margin: 0; border-radius: 0; border-bottom: 1px solid var(--glass-border); background: transparent; }
+html #goalsPage.goals-page .activity-subtitle { font-size: 14px; color: var(--text-body); }
+html #goalsPage.goals-page .activity-time { font: 14px var(--font-mono); color: var(--text-strong); white-space: nowrap; }
+html #goalsPage.goals-page .activity-item:nth-child(2) .activity-time { color: var(--teal); }
+html[data-theme="light"] #goalsPage.goals-page .activity-item:nth-child(2) .activity-time { color: var(--text-body); }
+@media (max-width: 767px) {
+  html #goalsPage.goals-page { max-width: 528px; padding: 64px var(--space-6) calc(var(--space-20) + env(safe-area-inset-bottom)); }
+  html #goalsPage.goals-page .page-title { font-size: 34px; }
+  html #goalsPage.goals-page .page-header { margin-bottom: var(--space-8); }
+  html #goalsPage.goals-page .goal-widget { padding: var(--space-5); backdrop-filter: blur(min(var(--glass-blur-card), 12px)); -webkit-backdrop-filter: blur(min(var(--glass-blur-card), 12px)); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  html #goalsPage.goals-page .goal-widget { backdrop-filter: none; -webkit-backdrop-filter: none; }
+}

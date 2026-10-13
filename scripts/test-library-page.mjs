@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { createLibraryPage } from '../frontend/js/features/library/libraryPage.js';
+import { buildLibraryShelfEmpty } from '../frontend/js/features/library/libraryShelvesPage.js';
 
 function createGrid() {
   let html = '';
@@ -89,6 +90,9 @@ const emptyPage = createLibraryPage({
   documentRoot: { getElementById: id => id === 'mainContent' ? emptyMain : id === 'libraryGrid' ? emptyGrid : null },
 });
 emptyPage();
-assert.match(emptyGrid.innerHTML, /Your library is empty/);
+assert.match(emptyGrid.innerHTML, /Your story starts here/);
+assert.match(emptyGrid.innerHTML, /data-action="import-backup"/);
+assert.match(buildLibraryShelfEmpty('all', '<img src=x onerror=alert(1)>'), /&lt;img/);
+assert.doesNotMatch(buildLibraryShelfEmpty('all', '<img src=x onerror=alert(1)>'), /<img/);
 
 console.log('Library page tests passed');

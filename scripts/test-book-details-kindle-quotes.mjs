@@ -162,7 +162,7 @@ assert.equal(mixed.element('bookQuoteTextInput').value, 'A manually saved quote.
 mixed.element('bookQuoteTextInput').value = 'An edited manual quote.';
 mixed.element('saveBookQuoteBtn').listeners.click();
 assert.equal(mixed.getBook().quotes.find(quote => quote.id === 'manual').text, 'An edited manual quote.');
-mixedQuoteList.listeners.click({
+await mixedQuoteList.listeners.click({
   target: { closest: () => ({ dataset: { quoteAction: 'delete', quoteId: 'manual' } }) },
 });
 assert.equal(mixed.getBook().quotes.some(quote => quote.id === 'manual'), false);
@@ -188,7 +188,7 @@ assert.equal(kindleOnly.getBook().quotes[0].note, 'Edited Kindle note');
 assert.equal(kindleOnly.getBook().quotes[0].source, 'kindle');
 assert.equal(kindleOnly.toasts.at(-1).message, 'Quote updated');
 
-quoteList.listeners.click({
+await quoteList.listeners.click({
   target: { closest: () => ({ dataset: { quoteAction: 'delete', quoteId: 'note-only' } }) },
 });
 assert.equal(kindleOnly.getBook().quotes.length, 0);
