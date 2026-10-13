@@ -6,6 +6,7 @@ const shelfCopy = {
   wishlist: ['Want to Read', 'Your next chapter starts here.', 'Queue is clear', 'Add books you want to read next.'],
   finished: ['Finished', 'Every last page, remembered.', 'No finished books yet', 'Keep reading.'],
   favorites: ['Favorites', 'The books you come back to.', 'No favorites yet', 'Save the books you love most here.'],
+  dnf: ['Abandoned', 'Not every book is your next chapter. Keep the ones you set aside here.', 'No books set aside', 'Books marked Did Not Finish will appear here. There’s no pressure to finish every story.'],
 };
 
 export function buildLibraryShelfEmpty(filter = 'all', query = '', state = {}) {
@@ -14,16 +15,20 @@ export function buildLibraryShelfEmpty(filter = 'all', query = '', state = {}) {
   const isShelfPage = state.isShelfPage;
   const copy = shelfCopy[filter];
   const [title, body] = query
-    ? ['No books found.', `Nothing in your library matches “${query}”. Try a title or author, or add the book you’re looking for.`]
+    ? filter === 'dnf'
+      ? ['No matches on this shelf', `No set-aside books match “${query}”. Try another title or author, or clear your search.`]
+      : ['No books found.', `Nothing in your library matches “${query}”. Try a title or author, or add the book you’re looking for.`]
     : selectedShelf
-      ? ['A little space to fill.', `${selectedShelf} is empty. Find a book to add to this shelf, add one manually, or import a collection.`]
+      ? filter === 'dnf'
+        ? ['No set-aside books in this shelf', `There are no Did Not Finish books in ${selectedShelf}. View all shelves to see the books you’ve set aside.`]
+        : ['A little space to fill.', `${selectedShelf} is empty. Find a book to add to this shelf, add one manually, or import a collection.`]
       : copy
         ? copy.slice(2)
         : filter === 'needs-metadata'
           ? ['No metadata issues found', 'Your saved books already look complete.']
           : ['Your story starts here.', 'Make room for your next good read. Search for a book, add one manually, or import your collection.'];
   const context = query ? 'No search matches' : selectedShelf ? `Empty shelf · ${selectedShelf}` : isShelfPage ? '00 books' : 'Empty library · 0 books total';
-  const icon = query ? 'search' : isShelfPage && copy ? `shelf-empty-${filter}` : selectedShelf ? 'grid' : 'books';
+  const icon = query ? 'search' : filter === 'dnf' ? 'status-dnf' : isShelfPage && copy ? `shelf-empty-${filter}` : selectedShelf ? 'grid' : 'books';
   const recovery = query
     ? `<button class="btn btn-ghost" type="button" data-action="clear-${isShelfPage ? 'shelf' : 'library'}-search">Clear search</button>`
     : selectedShelf
@@ -79,17 +84,17 @@ export function createLibraryShelvesPage({ storage, library, utils, actions = {}
     const books = shelfBooks();
     const [title, subtitle] = shelfCopy[state.status] || ['Bookshelf', 'Your books, all in one place.'];
     const pages = books.reduce((sum, book) => sum + Math.max(0, Number(book.currentPage) || 0), 0);
-    main.innerHTML = `<div class="page status-page" id="statusPage">
+    main.innerHTML = `<div class="page status-page" id="statusPage" data-shelf="${pageUtils.sanitize(state.status)}">
       <div class="library-breadcrumb"><button type="button" class="btn btn-ghost" data-action="browse-library">My Library</button><span aria-hidden="true">›</span><span>${title}</span><button type="button" class="btn btn-primary library-add-book" data-action="open-search">${libraryIcon('plus')} Add book</button></div>
       <div class="page-header status-header">
-        <div class="status-heading"><span class="library-eyebrow">Your private library</span><h1 class="page-title">${title}</h1><p class="page-subtitle">${subtitle}</p></div>
+        <div class="status-heading"><span class="library-eyebrow">Your private library</span><h1 class="page-title">${title}</h1>${state.status === 'dnf' ? `<span class="shelf-status-note">${libraryIcon('status-dnf')} Did Not Finish</span>` : ''}<p class="page-subtitle">${subtitle}</p></div>
         <div class="shelf-summary"><span>${pages}</span><small>pages read across this shelf</small></div>
       </div>
       ${libraryTools(pageUtils, state, customShelves(storage.getBooks()), 'shelf')}
       <div class="library-filters shelf-filters" aria-label="Bookshelves">
         ${Object.entries(shelfCopy).map(([status, [label]]) => {
           const count = status === 'favorites' ? storage.getBooks().filter(book => book.isFavorite).length : storage.getBooksByStatus(status).length;
-          return `<button type="button" class="chip${state.status === status ? ' active' : ''}" data-action="switch-shelf" data-status="${status}" aria-pressed="${state.status === status}">${label}<span>${String(count).padStart(2, '0')}</span></button>`;
+          return `<button type="button" class="chip${state.status === status ? ' active' : ''}" data-action="switch-shelf" data-status="${status}" aria-pressed="${state.status === status}">${status === 'dnf' ? 'Did Not Finish' : label}<span>${String(count).padStart(2, '0')}</span></button>`;
         }).join('')}
       </div>
       <div class="library-grid-summary"><span id="shelfResultCount" role="status"></span>${libraryIcon('grid')}</div>
@@ -101,6 +106,7 @@ export function createLibraryShelvesPage({ storage, library, utils, actions = {}
   }
 
   function renderStatusPage(status) {
+    if (status === 'abandoned') status = 'dnf';
     if (state.status !== status) Object.assign(state, { query: '', shelf: 'all' });
     state.status = status;
     renderShelf();
@@ -132,7 +138,7 @@ export function createLibraryShelvesPage({ storage, library, utils, actions = {}
         'reset-shelf-filters': () => { Object.assign(state, { query: '', shelf: 'all' }); renderShelf(); },
         'switch-shelf': () => {
           renderStatusPage(trigger.dataset.status);
-          actions.navigate?.(trigger.dataset.status);
+          actions.navigate?.(trigger.dataset.status === 'dnf' ? 'abandoned' : trigger.dataset.status);
         },
       };
       if (!handlers[trigger.dataset.action]) return;
