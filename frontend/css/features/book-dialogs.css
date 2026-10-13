@@ -1,0 +1,354 @@
+html[data-theme] :is(#searchModal, #addBookModal) {
+  padding: var(--space-10) var(--space-4);
+  align-items: center;
+}
+
+html[data-theme] :is(#searchModal, #addBookModal) [hidden] { display: none !important; }
+
+html[data-theme] :is(#searchModal, #addBookModal) .ph {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 1em;
+  height: 1em;
+  background: currentColor;
+  mask: var(--book-dialog-icon) center / contain no-repeat;
+  -webkit-mask: var(--book-dialog-icon) center / contain no-repeat;
+}
+html[data-theme] :is(#searchModal, #addBookModal) .ph::before { content: none; }
+html[data-theme] :is(#searchModal, #addBookModal) .ph-magnifying-glass { --book-dialog-icon: url('../../assets/revamp/library/search.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) :is(.ph-books, .ph-book) { --book-dialog-icon: url('../../assets/revamp/library/books.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) .ph-funnel { --book-dialog-icon: url('../../assets/revamp/library/sort.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) .ph-pencil { --book-dialog-icon: url('../../assets/revamp/book-details/edit.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) .ph-plus { --book-dialog-icon: url('../../assets/revamp/library/plus.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) .ph-x { --book-dialog-icon: url('../../assets/revamp/library/x.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) .ph-bookmark { --book-dialog-icon: url('../../assets/revamp/library/bookmark.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) .ph-book-open { --book-dialog-icon: url('../../assets/dashboard/desktop-book-open.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) :is(.ph-check-circle, .ph-floppy-disk) { --book-dialog-icon: url('../../assets/revamp/book-details/check.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) .ph-wifi-slash { --book-dialog-icon: url('../../assets/revamp/library/alert.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) .ph-arrow-right { --book-dialog-icon: url('../../assets/revamp/book-details/arrow-left.svg'); transform: rotate(180deg); }
+
+html[data-theme] :is(#searchModal, #addBookModal) .modal {
+  width: 100%;
+  max-width: 760px;
+  max-height: calc(100dvh - 80px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-2xl);
+  background: var(--glass-solid-1);
+  color: var(--text-strong);
+  box-shadow: var(--shadow-modal);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html[data-theme] :is(#searchModal, #addBookModal) .modal {
+    background: color-mix(in srgb, var(--glass-solid-1) 94%, transparent);
+    backdrop-filter: blur(var(--glass-blur-modal));
+    -webkit-backdrop-filter: blur(var(--glass-blur-modal));
+  }
+}
+
+html[data-theme] :is(#searchModal, #addBookModal) :is(button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 3px;
+}
+
+html[data-theme] :is(#searchModal, #addBookModal) :is(.btn, .modal-close, .search-close-btn) {
+  min-height: 44px;
+  min-width: 44px;
+  border-radius: var(--r-md);
+  white-space: normal;
+}
+
+html[data-theme] :is(#searchModal, #addBookModal) .btn-primary {
+  background: var(--indigo);
+  color: var(--text-inverse);
+  border-color: var(--indigo);
+}
+
+html[data-theme] :is(#searchModal, #addBookModal) .btn-ghost {
+  background: var(--glass-fill-2);
+  border: 1px solid var(--glass-border);
+  color: var(--text-strong);
+}
+
+html[data-theme] :is(#searchModal, #addBookModal) .book-dialog-eyebrow {
+  margin: 0 0 var(--space-2);
+  font: 500 11px/1.6 var(--font-mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text-body);
+}
+
+html[data-theme] #searchModal .book-dialog-heading { padding: var(--space-6) var(--space-6) 0; }
+html[data-theme] #searchModal .book-dialog-heading h2,
+html[data-theme] #addBookModal .modal-title {
+  font: 400 28px/1.25 var(--font-serif);
+  color: var(--text-strong);
+  margin: 0;
+}
+html[data-theme] #searchModal .book-dialog-heading > p:last-child {
+  margin: var(--space-2) 0 0;
+  font-size: 13px;
+  color: var(--text-body);
+}
+
+html[data-theme] #searchModal .search-modal { overflow-y: auto; }
+html[data-theme] #searchModal .search-input-wrap {
+  margin: var(--space-5) var(--space-6) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  min-height: 60px;
+  background: var(--glass-fill-2);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  gap: var(--space-2);
+}
+html[data-theme] #searchModal .search-input-wrap:focus-within { border-color: var(--indigo); }
+html[data-theme] #searchModal .search-input-icon { color: var(--indigo); font-size: 24px; }
+html[data-theme] #searchModal .search-input {
+  width: 0;
+  min-width: 0;
+  min-height: 44px;
+  background: transparent;
+  color: var(--text-strong);
+  -webkit-text-fill-color: var(--text-strong);
+  font: 400 16px/1.5 var(--font-ui);
+}
+html[data-theme] #searchModal .search-input::placeholder { color: var(--text-body); -webkit-text-fill-color: var(--text-body); }
+html[data-theme] #searchModal .search-close-btn { color: var(--text-body); }
+html[data-theme] #searchModal .search-advanced-toggle-row { padding: 0 var(--space-6); }
+html[data-theme] #searchModal :is(.search-advanced-toggle, .search-advanced-reset, .search-footer-action) {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-md);
+  background: var(--glass-fill-1);
+  color: var(--text-body);
+  font: 500 12px/1.5 var(--font-ui);
+}
+html[data-theme] #searchModal .search-advanced-toggle[aria-expanded="true"] {
+  background: var(--indigo-12);
+  border-color: var(--indigo);
+  color: var(--text-strong);
+}
+html[data-theme] #searchModal .search-filter-count { background: var(--indigo); color: var(--text-inverse); }
+html[data-theme] #searchModal .search-advanced-reset { border-color: transparent; background: transparent; }
+html[data-theme] #searchModal .search-advanced-filters { padding: var(--space-4) var(--space-6); }
+html[data-theme] #searchModal .search-advanced-filters { background: transparent; border-color: var(--glass-border); }
+html[data-theme] #searchModal :is(.search-filter-field, .search-filter-check) { color: var(--text-body); }
+html[data-theme] #searchModal .search-filter-check { background: var(--glass-fill-1); border-color: var(--glass-border); }
+html[data-theme] #searchModal .search-filter-check input { accent-color: var(--indigo); }
+html[data-theme] :is(#searchModal, #addBookModal) :is(.form-input, .form-select) {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-md);
+  background-color: var(--glass-solid-2);
+  color: var(--text-strong);
+  -webkit-text-fill-color: var(--text-strong);
+  font: 400 14px/1.6 var(--font-ui);
+  box-shadow: none;
+}
+html[data-theme] :is(#searchModal, #addBookModal) .form-input::placeholder { color: var(--text-body); -webkit-text-fill-color: var(--text-body); }
+html[data-theme] #searchModal .search-status {
+  margin: var(--space-3) var(--space-6);
+  color: var(--text-body);
+  font: 400 11px/1.6 var(--font-mono);
+}
+html[data-theme] #searchModal .search-results {
+  min-height: 200px;
+  max-height: 420px;
+  flex: 1 0 200px;
+  padding: 0 var(--space-3) var(--space-4);
+  overflow-y: auto;
+}
+html[data-theme] #searchModal :is(.search-empty-state, .search-loading) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: 220px;
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--text-body);
+}
+html[data-theme] #searchModal .search-empty-state > i {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--r-xl);
+  background: var(--indigo-12);
+  color: var(--indigo);
+  font-size: 30px;
+}
+html[data-theme] #searchModal :is(.search-empty-state, .search-loading) h3 {
+  color: var(--text-strong);
+  font: 400 22px/1.3 var(--font-serif);
+}
+html[data-theme] #searchModal .search-empty-state p { max-width: 380px; overflow-wrap: anywhere; }
+html[data-theme] #searchModal .search-recovery-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); }
+html[data-theme] #searchModal .search-section-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  color: var(--text-body);
+  font: 500 11px/1.6 var(--font-mono);
+  letter-spacing: .06em;
+}
+html[data-theme] #searchModal .search-section-filtered { color: var(--text-body); }
+html[data-theme] #searchModal .search-result-item {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: start;
+  padding: var(--space-4) var(--space-3);
+  gap: var(--space-4);
+  margin: 0 0 var(--space-2);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  background: var(--glass-fill-1);
+}
+html[data-theme] #searchModal .search-result-item:is(:hover, .focused) { background: var(--indigo-08); border-color: var(--indigo); }
+html[data-theme] #searchModal .search-result-info { min-width: 0; }
+html[data-theme] #searchModal .search-result-title {
+  color: var(--text-strong);
+  font: 400 18px/1.35 var(--font-serif);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+html[data-theme] #searchModal :is(.search-result-author, .search-result-meta, .search-result-description) {
+  color: var(--text-body);
+  font-size: 12px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+html[data-theme] #searchModal .search-result-description { margin-top: var(--space-2); }
+html[data-theme] #searchModal .search-result-source-badges { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); }
+html[data-theme] :is(#searchModal, #addBookModal) .badge {
+  color: var(--text-body);
+  background: var(--glass-fill-2);
+  border: 1px solid var(--glass-border);
+  font: 400 11px/1.5 var(--font-ui);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+html[data-theme] #searchModal .search-footer {
+  position: sticky;
+  bottom: 0;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-6);
+  background: var(--glass-solid-1);
+  border-top: 1px solid var(--glass-border);
+  color: var(--text-body);
+}
+html[data-theme] #searchModal .search-footer-action { margin-left: auto; color: var(--text-strong); background: var(--indigo-12); }
+html[data-theme] #searchModal .search-footer span,
+html[data-theme] #searchModal kbd { color: var(--text-body); }
+
+html[data-theme] #addBookModal .modal { max-width: 680px; }
+html[data-theme] #addBookModal .modal-header { padding: var(--space-6); border-color: var(--glass-border); background: transparent; }
+html[data-theme] #addBookModal .modal-close { background: var(--glass-fill-2); color: var(--text-strong); }
+html[data-theme] #addBookModal .modal-body { padding: var(--space-6); background: transparent; }
+html[data-theme] #addBookModal .book-preview {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-5);
+  margin: 0 0 var(--space-6);
+  padding: var(--space-5);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  background: var(--glass-fill-1);
+}
+html[data-theme] #addBookModal .book-preview > .book-cover { width: 92px; height: 138px; flex: none; border-radius: var(--r-sm); }
+html[data-theme] #addBookModal .book-preview-info { min-width: 0; }
+html[data-theme] #addBookModal .book-preview-title { font: 400 24px/1.25 var(--font-serif); color: var(--text-strong); overflow-wrap: anywhere; }
+html[data-theme] #addBookModal .book-preview-author { color: var(--text-body); margin: var(--space-2) 0; overflow-wrap: anywhere; }
+html[data-theme] #addBookModal .book-preview-meta { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); }
+html[data-theme] #addBookModal .book-preview-description { color: var(--text-body); font-size: 12px; line-height: 1.7; margin-top: var(--space-3); overflow-wrap: anywhere; }
+html[data-theme] #addBookModal .add-book-form { display: flex; flex-direction: column; gap: var(--space-5); }
+html[data-theme] #addBookModal .form-label { color: var(--text-strong); font-size: 13px; }
+html[data-theme] #addBookModal .book-shelf-fieldset { border: 0; padding: 0; min-width: 0; }
+html[data-theme] #addBookModal .book-shelf-fieldset legend { padding: 0 0 var(--space-3); }
+html[data-theme] #addBookModal :is(.text-tertiary, .form-hint, .manual-entry-copy) { color: var(--text-body); }
+html[data-theme] #addBookModal .form-hint { font-size: 12px; line-height: 1.6; }
+html[data-theme] #addBookModal .status-select-group { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
+html[data-theme] #addBookModal .status-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 90px;
+  padding: var(--space-3) var(--space-2);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-md);
+  background: var(--glass-fill-1);
+  color: var(--text-body);
+  font-size: 12px;
+  text-align: center;
+  align-items: center;
+}
+html[data-theme] #addBookModal .status-option i { color: var(--indigo); font-size: 24px; }
+html[data-theme] #addBookModal .status-option span { color: inherit; }
+html[data-theme] #addBookModal .status-option:has(input:checked) { background: var(--indigo-12); border-color: var(--indigo); color: var(--text-strong); }
+html[data-theme] #addBookModal .status-option:focus-within { outline: 2px solid var(--indigo); outline-offset: 3px; }
+html[data-theme] #addBookModal .status-option input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; cursor: pointer; }
+html[data-theme] #addBookModal .star-rating { gap: var(--space-1); flex-wrap: wrap; }
+html[data-theme] #addBookModal .star { min-width: 44px; min-height: 44px; color: var(--text-body); background: var(--glass-fill-1); border-radius: var(--r-sm); }
+html[data-theme] #addBookModal .star.filled { color: var(--text-primary); background: var(--indigo-12); }
+html[data-theme] #addBookModal .manual-entry-intro { padding: var(--space-4); margin-bottom: var(--space-5); background: var(--indigo-08); border-radius: var(--r-md); }
+html[data-theme] #addBookModal .manual-form-section { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); min-width: 0; border: 0; padding: 0; }
+html[data-theme] #addBookModal .manual-form-section legend { width: 100%; padding-bottom: var(--space-3); color: var(--text-strong); font: 400 18px/1.5 var(--font-serif); }
+html[data-theme] #addBookModal .form-group--wide { grid-column: 1 / -1; }
+html[data-theme] #addBookModal textarea { resize: vertical; }
+html[data-theme] #addBookModal .form-required { color: var(--text-strong); }
+html[data-theme] #addBookModal .modal-footer--embedded {
+  position: sticky;
+  bottom: calc(-1 * var(--space-6));
+  z-index: 1;
+  margin: 0 calc(-1 * var(--space-6)) calc(-1 * var(--space-6));
+  padding: var(--space-4) var(--space-6);
+  background: var(--glass-solid-1);
+  border-color: var(--glass-border);
+}
+html[data-theme] #addBookModal .progress-summary { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-4); }
+html[data-theme] #addBookModal .progress-bar { height: 6px; margin: 0; background: var(--glass-fill-3); }
+html[data-theme] #addBookModal .progress-fill { background: var(--teal); }
+html[data-theme] #addBookModal .progress-summary span { font: 400 12px/1.5 var(--font-mono); }
+
+@media (max-width: 640px) {
+  html[data-theme] :is(#searchModal, #addBookModal) { padding: var(--space-3); }
+  html[data-theme] :is(#searchModal, #addBookModal) .modal { max-height: calc(100dvh - 24px); border-radius: var(--r-xl); backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--glass-solid-1); }
+  html[data-theme] #searchModal .book-dialog-heading { padding: var(--space-5) var(--space-4) 0; }
+  html[data-theme] #searchModal .search-input-wrap { margin: var(--space-4); }
+  html[data-theme] #searchModal :is(.search-advanced-toggle-row, .search-advanced-filters, .search-footer) { padding-left: var(--space-4); padding-right: var(--space-4); }
+  html[data-theme] #searchModal .search-status { margin-left: var(--space-4); margin-right: var(--space-4); }
+  html[data-theme] #searchModal .search-input { font-size: 16px; }
+  html[data-theme] #searchModal .search-footer > span { display: none; }
+  html[data-theme] #searchModal .search-footer-action { margin-left: 0; width: 100%; justify-content: center; }
+  html[data-theme] #searchModal .search-result-item { grid-template-columns: 40px minmax(0, 1fr); gap: var(--space-3); }
+  html[data-theme] #searchModal .search-result-item > .book-cover { width: 40px; height: 60px; }
+  html[data-theme] #searchModal .search-result-add { grid-column: 2; justify-self: start; }
+  html[data-theme] #addBookModal :is(.modal-header, .modal-body) { padding: var(--space-4); }
+  html[data-theme] #addBookModal .modal-title { font-size: 24px; }
+  html[data-theme] #addBookModal .book-preview { grid-template-columns: 64px minmax(0, 1fr); gap: var(--space-3); padding: var(--space-3); }
+  html[data-theme] #addBookModal .book-preview > .book-cover { width: 64px; height: 96px; }
+  html[data-theme] #addBookModal .book-preview-title { font-size: 20px; }
+  html[data-theme] #addBookModal .manual-form-section { grid-template-columns: minmax(0, 1fr); }
+  html[data-theme] #addBookModal .status-option { font-size: 11px; }
+  html[data-theme] #addBookModal .modal-footer--embedded { bottom: calc(-1 * var(--space-4)); margin: 0 calc(-1 * var(--space-4)) calc(-1 * var(--space-4)); padding: var(--space-3) var(--space-4); }
+  html[data-theme] #addBookModal .modal-footer .btn { flex: 1; padding-left: var(--space-2); padding-right: var(--space-2); }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  html[data-theme] :is(#searchModal, #addBookModal) .modal { background: var(--glass-solid-1); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme] :is(#searchModal, #addBookModal) *,
+  html[data-theme] :is(#searchModal, #addBookModal) { animation: none; transition: none; scroll-behavior: auto; }
+}

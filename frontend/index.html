@@ -219,8 +219,13 @@
 
   <div class="modal-overlay" id="searchModal" role="dialog" aria-modal="true" aria-label="Search books" hidden>
     <div class="modal modal--centered search-modal">
+      <header class="book-dialog-heading">
+        <p class="book-dialog-eyebrow">Your next chapter</p>
+        <h2>Find a book</h2>
+        <p>Search your library and discover books from the web.</p>
+      </header>
       <div class="search-input-wrap">
-        <i class="ph ph-magnifying-glass search-input-icon"></i>
+        <i class="ph ph-magnifying-glass search-input-icon" aria-hidden="true"></i>
         <input
           type="text"
           id="searchInput"
@@ -228,6 +233,8 @@
           placeholder="Search by title, author, or ISBN…"
           autocomplete="off"
           spellcheck="false"
+          aria-label="Search by title, author, or ISBN"
+          aria-describedby="searchStatus"
         />
         <button class="search-close-btn" id="closeSearch" aria-label="Close search">
           <kbd>ESC</kbd>
@@ -275,10 +282,12 @@
           </label>
         </div>
       </div>
+      <p class="search-status" id="searchStatus" role="status" aria-live="polite">Enter at least 3 characters to search.</p>
       <div class="search-results" id="searchResults">
         <div class="search-empty-state" id="searchEmptyState">
-          <i class="ph ph-books"></i>
-          <p>Search for any book to add it to your library</p>
+          <i class="ph ph-books" aria-hidden="true"></i>
+          <h3>A whole world of stories</h3>
+          <p>Search by title, author, or ISBN to find your next read.</p>
         </div>
       </div>
       <div class="search-footer">
@@ -296,7 +305,10 @@
   <div class="modal-overlay" id="addBookModal" role="dialog" aria-modal="true" aria-labelledby="addBookModalTitle" hidden>
     <div class="modal modal--sheet add-book-modal">
       <div class="modal-header">
-        <h2 class="modal-title" id="addBookModalTitle">Add to Library</h2>
+        <div>
+          <p class="book-dialog-eyebrow">Your reading journey</p>
+          <h2 class="modal-title" id="addBookModalTitle">Add to Library</h2>
+        </div>
         <button class="modal-close" id="closeAddBook" aria-label="Close">
           <i class="ph ph-x"></i>
         </button>

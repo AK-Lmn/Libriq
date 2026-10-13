@@ -19,6 +19,7 @@ export const Library = (() => {
     const header   = modal.querySelector('.modal-title');
 
     if (header) header.textContent = isManual ? 'Manual Entry' : 'Add to Library';
+    modal.dataset.bookDialog = isManual ? 'manual' : 'add';
 
     body.innerHTML = isManual ? buildManualForm(bookData) : buildAddForm(bookData);
     Utils.show(modal);
@@ -75,26 +76,26 @@ export const Library = (() => {
       </div>
 
       <form id="addBookForm" class="add-book-form">
-        <div class="form-group">
-          <label class="form-label">Add to shelf</label>
+        <fieldset class="form-group book-shelf-fieldset">
+          <legend class="form-label">Add to shelf</legend>
           <div class="status-select-group">
             <label class="status-option selected">
-              <input type="radio" name="status" value="wishlist" checked hidden>
+              <input type="radio" name="status" value="wishlist" checked>
               <i class="ph ph-bookmark"></i>
               <span>Want to Read</span>
             </label>
             <label class="status-option">
-              <input type="radio" name="status" value="reading" hidden>
+              <input type="radio" name="status" value="reading">
               <i class="ph ph-book-open"></i>
               <span>Reading</span>
             </label>
             <label class="status-option">
-              <input type="radio" name="status" value="finished" hidden>
+              <input type="radio" name="status" value="finished">
               <i class="ph ph-check-circle"></i>
               <span>Finished</span>
             </label>
           </div>
-        </div>
+        </fieldset>
 
         <div class="form-group" id="pageProgressGroup" hidden>
           <label class="form-label" for="currentPageInput">Current page</label>
@@ -113,7 +114,7 @@ export const Library = (() => {
           <label class="form-label">Your rating</label>
           <div class="star-rating star-lg" id="addBookStars">
             ${[1,2,3,4,5].map(n =>
-              `<button class="star" type="button" data-action="set-add-rating" data-rating="${n}" aria-label="Rate ${n} out of 5">★</button>`
+              `<button class="star" type="button" data-action="set-add-rating" data-rating="${n}" aria-label="Rate ${n} out of 5" aria-pressed="false">★</button>`
             ).join('')}
           </div>
           <input type="hidden" name="rating" id="ratingInput" value="">
@@ -127,7 +128,9 @@ export const Library = (() => {
             name="tags"
             class="form-input"
             placeholder="e.g. Classics, Philosophy, Books to reread"
+            aria-describedby="addShelvesHint"
           />
+          <p class="form-hint" id="addShelvesHint">Separate shelf names with commas.</p>
         </div>
 
         <div class="modal-footer modal-footer--embedded">
@@ -167,6 +170,7 @@ export const Library = (() => {
     document.getElementById('ratingInput').value = value;
     document.querySelectorAll('#addBookStars .star').forEach((star, i) => {
       star.classList.toggle('filled', i < value);
+      star.setAttribute('aria-pressed', String(i + 1 === value));
     });
   }
 
@@ -174,6 +178,7 @@ export const Library = (() => {
     document.getElementById('manualRatingInput').value = value;
     document.querySelectorAll('#manualBookStars .star').forEach((star, i) => {
       star.classList.toggle('filled', i < value);
+      star.setAttribute('aria-pressed', String(i + 1 === value));
     });
   }
 
@@ -331,14 +336,15 @@ export const Library = (() => {
     const selectedShelves = Array.isArray(book.tags) ? book.tags.join(', ') : '';
 
     return `
-      <div class="book-details-notes">
-        <h3 class="book-details-section-title">Manual Entry</h3>
-        <p class="text-sm text-tertiary manual-entry-copy">
-          Add a book by hand when it is missing from Open Library or Google Books.
+      <div class="manual-entry-intro">
+        <p class="text-sm manual-entry-copy">
+          Can’t find your book? Add it by hand. Only title and author are required.
         </p>
       </div>
 
       <form id="addBookForm" class="add-book-form">
+        <fieldset class="manual-form-section">
+          <legend>The essentials</legend>
         <div class="form-group">
           <label class="form-label" for="manualTitleInput">Title <span class="form-required">*</span></label>
           <input type="text" id="manualTitleInput" name="title" class="form-input" value="${Utils.sanitize(book.title || '')}" required />
@@ -349,7 +355,7 @@ export const Library = (() => {
           <input type="text" id="manualAuthorInput" name="author" class="form-input" value="${Utils.sanitize(book.author || '')}" required />
         </div>
 
-        <div class="form-group">
+        <div class="form-group form-group--wide">
           <label class="form-label" for="manualCoverInput">Cover image URL <span class="text-tertiary">(optional)</span></label>
           <input type="url" id="manualCoverInput" name="coverUrl" class="form-input" value="${Utils.sanitize(book.coverUrl || '')}" placeholder="https://..." />
         </div>
@@ -364,11 +370,15 @@ export const Library = (() => {
           <input type="text" id="manualGenreInput" name="genres" class="form-input" value="${Utils.sanitize(selectedGenres)}" placeholder="e.g. Fantasy, Memoir" />
         </div>
 
-        <div class="form-group">
+        <div class="form-group form-group--wide">
           <label class="form-label" for="manualDescriptionInput">Description/synopsis <span class="text-tertiary">(optional)</span></label>
           <textarea id="manualDescriptionInput" name="description" class="form-input" rows="4" placeholder="Short description or synopsis...">${Utils.sanitize(book.description || '')}</textarea>
         </div>
 
+        </fieldset>
+
+        <fieldset class="manual-form-section">
+          <legend>More about the book</legend>
         <div class="form-group">
           <label class="form-label" for="manualYearInput">Published year <span class="text-tertiary">(optional)</span></label>
           <input type="number" id="manualYearInput" name="publishYear" class="form-input" value="${book.publishYear || ''}" min="0" step="1" />
@@ -383,10 +393,14 @@ export const Library = (() => {
           <label class="form-label" for="manualLanguageInput">Language <span class="text-tertiary">(optional)</span></label>
           <input type="text" id="manualLanguageInput" name="language" class="form-input" value="${Utils.sanitize(book.language || '')}" placeholder="English" />
         </div>
+        </fieldset>
 
-        <div class="form-group">
+        <fieldset class="manual-form-section">
+          <legend>Your reading journey</legend>
+        <div class="form-group form-group--wide">
           <label class="form-label" for="manualTagsInput">Shelves <span class="text-tertiary">(optional)</span></label>
           <input type="text" id="manualTagsInput" name="tags" class="form-input" value="${Utils.sanitize(selectedShelves)}" placeholder="e.g. Classics, Philosophy, Books to reread" />
+          <p class="form-hint">Separate shelf names with commas.</p>
         </div>
 
         <div class="form-group">
@@ -404,15 +418,16 @@ export const Library = (() => {
           <input type="number" id="manualCurrentPageInput" name="currentPage" class="form-input" value="${book.currentPage || 0}" min="0" step="1" />
         </div>
 
-        <div class="form-group" id="manualRatingGroup" ${selectedStatus === LIBRIQ.STATUS.FINISHED ? '' : 'hidden'}>
+        <div class="form-group form-group--wide" id="manualRatingGroup" ${selectedStatus === LIBRIQ.STATUS.FINISHED ? '' : 'hidden'}>
           <label class="form-label">Your rating</label>
           <div class="star-rating star-lg" id="manualBookStars">
             ${[1,2,3,4,5].map(n =>
-              `<button class="star" type="button" data-action="set-manual-rating" data-rating="${n}" aria-label="Rate ${n} out of 5">★</button>`
+              `<button class="star${n <= (book.rating || 0) ? ' filled' : ''}" type="button" data-action="set-manual-rating" data-rating="${n}" aria-label="Rate ${n} out of 5" aria-pressed="${n === book.rating}">★</button>`
             ).join('')}
           </div>
           <input type="hidden" name="rating" id="manualRatingInput" value="${book.rating || ''}">
         </div>
+        </fieldset>
 
         <div class="modal-footer modal-footer--embedded">
           <button type="button" class="btn btn-ghost" data-action="close-add-dialog">Cancel</button>
@@ -743,6 +758,7 @@ export const Library = (() => {
     const body   = document.getElementById('addBookBody');
     const header = modal.querySelector('.modal-title');
     if (header) header.textContent = 'Update Progress';
+    modal.dataset.bookDialog = 'progress';
 
     const pct = Utils.readingProgress(book.currentPage, book.pageCount);
 
@@ -753,10 +769,10 @@ export const Library = (() => {
           <div class="book-preview-title">${Utils.sanitize(book.title)}</div>
           <div class="book-preview-author">${Utils.sanitize(book.author)}</div>
           <div class="progress-summary">
-            <div class="progress-bar progress-bar--spaced">
+            <div class="progress-bar progress-bar--spaced" role="progressbar" aria-label="Reading progress" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100">
               <div class="progress-fill" style="width:${pct}%"></div>
             </div>
-            <span class="text-xs text-tertiary">${pct}% complete</span>
+            <span class="text-xs text-tertiary">${book.currentPage || 0}${book.pageCount ? ` / ${book.pageCount}` : ''} pages · ${pct}% complete</span>
           </div>
         </div>
       </div>
@@ -775,8 +791,12 @@ export const Library = (() => {
             value="${book.currentPage}"
             min="0"
             max="${book.pageCount || 99999}"
+            step="1"
+            required
+            aria-describedby="progressPageHint"
             autofocus
           />
+          <p class="form-hint" id="progressPageHint">${book.pageCount ? 'Reaching the last page will mark this book as finished.' : 'Total page count is not available for this book.'}</p>
         </div>
 
         <div class="modal-footer modal-footer--embedded">
