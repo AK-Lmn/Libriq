@@ -57,7 +57,7 @@ export function createBookDetailsPage({
     const description = book.description
       ? book.description.replace(/<[^>]*>/g, '')
       : null;
-    const synopsis = description || 'No description available yet. Your reading progress, notes and quotes are still here.';
+    const synopsis = description || (book.author ? `A work by ${book.author}.` : 'Saved in your library.');
     const notes = book.notes ?? '';
     const notesUpdatedText = book.notesUpdatedAt
       ? `Last updated ${Utils.formatDate(book.notesUpdatedAt)}`
@@ -121,7 +121,6 @@ export function createBookDetailsPage({
             <span class="badge ${Utils.statusBadgeClass(book.status)}">
               ${book.status === LIBRIQ.STATUS.READING ? icon('status-reading') : ''}${Utils.statusLabel(book.status)}
             </span>
-            <span class="badge badge-metadata badge-metadata-${Utils.sanitize(metadataQuality.className)}">${icon('status-metadata')}${Utils.sanitize(metadataQuality.label)}</span>
             ${genreBadges}
           </div>
           ${subjectBadges ? `<div class="book-details-source-badges">${subjectBadges}</div>` : ''}

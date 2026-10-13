@@ -165,6 +165,31 @@ export const Library = (() => {
       if (trigger.dataset.action === 'set-manual-rating' && Number.isFinite(rating)) _setManualFormRating(rating);
       if (trigger.dataset.action === 'close-add-dialog') closeAddModal();
     });
+    _autoEnrichMissingDescriptions();
+  }
+
+  function _autoEnrichMissingDescriptions() {
+    try {
+      if (typeof Storage === 'undefined' || typeof Storage.getBooks !== 'function') return;
+      const books = Storage.getBooks();
+      const missing = books.filter(b => b && !b.description);
+      if (missing.length === 0) return;
+
+      let seq = Promise.resolve();
+      missing.slice(0, 10).forEach((b, idx) => {
+        seq = seq
+          .then(() => new Promise(resolve => setTimeout(resolve, idx === 0 ? 600 : 1200)))
+          .then(() => refreshMetadata(b.id))
+          .then(res => {
+            if (res?.status === 'updated') {
+              Navigation?.renderCurrentPage?.();
+            }
+          })
+          .catch(() => {});
+      });
+    } catch {
+      // non-fatal
+    }
   }
 
   function _setFormRating(value) {
@@ -257,6 +282,12 @@ export const Library = (() => {
     Utils.toast(`"${book.title}" added to your library`, 'success');
     Navigation.updateBadges();
     Navigation.renderCurrentPage();
+
+    if (!book.description || !book.coverUrl || !book.pageCount) {
+      refreshMetadata(book.id).then(res => {
+        if (res?.status === 'updated') Navigation.renderCurrentPage();
+      }).catch(() => {});
+    }
   }
 
   function closeAddModal() {
@@ -523,6 +554,12 @@ export const Library = (() => {
     Utils.toast(`"${book.title}" added to your library`, 'success');
     Navigation.updateBadges();
     Navigation.renderCurrentPage();
+
+    if (!book.description || !book.coverUrl || !book.pageCount) {
+      refreshMetadata(book.id).then(res => {
+        if (res?.status === 'updated') Navigation.renderCurrentPage();
+      }).catch(() => {});
+    }
   }
 
   async function refreshMetadata(bookId) {
@@ -665,7 +702,6 @@ export const Library = (() => {
     const card = document.createElement('div');
     card.className = `book-card ${isFinished ? 'book-card--finished' : ''} ${isReading ? 'book-card--reading' : ''}`.trim();
     card.dataset.bookId = book.id;
-    const metadataQuality = _getMetadataQuality(book);
     const genreBadges = (book.genres || []).slice(0, 2)
       .map(genre => `<span class="badge badge-genre">${Utils.sanitize(genre)}</span>`).join('');
     const progressText = isReading
@@ -695,13 +731,9 @@ export const Library = (() => {
             <div class="progress-fill" style="width:${pageCount ? isFinished ? 100 : pct : 0}%"></div>
           </div>` : ''}
         </div>
-        ${metadataQuality.className !== 'complete' ? `<div class="library-card-metadata-note">${icon('alert')} Needs metadata</div>` : ''}
         <details class="library-card-disclosure">
           <summary>Book actions</summary>
-          <div class="library-card-extra">
-            <span class="badge badge-metadata badge-metadata-${metadataQuality.className}">${metadataQuality.label}</span>
-            ${genreBadges}
-          </div>
+          ${genreBadges ? `<div class="library-card-extra">${genreBadges}</div>` : ''}
           <div class="book-card-actions">
             ${isReading ? '<button type="button" class="btn btn-secondary btn-sm card-progress-btn" data-action="update-progress">Update Progress</button>' : ''}
             ${!isFinished && !isReading ? '<button type="button" class="btn btn-secondary btn-sm card-start-btn" data-action="start-reading">Start Reading</button>' : ''}
@@ -831,6 +863,7 @@ export const Library = (() => {
     toggleFavorite, removeBook,
     renderBookCard, showProgressModal,
     showDetailsModal, closeDetailsModal,
+    refreshMetadata,
   };
 })();
 
