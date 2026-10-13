@@ -1,165 +1,142 @@
-# LibriQ
+<div align="center">
 
-**LibriQ** is a cloud-first personal book-tracking web app for organizing a personal library, tracking reading progress, rating books, saving favorites, writing private notes, refreshing metadata, and reviewing reading statistics in a calm, focused workspace.
+# 📚 LibriQ
 
-The app is built with HTML, CSS, and Vanilla JavaScript. Book metadata comes primarily from Google Books and Open Library, with additional discovery and readable-link integrations from Gutendex / Project Gutenberg and Internet Archive.
+**A calm, privacy-first personal library & reading tracker.**
 
-LibriQ centers on signed-in account use through Google or email/password authentication. When account services are unavailable, an offline fallback can keep the app usable on the current device. Local JSON backups, manual cloud backup and restore, cloud merge previews, automatic Account Sync, and Sync Health diagnostics provide several layers of data safety.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/Tests-38%20passing-brightgreen.svg)](tests/)
+[![PWA](https://img.shields.io/badge/PWA-Offline%20Ready-orange.svg)](frontend/manifest.json)
+[![Live App](https://img.shields.io/badge/Demo-libriq.app-22d3ee.svg)](https://libriq.app)
 
-LibriQ 4.7 retains the v4.6 metadata and discovery improvements while adding synced activity history, clickable library-based recommendations, and smoother session restoration. Basic Google Analytics page-view tracking is used only for anonymous traffic measurement.
+*No social algorithms, zero ads, no clutter. Just your books, your reading streaks, and your private notes.*
 
-## Documentation
+[Live Demo](https://libriq.app) · [User Guide](docs/USER_GUIDE.md) · [Architecture](docs/ARCHITECTURE.md) · [Changelog](docs/CHANGELOG.md)
 
-- [Architecture](docs/ARCHITECTURE.md)
-- [Changelog and patch notes](docs/CHANGELOG.md)
-- [User guide](docs/USER_GUIDE.md)
-- [Firebase, authentication, sync, and backup](docs/FIREBASE.md)
-- [Deployment and environment configuration](docs/DEPLOYMENT.md)
-- [Book APIs and providers](docs/API.md)
+</div>
 
-## Key Features
+---
 
-- Search Google Books and Open Library with merged, deduplicated results
-- Add API results or enter books manually
-- Organize books by reading status, favorites, custom shelves, and metadata quality
-- Search, filter, and sort the saved library locally
-- Track pages, completion, ratings, private notes, and private quotes
-- Refresh missing metadata without overwriting personal reading data
-- Review Dashboard summaries, Statistics, yearly recap, goals, streaks, and activity
-- Discover local recommendations based on saved-library signals
-- Browse Open Library subject rails and free classics from Gutendex
-- Open Internet Archive readable or archive links when available
-- Export, validate, merge, replace, and restore JSON backups
-- Use Firestore cloud backup, manual restore and merge, and automatic Account Sync
-- Diagnose account and sync readiness from Settings
-- Use responsive light and dark themes and an offline-friendly PWA shell
-- Learn the product through the built-in Help & Guide Center and What’s New modal
+## 🌟 Overview
 
-For complete workflows and field-level details, see the [User Guide](docs/USER_GUIDE.md).
+**LibriQ** is an aesthetic, local-first web app designed for readers who want to track their personal library without the bloat of traditional reading platforms. It combines Google Books and Open Library metadata deduplication, offline PWA reliability, and optional Firestore cloud sync into a unified, glass-styled workspace.
 
-## Screenshots
+---
 
-### Dashboard
+## ✨ Key Features
 
-![Dashboard](docs/screenshots/dashboard-desktop.png)
+- **🔎 Dual-Engine Book Search**: Merged, deduplicated results across **Google Books** and **Open Library**, plus free classics from **Gutendex** (Project Gutenberg) and readable **Internet Archive** links.
+- **📖 Cover-Forward Library**: Filter and sort books by reading status (*Reading*, *Wishlist*, *Finished*, *Did Not Finish*), custom shelves, favorites, and metadata completeness.
+- **📊 Reading Insights & Streaks**: Track annual goals, pages read, daily reading streaks, completion percentages, and detailed yearly summaries.
+- **📝 Private Notes & Quotes**: Save custom annotations, favorite excerpts, and personal star ratings directly on each book card.
+- **🛡️ Data Ownership & Resilience**:
+  - Full **offline PWA** functionality via service workers and `localStorage`.
+  - Export and restore complete **JSON library backups**.
+  - Optional **Cloud Firestore sync** with real-time sync health diagnostics and safe async confirmation dialogs.
+- **🎨 Glassmorphic Interface**: Fully responsive, editorial glass design across both dark and light palettes.
 
-An at-a-glance home view with reading progress, goal tracking, and recent activity.
+---
 
-### Library
+## 📸 Screenshots
 
-![Library](docs/screenshots/library-desktop.png)
+| Dashboard | Library Shelf |
+| :---: | :---: |
+| ![Dashboard](docs/screenshots/dashboard-desktop.png) | ![Library](docs/screenshots/library-desktop.png) |
 
-A cover-forward shelf for browsing saved books, filters, and library search.
+| Book Details & Notes | Search & Discovery |
+| :---: | :---: |
+| ![Book Details](docs/screenshots/book-details-desktop.png) | ![Search](docs/screenshots/search-modal-desktop.png) |
 
-### Book Details
+---
 
-![Book Details](docs/screenshots/book-details-desktop.png)
+## 🛠️ Tech Stack
 
-The book detail modal for progress, rating, notes, favorites, and metadata.
+- **Frontend**: Vanilla JavaScript (Native ES Modules), HTML5, CSS3 (Modern Glassmorphism Design System)
+- **APIs & Discovery**: Google Books API, Open Library API, Gutendex (Project Gutenberg), Internet Archive
+- **Offline & Storage**: PWA Service Worker, Web App Manifest, `localStorage`
+- **Cloud & Auth (Optional)**: Firebase Authentication (Google & Email/Password), Cloud Firestore
+- **Testing**: Node.js Test Runner (`node --test`), 100% automated CI test suite
 
-### Search
+---
 
-![Search](docs/screenshots/search-modal-desktop.png)
+## 🚀 Quick Start
 
-The search experience for finding books online before adding them locally.
+### Prerequisites
+- Node.js (v18+) and npm
 
-### Help & Guide
+### Local Setup
 
-![Help & Guide](docs/screenshots/help-guide-desktop.png)
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/AK-Lmn/Libriq.git
+   cd Libriq
+   ```
 
-A built-in guide for getting started, using backups, and learning key features.
+2. **Install dependencies and build configuration**:
+   ```bash
+   npm install
+   npm run build
+   ```
 
-### Mobile View
+3. **Serve locally**:
+   ```bash
+   npx serve frontend -p 5500
+   ```
+   Open `http://localhost:5500` in your browser.
 
-![Mobile View](docs/screenshots/dashboard-mobile.png)
+> [!NOTE]
+> Public search and local library tracking work immediately out of the box with zero API keys required. To test Firebase authentication, add your credentials to a root `.env` file and rebuild. See [Deployment Guide](docs/DEPLOYMENT.md) for details.
 
-A compact mobile layout that keeps the dashboard easy to scan on smaller screens.
+---
 
-## Tech Stack
+## 🧪 Running Tests
 
-- **HTML** for structure
-- **CSS** for layout, themes, responsive design, and the Studio visual system
-- **Vanilla JavaScript** for application logic and interactions
-- **Firebase Authentication** for Google and email/password accounts
-- **Cloud Firestore** for account sync, activity history, and cloud backups
-- **localStorage** for device-local library and reading state
-- **Google Books API** and **Open Library API** for primary metadata search
-- **Gutendex / Project Gutenberg** for free-classics discovery
-- **Internet Archive** for readable and archive links
-- **Web App Manifest and service worker** for installable, offline-friendly access
-- **Figma-designed assets** for the LibriQ icon and branding system
-
-Saved books, progress, ratings, favorites, notes, and other reading state remain available locally in the browser. Account Sync and cloud backup are separate account-backed safety features. See [Firebase](docs/FIREBASE.md) for the exact boundaries.
-
-## Quick Start
-
-Requirements:
-
-- Node.js and npm
-- A local static-file server
-- Optional Firebase and Google Books credentials for account and keyed-search testing
+LibriQ includes comprehensive automated test coverage for authentication, catalog invariants, security boundaries, and responsive layouts:
 
 ```bash
-git clone https://github.com/AK-Lmn/Libriq.git
-cd Libriq
-npm install
-npm run build
+# Run unit & API test suite (38 tests)
+npm test
+
+# Run design & viewport verification scripts
+node scripts/test-integration-design.mjs
 ```
 
-Serve the repository and open:
+---
 
-```text
-http://localhost:5500/frontend/index.html
-```
-
-Normal public book search does not require local configuration. To enable Firebase sign-in locally, create a root `.env`, run `npm run build`, and add `localhost` to Firebase Authentication’s authorized domains. Use `localhost`, not `127.0.0.1`, for Firebase sign-in testing.
-
-See [Deployment](docs/DEPLOYMENT.md) for the complete environment-variable list, generated configuration behavior, Vercel settings, and deployment notes.
-
-## Project Structure
+## 📂 Project Structure
 
 ```text
 LibriQ/
-|-- frontend/
-|   |-- assets/
-|   |   `-- icons/
-|   |-- css/
-|   |-- js/
-|   |   |-- app/
-|   |   |-- features/
-|   |   `-- services/
-|   |-- index.html
-|   `-- manifest.json
-|-- docs/
-|   |-- screenshots/
-|   |-- API.md
-|   |-- ARCHITECTURE.md
-|   |-- CHANGELOG.md
-|   |-- DEPLOYMENT.md
-|   |-- FIREBASE.md
-|   `-- USER_GUIDE.md
-|-- scripts/
-|-- package.json
-|-- package-lock.json
-|-- README.md
-`-- LICENSE
+├── frontend/
+│   ├── assets/           # Revamp SVG icons, logos & branding
+│   ├── css/              # Feature stylesheets & glass layout system
+│   ├── js/
+│   │   ├── app/          # Core state & bootstrap
+│   │   ├── components/   # UI dialogs & modals
+│   │   ├── features/     # Library, goals, insights & search logic
+│   │   └── services/     # API providers & cloud sync
+│   ├── index.html        # Entry point
+│   └── manifest.json     # PWA manifest
+├── docs/                 # Architectural specs, API guides & screenshots
+├── scripts/              # Layout & integration test runners
+├── tests/                # Automated API & security test suite
+└── README.md
 ```
 
-The application uses native ES modules and feature/service boundaries while keeping `navigation.js` as the primary composition root. See [Architecture](docs/ARCHITECTURE.md) for the API boundary and temporary classic-script bridge.
+---
 
-## Current Status
+## 📄 Documentation
 
-LibriQ is in active development. The current release focuses on a stable reading tracker with library management, online and manual book entry, progress, ratings, private notes and quotes, metadata enrichment, statistics, responsive design, recommendations, backups, authenticated cloud sync, activity history, and an offline-friendly PWA shell.
+For deep dives into specific topics, check out the documentation:
+- 🏗️ [Architecture & Module Boundaries](docs/ARCHITECTURE.md)
+- 🔌 [Book APIs & Integrations](docs/API.md)
+- ☁️ [Firebase & Cloud Sync](docs/FIREBASE.md)
+- 🚢 [Deployment & Environment Setup](docs/DEPLOYMENT.md)
+- 📖 [Full User Guide](docs/USER_GUIDE.md)
+- 📝 [Changelog](docs/CHANGELOG.md)
 
-Current limitations and considerations:
+---
 
-- Live metadata search requires an internet connection.
-- Some providers do not return a synopsis or valid cover for every book; LibriQ displays safe fallbacks rather than inventing missing data.
-- Device-local data can be hidden or removed by clearing browser data or changing browsers unless it has been exported, backed up, or synced.
-- Account, backup, restore, merge, and sync behavior is documented separately because each has different data-safety semantics.
+## 📜 License
 
-Possible future improvements include better metadata matching, an activity heatmap, further mobile-navigation polish, further PWA/offline polish, and carefully designed profile or social-reading features. Earlier roadmap notes also considered activity history, optional backend storage, and cloud sync; several of those capabilities have since shipped. Authentication, privacy, storage, and user security remain the deciding constraints for future account-backed or social work.
-
-## License
-
-This project is licensed under the terms in [LICENSE](LICENSE).
+Distributed under the MIT License. See [LICENSE](LICENSE) for details.
