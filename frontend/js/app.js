@@ -21,16 +21,15 @@ function getWhatsNewVersion() {
 function getReleaseNotes() {
   return {
     [getWhatsNewVersion()]: {
-      title: "What's New in LibriQ v4.7.0",
-      subtitle: 'Better discovery, synced activity, and a smoother cloud-first experience.',
+      title: "What's New in LibriQ v4.8.0",
+      subtitle: '3D Digital Bookshelf view, refreshed Ribbon Q identity, and UI polish.',
       sections: [
-        ['Better book discovery', 'Search results and saved books now carry richer identity signals so LibriQ can merge duplicate sources more safely.'],
-        ['Source badges and richer metadata', 'Open Library, Google Books, Project Gutenberg, and Internet Archive badges make book origins easier to understand at a glance.'],
-        ['Clickable recommendations', 'Recommendations, Open Library subject rails, and free classics cards now open details and add flows more naturally.'],
-        ['Synced activity history', 'Activity now syncs with your account so Dashboard and Activity stay aligned after reloads and site-data clears.'],
-        ['Read and archive links', 'When available, Internet Archive links appear in Book Details without changing the normal search experience.'],
+        ['3D Digital Bookshelf View', 'Experience your collection like a physical bookcase. Switch seamlessly between the classic cover grid and 3D spine shelves with realistic depth and paper thickness.'],
+        ['Refreshed Brand Identity', 'The signature Ribbon Q logo mark has been precision-upgraded in Deep Indigo & Slate across all navigation headers, favicons, and PWA app icons.'],
+        ['Spine Hover Previews', 'Hovering or focusing on any spine brings it forward with an instant floating card showing book cover, author, and reading progress.'],
+        ['Dark & Light Theme Harmony', 'Refined glass tokens and shelf planks adapt naturally between deep OLED dark mode and clean editorial paper light mode.'],
       ],
-      note: 'This release stays backward-compatible with older saved books and keeps search, sync, and library behavior intact.',
+      note: 'All shelf filters, sorting options, and book details work seamlessly with the new Bookshelf view.',
     },
   };
 }

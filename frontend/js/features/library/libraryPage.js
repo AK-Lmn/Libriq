@@ -1,5 +1,5 @@
 import { buildLibraryShelfEmpty } from './libraryShelvesPage.js';
-import { customShelves, libraryIcon, libraryTools, sortLibraryBooks } from './libraryDesign.js';
+import { customShelves, libraryIcon, libraryTools, sortLibraryBooks, renderBookshelfView } from './libraryDesign.js';
 
 export function createLibraryPage({ storage, library, utils, constants, actions = {}, documentRoot } = {}) {
   let boundMain = null;
@@ -9,6 +9,7 @@ export function createLibraryPage({ storage, library, utils, constants, actions 
     query: 'libriq_library_query',
     sort: 'libriq_library_sort',
     shelf: 'libriq_library_shelf',
+    view: 'libriq_library_view',
   };
 
   const getDocument = () => documentRoot || globalThis.document;
@@ -24,6 +25,7 @@ export function createLibraryPage({ storage, library, utils, constants, actions 
       query: stateStore.getItem(stateKeys.query) || '',
       sort: stateStore.getItem(stateKeys.sort) || 'recently-added',
       shelf: stateStore.getItem(stateKeys.shelf) || 'all',
+      viewMode: stateStore.getItem(stateKeys.view) || 'grid',
     };
   }
 
@@ -85,11 +87,20 @@ export function createLibraryPage({ storage, library, utils, constants, actions 
     const order = getDocument()?.getElementById?.('librarySortSummary');
     if (order) order.textContent = state.sort === 'recently-added' ? 'Your latest additions first' : 'Your collection, your order';
     if (filtered.length === 0) {
+      grid.classList?.remove?.('books-shelf-mode');
       grid.innerHTML = buildEmpty(state.filter, state.query);
       return;
     }
-    grid.innerHTML = '';
-    filtered.forEach(book => grid.appendChild(library.renderBookCard(book)));
+    if (state.viewMode === 'shelf') {
+      grid.classList?.add?.('books-shelf-mode');
+      renderBookshelfView(filtered, grid, utils, {
+        showBookDetails: id => actions.showBookDetails?.(id),
+      });
+    } else {
+      grid.classList?.remove?.('books-shelf-mode');
+      grid.innerHTML = '';
+      filtered.forEach(book => grid.appendChild(library.renderBookCard(book)));
+    }
   }
 
   function renderLibraryPage({ root } = {}) {
@@ -166,6 +177,14 @@ export function createLibraryPage({ storage, library, utils, constants, actions 
           main.querySelectorAll?.('.chip').forEach(chip => {
             chip.classList.toggle('active', chip === trigger);
             chip.setAttribute('aria-pressed', String(chip === trigger));
+          });
+          renderGrid();
+        },
+        'set-library-view': () => {
+          const nextView = trigger.dataset.view === 'shelf' ? 'shelf' : 'grid';
+          setState({ view: nextView });
+          main.querySelectorAll?.('[data-action="set-library-view"]').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === nextView);
           });
           renderGrid();
         },
