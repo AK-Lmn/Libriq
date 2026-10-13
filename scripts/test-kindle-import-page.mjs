@@ -69,6 +69,9 @@ assert.equal(feature.open(), true);
 assert.equal(modal.hidden, false);
 assert.match(modal.innerHTML, /Import Kindle Clippings/);
 assert.match(modal.innerHTML, /Continue Import/);
+assert.match(modal.innerHTML, /aria-describedby="kindleFileHint"/);
+assert.match(preview.innerHTML, /Preview before you import/);
+assert.equal(continueButton.disabled, true);
 assert.doesNotMatch(modal.innerHTML, /onclick\s*=/i);
 
 const validFile = { name: 'My Clippings.txt', text: async () => 'valid clippings' };
@@ -113,6 +116,77 @@ await modal.emit('click', {
 assert.equal(modal.hidden, true);
 assert.equal(calls.cancel, 1);
 assert.equal(feature.getPreview(), null);
+
+// Only the latest selected file may publish a preview, including rejection paths.
+feature.open();
+let resolveOld;
+const oldRead = modal.emit('change', { target: { matches: () => true, files: [{ text: () => new Promise(resolve => { resolveOld = resolve; }) }] } });
+assert.match(preview.innerHTML, /Reading your clippings/);
+assert.equal(continueButton.disabled, true);
+await modal.emit('change', { target: { matches: () => true, files: [validFile] } });
+const current = feature.getPreview();
+resolveOld('invalid');
+await oldRead;
+assert.equal(feature.getPreview(), current);
+assert.equal(continueButton.disabled, false);
+
+let rejectOld;
+const rejectedRead = modal.emit('change', { target: { matches: () => true, files: [{ text: () => new Promise((_, reject) => { rejectOld = reject; }) }] } });
+await modal.emit('change', { target: { matches: () => true, files: [validFile] } });
+const newCurrent = feature.getPreview();
+rejectOld(new Error('Old file could not be read'));
+await rejectedRead;
+assert.equal(feature.getPreview(), newCurrent);
+
+let resolveCancelled;
+const cancelledRead = modal.emit('change', { target: { matches: () => true, files: [{ text: () => new Promise(resolve => { resolveCancelled = resolve; }) }] } });
+await modal.emit('keydown', { key: 'Escape', preventDefault() {} });
+resolveCancelled('valid clippings');
+await cancelledRead;
+assert.equal(feature.getPreview(), null);
+assert.equal(modal.hidden, true);
+
+feature.open();
+await modal.emit('change', { target: { matches: () => true, files: [{ text: async () => { throw new Error('Unreadable'); } }] } });
+assert.match(preview.innerHTML, /Could not read this clippings file/);
+assert.equal(continueButton.disabled, true);
+await modal.emit('change', { target: { matches: () => true, files: [] } });
+assert.match(preview.innerHTML, /Preview before you import/);
+assert.equal(feature.getSelectedFile(), null);
+
+let settleImport;
+let executions = 0;
+const guarded = createKindleImportPage({
+  documentRoot,
+  parseClippings: () => ({ books: [{}] }),
+  buildImportPlan: () => ({ booksMatched: 1 }),
+  applyKindleImportPlan: () => ({ importedQuotes: 1 }),
+  actions: { continueImport: () => { executions += 1; return new Promise(resolve => { settleImport = resolve; }); } },
+});
+guarded.open();
+await modal.emit('change', { target: { matches: () => true, files: [validFile] } });
+const continueEvent = { target: { closest: () => ({ dataset: { action: 'continue-kindle-import' } }) }, preventDefault() {} };
+const importing = modal.emit('click', continueEvent);
+assert.match(preview.innerHTML, /Importing your clippings/);
+assert.equal(continueButton.disabled, true);
+await modal.emit('click', continueEvent);
+await modal.emit('keydown', { key: 'Escape', preventDefault() {} });
+assert.equal(modal.hidden, false);
+assert.equal(executions, 1);
+settleImport(false);
+await importing;
+assert.match(preview.innerHTML, /Could not complete the import/);
+assert.match(preview.innerHTML, /Some changes may already have been applied/);
+assert.match(preview.innerHTML, /Import Preview/);
+assert.equal(continueButton.disabled, false);
+assert.ok(guarded.getPreview());
+
+const secondImport = modal.emit('click', continueEvent);
+settleImport({ quotesImported: 1 });
+await secondImport;
+assert.equal(executions, 2);
+assert.equal(modal.hidden, true);
+assert.equal(guarded.getPreview(), null);
 
 assert.throws(() => createKindleImportPage({}), /requires parseClippings/);
 console.log('Kindle import page tests passed.');
