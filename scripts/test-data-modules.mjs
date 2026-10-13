@@ -63,6 +63,9 @@ assert.equal(defaultBook.author, 'Unknown Author');
 assert.equal(defaultBook.status, 'wishlist');
 assert.equal(defaultBook.language, 'English');
 assert.deepEqual(defaultBook.quotes, []);
+assert.equal(createBook({ quotes: [{ text: 'Imported highlight', source: 'kindle' }] }).quotes[0].source, 'kindle');
+assert.equal(createBook({ quotes: [{ note: 'Imported note', source: 'kindle' }] }).quotes[0].source, 'kindle');
+assert.equal(createBook({ quotes: [{ text: 'Private quote', source: 'manual' }] }).quotes[0].source, 'manual');
 
 const suppliedBook = createBook({
   id: 'book-1',

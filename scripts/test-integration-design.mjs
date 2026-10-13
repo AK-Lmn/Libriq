@@ -3,6 +3,7 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
+import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const root = path.resolve('frontend');
@@ -23,7 +24,7 @@ const browser = await chromium.launch();
 const results = [];
 const routes = ['dashboard', 'library', 'reading', 'wishlist', 'finished', 'favorites', 'abandoned', 'stats', 'goals', 'activity', 'recommendations', 'settings', 'profile', 'help', 'quotes'];
 const overlays = ['details', 'search', 'add', 'manual', 'progress', 'kindle', 'whats-new', 'backup', 'danger', 'signin', 'signup', 'reset', 'boot', 'session-fallback'];
-const designed = new Set([...routes.filter(route => !['quotes', 'abandoned'].includes(route)), 'details']);
+const designed = new Set([...routes, ...overlays]);
 
 async function render(page, window, theme, state) {
   await page.evaluate(async ({ window: target, theme, state }) => {
@@ -44,7 +45,7 @@ async function render(page, window, theme, state) {
     globalThis.LibriqSyncBeta = { refresh() {}, getState: () => ({ enabled: false, status: 'off' }) };
     Storage.setActiveAccountUid(user.uid);
     const books = Array.from({ length: 8 }, (_, i) => createBook({ id: `fixture-${i}`, title: state === 'long' ? 'A very long book title with Unicode café 日本語 and a continuing chapter '.repeat(4) : `Fixture reading volume ${i + 1}`, author: state === 'long' ? 'An author with a deliberately lengthy name '.repeat(3) : `Fixture author ${i + 1}`, status: ['reading', 'wishlist', 'finished'][i % 3], pageCount: 304, currentPage: i % 3 === 2 ? 304 : 108, rating: 4, isFavorite: i % 2 === 0, genres: ['Fiction'], tags: ['Owned'], dateFinished: '2026-10-01', notes: 'Private notes from a fixture account.', quotes: [{ id: `quote-${i}`, text: 'A fixture quote for a private reading workspace.', page: 23, source: 'manual' }] }));
-    if (target === 'abandoned') books.forEach(book => { book.status = 'abandoned'; });
+    if (target === 'abandoned') books.forEach(book => { book.status = 'dnf'; });
     Storage.saveBooks(state === 'empty' && target !== 'details' && target !== 'progress' ? [] : books);
     Storage.saveProfile({ name: 'Fixture Reader', theme });
     Storage.saveGoals({ yearly: 12, year: 2026 });
@@ -56,6 +57,7 @@ async function render(page, window, theme, state) {
     const { Navigation } = await import('./js/navigation.js');
     globalThis.Navigation = Navigation;
     if (!globalThis.fixtureInitialized) { Navigation.init(); Search.init(); globalThis.fixtureInitialized = true; }
+    document.querySelector('#kindleImportModal:not([hidden]) [data-action="cancel-kindle-import"]')?.click();
     document.querySelectorAll('[role="dialog"]').forEach(el => { if (!el.hidden) Utils.hide(el); });
     document.body.style.overflow = '';
     if (['signin', 'signup', 'reset', 'session-fallback'].includes(target)) {
@@ -132,6 +134,9 @@ async function inspect(page) {
   });
 }
 
+export { render, inspect, server, browser, output };
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
 try {
   for (const [variant, width, theme, solid, state] of [
     ['desktop-dark', 1440, 'dark', false, 'ready'], ['mobile-dark', 390, 'dark', false, 'ready'],
@@ -139,6 +144,9 @@ try {
     ['desktop-solid', 1440, 'dark', true, 'ready'], ['mobile-light-solid', 390, 'light', true, 'ready'],
     ['narrow-empty', 320, 'dark', true, 'empty'], ['tablet-long', 1024, 'dark', false, 'long'],
     ['mobile-error', 390, 'dark', false, 'error'],
+    ['narrow-light', 320, 'light', false, 'ready'],
+    ['narrow-dark-long', 320, 'dark', false, 'long'],
+    ['narrow-light-empty', 320, 'light', true, 'empty'],
   ]) {
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
     const page = await context.newPage();
@@ -222,3 +230,4 @@ try {
   }
   await fs.writeFile(path.join(output, 'results.json'), JSON.stringify(results, null, 2));
 } finally { await browser.close(); await new Promise(resolve => server.close(resolve)); }
+}

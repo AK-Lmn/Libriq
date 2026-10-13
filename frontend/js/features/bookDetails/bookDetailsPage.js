@@ -1,3 +1,5 @@
+import { confirmAction as presentConfirmation } from '../../components/ui/confirmation.js';
+
 export function createBookDetailsPage({
   storage,
   utils,
@@ -15,7 +17,7 @@ export function createBookDetailsPage({
   const BookAPI = bookApi;
   const document = documentRoot || globalThis.document;
   const crypto = { randomUUID: createId || (() => globalThis.crypto.randomUUID()) };
-  const confirm = confirmAction || (message => globalThis.confirm(message));
+  const confirm = confirmAction || presentConfirmation;
   const _logActivity = (...args) => actions.logActivity?.(...args);
   const _getMetadataQuality = book => actions.getMetadataQuality?.(book) || { className: 'complete', label: 'Complete' };
   const _parseShelfInput = value => actions.parseShelfInput?.(value) || [];
@@ -505,7 +507,7 @@ export function createBookDetailsPage({
       }
     });
 
-    quotesList?.addEventListener('click', (e) => {
+    quotesList?.addEventListener('click', async (e) => {
       const btn = e.target.closest('button[data-quote-action]');
       if (!btn) return;
       const quoteId = btn.dataset.quoteId;
@@ -514,7 +516,7 @@ export function createBookDetailsPage({
       if (!currentQuote) return;
 
       if (action === 'delete') {
-        if (!confirm('Delete this private quote?')) return;
+        if (!await confirm('Delete this private quote?', { title: 'Delete private quote?', confirmLabel: 'Delete quote', trigger: btn })) return;
         deleteQuote(quoteId);
         return;
       }
@@ -607,8 +609,8 @@ export function createBookDetailsPage({
     removeBtn.className = 'btn btn-ghost';
     removeBtn.dataset.detailsAction = 'destructive';
     removeBtn.innerHTML = `${icon('delete')}Remove book`;
-    removeBtn.addEventListener('click', () => {
-      if (!confirm(`Remove "${book.title}" from your library?`)) return;
+    removeBtn.addEventListener('click', async () => {
+      if (!await confirm(`Remove "${book.title}" from your library?`, { title: 'Remove book?', confirmLabel: 'Remove book', trigger: removeBtn })) return;
       closeDetailsModal();
       Storage.removeBook(book.id);
       Utils.toast(`"${book.title}" removed`, 'info');

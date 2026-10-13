@@ -2,6 +2,7 @@ import { BookAPI } from './api/index.js';
 import { LIBRIQ, createBook } from './data.js';
 import { Storage } from './storage.js';
 import { Utils } from './utils.js';
+import { confirmAction, confirmTypedAction } from './components/ui/confirmation.js';
 import { Library } from './library.js';
 import { Search } from './search.js';
 import { Dashboard } from './dashboard.js';
@@ -362,6 +363,7 @@ export const Navigation = (() => {
   profileFeature = createProfilePage({ storage: Storage, utils: Utils, constants: LIBRIQ, actions: featureActions });
 
   const pages = {
+    abandoned: () => libraryShelvesFeature.renderStatusPage(LIBRIQ.STATUS.DNF),
     boot:      () => renderBootPage(),
     session:   () => renderSessionChoicePage(),
     dashboard: createDashboardPage({ dashboard: Dashboard, actions: featureActions }),
@@ -1544,20 +1546,48 @@ function _friendlyAuthMessage(err) {
   return map[code] || 'Something went wrong. Please try again.';
 }
 
+function _buildBackupStatsMarkup(entries) {
+  return `<dl class="backup-review-summary">${entries.map(([label, value]) => `<div><dt>${Utils.sanitize(label)}</dt><dd>${Utils.sanitize(String(value))}</dd></div>`).join('')}</dl>`;
+}
+
+function _buildBackupMetadataMarkup(entries) {
+  return `<dl class="backup-review-metadata">${entries.map(([label, value]) => `<div><dt>${Utils.sanitize(label)}</dt><dd>${Utils.sanitize(String(value))}</dd></div>`).join('')}</dl>`;
+}
+
+function _openBackupReview(modal, { cancel, close, merge, replace }, onClose = () => {}) {
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    modal.removeEventListener('dialog:close', cleanup);
+    Utils.hide(modal);
+    replace.onclick = null;
+    merge.onclick = null;
+    cancel.onclick = null;
+    close.onclick = null;
+    onClose();
+  };
+  modal.addEventListener('dialog:close', cleanup);
+  cancel.onclick = cleanup;
+  close.onclick = cleanup;
+  Utils.show(modal);
+  queueMicrotask(() => cancel.focus());
+  return cleanup;
+}
+
 function _buildRestoreSummaryMarkup(label, summary, extra = []) {
   return `
     <section class="whats-new-item">
       <div class="whats-new-item-title">${Utils.sanitize(label)}</div>
-      <p>
-        Books: ${summary.bookCount}<br>
-        Reading: ${summary.readingCount}<br>
-        Finished: ${summary.finishedCount}<br>
-        Notes: ${summary.notesCount}<br>
-        Quotes: ${summary.quotesCount}
-        ${summary.activityCount !== null ? `<br>Activity: ${summary.activityCount}` : ''}
-        ${summary.lastUpdatedAt ? `<br>Last updated: ${Utils.formatDate(summary.lastUpdatedAt)}` : ''}
-        ${extra.map(line => `<br>${Utils.sanitize(line)}`).join('')}
-      </p>
+      ${_buildBackupStatsMarkup([
+        ['Books', summary.bookCount], ['Reading', summary.readingCount], ['Finished', summary.finishedCount],
+        ['Notes', summary.notesCount], ['Quotes', summary.quotesCount],
+        ...(summary.activityCount !== null ? [['Activity', summary.activityCount]] : []),
+      ])}
+      ${_buildBackupMetadataMarkup([
+        ...(summary.lastUpdatedAt ? [['Last updated', Utils.formatDate(summary.lastUpdatedAt)]] : []),
+        ...extra,
+      ])}
     </section>`;
 }
 
@@ -1595,15 +1625,17 @@ async function openCloudRestorePreview() {
   const close = document.getElementById('closeBackupImport');
   if (!modal || !body || !title || !subtitle || !cancel || !merge || !replace || !close) return;
   title.textContent = 'Review before restoring';
+  modal.dataset.backupMode = 'cloud-restore';
   subtitle.textContent = 'Cloud restore replaces the library on this device. Export a JSON copy first if you want a safety copy.';
   body.innerHTML = `
+    <div class="backup-review-context"><span>Cloud backup</span><span>Review before applying</span></div>
     <div class="whats-new-list">
       ${_buildRestoreSummaryMarkup('Local library', currentSummary)}
       ${_buildRestoreSummaryMarkup('Cloud backup', cloudSummary, [
-        `Backup version: ${Utils.sanitize(String(docData.backupVersion ?? 'Unknown'))}`,
-        `App version: ${Utils.sanitize(String(docData.appVersion ?? docData.version ?? 'Unknown'))}`,
-        `Schema: ${Utils.sanitize(String(docData.schemaVersion ?? 'Unknown'))}`,
-        `Device ID: ${Utils.sanitize(String(docData.deviceId ?? 'Unknown'))}`,
+        ['Backup version', docData.backupVersion ?? 'Unknown'],
+        ['App version', docData.appVersion ?? docData.version ?? 'Unknown'],
+        ['Schema', docData.schemaVersion ?? 'Unknown'],
+        ['Device ID', docData.deviceId ?? 'Unknown'],
       ])}
       ${cloudIsOlder ? `<section class="whats-new-item"><div class="whats-new-item-title">Warning</div><p>This cloud backup may be older than your current library.</p></section>` : ''}
     </div>
@@ -1611,29 +1643,16 @@ async function openCloudRestorePreview() {
   merge.textContent = 'Export local JSON first';
   replace.textContent = 'Restore cloud backup';
   cancel.textContent = 'Cancel';
-  modal.removeAttribute('hidden');
-  document.body.style.overflow = 'hidden';
-
-  const cleanup = () => {
-    modal.setAttribute('hidden', '');
-    document.body.style.overflow = '';
-    replace.onclick = null;
-    merge.onclick = null;
-    cancel.onclick = null;
-    close.onclick = null;
-    modal.onclick = null;
-  };
+  const cleanup = _openBackupReview(modal, { cancel, close, merge, replace });
 
   merge.onclick = async () => {
     await exportData();
   };
   replace.onclick = async () => {
     cleanup();
+    await new Promise(resolve => requestAnimationFrame(resolve));
     await confirmAndRestoreCloud(docData, currentSummary);
   };
-  cancel.onclick = cleanup;
-  close.onclick = cleanup;
-  modal.onclick = (e) => { if (e.target === modal) cleanup(); };
 }
 
 async function openCloudMergePreview() {
@@ -1673,27 +1692,25 @@ async function openCloudMergePreview() {
   if (!modal || !body || !title || !subtitle || !cancel || !merge || !replace || !close) return;
 
   title.textContent = 'Review before merging';
+  modal.dataset.backupMode = 'cloud-merge';
   subtitle.textContent = 'Merge adds safe cloud-only items without replacing local conflicts. Export a JSON copy first if you want a safety copy.';
   body.innerHTML = `
+    <div class="backup-review-context"><span>Cloud backup</span><span>Review before applying</span></div>
     <div class="whats-new-list">
       ${_buildRestoreSummaryMarkup('Local library', currentSummary)}
       ${_buildRestoreSummaryMarkup('Cloud backup', cloudSummary, [
-        `Backup version: ${Utils.sanitize(String(docData.backupVersion ?? 'Unknown'))}`,
-        `App version: ${Utils.sanitize(String(docData.appVersion ?? docData.version ?? 'Unknown'))}`,
-        `Schema: ${Utils.sanitize(String(docData.schemaVersion ?? 'Unknown'))}`,
-        `Device ID: ${Utils.sanitize(String(docData.deviceId ?? 'Unknown'))}`,
+        ['Backup version', docData.backupVersion ?? 'Unknown'],
+        ['App version', docData.appVersion ?? docData.version ?? 'Unknown'],
+        ['Schema', docData.schemaVersion ?? 'Unknown'],
+        ['Device ID', docData.deviceId ?? 'Unknown'],
       ])}
       <section class="whats-new-item">
         <div class="whats-new-item-title">Merge result preview</div>
-        <p>
-          New books to add from cloud: ${plan.newBooksToAdd.length}<br>
-          Local books kept: ${plan.localBooksKept.length}<br>
-          Duplicates skipped: ${plan.duplicatesSkipped.length}<br>
-          Possible conflicts: ${plan.conflicts.length}<br>
-          Notes to add safely: ${plan.notesToAdd}<br>
-          Quotes to add safely: ${plan.quotesToAdd}<br>
-          Items unchanged: ${plan.itemsUnchanged}
-        </p>
+        ${_buildBackupStatsMarkup([
+          ['New books to add from cloud', plan.newBooksToAdd.length], ['Local books kept', plan.localBooksKept.length],
+          ['Duplicates skipped', plan.duplicatesSkipped.length], ['Possible conflicts', plan.conflicts.length],
+          ['Notes to add safely', plan.notesToAdd], ['Quotes to add safely', plan.quotesToAdd], ['Items unchanged', plan.itemsUnchanged],
+        ])}
       </section>
       ${plan.conflicts.length ? `<section class="whats-new-item"><div class="whats-new-item-title">Conflict notice</div><p>Some items looked different on this device and in your cloud backup. LibriQ kept this device's version for now.</p></section>` : ''}
     </div>
@@ -1701,44 +1718,31 @@ async function openCloudMergePreview() {
   merge.textContent = 'Merge cloud with this device';
   replace.textContent = 'Export local JSON first';
   cancel.textContent = 'Cancel';
-  modal.removeAttribute('hidden');
-  document.body.style.overflow = 'hidden';
-
-  const cleanup = () => {
-    modal.setAttribute('hidden', '');
-    document.body.style.overflow = '';
-    replace.onclick = null;
-    merge.onclick = null;
-    cancel.onclick = null;
-    close.onclick = null;
-    modal.onclick = null;
-  };
+  const cleanup = _openBackupReview(modal, { cancel, close, merge, replace });
 
   replace.onclick = async () => {
     await exportData();
   };
   merge.onclick = async () => {
     cleanup();
+    await new Promise(resolve => requestAnimationFrame(resolve));
     await confirmAndMergeCloud(docData, plan, currentSummary);
   };
-  cancel.onclick = cleanup;
-  close.onclick = cleanup;
-  modal.onclick = (e) => { if (e.target === modal) cleanup(); };
 }
 
 async function confirmAndRestoreCloud(docData, currentSummary) {
-  const proceed = confirm('Restoring will replace this device\'s current library with the cloud backup. Continue?');
+  const proceed = await confirmAction('Restoring will replace this device\'s current library with the cloud backup. Continue?', { title: 'Restore cloud backup?', confirmLabel: 'Continue to restore' });
   if (!proceed) return;
-  if (currentSummary.bookCount > 0 && !confirm('This cloud restore will overwrite your local library. Export first if you want a safety copy. Restore now?')) {
+  if (currentSummary.bookCount > 0 && !await confirmAction('This cloud restore will overwrite your local library. Export first if you want a safety copy. Restore now?', { title: 'Export a safety copy first', confirmLabel: 'Restore now' })) {
     return;
   }
   await restoreFromCloud(docData);
 }
 
 async function confirmAndMergeCloud(docData, plan, currentSummary) {
-  const proceed = confirm('Merge cloud with this device? LibriQ will add safe cloud-only items and keep this device\'s version for conflicts.');
+  const proceed = await confirmAction('Merge cloud with this device? LibriQ will add safe cloud-only items and keep this device\'s version for conflicts.', { title: 'Merge cloud with this device?', confirmLabel: 'Continue to merge', tone: 'default' });
   if (!proceed) return;
-  if (currentSummary.bookCount > 0 && !confirm('Export first if you want a safety copy. Apply the merge now?')) {
+  if (currentSummary.bookCount > 0 && !await confirmAction('Export first if you want a safety copy. Apply the merge now?', { title: 'Export a safety copy first', confirmLabel: 'Apply merge', tone: 'default' })) {
     return;
   }
   await mergeCloudWithThisDevice(docData, plan);
@@ -1909,16 +1913,18 @@ function _openImportPreview(file, parsed) {
   const exportedAt = parsed?.exportedAt || null;
 
   title.textContent = 'Import Backup Preview';
+  modal.dataset.backupMode = 'local';
   subtitle.textContent = 'Choose how to apply this backup to your local library.';
   body.innerHTML = `
+    <div class="backup-review-context"><span>Local JSON backup</span><span>${Utils.sanitize(file.name)}</span></div>
     <div class="whats-new-list">
       <section class="whats-new-item">
         <div class="whats-new-item-title">Backup details</div>
-        <p>Exported: ${exportedAt ? Utils.formatDate(exportedAt) : 'Unknown'}<br>Version: ${Utils.sanitize(backupVersion)}</p>
+        ${_buildBackupMetadataMarkup([['Exported', exportedAt ? Utils.formatDate(exportedAt) : 'Unknown'], ['Version', backupVersion]])}
       </section>
       <section class="whats-new-item">
         <div class="whats-new-item-title">Contents</div>
-        <p>${importedBooks.length} book${importedBooks.length === 1 ? '' : 's'} in backup<br>${localBooks.length} current local book${localBooks.length === 1 ? '' : 's'}<br>${importedActivity.length} backup activity event${importedActivity.length === 1 ? '' : 's'}</p>
+        ${_buildBackupStatsMarkup([['Books in backup', importedBooks.length], ['Current local books', localBooks.length], ['Backup activity events', importedActivity.length]])}
       </section>
       <section class="whats-new-item">
         <div class="whats-new-item-title">What happens next</div>
@@ -1927,9 +1933,7 @@ function _openImportPreview(file, parsed) {
     </div>
   `;
 
-  const cleanup = () => {
-    modal.setAttribute('hidden', '');
-    document.body.style.overflow = '';
+  const cleanup = _openBackupReview(modal, { cancel, close, merge, replace }, () => {
     title.textContent = 'Import Backup';
     subtitle.textContent = 'Review the backup before choosing how to apply it.';
     replace.textContent = 'Replace local library';
@@ -1942,7 +1946,7 @@ function _openImportPreview(file, parsed) {
     modal.onclick = null;
     const input = document.getElementById('importLibraryInput');
     if (input) input.value = '';
-  };
+  });
 
   const runImport = (replaceMode) => {
     cleanup();
@@ -1952,14 +1956,8 @@ function _openImportPreview(file, parsed) {
   replace.textContent = 'Replace local library';
   merge.textContent = 'Merge with current library';
   cancel.textContent = 'Cancel';
-  modal.removeAttribute('hidden');
-  document.body.style.overflow = 'hidden';
-
   replace.onclick = () => runImport(true);
   merge.onclick = () => runImport(false);
-  cancel.onclick = cleanup;
-  close.onclick = cleanup;
-  modal.onclick = (e) => { if (e.target === modal) cleanup(); };
 }
 
 function _applyImportedBackup(parsed, replaceMode) {
@@ -1992,77 +1990,8 @@ function _applyImportedBackup(parsed, replaceMode) {
   }
 }
 
-function _dangerConfirmElements() {
-  return {
-    modal: document.getElementById('dangerConfirmModal'),
-    title: document.getElementById('dangerConfirmTitle'),
-    body: document.getElementById('dangerConfirmBody'),
-    bodyCopy: document.getElementById('dangerConfirmBodyCopy'),
-    prompt: document.getElementById('dangerConfirmPrompt'),
-    input: document.getElementById('dangerConfirmInput'),
-    action: document.getElementById('dangerConfirmAction'),
-    cancel: document.getElementById('dangerConfirmCancel'),
-    close: document.getElementById('closeDangerConfirm'),
-    error: document.getElementById('dangerConfirmError'),
-  };
-}
-
-function confirmDangerAction({ title, body, prompt, expected, actionLabel }) {
-  return new Promise((resolve) => {
-    const els = _dangerConfirmElements();
-    if (!els.modal || !els.title || !els.body || !els.bodyCopy || !els.prompt || !els.input || !els.action || !els.cancel || !els.close || !els.error) {
-      console.error('[Libriq] Danger modal unavailable for confirmation dialog:', title);
-      resolve(false);
-      return;
-    }
-    els.title.textContent = title;
-    els.bodyCopy.textContent = body;
-    els.prompt.textContent = prompt;
-    els.error.hidden = true;
-    els.error.textContent = '';
-    els.input.value = '';
-    els.input.placeholder = prompt;
-    els.action.textContent = actionLabel;
-    els.action.disabled = true;
-    const cleanup = (result = false) => {
-      els.modal.setAttribute('hidden', '');
-      document.body.style.overflow = '';
-      els.input.oninput = null;
-      window.removeEventListener('keydown', onKeyDown);
-      els.cancel.onclick = null;
-      els.close.onclick = null;
-      els.action.onclick = null;
-      els.modal.onclick = null;
-      resolve(result);
-    };
-    els.input.oninput = () => {
-      els.error.hidden = true;
-      els.action.disabled = els.input.value.trim() !== expected;
-    };
-    els.cancel.onclick = () => cleanup(false);
-    els.close.onclick = () => cleanup(false);
-    els.action.onclick = async () => {
-      try {
-        if (els.input.value.trim() !== expected) return;
-        cleanup(true);
-      } catch (err) {
-        console.warn('[Libriq] Danger action failed:', err);
-        els.error.textContent = 'Something went wrong. Please try again.';
-        els.error.hidden = false;
-        els.action.disabled = false;
-      }
-    };
-    els.modal.onclick = (e) => {
-      if (e.target === els.modal) cleanup(false);
-    };
-    function onKeyDown(e) {
-      if (e.key === 'Escape' && !els.modal.hasAttribute('hidden')) cleanup(false);
-    }
-    window.addEventListener('keydown', onKeyDown);
-    els.modal.removeAttribute('hidden');
-    document.body.style.overflow = 'hidden';
-    window.setTimeout(() => els.input.focus(), 50);
-  });
+function confirmDangerAction(options) {
+  return confirmTypedAction(options);
 }
 
 async function clearLocalCache() {

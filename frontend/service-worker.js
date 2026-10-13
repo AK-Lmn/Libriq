@@ -1,9 +1,14 @@
 importScripts('./js/version-classic.js');
 const CACHE_VERSION = `libriq-v${self.LIBRIQ_APP_VERSION}`;
-const CACHE_NAME = `${CACHE_VERSION}-shell-v4-glass`;
+const CACHE_NAME = `${CACHE_VERSION}-shell-v5-complete-glass`;
 const IS_LOCAL_DEV = ['localhost', '127.0.0.1', '::1'].includes(self.location.hostname);
 
 const SHELL_ASSETS = [
+  './css/features/book-dialogs.css',
+  './css/features/quotes.css',
+  './css/features/kindle-import.css',
+  './css/features/support-dialogs.css',
+  './js/components/ui/confirmation.js',
   './index.html',
   './assets/revamp/account/18-4308-book-heart.svg',
   './assets/revamp/account/18-4308-chevron-up.svg',
