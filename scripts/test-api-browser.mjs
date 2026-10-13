@@ -177,8 +177,11 @@ try {
   await page.evaluate(() => Navigation.goTo('recommendations'));
   await page.waitForSelector('.recommendations-page');
   assert.ok(await page.locator('.recommendation-card-grid').count() > 0);
-  await page.waitForSelector('[data-subject-key] .recommendation-card');
-  await page.waitForSelector('[data-gutendex-rail] .recommendation-card');
+  await page.waitForSelector('#subjectDiscoveryRoot .recommendation-card');
+  assert.ok((await page.locator('#subjectDiscoveryRoot').textContent()).includes('Subject Smoke Book'));
+  await page.locator('[data-filter="gutenberg-classics"]').click();
+  await page.waitForSelector('#subjectDiscoveryRoot .recommendation-card');
+  assert.ok((await page.locator('#subjectDiscoveryRoot').textContent()).includes('Gutenberg'));
   await page.evaluate(() => Navigation.goTo('profile'));
   await page.waitForSelector('#profilePage');
   await page.evaluate(() => Navigation.goTo('settings'));

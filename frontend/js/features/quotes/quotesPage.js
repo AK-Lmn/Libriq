@@ -57,27 +57,30 @@ export function createQuotesPage({ storage, utils, actions = {}, clipboard, down
     const quotes = getQuotes();
     main.innerHTML = `
       <div class="page" id="quotesPage">
-        <div class="page-header library-header">
-          <div class="library-heading">
-            <span class="library-eyebrow">Saved passages</span>
+        <div class="page-header quotes-header">
+          <div class="quotes-heading">
+            <span class="quotes-eyebrow"><i class="ph ph-lock-simple" aria-hidden="true"></i> Your private collection</span>
             <h1 class="page-title">Quotes</h1>
-            <p class="page-subtitle">${quotes.length} saved quote${quotes.length !== 1 ? 's' : ''}</p>
+            <p class="page-subtitle">The passages that stay with you, all in one place.</p>
+          </div>
+          <div class="quotes-total"><i class="ph ph-quotes" aria-hidden="true"></i><span><strong>${quotes.length}</strong><span>saved quote${quotes.length !== 1 ? 's' : ''}</span></span></div>
+        </div>
+        <div class="quotes-tools">
+          <label class="quotes-search-label" for="quotesSearchInput">Find a saved passage</label>
+          <div class="quotes-search-wrap">
+            <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+            <input type="search" id="quotesSearchInput" class="quotes-search-input" placeholder="Search quotes, notes, titles, or authors..." value="${utils.sanitize(query)}" autocomplete="off" spellcheck="false" />
+            <button type="button" class="quotes-search-clear" data-action="clear-quotes-search" aria-label="Clear quote search" ${query ? '' : 'hidden'}><i class="ph ph-x" aria-hidden="true"></i></button>
           </div>
         </div>
-        <div class="library-tools">
-          <div class="library-search-wrap">
-            <i class="ph ph-magnifying-glass library-search-icon"></i>
-            <input type="search" id="quotesSearchInput" class="library-search-input" placeholder="Search quotes, notes, titles, or authors..." value="${utils.sanitize(query)}" autocomplete="off" spellcheck="false" />
-            <button type="button" class="library-search-clear" data-action="clear-quotes-search" aria-label="Clear quote search" ${query ? '' : 'hidden'}><i class="ph ph-x"></i></button>
-          </div>
+        <div class="quotes-filters" id="quotesFilters" role="group" aria-label="Quote source">
+          ${buildFilter('all', 'All', filter, quotes.length)}
+          ${buildFilter('manual', 'Manual', filter, filterLibraryQuotes(quotes, { filter: 'manual' }).length)}
+          ${buildFilter('kindle-highlights', 'Kindle Highlights', filter, filterLibraryQuotes(quotes, { filter: 'kindle-highlights' }).length)}
+          ${buildFilter('kindle-notes', 'Kindle Notes', filter, filterLibraryQuotes(quotes, { filter: 'kindle-notes' }).length)}
         </div>
-        <div class="chip-group library-filters" id="quotesFilters">
-          ${buildFilter('all', 'All', filter)}
-          ${buildFilter('manual', 'Manual', filter)}
-          ${buildFilter('kindle-highlights', 'Kindle Highlights', filter)}
-          ${buildFilter('kindle-notes', 'Kindle Notes', filter)}
-        </div>
-        <div class="activity-list book-quotes-list" id="quotesLibraryList"></div>
+        <p class="quotes-results-status" id="quotesResultsStatus" role="status" aria-live="polite" aria-atomic="true"></p>
+        <div class="quotes-list" id="quotesLibraryList"></div>
       </div>`;
     bindEvents(main);
     renderResults(quotes);
@@ -87,6 +90,8 @@ export function createQuotesPage({ storage, utils, actions = {}, clipboard, down
     const list = getDocument()?.getElementById?.('quotesLibraryList');
     if (!list) return;
     const filtered = filterLibraryQuotes(quotes, { query, filter });
+    const status = getDocument()?.getElementById?.('quotesResultsStatus');
+    if (status) status.textContent = `${filtered.length} of ${quotes.length} saved quotes${query || filter !== 'all' ? ' match your search and filters' : ''}`;
     if (!quotes.length) {
       list.innerHTML = buildEmpty('No saved quotes yet', 'Quotes and Kindle clippings saved to books will appear here.');
       return;
@@ -113,7 +118,10 @@ export function createQuotesPage({ storage, utils, actions = {}, clipboard, down
       if (!trigger) return;
       if (trigger.dataset.action === 'filter-quotes') {
         filter = trigger.dataset.filter || 'all';
-        main.querySelectorAll?.('#quotesFilters .chip').forEach(chip => chip.classList.toggle('active', chip === trigger));
+        main.querySelectorAll?.('#quotesFilters .chip').forEach(chip => {
+          chip.classList.toggle('active', chip === trigger);
+          chip.setAttribute?.('aria-pressed', String(chip === trigger));
+        });
         renderResults();
       } else if (trigger.dataset.action === 'clear-quotes-search') {
         query = '';
@@ -121,6 +129,7 @@ export function createQuotesPage({ storage, utils, actions = {}, clipboard, down
         if (input) input.value = '';
         trigger.hidden = true;
         renderResults();
+        input?.focus?.();
       } else if (trigger.dataset.action === 'open-quote-book') {
         actions.showBookDetails?.(trigger.dataset.bookId);
       } else if (['copy-quote', 'copy-quote-citation', 'export-quote-markdown'].includes(trigger.dataset.action)) {
@@ -156,23 +165,25 @@ export function createQuotesPage({ storage, utils, actions = {}, clipboard, down
   return render;
 }
 
-function buildFilter(value, label, active) {
-  return `<button type="button" class="chip${value === active ? ' active' : ''}" data-action="filter-quotes" data-filter="${value}">${label}</button>`;
+function buildFilter(value, label, active, count) {
+  return `<button type="button" class="chip${value === active ? ' active' : ''}" aria-pressed="${value === active}" data-action="filter-quotes" data-filter="${value}">${label}<span class="quotes-filter-count">${count}</span></button>`;
 }
 
 function buildQuoteCard(quote, utils) {
   const primary = quote.text || quote.note;
+  const source = quote.source === 'kindle' ? (quote.kind === 'note' ? 'Kindle note' : 'Kindle highlight') : 'Manual';
   const details = [
-    quote.source === 'kindle' ? (quote.kind === 'note' ? 'Kindle note' : 'Kindle highlight') : '',
     quote.page !== null && quote.page !== '' ? `p. ${utils.sanitize(String(quote.page))}` : '',
+    quote.location != null && quote.location !== '' ? `Location ${utils.sanitize(String(quote.location))}` : '',
   ].filter(Boolean).join(' · ');
-  return `<article class="activity-item quote-list-item">
-    <div class="activity-text quote-list-copy">
-      <div class="activity-title quote-list-text">${utils.sanitize(primary)}</div>
-      ${quote.text && quote.note ? `<div class="activity-subtitle">${utils.sanitize(quote.note)}</div>` : ''}
-      <div class="activity-subtitle">${utils.sanitize(quote.bookTitle)} · ${utils.sanitize(quote.bookAuthor)}${details ? ` · ${details}` : ''}</div>
+  return `<article class="quote-list-item${quote.kind === 'note' ? ' quote-list-item--note' : ''}">
+    <div class="quote-card-meta"><span class="quote-source"><i class="ph ${quote.source === 'kindle' ? 'ph-book-open' : 'ph-pencil-simple'}" aria-hidden="true"></i>${source}</span>${details ? `<span class="quote-page">${details}</span>` : ''}</div>
+    <div class="quote-list-copy">
+      <${quote.kind === 'note' ? 'p' : 'blockquote'} class="quote-list-text">${utils.sanitize(primary)}</${quote.kind === 'note' ? 'p' : 'blockquote'}>
+      ${quote.text && quote.note ? `<div class="quote-note"><span>Personal note</span><p>${utils.sanitize(quote.note)}</p></div>` : ''}
+      <div class="quote-citation"><i class="ph ph-book-bookmark" aria-hidden="true"></i><span>${utils.sanitize(quote.bookTitle)} · ${utils.sanitize(quote.bookAuthor)}</span></div>
     </div>
-    <div class="activity-time quote-list-actions">
+    <div class="quote-list-actions" role="group" aria-label="Actions for ${utils.sanitize(quote.bookTitle)} quote">
       <button type="button" class="btn btn-ghost btn-sm" data-action="copy-quote" data-quote-key="${utils.sanitize(quote.key)}">Copy Quote</button>
       <button type="button" class="btn btn-ghost btn-sm" data-action="copy-quote-citation" data-quote-key="${utils.sanitize(quote.key)}">Copy + Citation</button>
       <button type="button" class="btn btn-ghost btn-sm" data-action="export-quote-markdown" data-quote-key="${utils.sanitize(quote.key)}">Export Markdown</button>
@@ -234,7 +245,7 @@ async function downloadMarkdownFile({ filename, text }) {
 
 function buildEmpty(title, body) {
   return `<div class="empty-state quote-empty-state grid-full-width">
-    <div class="empty-state-icon"><i class="ph ph-quotes"></i></div>
+    <div class="empty-state-icon"><i class="ph ph-quotes" aria-hidden="true"></i></div>
     <div class="empty-state-title">${title}</div>
     <div class="empty-state-body">${body}</div>
   </div>`;

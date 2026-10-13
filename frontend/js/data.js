@@ -66,6 +66,7 @@ export function createBook(data) {
       text: String(q.text || ''),
       page: q.page ?? null,
       note: q.note ?? '',
+      ...(q.source ? { source: q.source } : {}),
       createdAt: q.createdAt || now,
       updatedAt: q.updatedAt || q.createdAt || now,
     })) : [],

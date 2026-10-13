@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="LibriQ — Your reading life, beautifully organized." />
+  <meta name="theme-color" content="#0B0E14" />
   <title>LibriQ</title>
   <link rel="icon" type="image/svg+xml" href="./assets/icons/favicon.svg" />
   <link rel="icon" type="image/png" sizes="16x16" href="./assets/icons/favicon-16x16.png" />
@@ -21,28 +22,17 @@
     gtag('config', 'G-W5DQL4RTCF', { send_page_view: true });
   </script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./assets/fonts/fonts.css" />
 
   <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js" defer></script>
 
   <link rel="stylesheet" href="css/tokens.css" />
   <link rel="stylesheet" href="css/reset.css" />
   <link rel="stylesheet" href="css/base.css" />
-  <link rel="stylesheet" href="css/components/button.css" />
-  <link rel="stylesheet" href="css/components/card.css" />
-  <link rel="stylesheet" href="css/components/toast.css" />
-  <link rel="stylesheet" href="css/components/form.css" />
-  <link rel="stylesheet" href="css/components/polish.css" />
-  <link rel="stylesheet" href="css/components/utilities.css" />
-  <link rel="stylesheet" href="css/features/settings.css" />
-  <link rel="stylesheet" href="css/features/library.css" />
-  <link rel="stylesheet" href="css/features/insights.css" />
-  <link rel="stylesheet" href="css/features/session.css" />
+  <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/sidebar.css" />
   <link rel="stylesheet" href="css/features/dashboard.css" />
-  <link rel="stylesheet" href="css/components/dialog.css" />
+  <link rel="stylesheet" href="css/navigation-chrome.css" />
   <link rel="stylesheet" href="css/animations.css" />
 </head>
 <body class="auth-booting">
@@ -50,10 +40,11 @@
     <aside id="sidebar" class="sidebar" role="navigation" aria-label="Main navigation">
       <div class="sidebar-logo">
         <div class="logo-mark">
-          <img class="logo-icon" src="./assets/icons/icon.svg" alt="" aria-hidden="true" />
+          <img class="logo-icon" src="./assets/dashboard/desktop-book-open.svg" alt="" aria-hidden="true" />
         </div>
         <span class="logo-text">LibriQ</span>
       </div>
+      <p class="sidebar-privacy"><img src="./assets/dashboard/desktop-lock-keyhole.svg" alt="" aria-hidden="true" /> Your books. Your space.</p>
 
       <button class="sidebar-search-btn" id="openSearch" aria-label="Search books">
         <i class="ph ph-magnifying-glass"></i>
@@ -62,8 +53,9 @@
       </button>
 
       <nav class="sidebar-nav">
-        <span class="nav-section-label">Library</span>
-        <ul class="nav-list" role="list">
+        <details class="nav-hub" open>
+          <summary class="nav-section-label">Library</summary>
+          <ul class="nav-list" role="list">
           <li>
             <button class="nav-item active" data-page="dashboard" aria-current="page">
               <i class="ph ph-house"></i>
@@ -103,10 +95,13 @@
               <i class="ph ph-heart"></i>
               <span>Favorites</span>
             </button>
+          </li>
         </ul>
+        </details>
 
-        <span class="nav-section-label">Insights</span>
-        <ul class="nav-list" role="list">
+        <details class="nav-hub" open>
+          <summary class="nav-section-label">Insights</summary>
+          <ul class="nav-list" role="list">
           <li>
             <button class="nav-item" data-page="stats">
               <i class="ph ph-chart-bar"></i>
@@ -126,9 +121,11 @@
             </button>
           </li>
         </ul>
+        </details>
 
-        <span class="nav-section-label">Discover</span>
-        <ul class="nav-list" role="list">
+        <details class="nav-hub" open>
+          <summary class="nav-section-label">Discover</summary>
+          <ul class="nav-list" role="list">
           <li>
             <button class="nav-item" data-page="recommendations">
               <i class="ph ph-sparkle"></i>
@@ -142,9 +139,11 @@
             </button>
           </li>
         </ul>
+        </details>
 
-        <span class="nav-section-label">Account</span>
-        <ul class="nav-list" role="list">
+        <details class="nav-hub" open>
+          <summary class="nav-section-label">Account</summary>
+          <ul class="nav-list" role="list">
           <li>
             <button class="nav-item" data-page="profile">
               <i class="ph ph-user-circle"></i>
@@ -158,10 +157,11 @@
             </button>
           </li>
         </ul>
+        </details>
       </nav>
 
       <div class="sidebar-streak" id="streakWidget">
-        <div class="streak-flame">🔥</div>
+        <div class="streak-flame"><img src="./assets/dashboard/desktop-flame.svg" alt="" aria-hidden="true" /></div>
         <div class="streak-info">
           <span class="streak-count" id="streakCount">0</span>
           <span class="streak-label">day streak</span>
@@ -179,7 +179,7 @@
         <i class="ph ph-list"></i>
       </button>
       <div class="mobile-logo">
-        <img class="mobile-logo-icon" src="./assets/icons/icon.svg" alt="" aria-hidden="true" />
+        <img class="mobile-logo-icon" src="./assets/dashboard/desktop-book-open.svg" alt="" aria-hidden="true" />
         <span>LibriQ</span>
       </div>
       <button class="mobile-search-btn" id="mobileSearchBtn" aria-label="Search">
@@ -219,8 +219,13 @@
 
   <div class="modal-overlay" id="searchModal" role="dialog" aria-modal="true" aria-label="Search books" hidden>
     <div class="modal modal--centered search-modal">
+      <header class="book-dialog-heading">
+        <p class="book-dialog-eyebrow">Your next chapter</p>
+        <h2>Find a book</h2>
+        <p>Search your library and discover books from the web.</p>
+      </header>
       <div class="search-input-wrap">
-        <i class="ph ph-magnifying-glass search-input-icon"></i>
+        <i class="ph ph-magnifying-glass search-input-icon" aria-hidden="true"></i>
         <input
           type="text"
           id="searchInput"
@@ -228,6 +233,8 @@
           placeholder="Search by title, author, or ISBN…"
           autocomplete="off"
           spellcheck="false"
+          aria-label="Search by title, author, or ISBN"
+          aria-describedby="searchStatus"
         />
         <button class="search-close-btn" id="closeSearch" aria-label="Close search">
           <kbd>ESC</kbd>
@@ -275,10 +282,12 @@
           </label>
         </div>
       </div>
+      <p class="search-status" id="searchStatus" role="status" aria-live="polite">Enter at least 3 characters to search.</p>
       <div class="search-results" id="searchResults">
         <div class="search-empty-state" id="searchEmptyState">
-          <i class="ph ph-books"></i>
-          <p>Search for any book to add it to your library</p>
+          <i class="ph ph-books" aria-hidden="true"></i>
+          <h3>A whole world of stories</h3>
+          <p>Search by title, author, or ISBN to find your next read.</p>
         </div>
       </div>
       <div class="search-footer">
@@ -296,7 +305,10 @@
   <div class="modal-overlay" id="addBookModal" role="dialog" aria-modal="true" aria-labelledby="addBookModalTitle" hidden>
     <div class="modal modal--sheet add-book-modal">
       <div class="modal-header">
-        <h2 class="modal-title" id="addBookModalTitle">Add to Library</h2>
+        <div>
+          <p class="book-dialog-eyebrow">Your reading journey</p>
+          <h2 class="modal-title" id="addBookModalTitle">Add to Library</h2>
+        </div>
         <button class="modal-close" id="closeAddBook" aria-label="Close">
           <i class="ph ph-x"></i>
         </button>

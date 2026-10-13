@@ -5,6 +5,10 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
   const pageDocument = documentRoot || globalThis.document;
   let boundMain = null;
 
+  function _icon(name) {
+    return `<img class="settings-icon" src="assets/revamp/account/23-5548-${name}.svg" alt="" aria-hidden="true" />`;
+  }
+
   function renderSettingsPage() {
     const main  = pageDocument.getElementById('mainContent');
     if (!main) {
@@ -26,183 +30,98 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
       ? utils.formatDate(cloudBackupMeta.lastCloudBackupAt)
       : 'No cloud backup yet.';
 
+
     main.innerHTML = `
       <div class="page settings-page" id="settingsPage">
-        <div class="settings-header">
+        <header class="settings-header">
           <div class="settings-heading">
-            <span class="settings-eyebrow">App preferences</span>
+            <span class="settings-eyebrow">A SPACE OF YOUR OWN</span>
             <h1 class="page-title">Settings</h1>
-            <p class="page-subtitle">Tune the app, manage backups, and keep your library safe.</p>
+            <p class="page-subtitle">Make LibriQ feel like you. Keep your library safe, private and close at hand.</p>
+          </div>
+          <span class="settings-device-label">THIS DEVICE · PREFERENCES</span>
+        </header>
+        <div class="settings-grid">
+          <div class="settings-column">
+            <section class="goal-widget settings-panel settings-panel-theme">
+              <div class="goal-header"><div>
+                <h2 class="goal-title">${_icon('moon')} Appearance</h2>
+                <p class="settings-panel-subtitle">A quieter space for your reading life.</p>
+              </div></div>
+              <div class="settings-theme-options" aria-label="Theme">
+                ${['dark', 'light'].map(option => `
+                  <button class="settings-theme-choice" type="button" data-action="choose-theme" data-theme-choice="${option}" aria-pressed="${theme === option}">
+                    <span class="settings-theme-preview settings-theme-preview--${option}" aria-hidden="true">
+                      <span>Your library</span><span class="settings-preview-books"><span></span><span></span><span></span></span>
+                    </span>
+                    <span class="settings-theme-label">${option === 'dark' ? 'Dark' : 'Light'}${_icon(theme === option ? 'circle-check' : 'unselected')}</span>
+                  </button>`).join('')}
+              </div>
+              <div class="settings-motion"><div class="settings-preference-row"><span>Motion &amp; transparency</span><span class="settings-system-label">System</span></div>
+                <p>Respects reduced motion: no spring, parallax or animated blur; transitions become instant.</p>
+              </div>
+              <div class="settings-solid-preview"><strong>Solid surfaces</strong><p>Reduced transparency removes blur and uses opaque surfaces. Same contrast, less visual noise.</p></div>
+            </section>
+
+            <section class="goal-widget settings-panel settings-panel-cloud">
+              <div class="goal-header"><div><h2 class="goal-title">${_icon('cloud-upload')} Cloud Backup</h2><p class="settings-panel-subtitle">A safe copy, ready when you need it.</p></div></div>
+              ${_buildCloudBackupSection(firebase, cloudBackupMeta)}
+              <p class="settings-safety-copy">Restore replaces this device’s library after confirmation. Merge adds safe cloud-only books and keeps this device’s version of conflicts. Review the preview first.</p>
+              ${cloudBackupMeta.bookCount != null ? `<div class="settings-snapshot">Library snapshot <strong>${utils.sanitize(cloudBackupMeta.bookCount)} books</strong></div>` : ''}
+            </section>
+
+            <section class="goal-widget settings-panel settings-panel-data">
+              <div class="goal-header"><div><h2 class="goal-title">${_icon('arrow-left-right')} Export / Import</h2><p class="settings-panel-subtitle">Your books are yours to take with you.</p></div></div>
+              <p class="settings-copy">Export your books, notes and reading history as JSON. Review an import before replacing or merging your library.</p>
+              <div class="settings-export-actions">
+                <button class="btn btn-secondary btn-sm" type="button" data-action="export-data">${_icon('download')} Export</button>
+                <button class="btn btn-secondary btn-sm" type="button" data-action="prompt-import">${_icon('upload')} Import</button>
+                <button class="btn btn-secondary btn-sm" type="button" data-action="open-kindle-import">${_icon('file-text')} Import Kindle Clippings</button>
+              </div>
+              <div class="settings-danger-zone"><h3>Danger zone</h3><p>These actions are permanent. Export a copy before deleting your data.</p>
+                <div class="settings-danger-actions">
+                  <button class="btn btn-danger btn-sm" type="button" data-action="delete-library">Delete library data</button>
+                  <button class="btn btn-danger btn-sm" type="button" data-action="delete-account">${_icon('user-round')} Delete account</button>
+                </div>
+              </div>
+              <details class="settings-backup-history"><summary>Backup history</summary><p>Last exported: ${utils.sanitize(lastExportedText)}</p><p>Last cloud backup: ${utils.sanitize(lastCloudBackupText)}</p></details>
+              ${hasBooks && !backupMeta.lastExportedAt ? '<div class="settings-callout">Consider exporting a backup before making larger changes.</div>' : ''}
+              <input id="importLibraryInput" type="file" accept="application/json,.json" hidden data-action="import-file" />
+            </section>
+          </div>
+          <div class="settings-column">
+            <section class="goal-widget settings-panel settings-panel-account">
+              <div class="goal-header"><div><h2 class="goal-title">${_icon('user-round')} Account</h2><p class="settings-panel-subtitle">Your identity. Your personal library.</p></div></div>
+              ${_buildAccountSection(firebase)}
+              <div class="settings-session-actions"><button class="btn btn-secondary btn-sm" type="button" data-action="choose-session-mode">Account &amp; offline preferences</button></div>
+            </section>
+            <section class="goal-widget settings-panel settings-panel-sync">
+              <div class="goal-header"><div><h2 class="goal-title">${_icon('refresh-cw')} Account Sync</h2><p class="settings-panel-subtitle">Keep your own devices on the same page.</p></div></div>
+              ${_buildSyncSection(firebase)}
+            </section>
+            <section class="goal-widget settings-panel settings-panel-privacy">
+              <div class="goal-header"><div><h2 class="goal-title">${_icon('lock-keyhole1')} Privacy / Data</h2><p class="settings-panel-subtitle">A personal library, not a public profile.</p></div></div>
+              <div class="settings-list">
+                ${[
+                  ['Local first', 'Your library stays available on this device, even offline.'],
+                  ['Account required', 'LibriQ requires an account. Offline access does not bypass account creation.'],
+                  ['You control the cloud', 'Backup and Account Sync use your account. Switch sync off at any time.'],
+                  ['Analytics', 'Anonymous page views help understand general traffic. Your library is not a public profile.'],
+                  ['Private notes and quotes', 'Notes and quotes are part of your library data when included in a backup or sync.'],
+                ].map(([title, subtitle]) => `<div class="settings-row"><div class="activity-text"><div class="activity-title">${title}</div><div class="activity-subtitle">${subtitle}</div></div></div>`).join('')}
+              </div>
+              <div class="settings-library-count">${utils.sanitize(storage.getBooks().length)} books <span>Local library</span></div>
+            </section>
+            <section class="goal-widget settings-panel settings-panel-about">
+              <div class="goal-header"><div><h2 class="goal-title">${_icon('book-open')} About LibriQ</h2><p class="settings-panel-subtitle">A little more room for books.</p></div></div>
+              <p class="settings-version">v${utils.sanitize(constants.VERSION)}</p>
+              <p class="settings-copy">A quiet home for your reading life. Lora, Inter &amp; IBM Plex Mono. Built with care and open-source tools.</p>
+              <p class="settings-copy">Book data from <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> and <a href="https://books.google.com" target="_blank" rel="noopener noreferrer">Google Books</a>.</p>
+              <p class="settings-copy">Use your browser’s Install app or Add to Home Screen option when available. Account services and offline access depend on this device’s state.</p>
+            </section>
           </div>
         </div>
-
-        <div class="settings-grid">
-          <section class="goal-widget settings-panel settings-panel-theme">
-            <div class="goal-header">
-              <div>
-                <div class="goal-title">Appearance</div>
-                <div class="settings-panel-subtitle">Choose the surface that feels best for your reading sessions.</div>
-              </div>
-            </div>
-            <div class="settings-row settings-row-action">
-              <div class="activity-text">
-                <div class="activity-title">Theme</div>
-                <div class="activity-subtitle">Switch between the Studio dark and light palettes.</div>
-              </div>
-              <button class="btn btn-secondary btn-sm" type="button" data-action="toggle-theme">
-                <i class="ph ph-${theme === 'dark' ? 'sun' : 'moon'}"></i>
-                Switch to ${theme === 'dark' ? 'light' : 'dark'}
-              </button>
-            </div>
-          </section>
-
-          <section class="goal-widget settings-panel">
-            <div class="goal-header">
-              <div>
-                <div class="goal-title">Account</div>
-                <div class="settings-panel-subtitle">Sign in only when you want backup, sync, or multi-device continuity.</div>
-              </div>
-            </div>
-            ${_buildAccountSection(firebase)}
-            <div class="settings-session-actions">
-              <button class="btn btn-secondary btn-sm" type="button" data-action="choose-session-mode">
-                <i class="ph ph-arrow-counter-clockwise"></i>
-                Choose start mode
-              </button>
-            </div>
-          </section>
-
-          <section class="goal-widget settings-panel settings-panel-cloud">
-            <div class="goal-header">
-              <div>
-                <div class="goal-title">Cloud Backup</div>
-                <div class="settings-panel-subtitle">Keep a recovery copy tied to your signed-in account.</div>
-              </div>
-            </div>
-            ${_buildCloudBackupSection(firebase, cloudBackupMeta)}
-          </section>
-
-          <section class="goal-widget settings-panel settings-panel-sync">
-            <div class="goal-header">
-              <div>
-                <div class="goal-title">Account Sync</div>
-                <div class="settings-panel-subtitle">Sync status and safety notes are separated from everyday backup controls.</div>
-              </div>
-            </div>
-            ${_buildSyncSection(firebase)}
-          </section>
-
-          <section class="goal-widget settings-panel settings-panel-data">
-            <div class="goal-header">
-              <div>
-                <div class="goal-title">Export / Import</div>
-                <div class="settings-panel-subtitle">Move your library between devices with a JSON backup.</div>
-              </div>
-            </div>
-            <div class="settings-row settings-row-action">
-              <div class="activity-text">
-                <div class="activity-title">Export library</div>
-                <div class="activity-subtitle">Download your data as JSON. Private notes are included.</div>
-              </div>
-              <button class="btn btn-secondary btn-sm" type="button" data-action="export-data">
-                <i class="ph ph-download-simple"></i> Export
-              </button>
-            </div>
-            <div class="settings-row settings-row-action">
-              <div class="activity-text">
-                <div class="activity-title">Import library</div>
-                <div class="activity-subtitle">Review a backup before replacing or merging your library.</div>
-              </div>
-              <button class="btn btn-secondary btn-sm" type="button" data-action="prompt-import">
-                <i class="ph ph-upload-simple"></i> Import
-              </button>
-            </div>
-            <div class="settings-row settings-row-action">
-              <div class="activity-text">
-                <div class="activity-title">Import Kindle Clippings</div>
-                <div class="activity-subtitle">Preview highlights and notes from My Clippings.txt.</div>
-              </div>
-              <button class="btn btn-secondary btn-sm" type="button" data-action="open-kindle-import">
-                <i class="ph ph-book-open-text"></i> Import Clippings
-              </button>
-            </div>
-            <div class="settings-row settings-row-danger">
-              <div class="activity-text">
-                <div class="activity-title">Danger zone</div>
-                <div class="activity-subtitle">Destructive account and cloud data actions live here.</div>
-              </div>
-              <div class="settings-danger-actions">
-                <button class="btn btn-danger btn-sm" type="button" data-action="delete-library">
-                  <i class="ph ph-trash"></i> Delete library data
-                </button>
-                <button class="btn btn-danger btn-sm" type="button" data-action="delete-account">
-                  <i class="ph ph-user-minus"></i> Delete account
-                </button>
-              </div>
-            </div>
-            <div class="settings-row">
-              <div class="activity-text">
-                <div class="activity-title">Last exported</div>
-                <div class="activity-subtitle">${lastExportedText}</div>
-              </div>
-            </div>
-            <div class="settings-row">
-              <div class="activity-text">
-                <div class="activity-title">Last cloud backup</div>
-                <div class="activity-subtitle">${lastCloudBackupText}</div>
-              </div>
-            </div>
-            ${hasBooks && !backupMeta.lastExportedAt ? `
-              <div class="settings-callout">
-                Consider exporting a backup before making larger changes.
-              </div>` : ''}
-            <input id="importLibraryInput" type="file" accept="application/json,.json" hidden data-action="import-file" />
-          </section>
-
-          <section class="goal-widget settings-panel">
-            <div class="goal-header">
-              <div>
-                <div class="goal-title">Privacy / Data</div>
-                <div class="settings-panel-subtitle">A local-first app with optional account features.</div>
-              </div>
-            </div>
-            <p class="text-sm text-secondary settings-copy">
-              LibriQ works without an account. Your library stays on this device unless you choose to back it up, sync it, or export it.
-            </p>
-            <div class="settings-list">
-              ${[
-                ['Local library storage', 'LibriQ stores your library locally on this device.'],
-                ['Analytics', 'LibriQ uses anonymous page views to understand general traffic.'],
-                ['Accounts are optional', 'You can keep using LibriQ without signing in.'],
-                ['Backup and sync', 'Backup, restore, merge, and Account Sync stay separate.'],
-                ['JSON export', 'Export a copy anytime for your own backup.'],
-                ['Private notes and quotes', 'Private notes and quotes stay local unless you include them in a backup.'],
-                ['Continue offline', 'Offline mode keeps your books on this device.'],
-              ].map(([title, subtitle]) => `
-                <div class="settings-row">
-                  <div class="activity-text">
-                    <div class="activity-title">${title}</div>
-                    <div class="activity-subtitle">${subtitle}</div>
-                  </div>
-                </div>`).join('')}
-            </div>
-          </section>
-
-          <section class="goal-widget settings-panel">
-            <div class="goal-header">
-              <div>
-                <div class="goal-title">About</div>
-                <div class="settings-panel-subtitle">Version and source notes for the current build.</div>
-              </div>
-            </div>
-            <p class="text-sm text-secondary settings-copy">
-              <strong class="text-primary">LibriQ</strong> v${constants.VERSION}<br>
-              Your reading life, beautifully organized.<br>
-              Book data from <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer" class="text-link">Open Library</a> and <a href="https://books.google.com" target="_blank" rel="noopener noreferrer" class="text-link">Google Books</a>.
-              <br>Manual cloud backup is available for signed-in users.
-            </p>
-          </section>
-        </div>
+        <footer class="settings-footer">A quiet home for your reading life.<span>LIBRIQ · PRIVATE BY DESIGN</span></footer>
       </div>`;
 
     bindSettingsActions(main);
@@ -234,7 +153,7 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
         <div class="activity-item activity-item--static activity-item--centered">
           <div class="activity-text">
             <div class="activity-title">Account</div>
-            <div class="activity-subtitle">Sign in to enable cloud backup.</div>
+            <div class="activity-subtitle">Sign in to your required LibriQ account.</div>
           </div>
           <button class="btn btn-secondary btn-sm" id="accountActionBtn" type="button" data-action="account-action" data-account-action="signin">
             Sign in
@@ -372,7 +291,7 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
     if (globalThis.localStorage?.getItem('libriq_debug_auto_backup')) {
       console.debug('[LibriQ][AutoBackup] renderCloudBackupSection reads status', cloudState);
     }
-    const status = cloudState.message || (cloudBackupMeta.lastCloudBackupAt ? 'Cloud backup active' : 'Sign in to enable cloud backup');
+    const status = cloudState.message || (cloudBackupMeta.lastCloudBackupAt ? 'Cloud backup active' : 'No cloud backup yet.');
     const lastSaved = cloudState.lastSavedAt || cloudBackupMeta.lastCloudBackupAt;
     const lastSavedText = lastSaved
       ? (actions.formatLastSavedLabel(lastSaved) || `Last backed up: ${utils.formatDate(lastSaved)}`)
@@ -386,23 +305,23 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
         <div class="activity-item settings-summary-item activity-item--static">
           <div class="activity-text">
             <div class="activity-title">Cloud backup</div>
-            <div class="activity-subtitle" id="cloudBackupStatusText">${status}</div>
+            <div class="activity-subtitle" id="cloudBackupStatusText">${utils.sanitize(status)}</div>
             <div class="activity-subtitle" id="cloudBackupSecondaryText">${backupHelperText}</div>
-            <div class="activity-subtitle" id="cloudBackupLastSavedText">${lastSavedText}</div>
+            <div class="activity-subtitle" id="cloudBackupLastSavedText">${utils.sanitize(lastSavedText)}</div>
           </div>
         </div>
         <div class="settings-cloud-actions">
           <button class="btn btn-primary btn-sm" type="button" id="cloudBackupSaveBtn" data-action="backup-cloud">
-            <i class="ph ph-cloud-arrow-up"></i>
+            ${_icon('cloud-upload')}
             Back up now
           </button>
           <button class="btn btn-secondary btn-sm" type="button" id="cloudBackupRestoreBtn" data-action="restore-cloud">
-            <i class="ph ph-cloud-arrow-down"></i>
-            Restore from cloud
+            ${_icon('download')}
+            Restore
           </button>
           <button class="btn btn-secondary btn-sm" type="button" id="cloudBackupMergeBtn" data-action="merge-cloud">
-            <i class="ph ph-arrows-left-right"></i>
-            Merge cloud with this device
+            ${_icon('arrow-left-right')}
+            Merge
           </button>
         </div>
       </div>`;
@@ -475,7 +394,7 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
             <div class="sync-health-list">${diagnosticsRows}</div>
             <div class="settings-diagnostics-actions">
               <button class="btn btn-secondary btn-sm" type="button" data-action="clear-local-cache">
-                <i class="ph ph-trash"></i> Clear local cache
+                Clear local cache
               </button>
             </div>
           </div>
@@ -517,9 +436,13 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
     boundMain = main;
     main.addEventListener('click', event => {
       const trigger = event.target.closest?.('[data-action]');
-      if (!trigger) return;
+      if (!trigger || trigger.disabled) return;
       const handlers = {
         'toggle-theme': () => actions.toggleTheme?.(),
+        'choose-theme': () => {
+          const currentTheme = actions.getActiveTheme?.() || pageDocument.documentElement.getAttribute('data-theme') || 'dark';
+          if (trigger.dataset.themeChoice !== currentTheme) actions.toggleTheme?.();
+        },
         'choose-session-mode': () => actions.navigate?.('session'),
         'export-data': () => actions.exportData?.(),
         'prompt-import': () => actions.promptImportData?.(),

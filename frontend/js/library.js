@@ -4,6 +4,7 @@ import { Storage } from './storage.js';
 import { Utils } from './utils.js';
 import { LibriqFirebase } from './firebase-client.js';
 import { createBookDetailsPage } from './features/bookDetails/bookDetailsPage.js';
+import { confirmAction } from './components/ui/confirmation.js';
 
 export const Library = (() => {
   const Identity = {
@@ -19,6 +20,7 @@ export const Library = (() => {
     const header   = modal.querySelector('.modal-title');
 
     if (header) header.textContent = isManual ? 'Manual Entry' : 'Add to Library';
+    modal.dataset.bookDialog = isManual ? 'manual' : 'add';
 
     body.innerHTML = isManual ? buildManualForm(bookData) : buildAddForm(bookData);
     Utils.show(modal);
@@ -75,26 +77,26 @@ export const Library = (() => {
       </div>
 
       <form id="addBookForm" class="add-book-form">
-        <div class="form-group">
-          <label class="form-label">Add to shelf</label>
+        <fieldset class="form-group book-shelf-fieldset">
+          <legend class="form-label">Add to shelf</legend>
           <div class="status-select-group">
             <label class="status-option selected">
-              <input type="radio" name="status" value="wishlist" checked hidden>
+              <input type="radio" name="status" value="wishlist" checked>
               <i class="ph ph-bookmark"></i>
               <span>Want to Read</span>
             </label>
             <label class="status-option">
-              <input type="radio" name="status" value="reading" hidden>
+              <input type="radio" name="status" value="reading">
               <i class="ph ph-book-open"></i>
               <span>Reading</span>
             </label>
             <label class="status-option">
-              <input type="radio" name="status" value="finished" hidden>
+              <input type="radio" name="status" value="finished">
               <i class="ph ph-check-circle"></i>
               <span>Finished</span>
             </label>
           </div>
-        </div>
+        </fieldset>
 
         <div class="form-group" id="pageProgressGroup" hidden>
           <label class="form-label" for="currentPageInput">Current page</label>
@@ -113,7 +115,7 @@ export const Library = (() => {
           <label class="form-label">Your rating</label>
           <div class="star-rating star-lg" id="addBookStars">
             ${[1,2,3,4,5].map(n =>
-              `<button class="star" type="button" data-action="set-add-rating" data-rating="${n}" aria-label="Rate ${n} out of 5">★</button>`
+              `<button class="star" type="button" data-action="set-add-rating" data-rating="${n}" aria-label="Rate ${n} out of 5" aria-pressed="false">★</button>`
             ).join('')}
           </div>
           <input type="hidden" name="rating" id="ratingInput" value="">
@@ -127,7 +129,9 @@ export const Library = (() => {
             name="tags"
             class="form-input"
             placeholder="e.g. Classics, Philosophy, Books to reread"
+            aria-describedby="addShelvesHint"
           />
+          <p class="form-hint" id="addShelvesHint">Separate shelf names with commas.</p>
         </div>
 
         <div class="modal-footer modal-footer--embedded">
@@ -167,6 +171,7 @@ export const Library = (() => {
     document.getElementById('ratingInput').value = value;
     document.querySelectorAll('#addBookStars .star').forEach((star, i) => {
       star.classList.toggle('filled', i < value);
+      star.setAttribute('aria-pressed', String(i + 1 === value));
     });
   }
 
@@ -174,6 +179,7 @@ export const Library = (() => {
     document.getElementById('manualRatingInput').value = value;
     document.querySelectorAll('#manualBookStars .star').forEach((star, i) => {
       star.classList.toggle('filled', i < value);
+      star.setAttribute('aria-pressed', String(i + 1 === value));
     });
   }
 
@@ -331,14 +337,15 @@ export const Library = (() => {
     const selectedShelves = Array.isArray(book.tags) ? book.tags.join(', ') : '';
 
     return `
-      <div class="book-details-notes">
-        <h3 class="book-details-section-title">Manual Entry</h3>
-        <p class="text-sm text-tertiary manual-entry-copy">
-          Add a book by hand when it is missing from Open Library or Google Books.
+      <div class="manual-entry-intro">
+        <p class="text-sm manual-entry-copy">
+          Can’t find your book? Add it by hand. Only title and author are required.
         </p>
       </div>
 
       <form id="addBookForm" class="add-book-form">
+        <fieldset class="manual-form-section">
+          <legend>The essentials</legend>
         <div class="form-group">
           <label class="form-label" for="manualTitleInput">Title <span class="form-required">*</span></label>
           <input type="text" id="manualTitleInput" name="title" class="form-input" value="${Utils.sanitize(book.title || '')}" required />
@@ -349,7 +356,7 @@ export const Library = (() => {
           <input type="text" id="manualAuthorInput" name="author" class="form-input" value="${Utils.sanitize(book.author || '')}" required />
         </div>
 
-        <div class="form-group">
+        <div class="form-group form-group--wide">
           <label class="form-label" for="manualCoverInput">Cover image URL <span class="text-tertiary">(optional)</span></label>
           <input type="url" id="manualCoverInput" name="coverUrl" class="form-input" value="${Utils.sanitize(book.coverUrl || '')}" placeholder="https://..." />
         </div>
@@ -364,11 +371,15 @@ export const Library = (() => {
           <input type="text" id="manualGenreInput" name="genres" class="form-input" value="${Utils.sanitize(selectedGenres)}" placeholder="e.g. Fantasy, Memoir" />
         </div>
 
-        <div class="form-group">
+        <div class="form-group form-group--wide">
           <label class="form-label" for="manualDescriptionInput">Description/synopsis <span class="text-tertiary">(optional)</span></label>
           <textarea id="manualDescriptionInput" name="description" class="form-input" rows="4" placeholder="Short description or synopsis...">${Utils.sanitize(book.description || '')}</textarea>
         </div>
 
+        </fieldset>
+
+        <fieldset class="manual-form-section">
+          <legend>More about the book</legend>
         <div class="form-group">
           <label class="form-label" for="manualYearInput">Published year <span class="text-tertiary">(optional)</span></label>
           <input type="number" id="manualYearInput" name="publishYear" class="form-input" value="${book.publishYear || ''}" min="0" step="1" />
@@ -383,10 +394,14 @@ export const Library = (() => {
           <label class="form-label" for="manualLanguageInput">Language <span class="text-tertiary">(optional)</span></label>
           <input type="text" id="manualLanguageInput" name="language" class="form-input" value="${Utils.sanitize(book.language || '')}" placeholder="English" />
         </div>
+        </fieldset>
 
-        <div class="form-group">
+        <fieldset class="manual-form-section">
+          <legend>Your reading journey</legend>
+        <div class="form-group form-group--wide">
           <label class="form-label" for="manualTagsInput">Shelves <span class="text-tertiary">(optional)</span></label>
           <input type="text" id="manualTagsInput" name="tags" class="form-input" value="${Utils.sanitize(selectedShelves)}" placeholder="e.g. Classics, Philosophy, Books to reread" />
+          <p class="form-hint">Separate shelf names with commas.</p>
         </div>
 
         <div class="form-group">
@@ -404,15 +419,16 @@ export const Library = (() => {
           <input type="number" id="manualCurrentPageInput" name="currentPage" class="form-input" value="${book.currentPage || 0}" min="0" step="1" />
         </div>
 
-        <div class="form-group" id="manualRatingGroup" ${selectedStatus === LIBRIQ.STATUS.FINISHED ? '' : 'hidden'}>
+        <div class="form-group form-group--wide" id="manualRatingGroup" ${selectedStatus === LIBRIQ.STATUS.FINISHED ? '' : 'hidden'}>
           <label class="form-label">Your rating</label>
           <div class="star-rating star-lg" id="manualBookStars">
             ${[1,2,3,4,5].map(n =>
-              `<button class="star" type="button" data-action="set-manual-rating" data-rating="${n}" aria-label="Rate ${n} out of 5">★</button>`
+              `<button class="star${n <= (book.rating || 0) ? ' filled' : ''}" type="button" data-action="set-manual-rating" data-rating="${n}" aria-label="Rate ${n} out of 5" aria-pressed="${n === book.rating}">★</button>`
             ).join('')}
           </div>
           <input type="hidden" name="rating" id="manualRatingInput" value="${book.rating || ''}">
         </div>
+        </fieldset>
 
         <div class="modal-footer modal-footer--embedded">
           <button type="button" class="btn btn-ghost" data-action="close-add-dialog">Cancel</button>
@@ -434,8 +450,8 @@ export const Library = (() => {
   }
 
 
-  function removeBook(bookId, title) {
-    if (!confirm(`Remove "${title}" from your library?`)) return;
+  async function removeBook(bookId, title) {
+    if (!await confirmAction(`Remove "${title}" from your library?`, { title: 'Remove book?', confirmLabel: 'Remove book' })) return;
     Storage.removeBook(bookId);
     Utils.toast(`"${title}" removed`, 'info');
     Navigation.updateBadges();
@@ -530,6 +546,7 @@ export const Library = (() => {
   }
 
   const bookDetailsFeature = createBookDetailsPage({
+    confirmAction,
     storage: Storage,
     utils: Utils,
     constants: LIBRIQ,
@@ -635,116 +652,103 @@ export const Library = (() => {
   }
 
   function renderBookCard(book) {
-    const pct     = Utils.readingProgress(book.currentPage, book.pageCount);
+    const currentPage = Math.max(0, Number(book.currentPage) || 0);
+    const pageCount = Math.max(0, Number(book.pageCount) || 0);
+    const pct = Utils.readingProgress(currentPage, pageCount);
     const isReading = book.status === LIBRIQ.STATUS.READING;
     const isFinished = book.status === LIBRIQ.STATUS.FINISHED;
-
+    const statusIcon = {
+      [LIBRIQ.STATUS.READING]: 'reading', [LIBRIQ.STATUS.FINISHED]: 'finished',
+      [LIBRIQ.STATUS.WISHLIST]: 'wishlist', [LIBRIQ.STATUS.DNF]: 'dnf',
+    }[book.status] || 'wishlist';
+    const icon = name => `<span class="library-icon library-icon--${name}" aria-hidden="true"></span>`;
     const card = document.createElement('div');
     card.className = `book-card ${isFinished ? 'book-card--finished' : ''} ${isReading ? 'book-card--reading' : ''}`.trim();
     card.dataset.bookId = book.id;
-
-    const genreBadges = (book.genres || []).slice(0, 2)
-      .map(g => `<span class="badge badge-genre">${Utils.sanitize(g)}</span>`)
-      .join('');
     const metadataQuality = _getMetadataQuality(book);
+    const genreBadges = (book.genres || []).slice(0, 2)
+      .map(genre => `<span class="badge badge-genre">${Utils.sanitize(genre)}</span>`).join('');
+    const progressText = isReading
+      ? `${currentPage} / ${pageCount || '?'} pages`
+      : isFinished && pageCount ? `${pageCount} / ${pageCount} pages` : pageCount ? `${pageCount} pages` : 'Page count unavailable';
 
     card.innerHTML = `
       ${Utils.buildCover(book, 'cover-md')}
       <div class="book-card-info">
-        <div class="book-card-title">${Utils.sanitize(book.title)}</div>
-        <div class="book-card-author">${Utils.sanitize(book.author)}</div>
+        <button type="button" class="btn btn-icon btn-sm card-fav-btn ${book.isFavorite ? 'active' : ''}" data-action="toggle-favorite" aria-label="${book.isFavorite ? 'Unfavorite' : 'Favorite'} ${Utils.sanitize(book.title)}" aria-pressed="${Boolean(book.isFavorite)}">
+          ${icon(book.isFavorite ? 'heart-active' : 'heart')}${icon(book.isFavorite ? 'bookmark-active' : 'bookmark')}<i class="${book.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart'}" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="btn btn-ghost book-card-title card-details-btn" data-action="show-book-details" aria-label="Details for ${Utils.sanitize(book.title)}">${Utils.sanitize(book.title)}</button>
+        <div class="book-card-author">${Utils.sanitize(book.author || 'Author not added')}</div>
         <div class="book-card-meta">
           <span class="badge ${Utils.statusBadgeClass(book.status)}">
-            ${Utils.statusLabel(book.status)}
+            ${icon(`status-${statusIcon}`)}${Utils.statusLabel(book.status)}
           </span>
-          <span class="badge badge-metadata badge-metadata-${metadataQuality.className}">${metadataQuality.label}</span>
           ${book.rating ? Utils.buildStars(book.rating) : ''}
-          ${genreBadges}
         </div>
-
-        ${isReading ? `
-          <div class="reading-progress">
-            <div class="progress-label">
-              <span class="progress-text">Page ${book.currentPage} of ${book.pageCount || '?'}</span>
-              <span class="progress-pct">${pct}%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" style="width:${pct}%"></div>
-            </div>
-          </div>` : isFinished ? `
-          <div class="book-card-complete">
-            <i class="ph ph-check-circle"></i>
-            Finished and ready for the next shelf.
+        <div class="library-card-progress ${isReading ? 'reading-progress' : ''}">
+          <div class="progress-label">
+            <span class="progress-text">${progressText}</span>
+            <span class="progress-pct">${isReading ? pageCount ? `${pct}%` : '—' : isFinished && pageCount ? '100%' : '—'}</span>
+          </div>
+          ${isReading || isFinished ? `<div class="progress-bar" role="progressbar" aria-label="Reading progress for ${Utils.sanitize(book.title)}" aria-valuemin="0" aria-valuemax="100" ${pageCount ? `aria-valuenow="${isFinished ? 100 : pct}"` : ''} aria-valuetext="${progressText}">
+            <div class="progress-fill" style="width:${pageCount ? isFinished ? 100 : pct : 0}%"></div>
           </div>` : ''}
-
-        <div class="book-card-actions">
-          <div class="book-card-actions-primary"></div>
-          <div class="book-card-actions-secondary"></div>
         </div>
+        ${metadataQuality.className !== 'complete' ? `<div class="library-card-metadata-note">${icon('alert')} Needs metadata</div>` : ''}
+        <details class="library-card-disclosure">
+          <summary>Book actions</summary>
+          <div class="library-card-extra">
+            <span class="badge badge-metadata badge-metadata-${metadataQuality.className}">${metadataQuality.label}</span>
+            ${genreBadges}
+          </div>
+          <div class="book-card-actions">
+            ${isReading ? '<button type="button" class="btn btn-secondary btn-sm card-progress-btn" data-action="update-progress">Update Progress</button>' : ''}
+            ${!isFinished && !isReading ? '<button type="button" class="btn btn-secondary btn-sm card-start-btn" data-action="start-reading">Start Reading</button>' : ''}
+            ${isReading ? '<button type="button" class="btn btn-secondary btn-sm card-finish-btn" data-action="finish-book">Finish</button>' : ''}
+            <button type="button" class="btn btn-danger btn-sm card-remove-btn" data-action="remove-book">Remove</button>
+          </div>
+        </details>
       </div>`;
 
-    const primaryActions = card.querySelector('.book-card-actions-primary');
-    const secondaryActions = card.querySelector('.book-card-actions-secondary');
-
-    if (isReading) {
-      const updateBtn = document.createElement('button');
-      updateBtn.className = 'btn btn-primary btn-sm';
-      updateBtn.innerHTML = '<i class="ph ph-pencil"></i> Update';
-      updateBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        Library.showProgressModal(book.id);
-      });
-      primaryActions.appendChild(updateBtn);
-    }
-
-    if (book.status !== LIBRIQ.STATUS.FINISHED) {
-      const finishBtn = document.createElement('button');
-      finishBtn.className = 'btn btn-secondary btn-sm book-card-primary-action';
-      finishBtn.innerHTML = `<i class="ph ph-check"></i> ${
-        isReading ? 'Finish' : 'Start Reading'
-      }`;
-      finishBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (isReading) {
-          Library.setStatus(book.id, LIBRIQ.STATUS.FINISHED);
-        } else {
-          Library.setStatus(book.id, LIBRIQ.STATUS.READING);
-        }
-        Navigation.renderCurrentPage();
-      });
-      primaryActions.appendChild(finishBtn);
-    }
-
-    const favBtn = document.createElement('button');
-    favBtn.className = 'btn btn-ghost btn-sm btn-icon';
-    favBtn.title = book.isFavorite ? 'Unfavorite' : 'Favorite';
-    favBtn.innerHTML = `<i class="${book.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart'}"></i>`;
-    favBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-
-  Library.toggleFavorite(book.id);
-
-  Navigation.updateBadges();
-  Navigation.renderCurrentPage();
-});
-    secondaryActions.appendChild(favBtn);
-
-    const removeBtn = document.createElement('button');
-    removeBtn.className = 'btn btn-ghost btn-sm btn-icon';
-    removeBtn.title = 'Remove';
-    removeBtn.innerHTML = '<i class="ph ph-trash"></i>';
-    removeBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
+    card.addEventListener('click', event => {
+      if (event.target.closest('button, details, a, input, select')) return;
+      Library.showDetailsModal(book.id);
+    });
+    card.querySelector('.card-details-btn').addEventListener('click', event => {
+      event.stopPropagation();
+      Library.showDetailsModal(book.id);
+    });
+    const favBtn = card.querySelector('.card-fav-btn');
+    favBtn.addEventListener('click', event => {
+      event.stopPropagation();
+      Library.toggleFavorite(book.id);
+      const updated = Storage.getBookById(book.id);
+      favBtn.classList.toggle('active', Boolean(updated.isFavorite));
+      favBtn.setAttribute('aria-pressed', String(Boolean(updated.isFavorite)));
+      favBtn.setAttribute('aria-label', `${updated.isFavorite ? 'Unfavorite' : 'Favorite'} ${book.title}`);
+      favBtn.innerHTML = `${icon(updated.isFavorite ? 'heart-active' : 'heart')}${icon(updated.isFavorite ? 'bookmark-active' : 'bookmark')}<i class="${updated.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart'}" aria-hidden="true"></i>`;
+      Navigation.updateBadges();
+      Navigation.renderCurrentPage();
+    });
+    card.querySelector('.card-progress-btn')?.addEventListener('click', event => {
+      event.stopPropagation();
+      Library.showProgressModal(book.id);
+    });
+    card.querySelector('.card-start-btn')?.addEventListener('click', event => {
+      event.stopPropagation();
+      Library.setStatus(book.id, LIBRIQ.STATUS.READING);
+      Navigation.renderCurrentPage();
+    });
+    card.querySelector('.card-finish-btn')?.addEventListener('click', event => {
+      event.stopPropagation();
+      Library.setStatus(book.id, LIBRIQ.STATUS.FINISHED);
+      Navigation.renderCurrentPage();
+    });
+    card.querySelector('.card-remove-btn').addEventListener('click', event => {
+      event.stopPropagation();
       Library.removeBook(book.id, book.title);
     });
-    secondaryActions.appendChild(removeBtn);
-
-    card.addEventListener('click', (e) => {
-      if (!e.target.closest('.book-card-actions')) {
-        Library.showDetailsModal(book.id);
-      }
-    });
-
     return card;
   }
 
@@ -756,6 +760,7 @@ export const Library = (() => {
     const body   = document.getElementById('addBookBody');
     const header = modal.querySelector('.modal-title');
     if (header) header.textContent = 'Update Progress';
+    modal.dataset.bookDialog = 'progress';
 
     const pct = Utils.readingProgress(book.currentPage, book.pageCount);
 
@@ -766,10 +771,10 @@ export const Library = (() => {
           <div class="book-preview-title">${Utils.sanitize(book.title)}</div>
           <div class="book-preview-author">${Utils.sanitize(book.author)}</div>
           <div class="progress-summary">
-            <div class="progress-bar progress-bar--spaced">
+            <div class="progress-bar progress-bar--spaced" role="progressbar" aria-label="Reading progress" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100">
               <div class="progress-fill" style="width:${pct}%"></div>
             </div>
-            <span class="text-xs text-tertiary">${pct}% complete</span>
+            <span class="text-xs text-tertiary">${book.currentPage || 0}${book.pageCount ? ` / ${book.pageCount}` : ''} pages · ${pct}% complete</span>
           </div>
         </div>
       </div>
@@ -788,8 +793,12 @@ export const Library = (() => {
             value="${book.currentPage}"
             min="0"
             max="${book.pageCount || 99999}"
+            step="1"
+            required
+            aria-describedby="progressPageHint"
             autofocus
           />
+          <p class="form-hint" id="progressPageHint">${book.pageCount ? 'Reaching the last page will mark this book as finished.' : 'Total page count is not available for this book.'}</p>
         </div>
 
         <div class="modal-footer modal-footer--embedded">
