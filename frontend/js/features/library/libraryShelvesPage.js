@@ -92,6 +92,40 @@ export function createLibraryShelvesPage({ storage, library, utils, actions = {}
     const books = shelfBooks();
     const [title, subtitle] = shelfCopy[state.status] || ['Bookshelf', 'Your books, all in one place.'];
     const pages = books.reduce((sum, book) => sum + Math.max(0, Number(book.currentPage) || 0), 0);
+
+    const existing = pageDocument.getElementById('statusPage');
+    if (existing && main.contains(existing)) {
+      existing.dataset.shelf = pageUtils.sanitize(state.status);
+      const breadcrumbTitle = existing.querySelector('.library-breadcrumb span:last-of-type');
+      if (breadcrumbTitle) breadcrumbTitle.textContent = title;
+      const h1 = existing.querySelector('.status-heading .page-title');
+      if (h1) h1.textContent = title;
+      const sub = existing.querySelector('.status-heading .page-subtitle');
+      if (sub) sub.textContent = subtitle;
+      const pagesEl = existing.querySelector('.shelf-summary span');
+      if (pagesEl) pagesEl.textContent = String(pages);
+      const dnfNote = existing.querySelector('.shelf-status-note');
+      if (state.status === 'dnf') {
+        if (!dnfNote && h1) {
+          const note = pageDocument.createElement('span');
+          note.className = 'shelf-status-note';
+          note.innerHTML = `${libraryIcon('status-dnf')} Did Not Finish`;
+          h1.insertAdjacentElement('afterend', note);
+        }
+      } else if (dnfNote) {
+        dnfNote.remove();
+      }
+      existing.querySelectorAll('[data-action="switch-shelf"]').forEach(chip => {
+        const active = chip.dataset.status === state.status;
+        chip.classList.toggle('active', active);
+        chip.setAttribute('aria-pressed', String(active));
+      });
+      const grid = existing.querySelector('#favoritesGrid, #statusGrid');
+      if (grid) grid.id = state.status === 'favorites' ? 'favoritesGrid' : 'statusGrid';
+      renderGrid();
+      return;
+    }
+
     main.innerHTML = `<div class="page status-page" id="statusPage" data-shelf="${pageUtils.sanitize(state.status)}">
       <div class="library-breadcrumb"><button type="button" class="btn btn-ghost" data-action="browse-library">My Library</button><span aria-hidden="true">›</span><span>${title}</span><button type="button" class="btn btn-primary library-add-book" data-action="open-search">${libraryIcon('plus')} Add book</button></div>
       <div class="page-header status-header">

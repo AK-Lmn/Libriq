@@ -1,4 +1,4 @@
-const TOP_ROUTES = new Set(['library', 'recommendations', 'settings', 'help']);
+const TOP_ROUTES = new Set();
 
 export function applyNavigationChrome(route, root = document) {
   root.body?.setAttribute?.('data-route', route);
