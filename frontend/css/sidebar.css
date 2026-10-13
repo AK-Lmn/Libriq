@@ -68,10 +68,17 @@
   font-size: var(--text-sm);
   text-align: left;
   cursor: pointer;
+  white-space: nowrap;
   transition:
     border-color var(--duration-fast),
     color var(--duration-fast),
     background var(--duration-fast);
+}
+
+.sidebar-search-btn span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebar-search-btn:hover {
@@ -87,6 +94,8 @@
 
 .sidebar-search-btn kbd {
   margin-left: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .sidebar-nav {

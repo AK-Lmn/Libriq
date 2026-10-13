@@ -494,15 +494,17 @@
 .books-shelf-mode {
   display: block !important;
   width: 100% !important;
+  overflow: visible !important;
 }
 
 .bookshelf-showcase {
   display: flex;
   flex-direction: column;
-  gap: 56px;
+  gap: 64px;
   width: 100%;
-  margin: 32px 0 48px;
+  margin: 36px 0 48px;
   perspective: 1200px;
+  overflow: visible;
 }
 
 .bookshelf-tier {
@@ -510,20 +512,24 @@
   flex-direction: column;
   width: 100%;
   position: relative;
+  overflow: visible;
+}
+
+.bookshelf-tier:hover,
+.bookshelf-tier:focus-within {
+  z-index: 50;
 }
 
 .bookshelf-spines {
   display: flex;
   align-items: flex-end;
-  gap: 6px;
-  padding: 0 32px;
+  gap: 8px;
+  padding: 40px 48px 2px;
   position: relative;
   z-index: 2;
-  overflow-x: auto;
-  overflow-y: visible;
+  overflow: visible;
   scrollbar-width: thin;
-  padding-bottom: 2px;
-  min-height: 240px;
+  min-height: 260px;
 }
 
 /* Individual 3D Book Spine */
