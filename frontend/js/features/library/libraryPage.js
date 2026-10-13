@@ -40,25 +40,11 @@ export function createLibraryPage({ storage, library, utils, constants, actions 
     return customShelves(books || []);
   }
 
-  function bookNeedsMetadata(book) {
-    if (!book) return [];
-    const gaps = [];
-    if (!book.coverUrl) gaps.push('cover');
-    if (!book.description) gaps.push('description');
-    if (!book.pageCount) gaps.push('pageCount');
-    if (!Array.isArray(book.genres) || book.genres.length === 0) gaps.push('genres');
-    if (!book.publishYear) gaps.push('publishYear');
-    if (!book.publisher) gaps.push('publisher');
-    if (!book.language) gaps.push('language');
-    return gaps;
-  }
-
   function filterAndSortBooks(books, state) {
     const query = (state.query || '').toLowerCase();
     let filtered = books.slice();
     if (state.shelf && state.shelf !== 'all') filtered = filtered.filter(book => Array.isArray(book.tags) && book.tags.includes(state.shelf));
     if (state.filter === 'favorites') filtered = filtered.filter(book => book.isFavorite);
-    else if (state.filter === 'needs-metadata') filtered = filtered.filter(book => bookNeedsMetadata(book).length > 0);
     else if (state.filter !== 'all') filtered = filtered.filter(book => book.status === state.filter);
     if (query) {
       filtered = filtered.filter(book => [book.title, book.author, (book.genres || []).join(' '), book.description || '']
@@ -119,7 +105,6 @@ export function createLibraryPage({ storage, library, utils, constants, actions 
       wishlist: books.filter(book => book.status === constants.STATUS.WISHLIST).length,
       finished: books.filter(book => book.status === constants.STATUS.FINISHED).length,
       favorites: books.filter(book => book.isFavorite).length,
-      needsMetadata: books.filter(book => bookNeedsMetadata(book).length > 0).length,
     };
 
     main.innerHTML = `
@@ -139,7 +124,6 @@ export function createLibraryPage({ storage, library, utils, constants, actions 
           <button class="chip${state.filter === 'wishlist' ? ' active' : ''}" data-action="filter-library" data-filter="wishlist">Want to Read <span>${counts.wishlist}</span></button>
           <button class="chip${state.filter === 'finished' ? ' active' : ''}" data-action="filter-library" data-filter="finished">Finished <span>${counts.finished}</span></button>
           <button class="chip${state.filter === 'favorites' ? ' active' : ''}" data-action="filter-library" data-filter="favorites">Favorites <span>${counts.favorites}</span></button>
-          <button class="chip${state.filter === 'needs-metadata' ? ' active' : ''}" data-action="filter-library" data-filter="needs-metadata">Needs Metadata <span>${counts.needsMetadata}</span></button>
         </div>
         <div class="library-grid-summary"><span id="libraryResultCount" role="status"></span><span id="librarySortSummary"></span></div>
         <div class="books-grid" id="libraryGrid">${books.length === 0 ? buildEmpty() : ''}</div>

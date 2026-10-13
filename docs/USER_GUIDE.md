@@ -63,7 +63,7 @@ Manual entry is available when a useful API match cannot be found. Title and aut
 
 ## Personal Library
 
-The Library uses a cover-forward layout. Books can be filtered by All, Reading, Want to Read, Finished, Favorites, Needs Metadata, and saved shelf tags.
+The Library uses a cover-forward layout. Books can be filtered by All, Reading, Want to Read, Finished, Favorites, and saved shelf tags. Missing descriptions and metadata are enriched automatically in the background.
 
 The local library search and sorting tools support:
 
