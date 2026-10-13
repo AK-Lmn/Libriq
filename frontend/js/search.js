@@ -16,6 +16,7 @@ export const Search = (() => {
   let filtersOpen = false;
   let activeFilters = _defaultFilters();
   let initialized = false;
+  let searchRevision = 0;
 
   function getEls() {
     return {
@@ -67,25 +68,53 @@ export const Search = (() => {
     Utils.hide(modal);
     input.value = '';
     currentQuery = '';
+    searchRevision += 1;
     results = [];
     focusedIndex = -1;
     activeFilters = _defaultFilters();
     filtersOpen = false;
     _syncFiltersUI();
+    _setDefaultEmptyState();
     _clearResults();
     document.body.style.overflow = '';
   }
 
-  function _setDefaultEmptyState(message = 'Search for any book to add it to your library') {
+  function _setStatus(message, busy = false) {
+    const status = document.getElementById('searchStatus');
+    if (status) status.textContent = message;
+    getEls().resultsArea?.setAttribute('aria-busy', String(busy));
+  }
+
+  function _setDefaultEmptyState() {
     const { emptyState } = getEls();
     emptyState.innerHTML = `
-      <i class="ph ph-books"></i>
-      <p>${Utils.sanitize(message)}</p>`;
+      <i class="ph ph-books" aria-hidden="true"></i>
+      <h3>A whole world of stories</h3>
+      <p>Search by title, author, or ISBN to find your next read.</p>`;
+    _setStatus('Enter at least 3 characters to search.');
+  }
+
+  function _showRecovery(icon, title, message, reset = false) {
+    const { emptyState } = getEls();
+    emptyState.innerHTML = `
+      <i class="ph ph-${icon}" aria-hidden="true"></i>
+      <h3>${Utils.sanitize(title)}</h3>
+      <p>${Utils.sanitize(message)}</p>
+      <div class="search-recovery-actions">
+        ${reset ? '<button class="btn btn-ghost" type="button" data-reset-filters>Reset filters</button>' : ''}
+        <button class="btn btn-primary search-manual-btn" type="button" data-manual-entry>
+          <i class="ph ph-pencil" aria-hidden="true"></i> Add Manually
+        </button>
+      </div>`;
+    emptyState.querySelector('[data-manual-entry]')?.addEventListener('click', openManualEntry);
+    emptyState.querySelector('[data-reset-filters]')?.addEventListener('click', resetFilters);
+    Utils.show(emptyState);
+    _setStatus(title);
   }
 
   function openManualEntry() {
     close();
-    Library.showAddModal({}, { manual: true });
+    requestAnimationFrame(() => Library.showAddModal({}, { manual: true }));
   }
 
   function _clearResults() {
@@ -97,6 +126,7 @@ export const Search = (() => {
   }
 
   async function executeSearch(query) {
+    const revision = ++searchRevision;
     const { resultsArea, emptyState } = getEls();
 
     if (!query || query.length < 3) {
@@ -106,16 +136,15 @@ export const Search = (() => {
     }
 
     Utils.hide(emptyState);
-    emptyState.innerHTML = `
-      <i class="ph ph-books"></i>
-      <p>Search for any book to add it to your library</p>`;
+    _setStatus('Searching your library and book providers…', true);
     Array.from(resultsArea.childNodes).forEach(node => {
       if (node !== emptyState) resultsArea.removeChild(node);
     });
     resultsArea.insertAdjacentHTML('afterbegin', `
       <div class="search-loading" id="searchSpinner">
         <div class="spinner"></div>
-        <span>Searching…</span>
+        <h3>Finding your next read</h3>
+        <span>Searching your library and book providers…</span>
       </div>`);
 
     try {
@@ -123,20 +152,17 @@ export const Search = (() => {
         searchLocal(query),
         BookAPI.searchBooks(query),
       ]);
+      if (revision !== searchRevision) return;
 
       results = [...localResults.map(r => ({ ...r, _source: 'local' })),
                  ...apiResults.map(r => ({ ...r, _source: 'api' }))];
 
       renderResults(localResults, apiResults);
     } catch (err) {
+      if (revision !== searchRevision) return;
       console.error('[Libriq] Search error:', err);
       _clearResults();
-      const { emptyState } = getEls();
-      Utils.hide(emptyState);
-      const errEl = document.createElement('div');
-      errEl.className = 'search-empty-state';
-      errEl.innerHTML = `<i class="ph ph-wifi-slash"></i><p>Couldn't connect. Check your internet and try again.</p>`;
-      getEls().resultsArea.appendChild(errEl);
+      _showRecovery('wifi-slash', 'Couldn’t connect', 'Check your internet and try again, or add the book manually.');
     }
   }
 
@@ -164,20 +190,9 @@ export const Search = (() => {
 
     if (localResults.length === 0 && apiResults.length === 0) {
       const offlineMessage = 'You’re offline. Saved library features still work, but online book search needs internet.';
-      emptyState.innerHTML = searchMeta.blockedOffline || searchMeta.offline
-        ? `
-        <i class="ph ph-wifi-slash"></i>
-        <p>${offlineMessage}</p>`
-        : `
-        <i class="ph ph-magnifying-glass"></i>
-        <p>No results found for "<strong>${Utils.sanitize(currentQuery)}</strong>"</p>`;
-      emptyState.insertAdjacentHTML('beforeend', `
-        <button class="btn btn-primary btn-sm search-manual-btn" type="button" data-manual-entry>
-          <i class="ph ph-pencil"></i>
-          Add Manually
-        </button>`);
-      emptyState.querySelector('[data-manual-entry]')?.addEventListener('click', openManualEntry);
-      Utils.show(emptyState);
+      _showRecovery(searchMeta.blockedOffline || searchMeta.offline ? 'wifi-slash' : 'magnifying-glass',
+        searchMeta.blockedOffline || searchMeta.offline ? 'Online search is unavailable' : 'No books found',
+        searchMeta.blockedOffline || searchMeta.offline ? offlineMessage : `No results found for “${currentQuery}”. Try another title or add it manually.`);
       return;
     }
 
@@ -186,13 +201,19 @@ export const Search = (() => {
 
     if (localResults.length > 0) {
       resultsArea.insertAdjacentHTML('beforeend',
-        `<div class="search-section-label">In Your Library</div>`);
+        `<div class="search-section-label">In Your Library <span>${localResults.length}</span></div>`);
       localResults.forEach(book => {
         resultsArea.appendChild(buildLocalResultItem(book));
       });
     }
 
     const filteredApiResults = _applyAdvancedFilters(apiResults);
+
+    if (localResults.length === 0 && filteredApiResults.length === 0) {
+      _showRecovery('funnel', 'No matching books', 'Try fewer filters to see more results, or add the book manually.', true);
+    } else {
+      _setStatus(`${localResults.length + filteredApiResults.length} books found${_filtersActive() ? ' with your filters' : ''}.`);
+    }
 
     if (filteredApiResults.length > 0) {
       resultsArea.insertAdjacentHTML('beforeend',
@@ -222,13 +243,11 @@ export const Search = (() => {
         <div class="search-result-description">${Utils.sanitize(_previewDescription(book))}</div>
       </div>
       <div class="search-result-add">
-        <button class="btn btn-ghost btn-sm" onclick="Navigation.goTo('library')">
+        <button class="btn btn-ghost btn-sm" aria-label="View in your library" onclick="Navigation.goTo('library')">
           <i class="ph ph-arrow-right"></i>
         </button>
       </div>`;
-    el.addEventListener('click', (e) => {
-      if (!e.target.closest('.btn')) close();
-    });
+    el.addEventListener('click', close);
     return el;
   }
 
@@ -302,8 +321,10 @@ export const Search = (() => {
       updateFocus(items);
     }
 
-    if (e.key === 'Enter' && focusedIndex >= 0) {
-      items[focusedIndex]?.click();
+    if (e.key === 'Enter' && focusedIndex >= 0 && e.target === getEls().input) {
+      e.preventDefault();
+      const item = items[focusedIndex];
+      (item?.querySelector('button') || item)?.click();
     }
   }
 
@@ -314,7 +335,7 @@ export const Search = (() => {
 
   function openAddModal(bookData) {
     close();
-    Library.showAddModal(bookData);
+    requestAnimationFrame(() => Library.showAddModal(bookData));
   }
 
   function _previewDescription(book) {
@@ -434,11 +455,13 @@ export const Search = (() => {
     const { input } = getEls();
 
     searchDebounced = Utils.debounce((q) => {
+      if (getEls().modal.hidden || q !== getEls().input.value.trim()) return;
       currentQuery = q;
       executeSearch(q);
     }, 350);
 
     input.addEventListener('input', (e) => {
+      searchRevision += 1;
       searchDebounced(e.target.value.trim());
     });
 
@@ -463,6 +486,7 @@ export const Search = (() => {
     document.getElementById('searchModal')?.addEventListener('click', (e) => {
       if (e.target === e.currentTarget) close();
     });
+    document.getElementById('searchModal')?.addEventListener('dialog:close', close);
 
     document.getElementById('searchManualEntry')?.addEventListener('click', openManualEntry);
     document.getElementById('searchAdvancedToggle')?.addEventListener('click', () => toggleAdvancedFilters());
