@@ -22,6 +22,48 @@ export function createHelpPage({ storage, actions, documentRoot }) {
           <li>${paragraph('Make it yours', 'Add the book to your Library and choose a reading status. Start with Want to read, or choose Reading if you have already begun.')}</li>
           <li>${paragraph('Return as you read', 'Open the book in your Library to update your current page and save a note. Small updates are enough; there is no reading schedule to keep.')}</li>
         </ol>
+        <div class="help-shortcuts-guide">
+          <h3>Essential keyboard shortcuts</h3>
+          <p>Navigate and control LibriQ rapidly without reaching for the mouse.</p>
+          <div class="help-shortcuts-table-wrapper">
+            <table class="help-shortcuts-table">
+              <thead>
+                <tr>
+                  <th scope="col">Shortcut</th>
+                  <th scope="col">Action</th>
+                  <th scope="col">Context</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><kbd>Cmd</kbd> / <kbd>Ctrl</kbd> + <kbd>K</kbd></td>
+                  <td>Open quick book search</td>
+                  <td>Everywhere</td>
+                </tr>
+                <tr>
+                  <td><kbd>Esc</kbd></td>
+                  <td>Close active modal or drawer</td>
+                  <td>Modals &amp; side panels</td>
+                </tr>
+                <tr>
+                  <td><kbd>V</kbd></td>
+                  <td>Toggle 3D Bookshelf and 2D Grid view</td>
+                  <td>Library page</td>
+                </tr>
+                <tr>
+                  <td><kbd>1</kbd> / <kbd>2</kbd> / <kbd>3</kbd></td>
+                  <td>Switch shelves (All / Reading / Finished)</td>
+                  <td>Library page</td>
+                </tr>
+                <tr>
+                  <td><kbd>?</kbd></td>
+                  <td>Open this Help &amp; Guide center</td>
+                  <td>Everywhere</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
         ${question('How do I install LibriQ as an app?', 'For an app-like reading space, use your browser’s Install app or Add to Home Screen option, when available. Open LibriQ from its icon to use it in a standalone window.')}`],
       ['Search &amp; manual entry', `
         ${paragraph('Search for the edition you own', 'Try the full title or the author’s name. An ISBN can help narrow the results to a specific edition. Compare language, format, and page count; different editions may track progress differently.')}
@@ -30,6 +72,32 @@ export function createHelpPage({ storage, actions, documentRoot }) {
       ['Library management', `
         <p>Use a book’s status to describe where it sits in your reading life. You can change it whenever your plans change.</p>
         <div class="help-statuses"><span>Reading</span><span>Finished</span><span>Want to read</span><span>Did not finish</span></div>
+        <div class="help-3d-guide">
+          <h3>3D Digital Bookshelf navigation</h3>
+          <p>Experience your library on realistic 3D cedar shelves with ambient lighting and spine bindings.</p>
+          <div class="help-3d-grid">
+            <div class="help-3d-card">
+              <div class="help-3d-card-icon"><i class="ph ph-hand-pointing" aria-hidden="true"></i></div>
+              <h4>Orbit &amp; Angle</h4>
+              <p>Click &amp; drag (or one-finger drag on touch) to pan and inspect shelves from any perspective.</p>
+            </div>
+            <div class="help-3d-card">
+              <div class="help-3d-card-icon"><i class="ph ph-magnifying-glass-plus" aria-hidden="true"></i></div>
+              <h4>Smooth Zoom</h4>
+              <p>Scroll the mouse wheel or pinch-to-zoom on touch to step in close to spines or step back for the whole collection.</p>
+            </div>
+            <div class="help-3d-card">
+              <div class="help-3d-card-icon"><i class="ph ph-cursor-click" aria-hidden="true"></i></div>
+              <h4>Spine Inspection</h4>
+              <p>Hover over any book to see its spine illuminate and elevate. Click to pull the volume out and open its reading drawer.</p>
+            </div>
+            <div class="help-3d-card">
+              <div class="help-3d-card-icon"><i class="ph ph-sliders-horizontal" aria-hidden="true"></i></div>
+              <h4>Lighting &amp; Finish</h4>
+              <p>Shelves dynamically respond to your system theme with subtle metallic highlights and soft contact shadows.</p>
+            </div>
+          </div>
+        </div>
         ${paragraph('Find, filter, and tidy', 'Search within your Library or filter by status or favorites to narrow your shelves. Sort the shelf and open a book to edit its details. Before removing an entry, check its progress and notes and save anything you want to keep.')}
         ${question('What should I do with duplicate editions?', 'Compare the edition, ISBN, progress and notes before removing anything. Export a backup first. A manual cloud merge skips duplicates and keeps this device’s version where details conflict.')}`],
       ['Progress &amp; notes', `
@@ -48,6 +116,8 @@ export function createHelpPage({ storage, actions, documentRoot }) {
         <aside class="help-callout">${icon('info')}<div><strong>If books still seem to be missing</strong><p>Check your account and Library filters first. Do not immediately import an older backup; compare the data and review conflicts before making another change.</p></div></aside>`],
       ['FAQ / troubleshooting', `
         ${question('My Library looks empty. Where should I start?', 'Clear active filters and search terms, confirm you are in the same account, and check the sync state. If a device still has your books, preserve a backup there before trying an import or merge.', true)}
+        ${question('Why are book covers or descriptions missing?', 'LibriQ queries Open Library, Google Books, and Wikipedia in the background to automatically enrich book covers and synopses. If a newly added or manually created book has no cover, open its edit drawer and paste a high-resolution cover image URL or correct its ISBN.', true)}
+        ${question('How does offline reading work with cloud sync?', 'All your books, reading progress, and private notes are cached locally in your browser’s IndexedDB. You can read, update pages, and log quotes completely offline. When an internet connection is re-established, LibriQ automatically synchronizes pending changes with your account without overwriting newer progress.', true)}
         ${question('Can I reduce motion?', 'Yes. Enable reduced motion in your device’s accessibility settings. LibriQ respects prefers-reduced-motion: animated transitions and spring movement are removed or made immediate. Reading and navigation remain available.', true)}
         ${question('Can I turn off the glass effect?', 'Use reduced transparency in your device’s accessibility settings where available. The solid-surface fallback replaces translucent cards with opaque surfaces and removes background blur while keeping the same text, contrast, and layout.', true)}
         <aside class="help-solid-preview"><strong>Solid surfaces · same quiet space</strong><p>No transparency. No backdrop blur. Guidance stays readable.</p></aside>
@@ -76,8 +146,21 @@ export function createHelpPage({ storage, actions, documentRoot }) {
             <span class="help-eyebrow">${icon('compass')} A LITTLE GUIDANCE</span>
             <h1 class="page-title">Help &amp; Guide Center</h1>
             <p>A quieter way to keep track of your reading. Find your next book, tend your library, and keep your progress close.</p>
+            <div class="help-search-container">
+              <div class="help-search-input-wrapper">
+                <i class="ph ph-magnifying-glass help-search-icon" aria-hidden="true"></i>
+                <input type="search" id="helpSearchInput" class="help-search-input" placeholder="Search guides, 3D controls, shortcuts, sync..." aria-label="Search help topics" autocomplete="off" />
+                <button type="button" id="helpSearchClear" class="help-search-clear" data-action="clear-help-search" aria-label="Clear search" hidden>
+                  <i class="ph ph-x" aria-hidden="true"></i>
+                </button>
+              </div>
+              <div id="helpSearchFeedback" class="help-search-feedback" aria-live="polite"></div>
+            </div>
             ${returnActions()}
           </header>
+          <nav class="help-mobile-pills" aria-label="Quick jump to topic">
+            ${sections.map(([title], i) => `<a href="#help-section-${i + 1}" data-action="open-guide-section" data-section-id="help-section-${i + 1}" class="help-pill"><span>${String(i + 1).padStart(2, '0')}</span> ${title.replace(/&amp;/g, '&')}</a>`).join('')}
+          </nav>
           <div class="help-sections">
             ${sections.map(([title, body], i) => `<details class="help-section" id="help-section-${i + 1}" open>
               <summary><span class="help-section-number">${String(i + 1).padStart(2, '0')}</span><h2>${title}</h2><span class="help-chevron">${icon('chevron-up')}</span></summary>
@@ -89,13 +172,87 @@ export function createHelpPage({ storage, actions, documentRoot }) {
         </div>
       </div>`;
 
+    if (typeof IntersectionObserver !== 'undefined' && main.querySelectorAll) {
+      const tocLinks = main.querySelectorAll('.help-contents a[data-section-id]');
+      const sectionEls = main.querySelectorAll('.help-section');
+      if (tocLinks.length > 0 && sectionEls.length > 0) {
+        const observer = new IntersectionObserver(entries => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              tocLinks.forEach(link => {
+                link.classList.toggle('is-active', link.dataset.sectionId === entry.target.id);
+              });
+            }
+          });
+        }, { rootMargin: '-10% 0px -70% 0px', threshold: 0 });
+        sectionEls.forEach(sec => observer.observe(sec));
+      }
+    }
+
     if (boundMain === main) return;
     boundMain = main;
+
+    const handleSearch = query => {
+      const q = (query || '').trim().toLowerCase();
+      const searchFeedback = pageDocument.getElementById?.('helpSearchFeedback') || main.querySelector?.('#helpSearchFeedback');
+      const clearBtn = pageDocument.getElementById?.('helpSearchClear') || main.querySelector?.('#helpSearchClear');
+      if (clearBtn) clearBtn.hidden = !q;
+
+      const sectionsList = main.querySelectorAll?.('.help-section');
+      if (!sectionsList || sectionsList.length === 0) return;
+
+      if (!q) {
+        sectionsList.forEach(sec => {
+          sec.hidden = false;
+          sec.classList.remove('is-search-hidden');
+        });
+        if (searchFeedback) searchFeedback.textContent = '';
+        return;
+      }
+
+      let matchCount = 0;
+      sectionsList.forEach(sec => {
+        const text = (sec.textContent || '').toLowerCase();
+        const matches = text.includes(q);
+        sec.hidden = !matches;
+        sec.classList.toggle('is-search-hidden', !matches);
+        if (matches) {
+          matchCount++;
+          sec.open = true;
+          sec.querySelectorAll?.('.help-question').forEach(qEl => {
+            if ((qEl.textContent || '').toLowerCase().includes(q)) {
+              qEl.open = true;
+            }
+          });
+        }
+      });
+
+      if (searchFeedback) {
+        searchFeedback.textContent = matchCount === 0
+          ? `No matches found for "${query}"`
+          : `Found ${matchCount} section${matchCount === 1 ? '' : 's'} matching "${query}"`;
+      }
+    };
+
+    main.addEventListener('input', event => {
+      if (event.target?.id === 'helpSearchInput') {
+        handleSearch(event.target.value);
+      }
+    });
+
     main.addEventListener('click', event => {
       const trigger = event.target.closest?.('[data-action]');
       if (!trigger) return;
       if (trigger.dataset.action === 'open-search') actions?.openSearch?.();
       if (trigger.dataset.action === 'open-library') actions?.navigate?.('library');
+      if (trigger.dataset.action === 'clear-help-search') {
+        const input = pageDocument.getElementById?.('helpSearchInput') || main.querySelector?.('#helpSearchInput');
+        if (input) {
+          input.value = '';
+          handleSearch('');
+          input.focus();
+        }
+      }
       if (trigger.dataset.action === 'open-guide-section') {
         const section = pageDocument.getElementById(trigger.dataset.sectionId);
         if (section) section.open = true;

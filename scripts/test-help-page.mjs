@@ -47,6 +47,12 @@ assert.doesNotMatch(main.innerHTML, /guest mode|works without an account|account
 const originalHandler = handlers.get('click');
 render();
 assert.equal(handlers.get('click'), originalHandler, 'Renders do not duplicate delegated listeners');
-handlers.get('click')({ target: { closest: () => null } });
+assert.match(main.innerHTML, /Essential keyboard shortcuts/);
+assert.match(main.innerHTML, /3D Digital Bookshelf navigation/);
+assert.match(main.innerHTML, /id="helpSearchInput"/);
+assert.match(main.innerHTML, /class="help-mobile-pills"/);
+assert.match(main.innerHTML, /data-action="clear-help-search"/);
+
+click('clear-help-search');
 
 console.log('Help page tests passed');
