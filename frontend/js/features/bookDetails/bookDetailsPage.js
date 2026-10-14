@@ -21,6 +21,7 @@ export function createBookDetailsPage({
   const _logActivity = (...args) => actions.logActivity?.(...args);
   const _getMetadataQuality = book => actions.getMetadataQuality?.(book) || { className: 'complete', label: 'Complete' };
   const _parseShelfInput = value => actions.parseShelfInput?.(value) || [];
+  const _autoEnrichDescription = bookId => actions.autoEnrichDescription?.(bookId);
   const Navigation = {
     updateBadges: () => actions.updateBadges?.(),
     renderCurrentPage: () => actions.renderCurrentPage?.(),
@@ -266,7 +267,22 @@ export function createBookDetailsPage({
     }
 
     Utils.show(modal);
-    document.body.style.overflow = 'hidden';
+
+    if (!book.description && typeof _autoEnrichDescription === 'function') {
+      Promise.resolve(_autoEnrichDescription(book.id)).then(updated => {
+        if (updated) {
+          const fresh = Storage.getBookById(book.id);
+          if (fresh?.description) {
+            const descEl = body.querySelector('.book-details-desc-text');
+            const descContainer = body.querySelector('.book-details-description');
+            if (descEl && modal && !modal.hasAttribute('hidden')) {
+              descEl.textContent = fresh.description.replace(/<[^>]*>/g, '').trim();
+              descContainer?.classList.remove('book-details-description--empty');
+            }
+          }
+        }
+      }).catch(() => {});
+    }
 
     let actions = modal.querySelector('#bookDetailsFooter');
     if (!actions) {
@@ -639,7 +655,6 @@ export function createBookDetailsPage({
   function closeDetailsModal() {
     const modal = document.getElementById('bookDetailsModal');
     Utils.hide(modal);
-    document.body.style.overflow = '';
   }
 
 

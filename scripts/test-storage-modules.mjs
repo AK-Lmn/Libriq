@@ -257,6 +257,14 @@ behaviorStorage.resetAll();
 assert.deepEqual(behaviorStorage.getBooks(), []);
 assert.deepEqual(behaviorEvents.map(event => event.type), ['libriq:reset']);
 
+behaviorStorage.clearActiveAccountScope();
+behaviorStorage.addBook({ id: 'guest-reset-book', title: 'Guest Reset', author: 'Reader' });
+assert.equal(behaviorStorage.getBooks().length, 1);
+behaviorEvents.length = 0;
+behaviorStorage.resetAll();
+assert.deepEqual(behaviorStorage.getBooks(), []);
+assert.deepEqual(behaviorEvents.map(event => event.type), ['libriq:reset']);
+
 assert.match(source, /import\s*\{[\s\S]*LIBRIQ[\s\S]*createBook[\s\S]*createProfile[\s\S]*SEED_BOOKS[\s\S]*\}\s*from\s*['"]\.\/data\.js['"]/);
 assert.match(source, /export const Storage\s*=/);
 assert.doesNotMatch(source, /window\.(?:Storage|LibriqStorage)\s*=/);

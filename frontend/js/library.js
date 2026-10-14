@@ -567,19 +567,49 @@ export const Library = (() => {
     if (!current) return { status: 'error' };
 
     let candidate = await _fetchMetadataCandidate(current);
-    if (!candidate) return { status: 'no-new' };
     if (candidate?.source === 'openlibrary') {
       candidate = await BookAPI.enrichBook(candidate);
     }
-    candidate = await BookAPI.enrichBookLinks({ ...current, ...candidate });
+    if (candidate) {
+      candidate = await BookAPI.enrichBookLinks({ ...current, ...candidate });
+    }
 
-    const updates = _buildMetadataUpdates(current, candidate);
+    const updates = candidate ? _buildMetadataUpdates(current, candidate) : {};
+
+    // If description is still missing, query Wikipedia / Open Library fallback
+    if (!current.description && !updates.description) {
+      try {
+        const fallbackDesc = await BookAPI.fetchBookDescription(current);
+        if (fallbackDesc) {
+          updates.description = fallbackDesc;
+          updates.shortDescription = fallbackDesc;
+        }
+      } catch {
+        // ignore fallback errors
+      }
+    }
+
     if (Object.keys(updates).length === 0) return { status: 'no-new' };
 
     Storage.updateBook(bookId, updates);
     const updated = Storage.getBookById(bookId);
     _logActivity('metadata_refreshed', updated, { status: 'updated' }, updated?.source || 'system');
     return { status: 'updated' };
+  }
+
+  async function _autoEnrichDescription(bookId) {
+    const current = Storage.getBookById(bookId);
+    if (!current || current.description) return false;
+    try {
+      const desc = await BookAPI.fetchBookDescription(current);
+      if (desc) {
+        Storage.updateBook(bookId, { description: desc, shortDescription: desc });
+        return true;
+      }
+    } catch {
+      // ignore
+    }
+    return false;
   }
 
   const bookDetailsFeature = createBookDetailsPage({
@@ -597,6 +627,7 @@ export const Library = (() => {
       setStatus: (bookId, status) => setStatus(bookId, status),
       setRating: (bookId, rating) => setRating(bookId, rating),
       refreshMetadata: bookId => refreshMetadata(bookId),
+      autoEnrichDescription: bookId => _autoEnrichDescription(bookId),
       toggleFavorite: bookId => toggleFavorite(bookId),
       updateBadges: () => globalThis.Navigation?.updateBadges?.(),
       renderCurrentPage: () => globalThis.Navigation?.renderCurrentPage?.(),
@@ -625,13 +656,37 @@ export const Library = (() => {
   async function _fetchMetadataCandidate(book) {
     try {
       if (book.isbn) {
-        return await BookAPI.lookupISBN(book.isbn);
+        const byIsbn = await BookAPI.lookupISBN(book.isbn);
+        if (byIsbn) return byIsbn;
       }
 
-      const query = `${book.title} ${book.author}`.trim();
+      const query = `${book.title} ${book.author || ''}`.trim();
       const results = await BookAPI.searchBooks(query);
+      if (!Array.isArray(results) || results.length === 0) return null;
+
+      // 1. Exact match
       const targetKey = _normalizeMatchKey(book);
-      return results.find(result => _normalizeMatchKey(result) === targetKey) || null;
+      const exact = results.find(result => _normalizeMatchKey(result) === targetKey);
+      if (exact) return exact;
+
+      // 2. Fuzzy match
+      const clean = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+      const cleanBookTitle = clean(book.title);
+      const authorTokens = clean(book.author).split(' ').filter(token => token.length > 2);
+
+      const fuzzy = results.find(result => {
+        const cleanResultTitle = clean(result.title);
+        const titleMatch = cleanResultTitle.startsWith(cleanBookTitle) ||
+                           cleanBookTitle.startsWith(cleanResultTitle) ||
+                           cleanResultTitle.includes(cleanBookTitle) ||
+                           cleanBookTitle.includes(cleanResultTitle);
+        if (!titleMatch) return false;
+        if (authorTokens.length === 0) return true;
+        const resultAuthor = clean(result.author);
+        return authorTokens.some(token => resultAuthor.includes(token));
+      });
+
+      return fuzzy || results[0] || null;
     } catch (err) {
       console.warn('[Libriq] Metadata refresh failed:', err);
       return null;

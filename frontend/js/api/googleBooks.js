@@ -61,14 +61,7 @@ export const GoogleBooksAPI = (() => {
   }
 
   async function _fetch(url) {
-    const requestUrl = _cacheBust(url);
-    return fetchJson(requestUrl, { timeoutMs: TIMEOUT_MS, retries: 1 });
-  }
-
-  function _cacheBust(url) {
-    const requestUrl = new URL(url);
-    requestUrl.searchParams.set('_ts', Date.now().toString());
-    return requestUrl.toString();
+    return fetchJson(url, { timeoutMs: TIMEOUT_MS, retries: 1 });
   }
 
   function _getApiKey() {

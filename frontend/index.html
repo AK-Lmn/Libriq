@@ -3,8 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="LibriQ — Your reading life, beautifully organized." />
+  <meta name="description" content="LibriQ — Your reading life, beautifully organized. Track books, set reading goals, discover new titles, and view reading statistics." />
   <meta name="theme-color" content="#0B0E14" />
+  <meta property="og:title" content="LibriQ — Your reading life, beautifully organized" />
+  <meta property="og:description" content="Track your reading, discover books, and visualize your reading habits." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="./assets/icons/icon-512.png" />
+  <meta property="og:site_name" content="LibriQ" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="LibriQ" />
+  <meta name="twitter:description" content="Track your reading, discover books, and visualize your reading habits." />
+  <meta name="twitter:image" content="./assets/icons/icon-512.png" />
   <title>LibriQ</title>
   <link rel="icon" type="image/svg+xml" href="./assets/icons/favicon.svg" />
   <link rel="icon" type="image/png" sizes="16x16" href="./assets/icons/favicon-16x16.png" />
@@ -24,7 +33,7 @@
 
   <link rel="stylesheet" href="./assets/fonts/fonts.css" />
 
-  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js" defer></script>
+  <link rel="stylesheet" href="vendor/phosphor/style.css" />
 
   <link rel="stylesheet" href="css/tokens.css" />
   <link rel="stylesheet" href="css/reset.css" />
@@ -446,6 +455,7 @@
   <script>
     if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
       const localConfig = document.createElement('script');
+      localConfig.async = false;
       localConfig.src = 'js/config.local.js';
       document.head.appendChild(localConfig);
     }

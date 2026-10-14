@@ -4,6 +4,8 @@
   "version": "4.8.0",
   "type": "module",
   "scripts": {
+    "start": "node scripts/e2e-server.mjs",
+    "dev": "node scripts/e2e-server.mjs",
     "test": "node --test tests/**/*.test.js",
     "build": "node scripts/generate-config.mjs",
     "test:data-modules": "node scripts/test-data-modules.mjs",

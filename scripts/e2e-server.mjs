@@ -30,14 +30,35 @@ function publish(pathValue) {
   }
 }
 
+const MIME_TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+  '.otf': 'font/otf',
+  '.webmanifest': 'application/manifest+json',
+  '.xml': 'application/xml',
+};
+
 function serveFile(res, filePath) {
   if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
     res.writeHead(404);
     res.end('Not found');
     return;
   }
-  const ext = path.extname(filePath);
-  const type = ext === '.html' ? 'text/html' : ext === '.js' ? 'text/javascript' : ext === '.css' ? 'text/css' : 'application/octet-stream';
+  const ext = path.extname(filePath).toLowerCase();
+  const type = MIME_TYPES[ext] || 'application/octet-stream';
   res.writeHead(200, { 'content-type': type });
   fs.createReadStream(filePath).pipe(res);
 }

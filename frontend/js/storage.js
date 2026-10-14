@@ -568,7 +568,8 @@ export const Storage = (() => {
   function resetAll() {
     _ensureScopeInitialized();
     Object.entries(DATA_KEYS).forEach(([name, key]) => {
-      localStorage.removeItem(activeUid && SCOPED_DATA_KEYS.has(name) ? _userKey(activeUid, key) : key);
+      localStorage.removeItem(_key(name));
+      localStorage.removeItem(key);
     });
     _writeDefaults();
     getDeviceId();

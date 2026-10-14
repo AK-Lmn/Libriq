@@ -40,12 +40,22 @@ assert.equal(BookCache.get('DUNE')[0].title, 'Dune');
 BookCache.invalidate('dune');
 assert.equal(BookCache.has('dune'), false);
 
+// Test LRU bound (100 entries)
+BookCache.clear();
+for (let i = 0; i < 105; i += 1) {
+  BookCache.set(`key-${i}`, [{ id: i }]);
+}
+assert.equal(BookCache.has('key-0'), false);
+assert.equal(BookCache.has('key-4'), false);
+assert.equal(BookCache.has('key-5'), true);
+assert.equal(BookCache.has('key-104'), true);
+
 const html = fs.readFileSync('frontend/index.html', 'utf8');
 const moduleEntries = html.match(/<script\s+type="module"\s+src="js\/appModules\.js"><\/script>/g) || [];
 assert.equal(moduleEntries.length, 1);
 assert.doesNotMatch(html, /<script[^>]+src="js\/(?:search|library)\.js"/);
 assert.doesNotMatch(html, /<script[^>]+src="js\/(?:dashboard|navigation)\.js"/);
-for (const name of ['bookIdentity', 'normalizeBook', 'openLibrary', 'googleBooks', 'gutendex', 'internetArchive', 'mergeBooks', 'cache']) {
+for (const name of ['bookIdentity', 'normalizeBook', 'openLibrary', 'googleBooks', 'gutendex', 'internetArchive', 'mergeBooks', 'cache', 'wikipedia']) {
   assert.doesNotMatch(html, new RegExp(`<script[^>]+src="js/api/${name}\\.js"`));
 }
 assert.doesNotMatch(html, /gemini/i);

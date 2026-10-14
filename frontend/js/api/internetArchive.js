@@ -154,20 +154,13 @@ export const InternetArchiveAPI = (() => {
   }
 
   async function _fetch(url) {
-    const requestUrl = _cacheBust(url);
-    return fetchJson(requestUrl, { timeoutMs: TIMEOUT_MS, retries: 1 });
+    return fetchJson(url, { timeoutMs: TIMEOUT_MS, retries: 1 });
   }
 
   function _normalizeIdentifier(value) {
     const clean = String(value || '').trim();
     if (!clean) return '';
     return clean.replace(/^https?:\/\/archive\.org\/details\//i, '').replace(/^\/+/, '').replace(/\s+/g, '');
-  }
-
-  function _cacheBust(url) {
-    const requestUrl = new URL(url);
-    requestUrl.searchParams.set('_ts', Date.now().toString());
-    return requestUrl.toString();
   }
 
   function _isNetworkFailure(err) {

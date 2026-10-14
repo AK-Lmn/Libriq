@@ -123,7 +123,7 @@ export function buildBookSpine(book, utils, actions = {}) {
     ${book.isFavorite ? '<span class="spine-favorite-star" title="Favorite">★</span>' : ''}
     <div class="spine-popover">
       <div class="spine-popover-cover">
-        ${book.coverUrl ? `<img src="${sanitize(book.coverUrl)}" alt="" loading="lazy" />` : '<div class="spine-popover-no-cover"><i class="ph ph-book"></i></div>'}
+        ${book.coverUrl ? `<img src="${sanitize(book.coverUrl)}" alt="" loading="lazy" decoding="async" />` : '<div class="spine-popover-no-cover"><i class="ph ph-book"></i></div>'}
       </div>
       <div class="spine-popover-info">
         <strong class="spine-popover-title">${sanitize(book.title)}</strong>

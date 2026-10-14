@@ -210,7 +210,7 @@ try {
   assert.equal(authSmoke.createdEmail, 'created-smoke@example.com');
   assert.equal(authSmoke.signedOut, true);
   await page.waitForFunction(() => window.LibriqNavigation.currentPage === 'session');
-  assert.deepEqual(errors.filter(error => /ReferenceError|module|Failed to load/i.test(error)), []);
+  assert.deepEqual(errors.filter(error => /ReferenceError|module/i.test(error) || (/Failed to load/i.test(error) && !/net::ERR_NAME_NOT_RESOLVED/i.test(error))), []);
   console.log('API browser smoke test passed');
 } finally {
   await closePlaywright(browser, context ? [context] : [], { testName });

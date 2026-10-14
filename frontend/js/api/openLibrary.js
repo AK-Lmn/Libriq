@@ -132,8 +132,7 @@ export const OpenLibraryAPI = (() => {
   }
 
   async function _fetch(url) {
-    const requestUrl = _cacheBust(url);
-    return fetchJson(requestUrl, { timeoutMs: TIMEOUT_MS, retries: 1 });
+    return fetchJson(url, { timeoutMs: TIMEOUT_MS, retries: 1 });
   }
 
   async function _fetchWorkRecord(workKey) {
@@ -351,12 +350,6 @@ export const OpenLibraryAPI = (() => {
       if (clean) return clean;
     }
     return '';
-  }
-
-  function _cacheBust(url) {
-    const requestUrl = new URL(url);
-    requestUrl.searchParams.set('_ts', Date.now().toString());
-    return requestUrl.toString();
   }
 
   function _isNetworkFailure(err) {
