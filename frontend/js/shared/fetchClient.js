@@ -42,7 +42,7 @@ export async function request(url, options = {}) {
 
   try {
     const response = await fetch(url, {
-      cache: 'no-store',
+      cache: requestInit.cache || 'default',
       credentials: 'omit',
       ...requestInit,
       signal: combinedSignal,

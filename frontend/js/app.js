@@ -96,7 +96,6 @@ function getReleaseNotes() {
     if (!modal) return;
     renderWhatsNew();
     Utils.show(modal);
-    document.body.style.overflow = 'hidden';
   }
 
   function scheduleWhatsNew() {
@@ -122,7 +121,6 @@ function getReleaseNotes() {
   function dismissWhatsNew() {
     localStorage.setItem(RELEASE_KEY, getWhatsNewVersion());
     closeWhatsNew();
-    document.body.style.overflow = '';
     Navigation.routeAfterAuthReady?.();
     if (Navigation.currentPage === 'session') {
       Navigation.renderCurrentPage?.();

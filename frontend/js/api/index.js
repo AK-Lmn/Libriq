@@ -4,6 +4,7 @@ import { OpenLibraryAPI } from './openLibrary.js';
 import { GoogleBooksAPI } from './googleBooks.js';
 import { GutendexAPI } from './gutendex.js';
 import { InternetArchiveAPI } from './internetArchive.js';
+import { WikipediaAPI } from './wikipedia.js';
 import { MergeBooks } from './mergeBooks.js';
 import { BookCache } from './cache.js';
 
@@ -134,6 +135,37 @@ export const BookAPI = (() => {
     return next;
   }
 
+  async function fetchBookDescription(book) {
+    if (!book) return null;
+    if (NormalizeBook.isUsefulDescription(book.description)) {
+      return book.description;
+    }
+
+    // 1. If Open Library work key exists, try enriching work record
+    if (book.openLibraryWorkKey || String(book.openLibraryId || '').includes('/works/')) {
+      try {
+        const enriched = await OpenLibraryAPI.enrichBook(book);
+        if (NormalizeBook.isUsefulDescription(enriched?.description)) {
+          return enriched.description;
+        }
+      } catch {
+        // continue to Wikipedia fallback
+      }
+    }
+
+    // 2. Try Wikipedia summary
+    try {
+      const wiki = await WikipediaAPI.findBookDescription(book);
+      if (NormalizeBook.isUsefulDescription(wiki?.description)) {
+        return wiki.description;
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
+  }
+
   return {
     searchBooks,
     lookupISBN,
@@ -143,6 +175,8 @@ export const BookAPI = (() => {
     searchCuratedClassics: GutendexAPI.searchCuratedClassics,
     enrichBook: OpenLibraryAPI.enrichBook,
     enrichBookLinks: InternetArchiveAPI.enrichBookLinks,
+    fetchBookDescription,
+    findWikipediaDescription: WikipediaAPI.findBookDescription,
     isSameBook: BookIdentity.isSameBook,
     getSourceLabels: BookIdentity.getSourceLabels,
     normalizeSource: BookIdentity.normalizeSource,

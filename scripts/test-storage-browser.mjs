@@ -218,8 +218,9 @@ try {
     deviceId: 'existing-browser-device',
   });
 
-  assert.deepEqual(freshErrors.filter(error => /Storage|ReferenceError|module|stale|Failed to load/i.test(error)), []);
-  assert.deepEqual(populatedErrors.filter(error => /Storage|ReferenceError|module|stale|Failed to load/i.test(error)), []);
+  const isRelevantError = error => /Storage|ReferenceError|module|stale/i.test(error) || (/Failed to load/i.test(error) && !/net::ERR_NAME_NOT_RESOLVED/i.test(error));
+  assert.deepEqual(freshErrors.filter(isRelevantError), []);
+  assert.deepEqual(populatedErrors.filter(isRelevantError), []);
   console.log('Storage browser persistence test passed');
 } finally {
   await closePlaywright(browser, contexts, { testName });

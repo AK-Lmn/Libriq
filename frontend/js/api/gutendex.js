@@ -42,8 +42,7 @@ export const GutendexAPI = (() => {
   }
 
   async function _fetch(url) {
-    const requestUrl = _cacheBust(url);
-    return fetchJson(requestUrl, { timeoutMs: TIMEOUT_MS, retries: 1 });
+    return fetchJson(url, { timeoutMs: TIMEOUT_MS, retries: 1 });
   }
 
   function _normalizeGutendexBook(item, subjectKey = '') {
@@ -151,12 +150,6 @@ export const GutendexAPI = (() => {
 
   function _normalizeTopic(value) {
     return String(value || '').toLowerCase().trim().replace(/\s+/g, '_').replace(/[^a-z0-9_]+/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
-  }
-
-  function _cacheBust(url) {
-    const requestUrl = new URL(url);
-    requestUrl.searchParams.set('_ts', Date.now().toString());
-    return requestUrl.toString();
   }
 
   function _isNetworkFailure(err) {

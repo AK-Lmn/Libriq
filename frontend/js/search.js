@@ -48,12 +48,14 @@ export const Search = (() => {
     };
   }
 
-  function open() {
+  let _lastSearchTrigger = null;
+
+  function open(trigger = document.activeElement) {
+    _lastSearchTrigger = trigger instanceof HTMLElement ? trigger : null;
     const { modal, input } = getEls();
-    Utils.show(modal);
+    Utils.show(modal, { trigger: _lastSearchTrigger, initialFocus: input });
     _syncFiltersUI();
     requestAnimationFrame(() => input.focus());
-    document.body.style.overflow = 'hidden';
   }
 
   function updateShortcutLabel() {
@@ -76,7 +78,10 @@ export const Search = (() => {
     _syncFiltersUI();
     _setDefaultEmptyState();
     _clearResults();
-    document.body.style.overflow = '';
+    if (_lastSearchTrigger?.isConnected) {
+      _lastSearchTrigger.focus?.({ preventScroll: true });
+    }
+    _lastSearchTrigger = null;
   }
 
   function _setStatus(message, busy = false) {
@@ -243,10 +248,22 @@ export const Search = (() => {
         <div class="search-result-description">${Utils.sanitize(_previewDescription(book))}</div>
       </div>
       <div class="search-result-add">
-        <button class="btn btn-ghost btn-sm" aria-label="View in your library" onclick="Navigation.goTo('library')">
+        <button class="btn btn-ghost btn-sm" aria-label="View in your library" data-nav="library">
           <i class="ph ph-arrow-right"></i>
         </button>
       </div>`;
+    const navBtn = el.querySelector('[data-nav="library"]');
+    if (navBtn) {
+      navBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        close();
+        if (window.Navigation?.goTo) {
+          window.Navigation.goTo('library');
+        } else if (window.LibriqNavigation?.goTo) {
+          window.LibriqNavigation.goTo('library');
+        }
+      });
+    }
     el.addEventListener('click', close);
     return el;
   }

@@ -62,16 +62,16 @@ export const Utils = {
     return el;
   },
 
-  show(el) {
+  show(el, options = {}) {
     if (!el) return;
     const dialog = _getDialogController(el);
-    if (dialog) dialog.open();
+    if (dialog) dialog.open(options);
     else el.removeAttribute('hidden');
   },
-  hide(el) {
+  hide(el, options = {}) {
     if (!el) return;
     const dialog = _getDialogController(el);
-    if (dialog) dialog.close();
+    if (dialog) dialog.close(options);
     else el.setAttribute('hidden', '');
   },
   toggle: (el, force) => {
@@ -199,6 +199,7 @@ export const Utils = {
           <img src="${Utils.sanitize(coverUrl)}"
                alt="Cover of ${Utils.sanitize(book.title)}"
                loading="lazy"
+               decoding="async"
                onerror="if(this.dataset.fallbackTriggered==='1') return; this.dataset.fallbackTriggered='1'; this.removeAttribute('src'); this.parentElement.innerHTML=Utils.buildCoverPlaceholder(${_inlineString(book.title)})">
         </div>`;
     }
