@@ -59,7 +59,13 @@ function serveFile(res, filePath) {
   }
   const ext = path.extname(filePath).toLowerCase();
   const type = MIME_TYPES[ext] || 'application/octet-stream';
-  res.writeHead(200, { 'content-type': type });
+  res.writeHead(200, {
+    'content-type': type,
+    'x-content-type-options': 'nosniff',
+    'x-frame-options': 'DENY',
+    'referrer-policy': 'strict-origin-when-cross-origin',
+    'permissions-policy': 'camera=(), microphone=(), geolocation=()',
+  });
   fs.createReadStream(filePath).pipe(res);
 }
 
