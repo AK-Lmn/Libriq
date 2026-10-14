@@ -1,6 +1,8 @@
 <div align="center">
 
-# 📚 LibriQ
+<img src="frontend/assets/icons/icon.svg" alt="LibriQ Logo" width="96" height="96" />
+
+# LibriQ
 
 **A calm, privacy-first personal library & reading tracker.**
 
@@ -26,7 +28,7 @@
 ## ✨ Key Features
 
 - **🔎 Dual-Engine Book Search**: Merged, deduplicated results across **Google Books** and **Open Library**, plus free classics from **Gutendex** (Project Gutenberg) and readable **Internet Archive** links.
-- **📖 Cover-Forward Library**: Filter and sort books by reading status (*Reading*, *Wishlist*, *Finished*, *Did Not Finish*), custom shelves, favorites, and metadata completeness.
+- **📖 Cover-Forward Library & 3D Bookshelf**: Filter and sort books by reading status (*Reading*, *Wishlist*, *Finished*, *Did Not Finish*), custom shelves, favorites, or realistic 3D cedar bookshelf spine views.
 - **📊 Reading Insights & Streaks**: Track annual goals, pages read, daily reading streaks, completion percentages, and detailed yearly summaries.
 - **📝 Private Notes & Quotes**: Save custom annotations, favorite excerpts, and personal star ratings directly on each book card.
 - **🛡️ Data Ownership & Resilience**:
@@ -34,18 +36,6 @@
   - Export and restore complete **JSON library backups**.
   - Optional **Cloud Firestore sync** with real-time sync health diagnostics and safe async confirmation dialogs.
 - **🎨 Glassmorphic Interface**: Fully responsive, editorial glass design across both dark and light palettes.
-
----
-
-## 📸 Screenshots
-
-| Dashboard | Library Shelf |
-| :---: | :---: |
-| ![Dashboard](docs/screenshots/dashboard-desktop.png) | ![Library](docs/screenshots/library-desktop.png) |
-
-| Book Details & Notes | Search & Discovery |
-| :---: | :---: |
-| ![Book Details](docs/screenshots/book-details-desktop.png) | ![Search](docs/screenshots/search-modal-desktop.png) |
 
 ---
 
