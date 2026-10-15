@@ -417,7 +417,9 @@ export const Storage = (() => {
       return fresh;
     }
     const displayName = data.displayName || data.name || DEFAULTS.profile().name;
-    return { ...DEFAULTS.profile(), ...data, name: displayName, displayName };
+    const createdAt = data.createdAt || data.joinDate || null;
+    const joinDate = data.joinDate || data.createdAt || createdAt;
+    return { ...DEFAULTS.profile(), ...data, name: displayName, displayName, createdAt, joinDate };
   }
 
   function getBackupMeta() {
@@ -458,14 +460,16 @@ export const Storage = (() => {
     const current = getProfile();
     const next = updates && typeof updates === 'object' ? updates : {};
     const displayName = next.displayName || next.name || current.displayName || current.name;
+    const createdAt = next.createdAt || next.joinDate || current.createdAt || current.joinDate || new Date().toISOString();
+    const joinDate = next.joinDate || next.createdAt || current.joinDate || current.createdAt || createdAt;
     const updated = {
       ...current,
       ...next,
       name: displayName,
       displayName,
-      updatedAt: new Date().toISOString(),
-      createdAt: current.createdAt || current.joinDate || new Date().toISOString(),
-      joinDate: current.joinDate || current.createdAt || new Date().toISOString(),
+      updatedAt: next.updatedAt || new Date().toISOString(),
+      createdAt,
+      joinDate,
     };
     _write(_key('PROFILE'), updated);
     _dispatchChange('profile:updated', updated);

@@ -706,12 +706,21 @@ export const Navigation = (() => {
         renderSessionChoicePage();
       } else if (firebase.restoringSession && firebase.user && _currentPage !== 'session') {
         renderCurrentPage?.();
-      } else if (_currentPage === 'settings') settingsFeature();
+      } else if (_currentPage === 'settings') {
+        settingsFeature();
+      } else if (_currentPage === 'profile') {
+        profileFeature();
+      }
       if (_currentPage === 'session') renderSessionChoicePage();
       LibriqCloudBackup.refresh();
       window.LibriqSyncBeta?.refresh?.();
       updateDesktopStatusPill();
       maybeShowNewDeviceCloudPrompt();
+    });
+    window.addEventListener('libriq:profile:updated', () => {
+      if (_currentPage === 'profile') {
+        profileFeature();
+      }
     });
     window.addEventListener('libriq:activity:updated', () => {
       if (['dashboard', 'activity'].includes(_currentPage)) {

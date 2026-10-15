@@ -20,10 +20,37 @@ export function createProfilePage({ storage, utils, constants, actions = {}, doc
     const displayName = resolveAccountDisplayName(profile, user);
     const stats = storage.getStats();
     const streak = storage.getStreak?.();
-    const creationTime = user?.metadata?.creationTime || profile?.createdAt || profile?.joinDate;
-    const joined = creationTime && Number.isFinite(new Date(creationTime).getTime())
-      ? `Joined ${new Date(creationTime).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
+    function parseJoinDate(val) {
+      if (!val) return null;
+      if (typeof val === 'number' && Number.isFinite(val)) return new Date(val);
+      if (typeof val === 'string') {
+        const trimmed = val.trim();
+        if (/^\d{10,13}$/.test(trimmed)) {
+          const num = Number(trimmed);
+          return new Date(trimmed.length === 10 ? num * 1000 : num);
+        }
+        const parsed = new Date(trimmed);
+        if (Number.isFinite(parsed.getTime())) return parsed;
+      }
+      if (val instanceof Date && Number.isFinite(val.getTime())) return val;
+      return null;
+    }
+
+    const installedTime = typeof localStorage !== 'undefined' ? localStorage.getItem('libriq_installed') : null;
+    const rawCreationTime = user?.metadata?.creationTime
+      || user?.metadata?.createdAt
+      || profile?.createdAt
+      || profile?.joinDate
+      || (user || profile?.name !== 'Reader' ? installedTime : null);
+
+    const parsedDate = parseJoinDate(rawCreationTime) || (user ? parseJoinDate(installedTime) : null);
+    const joined = parsedDate
+      ? `Joined ${parsedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
       : 'Join date unavailable';
+
+    if (parsedDate && !profile?.createdAt && storage.saveProfile) {
+      storage.saveProfile({ createdAt: parsedDate.toISOString(), joinDate: parsedDate.toISOString() });
+    }
     const icon = name => `<img class="profile-icon" src="assets/revamp/account/20-1118-${name}.svg" alt="" aria-hidden="true" />`;
     const totals = [
       ['library', 'Total books', stats.total ?? 0, 'Your personal library'],
