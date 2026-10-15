@@ -9,7 +9,7 @@ if (!RESEND_API_KEY) {
 }
 
 const targetEmail = process.argv[2] || 'kianxd.00@gmail.com';
-const subject = 'LibriQ is back: what is new in v4.8 [Preview]';
+const subject = 'LibriQ is back: what is new in v4.8';
 
 const plainTextFallback = `Hi reader,
 
