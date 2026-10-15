@@ -414,6 +414,7 @@ export const Navigation = (() => {
       LibriqCloudBackup.refresh();
       if (root) root.scrollTop = 0;
       window.dispatchEvent(new CustomEvent('libriq:page-changed', { detail: { page: name } }));
+      syncUrlForRoute(name);
     },
     renderError: ({ error, name, root }) => {
       console.error(`[LibriQ] Failed to render ${name} page:`, error);
@@ -428,6 +429,40 @@ export const Navigation = (() => {
       }
     },
   }).registerAll(pages);
+
+  function syncUrlForRoute(name) {
+    if (typeof window === 'undefined' || !window.location || typeof history === 'undefined' || typeof history.replaceState !== 'function') return;
+    if (name === 'boot' || name === 'session') return;
+
+    const currentHash = window.location.hash || '';
+    if (name === 'dashboard') {
+      if (currentHash) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+      return;
+    }
+
+    if (name === 'help') {
+      if (!currentHash || (!currentHash.startsWith('#help') && !currentHash.startsWith('#help-section-'))) {
+        history.replaceState(null, '', window.location.pathname + window.location.search + '#help');
+      }
+      return;
+    }
+
+    const expectedHash = `#${name}`;
+    if (currentHash !== expectedHash) {
+      history.replaceState(null, '', window.location.pathname + window.location.search + expectedHash);
+    }
+  }
+
+  function getRouteFromHash(rawHash = (typeof window !== 'undefined' ? window.location?.hash : '')) {
+    const hash = String(rawHash || '').replace(/^#\/?/, '').trim();
+    if (!hash) return 'dashboard';
+    if (hash.startsWith('help-section-') || hash === 'help') return 'help';
+    if (hash === 'stats' || hash === 'statistics') return 'stats';
+    if (pages[hash]) return hash;
+    return 'dashboard';
+  }
 
   function goTo(page) {
     router.navigate(page);
@@ -657,6 +692,14 @@ export const Navigation = (() => {
     applyTheme();
     updateBadges();
     updateDesktopStatusPill();
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('hashchange', () => {
+        const target = getRouteFromHash();
+        if (target && target !== _currentPage && pages[target]) {
+          goTo(target);
+        }
+      });
+    }
     const tryResume = () => {
     const firebase = LibriqFirebase.getState();
       debugSync('startup resume check', {
@@ -755,6 +798,7 @@ export const Navigation = (() => {
     setEmailAuthMode,
     shouldRenderSessionScreen,
     isConfirmedSignedOut,
+    getRouteFromHash,
     get currentPage() { return _currentPage; },
   };
 })();
@@ -786,20 +830,29 @@ function renderBootPage() {
 }
 
 function routeAfterAuthReady() {
-      const firebase = LibriqFirebase.getState();
+  const firebase = LibriqFirebase.getState();
   if (!firebase.ready) {
     Navigation.goTo('boot');
     return false;
   }
+  const targetRoute = Navigation.getRouteFromHash?.() || 'dashboard';
   if (firebase.user || firebase.restoringSession) {
     if (firebase.user) {
-    Storage.setActiveAccountUid?.(firebase.user.uid);
-    Navigation.setSessionPreference?.('account');
+      Storage.setActiveAccountUid?.(firebase.user.uid);
+      Navigation.setSessionPreference?.('account');
     }
-    if (Navigation.currentPage === 'session') {
-      Navigation.goTo('dashboard');
-    } else if (Navigation.currentPage === 'boot') {
-      Navigation.goTo('dashboard');
+    if (Navigation.currentPage === 'session' || Navigation.currentPage === 'boot') {
+      Navigation.goTo(targetRoute);
+      if (targetRoute === 'help' && typeof window !== 'undefined' && window.location?.hash?.startsWith('#help-section-')) {
+        const secId = window.location.hash.slice(1);
+        window.setTimeout(() => {
+          const sec = document.getElementById(secId);
+          if (sec) {
+            sec.open = true;
+            sec.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+          }
+        }, 150);
+      }
     }
     window.LibriqSyncBeta?.maybeAutoEnable?.('auth-ready');
     return true;
@@ -814,7 +867,7 @@ function routeAfterAuthReady() {
   }
   Storage.clearActiveAccountScope?.();
   if (Navigation.getCurrentSessionMode?.() === 'offline' || Navigation.getSessionPreference?.() === 'offline') {
-    Navigation.goTo('dashboard');
+    Navigation.goTo(targetRoute);
     return true;
   }
   if (Navigation.currentPage !== 'session') Navigation.goTo('session');
