@@ -254,8 +254,13 @@ export function createHelpPage({ storage, actions, documentRoot }) {
         }
       }
       if (trigger.dataset.action === 'open-guide-section') {
-        const section = pageDocument.getElementById(trigger.dataset.sectionId);
-        if (section) section.open = true;
+        event.preventDefault?.();
+        const sectionId = trigger.dataset.sectionId;
+        const section = pageDocument.getElementById?.(sectionId) || main.querySelector?.(`#${sectionId}`);
+        if (section) {
+          section.open = true;
+          section.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+        }
       }
     });
   };

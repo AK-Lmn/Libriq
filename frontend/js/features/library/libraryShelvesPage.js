@@ -93,8 +93,8 @@ export function createLibraryShelvesPage({ storage, library, utils, actions = {}
     const [title, subtitle] = shelfCopy[state.status] || ['Bookshelf', 'Your books, all in one place.'];
     const pages = books.reduce((sum, book) => sum + Math.max(0, Number(book.currentPage) || 0), 0);
 
-    const existing = pageDocument.getElementById('statusPage');
-    if (existing && main.contains(existing)) {
+    const existing = main.querySelector ? main.querySelector('#statusPage') : pageDocument.getElementById('statusPage');
+    if (existing && (typeof main.contains === 'function' ? main.contains(existing) : main.querySelector?.('#statusPage') === existing)) {
       existing.dataset.shelf = pageUtils.sanitize(state.status);
       const breadcrumbTitle = existing.querySelector('.library-breadcrumb span:last-of-type');
       if (breadcrumbTitle) breadcrumbTitle.textContent = title;
