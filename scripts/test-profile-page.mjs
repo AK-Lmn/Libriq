@@ -75,6 +75,29 @@ assert.match(firebaseProfileMain.innerHTML, /value="Account Reader"/);
 assert.match(firebaseProfileMain.innerHTML, /account@example\.com/);
 assert.match(firebaseProfileMain.innerHTML, /Joined June 17, 2025/);
 assert.match(firebaseProfileMain.innerHTML, /0 rated books/);
+
+// Test numeric ms string creationTime
+const numericProfileMain = { innerHTML: '', addEventListener() {} };
+const numericProfilePage = createProfilePage({
+  storage: { getProfile: () => ({ name: 'Reader' }), getStats: () => ({}) },
+  utils: { sanitize: value => String(value ?? ''), formatNumber: value => String(value ?? 0) },
+  actions: { getCurrentUser: () => ({ displayName: 'Numeric User', metadata: { creationTime: '1750161600000' } }) },
+  documentRoot: { getElementById: id => id === 'mainContent' ? numericProfileMain : null },
+});
+numericProfilePage();
+assert.match(numericProfileMain.innerHTML, /Joined June 17, 2025/);
+
+// Test profile.createdAt fallback
+const fallbackProfileMain = { innerHTML: '', addEventListener() {} };
+const fallbackProfilePage = createProfilePage({
+  storage: { getProfile: () => ({ name: 'Reader', createdAt: '2024-03-10T00:00:00Z' }), getStats: () => ({}) },
+  utils: { sanitize: value => String(value ?? ''), formatNumber: value => String(value ?? 0) },
+  actions: { getCurrentUser: () => null },
+  documentRoot: { getElementById: id => id === 'mainContent' ? fallbackProfileMain : null },
+});
+fallbackProfilePage();
+assert.match(fallbackProfileMain.innerHTML, /Joined March 10, 2024/);
+
 const dashboardSource = fs.readFileSync('frontend/js/dashboard.js', 'utf8');
 assert.match(dashboardSource, /resolveAccountDisplayName\(profile, LibriqFirebase\.getState\(\)\.user\)/);
 

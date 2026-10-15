@@ -184,7 +184,7 @@ function setState(next) {
 
 function getVisibleUser() {
   if (TEST_MODE) return testUser;
-  return auth?.currentUser || (state.restoringSession ? state.user : null);
+  return auth?.currentUser || state.user || null;
 }
 
 function defer() {
@@ -641,6 +641,10 @@ function getCurrentUser() {
     email: current.email || '',
     photoURL: current.photoURL || '',
     emailVerified: Boolean(current.emailVerified),
+    metadata: current.metadata ? {
+      creationTime: current.metadata.creationTime || current.metadata.createdAt || null,
+      lastSignInTime: current.metadata.lastSignInTime || current.metadata.lastLoginAt || null,
+    } : null,
     providerData: Array.isArray(current.providerData) ? current.providerData.map(provider => ({
       providerId: provider?.providerId || '',
       email: provider?.email || '',
@@ -1029,15 +1033,21 @@ async function syncProfileFromCloud(uid = null) {
       return local;
     }
     if (!remote) return local;
+    const userCreationTime = getCurrentUser()?.metadata?.creationTime || getCurrentUser()?.metadata?.createdAt || null;
+    const createdAt = remote.createdAt || remote.joinDate || local?.createdAt || local?.joinDate || userCreationTime || null;
     const merged = {
       ...Storage.getProfile?.(),
       displayName: remote.displayName || remote.name || local?.displayName || local?.name || 'Reader',
       name: remote.displayName || remote.name || local?.displayName || local?.name || 'Reader',
       bio: typeof remote.bio === 'string' ? remote.bio : local?.bio || null,
       avatar: remote.avatar || local?.avatar || null,
-      createdAt: remote.createdAt || remote.joinDate || local?.createdAt || local?.joinDate || null,
+      createdAt,
+      joinDate: remote.joinDate || remote.createdAt || local?.joinDate || local?.createdAt || createdAt,
       updatedAt: remote.updatedAt || local?.updatedAt || remote.createdAt || remote.joinDate || local?.createdAt || null,
     };
+    if (!remote?.createdAt && createdAt) {
+      await writeProfileDoc(profileUid, { ...merged, createdAt }).catch(e => console.warn('[LibriQ] Failed to backfill createdAt:', e));
+    }
     profileSyncHydrating = true;
     try {
       Storage.saveProfile?.(merged);
