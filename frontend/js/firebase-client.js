@@ -315,6 +315,10 @@ function init() {
         email: user.email || '',
         photoURL: user.photoURL || '',
         emailVerified: Boolean(user.emailVerified),
+        metadata: user.metadata ? {
+          creationTime: user.metadata.creationTime || null,
+          lastSignInTime: user.metadata.lastSignInTime || null,
+        } : null,
         providerData: Array.isArray(user.providerData) ? user.providerData.map(provider => ({
           providerId: provider?.providerId || '',
           email: provider?.email || '',

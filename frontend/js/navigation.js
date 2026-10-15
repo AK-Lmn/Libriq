@@ -236,6 +236,7 @@ export const Navigation = (() => {
     buildGenreRow,
     isOnline: () => globalThis.navigator?.onLine !== false,
     getFirebaseState: () => LibriqFirebase.getState(),
+    getCurrentUser: () => LibriqFirebase.getCurrentUser(),
   };
   const settingsActions = {
     ...featureActions,

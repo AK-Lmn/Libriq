@@ -16,11 +16,11 @@ export function createProfilePage({ storage, utils, constants, actions = {}, doc
       return;
     }
     const profile = storage.getProfile();
-    const user = actions.getFirebaseState?.().user;
+    const user = actions.getCurrentUser?.() || actions.getFirebaseState?.().user;
     const displayName = resolveAccountDisplayName(profile, user);
     const stats = storage.getStats();
     const streak = storage.getStreak?.();
-    const creationTime = user?.metadata?.creationTime;
+    const creationTime = user?.metadata?.creationTime || profile?.createdAt || profile?.joinDate;
     const joined = creationTime && Number.isFinite(new Date(creationTime).getTime())
       ? `Joined ${new Date(creationTime).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
       : 'Join date unavailable';
