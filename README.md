@@ -27,25 +27,38 @@
 
 ## ✨ Key Features
 
-- **🔎 Dual-Engine Book Search**: Merged, deduplicated results across **Google Books** and **Open Library**, plus free classics from **Gutendex** (Project Gutenberg) and readable **Internet Archive** links.
+- **🔎 Multi-Engine Book Search & Auto-Enrichment**: Merged, deduplicated results across **Google Books** and **Open Library**, with automated background description resolution via **Wikipedia REST API** and Open Library Works fallback. Includes readable **Internet Archive** links and free classics from **Gutendex**.
 - **📖 Cover-Forward Library & 3D Bookshelf**: Filter and sort books by reading status (*Reading*, *Wishlist*, *Finished*, *Did Not Finish*), custom shelves, favorites, or realistic 3D cedar bookshelf spine views.
 - **📊 Reading Insights & Streaks**: Track annual goals, pages read, daily reading streaks, completion percentages, and detailed yearly summaries.
 - **📝 Private Notes & Quotes**: Save custom annotations, favorite excerpts, and personal star ratings directly on each book card.
 - **🛡️ Data Ownership & Resilience**:
   - Full **offline PWA** functionality via service workers and `localStorage`.
+  - Self-hosted local icon system (Phosphor) with zero external CDN dependencies.
   - Export and restore complete **JSON library backups**.
   - Optional **Cloud Firestore sync** with real-time sync health diagnostics and safe async confirmation dialogs.
 - **🎨 Glassmorphic Interface**: Fully responsive, editorial glass design across both dark and light palettes.
 
 ---
 
+## 📸 App Preview
+
+| Dashboard | Library Shelf |
+| :---: | :---: |
+| ![Dashboard](docs/screenshots/dashboard-desktop.png) | ![Library](docs/screenshots/library-desktop.png) |
+
+| Book Details & Notes | Search & Discovery |
+| :---: | :---: |
+| ![Book Details](docs/screenshots/book-details-desktop.png) | ![Search](docs/screenshots/search-modal-desktop.png) |
+
+---
+
 ## 🛠️ Tech Stack
 
 - **Frontend**: Vanilla JavaScript (Native ES Modules), HTML5, CSS3 (Modern Glassmorphism Design System)
-- **APIs & Discovery**: Google Books API, Open Library API, Gutendex (Project Gutenberg), Internet Archive
+- **APIs & Discovery**: Google Books API, Open Library API, Wikipedia REST API, Gutendex (Project Gutenberg), Internet Archive
 - **Offline & Storage**: PWA Service Worker, Web App Manifest, `localStorage`
 - **Cloud & Auth (Optional)**: Firebase Authentication (Google & Email/Password), Cloud Firestore
-- **Testing**: Node.js Test Runner (`node --test`), 100% automated CI test suite
+- **Testing & Deployment**: Node.js Test Runner (`node --test`), Playwright, Vercel Edge with immutable HTTP cache headers
 
 ---
 
@@ -70,12 +83,13 @@
 
 3. **Serve locally**:
    ```bash
-   npx serve frontend -p 5500
+   npm start
+   # or: npm run dev
    ```
-   Open `http://localhost:5500` in your browser.
+   Open `http://localhost:4173` in your browser.
 
 > [!NOTE]
-> Public search and local library tracking work immediately out of the box with zero API keys required. To test Firebase authentication, add your credentials to a root `.env` file and rebuild. See [Deployment Guide](docs/DEPLOYMENT.md) for details.
+> Public search, book metadata enrichment, and local library tracking work immediately out of the box with zero API keys required. To test Firebase authentication, add your credentials to a root `.env` file and rebuild. See [Deployment Guide](docs/DEPLOYMENT.md) for details.
 
 ---
 
