@@ -1,4 +1,6 @@
 // scripts/send-rebrand-announcement.mjs
+import { renderAnnouncementEmail } from '../emails/rebrand-announcement.js';
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
 if (!RESEND_API_KEY) {
@@ -24,35 +26,38 @@ const allRecipients = [
 const targetArg = process.argv[2];
 const recipients = targetArg ? [targetArg] : allRecipients;
 
-const subject = 'LibriQ is back: the rebrand';
+const subject = 'LibriQ is back: what is new in v4.8';
 
 const bodyText = `Hi reader,
 
-We built LibriQ with a simple promise: a quiet, private sanctuary for your reading life, free from algorithmic noise, social pressure, and advertising clutter.
+We started LibriQ because we wanted a clean way to track books without ads, social media feeds, or pressure. Just your shelves, your notes, and your reading pace.
 
-Over the past few weeks, we have completely overhauled the platform. Today, we are introducing LibriQ v4.8 with a major design and architectural update:
+Over the last couple of weeks, we made some big improvements to the app. Here is a quick look at what is new:
 
-What is new in LibriQ:
+1. The 3D Bookshelf
+You can now see your books standing on virtual wooden shelves. Rotate and browse through your collection like a physical bookcase, or tap a book to inspect its details. Press "V" on desktop or use the switcher icon in your library to try it.
 
-- The 3D Digital Bookshelf: View your collection on virtual cedar shelves with ambient lighting, distinctive spine bindings, and interactive inspection. Tap the Bookshelf view switcher in your library (or press "V" on desktop) to explore it.
-- Deep Indigo Visual Identity: A refined, high-contrast dark interface engineered specifically for comfortable night reading and distraction-free tracking.
-- Local-First Offline Speed: Upgraded IndexedDB caching that enables instant page loads, offline progress updates, and automatic synchronization when reconnected.
-- Background Metadata Enrichment: Automated synopsis and cover retrieval via Open Library, Google Books, and Wikipedia for complete edition details.
-- Comprehensive Help Center: Built-in instant topic search, keyboard navigation matrix, and troubleshooting guides.
+2. A Darker, Cleaner Look
+We refreshed the entire app with a deep indigo dark mode. It has clear contrast that stays comfortable on your eyes during late-night reading sessions.
 
-Your library data, private notes, and reading history remain intact and ready for you.
+3. Works Completely Offline
+Your library now loads straight from your device. You can log pages or add notes on the train or without Wi-Fi, and your progress syncs automatically when you are back online.
 
-Return to your library:
+4. Faster Book Info & Better Help
+Book summaries and cover art now load faster using Wikipedia, Open Library, and Google Books. We also added instant search in the Help Center so you can look up keyboard shortcuts and tips anytime.
+
+Your books are waiting. All your reading history, private notes, and custom categories remain safe and untouched.
+
+Open LibriQ:
 https://libriq.app
 
-Best regards,
+Happy reading,
 The LibriQ Team
-https://libriq.app
 
 ---
-You are receiving this update because you registered an account on LibriQ (https://libriq.app).
-LibriQ is private by design: we do not sell data, track browsing across the web, or display advertisements.
-To unsubscribe from future product announcements or delete your account, reply to this email or visit Settings in the app.`;
+LibriQ (https://libriq.app)
+Private by design. No tracking pixels, no ads, ever.
+To unsubscribe or manage your account, simply reply to this email or visit Settings in the app.`;
 
 async function checkDomainStatus() {
   const res = await fetch('https://api.resend.com/domains/9fa08728-9d66-4df1-acc8-f07fe6b853dd', {
@@ -62,7 +67,7 @@ async function checkDomainStatus() {
   return data;
 }
 
-async function sendEmail(to) {
+async function sendEmail(to, htmlContent) {
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -73,6 +78,7 @@ async function sendEmail(to) {
       from: 'LibriQ <updates@libriq.app>',
       to: [to],
       subject: subject,
+      html: htmlContent,
       text: bodyText,
     }),
   });
@@ -91,19 +97,19 @@ async function main() {
 
   if (domain.status !== 'verified') {
     console.warn('\nWarning: libriq.app is not verified yet. Please add the DNS records and verify in Resend first.');
-    console.log('Records needed:');
-    domain.records?.forEach(r => {
-      console.log(`- [${r.type}] Host: "${r.name}" -> Value: "${r.value}" (Status: ${r.status})`);
-    });
     return;
   }
 
-  console.log(`\nDomain verified! Beginning dispatch to ${recipients.length} registered users...`);
+  console.log('Rendering locked-in LibriQ React Email template...');
+  const htmlContent = await renderAnnouncementEmail();
+  console.log(`Template compiled: ${htmlContent.length} bytes.`);
+
+  console.log(`\nDomain verified! Beginning dispatch to ${recipients.length} recipient(s)...`);
   let successCount = 0;
 
   for (const email of recipients) {
     try {
-      const res = await sendEmail(email);
+      const res = await sendEmail(email, htmlContent);
       console.log(`[OK] Sent to ${email} (id: ${res.id})`);
       successCount++;
       await new Promise(r => setTimeout(r, 600)); // safe 600ms rate limit
