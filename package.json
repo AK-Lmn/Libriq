@@ -21,6 +21,7 @@
     "test:dashboard-modules": "node scripts/test-dashboard-modules.mjs",
     "test:dashboard-design": "node scripts/test-dashboard-design.mjs",
     "test:navigation-modules": "node scripts/test-navigation-modules.mjs",
+    "test:navigation-hash-sync": "node scripts/test-navigation-hash-sync.mjs",
     "test:app-modules": "node scripts/test-app-modules.mjs",
     "test:install-prompt": "node scripts/test-install-prompt.mjs",
     "test:phase1-modules": "node scripts/test-phase1-modules.mjs",

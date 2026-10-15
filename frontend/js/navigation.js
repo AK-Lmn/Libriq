@@ -799,6 +799,7 @@ export const Navigation = (() => {
     shouldRenderSessionScreen,
     isConfirmedSignedOut,
     getRouteFromHash,
+    syncUrlForRoute,
     get currentPage() { return _currentPage; },
   };
 })();
