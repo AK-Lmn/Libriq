@@ -6,7 +6,8 @@ if (!RESEND_API_KEY) {
   process.exit(1);
 }
 
-const recipients = [
+const allRecipients = [
+  'kianxd.00@gmail.com',
   '[redacted-email]',
   '[redacted-email]',
   '[redacted-email]',
@@ -19,6 +20,9 @@ const recipients = [
   '[redacted-email]',
   '[redacted-email]',
 ];
+
+const targetArg = process.argv[2];
+const recipients = targetArg ? [targetArg] : allRecipients;
 
 const subject = 'LibriQ is back: the rebrand';
 
