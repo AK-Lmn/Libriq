@@ -7,6 +7,7 @@ const SHELL_ASSETS = [
   './css/features/book-dialogs.css',
   './css/features/quotes.css',
   './css/features/kindle-import.css',
+  './css/features/goodreads-import.css',
   './css/features/support-dialogs.css',
   './js/components/ui/confirmation.js',
   './index.html',

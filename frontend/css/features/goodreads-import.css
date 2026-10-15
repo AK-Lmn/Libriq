@@ -1,0 +1,99 @@
+#goodreadsImportModal {
+  padding: var(--space-6);
+  background: rgba(5, 8, 16, .66);
+  color: var(--text-body);
+}
+
+#goodreadsImportModal[hidden] { display: none; }
+#goodreadsImportModal .goodreads-import-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 680px);
+  max-height: calc(100dvh - var(--space-12));
+  min-width: 0;
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-2xl);
+  background: var(--glass-fill-4);
+  box-shadow: var(--shadow-modal);
+  backdrop-filter: blur(var(--glass-blur-modal));
+  -webkit-backdrop-filter: blur(var(--glass-blur-modal));
+  overflow: hidden;
+}
+
+#goodreadsImportModal .modal-header { display: flex; align-items: flex-start; gap: var(--space-4); flex-shrink: 0; padding: var(--space-6); border-bottom: 1px solid var(--glass-border); }
+#goodreadsImportModal .goodreads-import-heading { flex: 1; min-width: 0; }
+#goodreadsImportModal .goodreads-import-eyebrow { display: flex; align-items: center; gap: var(--space-2); color: var(--text-body); font: 500 var(--t-xs)/1.7 var(--font-mono); letter-spacing: .07em; text-transform: uppercase; }
+#goodreadsImportModal .goodreads-import-eyebrow i { color: var(--indigo); font-size: 18px; }
+#goodreadsImportModal .modal-title { margin: var(--space-2) 0; font: 400 clamp(24px, 3vw, 30px)/1.3 var(--font-serif); color: var(--text-strong); overflow-wrap: anywhere; }
+#goodreadsImportModal .goodreads-import-subtitle { margin: 0; font-size: var(--t-sm); color: var(--text-body); }
+#goodreadsImportModal .modal-close { width: 44px; height: 44px; flex-shrink: 0; border: 1px solid var(--glass-border); background: var(--glass-fill-1); color: var(--text-body); border-radius: var(--r-md); cursor: pointer; }
+#goodreadsImportModal .modal-body { padding: var(--space-6); min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+#goodreadsImportModal .goodreads-import-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); margin: 0 0 var(--space-6); padding: 0; list-style: none; }
+#goodreadsImportModal .goodreads-import-steps li { display: flex; align-items: center; gap: var(--space-2); border-bottom: 2px solid var(--glass-border); padding-bottom: var(--space-3); color: var(--text-body); font-size: var(--t-xs); }
+#goodreadsImportModal .goodreads-import-steps span { font: 500 var(--t-xs)/1.6 var(--font-mono); color: var(--text-body); }
+#goodreadsImportModal[data-state="initial"] .goodreads-import-steps li:first-child,
+#goodreadsImportModal[data-state="reading"] .goodreads-import-steps li:first-child,
+#goodreadsImportModal[data-state="empty"] .goodreads-import-steps li:first-child,
+#goodreadsImportModal[data-state="preview"] .goodreads-import-steps li:nth-child(2),
+#goodreadsImportModal[data-state="importing"] .goodreads-import-steps li:last-child { border-bottom-color: var(--indigo); color: var(--text-strong); }
+#goodreadsImportModal .goodreads-import-file { display: flex; align-items: flex-start; gap: var(--space-4); padding: var(--space-5); border: 1px dashed var(--glass-border); border-radius: var(--r-lg); background: var(--glass-fill-1); }
+#goodreadsImportModal .goodreads-import-file-icon { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: var(--r-md); background: var(--indigo-12); color: var(--indigo); font-size: 24px; }
+#goodreadsImportModal .goodreads-import-file-fields { flex: 1; min-width: 0; }
+#goodreadsImportModal .form-label { color: var(--text-strong); font-size: var(--t-body); font-weight: 600; }
+#goodreadsImportModal #goodreadsFileHint { margin: var(--space-2) 0 var(--space-4); font-size: var(--t-sm); color: var(--text-body); }
+#goodreadsImportModal .form-input { display: block; width: 100%; max-width: 100%; min-height: 48px; background: var(--glass-fill-1); border: 1px solid var(--glass-border); border-radius: var(--r-md); color: var(--text-body); font-size: var(--t-sm); padding: var(--space-2); }
+#goodreadsImportModal .form-input::file-selector-button { min-height: 44px; padding: var(--space-2) var(--space-3); border: 1px solid var(--glass-border); background: var(--glass-solid-2); color: var(--text-strong); border-radius: var(--r-sm); margin-right: var(--space-2); cursor: pointer; font: 500 var(--t-sm)/1.5 var(--font-ui); }
+#goodreadsImportModal #goodreadsImportPreview { margin-top: var(--space-5); }
+#goodreadsImportModal .goodreads-import-message { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-5); background: var(--glass-fill-1); border: 1px solid var(--glass-border); border-radius: var(--r-lg); }
+#goodreadsImportModal .goodreads-import-message > i { font-size: 24px; color: var(--indigo); flex-shrink: 0; }
+#goodreadsImportModal .goodreads-import-message h3 { color: var(--text-strong); font: 600 var(--t-body)/1.6 var(--font-ui); margin: 0 0 var(--space-1); }
+#goodreadsImportModal .goodreads-import-message p { margin: 0; color: var(--text-body); font-size: var(--t-sm); }
+#goodreadsImportModal .goodreads-import-message--error { border-left: 3px solid var(--danger); margin-bottom: var(--space-4); }
+#goodreadsImportModal .goodreads-import-message--error > i { color: var(--danger); }
+#goodreadsImportModal .goodreads-preview-summary { padding: var(--space-5); border: 1px solid var(--glass-border); border-radius: var(--r-lg); background: var(--glass-fill-1); }
+#goodreadsImportModal .goodreads-preview-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+#goodreadsImportModal .goodreads-preview-heading h3 { font: 500 20px/1.4 var(--font-serif); color: var(--text-strong); margin: 0; }
+#goodreadsImportModal .goodreads-preview-heading span { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--text-body); background: var(--glass-fill-1); border-radius: var(--r-pill); padding: var(--space-1) var(--space-2); font-size: var(--t-xs); }
+#goodreadsImportModal .goodreads-preview-heading i { color: var(--teal); }
+#goodreadsImportModal .goodreads-preview-filename { margin: var(--space-2) 0 var(--space-4); font: 400 var(--t-xs)/1.8 var(--font-mono); overflow-wrap: anywhere; color: var(--text-body); }
+#goodreadsImportModal .goodreads-preview-counts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }
+#goodreadsImportModal .goodreads-preview-stat { display: flex; flex-direction: column-reverse; align-items: flex-start; justify-content: flex-end; min-width: 0; padding: var(--space-3); border: 1px solid var(--glass-border); border-radius: var(--r-md); }
+#goodreadsImportModal .goodreads-preview-stat dt { color: var(--text-body); font-size: var(--t-xs); margin-top: var(--space-2); }
+#goodreadsImportModal .goodreads-preview-stat dd { margin: 0; color: var(--text-strong); font: 500 26px/1.3 var(--font-mono); overflow-wrap: anywhere; }
+#goodreadsImportModal .goodreads-preview-samples { margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--glass-border); }
+#goodreadsImportModal .goodreads-preview-samples h4 { margin: 0 0 var(--space-2); font-size: var(--t-xs); color: var(--text-body); text-transform: uppercase; letter-spacing: .05em; }
+#goodreadsImportModal .goodreads-preview-samples ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+#goodreadsImportModal .goodreads-preview-samples li { display: flex; align-items: center; gap: var(--space-2); font-size: var(--t-sm); overflow: hidden; }
+#goodreadsImportModal .sample-title { font-weight: 500; color: var(--text-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#goodreadsImportModal .sample-author { color: var(--text-body); font-size: var(--t-xs); white-space: nowrap; }
+#goodreadsImportModal .sample-badge { margin-left: auto; font-size: var(--t-xs); padding: 2px 8px; border-radius: var(--r-pill); text-transform: capitalize; font-weight: 500; }
+#goodreadsImportModal .sample-badge--finished { background: rgba(52, 199, 89, 0.15); color: #34C759; }
+#goodreadsImportModal .sample-badge--reading { background: rgba(0, 122, 255, 0.15); color: #007AFF; }
+#goodreadsImportModal .sample-badge--wishlist { background: rgba(255, 149, 0, 0.15); color: #FF9500; }
+#goodreadsImportModal .goodreads-preview-explanation { margin: var(--space-4) 0 0; color: var(--text-body); font-size: var(--t-sm); }
+#goodreadsImportModal .goodreads-import-privacy { display: flex; align-items: baseline; gap: var(--space-2); color: var(--text-body); margin: var(--space-5) 0 0; font-size: var(--t-xs); }
+#goodreadsImportModal .goodreads-import-privacy i { flex-shrink: 0; color: var(--teal); }
+#goodreadsImportModal .goodreads-import-footer { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-3); margin: 0; padding: var(--space-5) var(--space-6); border-top: 1px solid var(--glass-border); background: var(--glass-fill-1); flex-shrink: 0; }
+#goodreadsImportModal .btn { min-height: 44px; white-space: normal; max-width: 100%; padding: var(--space-3) var(--space-5); border-radius: var(--r-md); font: 600 var(--t-sm)/1.5 var(--font-ui); }
+#goodreadsImportModal .btn-secondary { border: 1px solid var(--glass-border); background: var(--glass-fill-1); color: var(--text-strong); }
+#goodreadsImportModal .btn-primary { border: 1px solid var(--indigo); background: var(--indigo); color: var(--bg); }
+#goodreadsImportModal button:disabled { cursor: not-allowed; opacity: .55; }
+#goodreadsImportModal :is(button, input):focus-visible { outline: 2px solid var(--indigo); outline-offset: 3px; }
+#goodreadsImportModal :is(p, h3, dt) { overflow-wrap: anywhere; }
+
+@media (max-width: 768px) {
+  #goodreadsImportModal { padding: 0; align-items: flex-end; }
+  #goodreadsImportModal .goodreads-import-panel { width: 100%; max-height: 100dvh; margin: 0; border-radius: var(--r-2xl) var(--r-2xl) 0 0; background: var(--glass-solid-2); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  #goodreadsImportModal .modal-header { padding: var(--space-5) var(--space-4); gap: var(--space-2); }
+  #goodreadsImportModal .modal-body { padding: var(--space-5) var(--space-4); }
+  #goodreadsImportModal .goodreads-import-file { padding: var(--space-4); }
+  #goodreadsImportModal .goodreads-import-file-icon { display: none; }
+  #goodreadsImportModal .goodreads-import-steps { gap: var(--space-2); }
+  #goodreadsImportModal .goodreads-import-steps li { align-items: flex-start; flex-direction: column; gap: var(--space-1); }
+  #goodreadsImportModal .goodreads-preview-summary { padding: var(--space-4); }
+  #goodreadsImportModal .goodreads-preview-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+  #goodreadsImportModal .goodreads-import-footer { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: var(--space-2); padding: var(--space-4) var(--space-4) calc(var(--space-4) + env(safe-area-inset-bottom)); }
+  #goodreadsImportModal .btn { padding: var(--space-3) var(--space-2); }
+}

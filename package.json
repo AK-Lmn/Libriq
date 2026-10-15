@@ -42,6 +42,8 @@
     "test:kindle-import-service": "node scripts/test-kindle-import-service.mjs",
     "test:kindle-quote-import": "node scripts/test-kindle-quote-import.mjs",
     "test:kindle-import-page": "node scripts/test-kindle-import-page.mjs",
+    "test:goodreads-import": "node scripts/test-goodreads-import.mjs",
+    "test:goodreads-import-page": "node scripts/test-goodreads-import-page.mjs",
     "test:kindle-import-execution": "node scripts/test-kindle-import-execution.mjs",
     "test:book-details-kindle-quotes": "node scripts/test-book-details-kindle-quotes.mjs",
     "test:quotes-page": "node scripts/test-quotes-page.mjs",

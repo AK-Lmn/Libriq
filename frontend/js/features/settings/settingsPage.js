@@ -76,6 +76,7 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
               <div class="settings-export-actions">
                 <button class="btn btn-secondary btn-sm" type="button" data-action="export-data">${_icon('download')} Export</button>
                 <button class="btn btn-secondary btn-sm" type="button" data-action="prompt-import">${_icon('upload')} Import</button>
+                <button class="btn btn-secondary btn-sm" type="button" data-action="open-goodreads-import">${_icon('file-text')} Import Goodreads CSV</button>
                 <button class="btn btn-secondary btn-sm" type="button" data-action="open-kindle-import">${_icon('file-text')} Import Kindle Clippings</button>
               </div>
               <div class="settings-danger-zone"><h3>Danger zone</h3><p>These actions are permanent. Export a copy before deleting your data.</p>
@@ -446,6 +447,7 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
         'choose-session-mode': () => actions.navigate?.('session'),
         'export-data': () => actions.exportData?.(),
         'prompt-import': () => actions.promptImportData?.(),
+        'open-goodreads-import': () => actions.openGoodreadsImport?.(),
         'open-kindle-import': () => actions.openKindleImport?.(),
         'delete-library': () => actions.confirmDeleteLibraryData?.(),
         'delete-account': () => actions.confirmDeleteAccount?.(),

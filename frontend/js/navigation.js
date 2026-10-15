@@ -21,6 +21,7 @@ import { createSettingsPage } from './features/settings/settingsPage.js';
 import { createRecommendationsPage } from './features/recommendations/recommendationsPage.js';
 import { createProfilePage } from './features/profile/profilePage.js';
 import { createKindleImportPage } from './features/kindleImport/kindleImportPage.js';
+import { createGoodreadsImportPage } from './features/goodreadsImport/goodreadsImportPage.js';
 import { createQuotesPage } from './features/quotes/quotesPage.js';
 import { createImportMerge } from './services/importMerge.js';
 import { createExportPayload, parseBackupText, serializeBackup, validateBackup } from './services/backupSerialization.js';
@@ -28,8 +29,22 @@ import { createBrowserDownloadFile, createImportExportService, readBrowserFileTe
 import { parseKindleClippings } from './services/kindleClippingsParser.js';
 import { createKindleImportService } from './services/kindleImportService.js';
 import { createKindleQuoteImport } from './services/kindleQuoteImport.js';
+import { parseGoodreadsCsv } from './services/goodreadsCsvParser.js';
+import { createGoodreadsImportService } from './services/goodreadsImportService.js';
+import { executeGoodreadsImport } from './services/goodreadsImportExecution.js';
 import { resolveAccountDisplayName } from './accountDisplayName.js';
 import { applyNavigationChrome, initializeNavigationChrome } from './navigationChrome.js';
+
+export function completeGoodreadsImport({ previewResult, storage, toast, rerender } = {}) {
+  const result = executeGoodreadsImport({
+    importPlan: previewResult?.importPlan,
+    storage,
+    mergeMatched: true,
+  });
+  toast?.(`Goodreads import complete: ${result.booksCreated} books added, ${result.booksMatched} books updated.`, 'success');
+  rerender?.();
+  return result;
+}
 
 function executeKindleImport({ previewResult, storage } = {}) {
   if (!storage || typeof storage.updateBook !== 'function' || typeof storage.addBook !== 'function') {
@@ -237,6 +252,7 @@ export const Navigation = (() => {
     isOnline: () => globalThis.navigator?.onLine !== false,
     getFirebaseState: () => LibriqFirebase.getState(),
     getCurrentUser: () => LibriqFirebase.getCurrentUser(),
+    openGoodreadsImport: () => goodreadsImportFeature.open(),
   };
   const settingsActions = {
     ...featureActions,
@@ -253,6 +269,7 @@ export const Navigation = (() => {
     toggleTheme: () => Navigation.toggleTheme(),
     exportData: () => exportData(),
     promptImportData: () => promptImportData(),
+    openGoodreadsImport: () => goodreadsImportFeature.open(),
     openKindleImport: () => kindleImportFeature.open(),
     importDataFromFile: file => importDataFromFile(file),
     confirmDeleteLibraryData: () => confirmDeleteLibraryData(),
@@ -354,6 +371,37 @@ export const Navigation = (() => {
           });
         } catch (error) {
           Utils.toast('Could not import Kindle clippings.', 'error');
+          return false;
+        }
+      },
+    },
+  });
+  const goodreadsImportService = createGoodreadsImportService({
+    createBook,
+    createId: () => crypto.randomUUID(),
+    now: () => new Date().toISOString(),
+    statuses: LIBRIQ.STATUS,
+  });
+  const goodreadsImportFeature = createGoodreadsImportPage({
+    parseCsv: parseGoodreadsCsv,
+    buildImportPlan: goodreadsImportService.buildImportPlan,
+    executeImport: executeGoodreadsImport,
+    actions: {
+      getExistingBooks: () => Storage.getBooks(),
+      getStorage: () => Storage,
+      continueImport: detail => {
+        try {
+          return completeGoodreadsImport({
+            previewResult: detail,
+            storage: Storage,
+            toast: (message, type) => Utils.toast(message, type),
+            rerender: () => {
+              Navigation.updateBadges?.();
+              Navigation.renderCurrentPage?.();
+            },
+          });
+        } catch (error) {
+          Utils.toast('Could not import Goodreads CSV.', 'error');
           return false;
         }
       },
@@ -800,6 +848,8 @@ export const Navigation = (() => {
     isConfirmedSignedOut,
     getRouteFromHash,
     syncUrlForRoute,
+    openGoodreadsImport: () => goodreadsImportFeature.open(),
+    openKindleImport: () => kindleImportFeature.open(),
     get currentPage() { return _currentPage; },
   };
 })();
