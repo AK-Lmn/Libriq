@@ -38,7 +38,7 @@ export function RebrandAnnouncementEmail() {
         style: {
           backgroundColor: '#07080c',
           fontFamily:
-            'Georgia, Cambria, "Times New Roman", Times, serif',
+            '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
           margin: 0,
           padding: '40px 0',
           WebkitFontSmoothing: 'antialiased',
@@ -49,12 +49,12 @@ export function RebrandAnnouncementEmail() {
         {
           className: 'email-container',
           style: {
-            maxWidth: '580px',
+            maxWidth: '560px',
             margin: '0 auto',
             backgroundColor: '#0d1017',
             border: '1px solid #1c2333',
-            borderRadius: '14px',
-            padding: '44px 38px',
+            borderRadius: '12px',
+            padding: '40px 36px',
             color: '#e2e8f0',
             boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
           },
@@ -63,15 +63,15 @@ export function RebrandAnnouncementEmail() {
         // --- MASTHEAD ---
         e(
           Section,
-          { style: { textAlign: 'center', marginBottom: '28px' } },
+          { style: { textAlign: 'center', marginBottom: '24px' } },
           e(Img, {
             src: 'https://www.libriq.app/assets/icons/icon-192.png',
-            width: '44',
-            height: '44',
-            alt: 'LibriQ Crest',
+            width: '42',
+            height: '42',
+            alt: 'LibriQ',
             style: {
-              margin: '0 auto 12px auto',
-              borderRadius: '10px',
+              margin: '0 auto 10px auto',
+              borderRadius: '9px',
               border: '1px solid #2d3748',
               display: 'block',
             },
@@ -80,11 +80,9 @@ export function RebrandAnnouncementEmail() {
             Text,
             {
               style: {
-                fontFamily:
-                  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 fontSize: '15px',
                 fontWeight: '700',
-                letterSpacing: '5px',
+                letterSpacing: '4px',
                 color: '#f8fafc',
                 textTransform: 'uppercase',
                 margin: '0 0 4px 0',
@@ -96,35 +94,32 @@ export function RebrandAnnouncementEmail() {
             Text,
             {
               style: {
-                fontFamily:
-                  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                fontSize: '10px',
-                fontWeight: '600',
-                letterSpacing: '2.5px',
+                fontSize: '11px',
+                fontWeight: '500',
+                letterSpacing: '1.5px',
                 color: '#d4a373',
                 textTransform: 'uppercase',
                 margin: 0,
               },
             },
-            'DISPATCH • EDITION 4.8 • AUTUMN 2026'
+            'LibriQ v4.8 Update'
           )
         ),
 
-        // Double Hairline Divider
+        // Hairline Divider
         e(
           Section,
-          { style: { textAlign: 'center', margin: '0 0 32px 0' } },
+          { style: { textAlign: 'center', margin: '0 0 28px 0' } },
           e('div', {
             style: {
-              borderTop: '1px solid #222b3d',
-              borderBottom: '1px solid #222b3d',
-              height: '3px',
+              borderTop: '1px solid #1c2333',
+              height: '1px',
               width: '100%',
             },
           })
         ),
 
-        // --- HERO HEADLINE ---
+        // --- HEADLINE ---
         e(
           Heading,
           {
@@ -132,16 +127,16 @@ export function RebrandAnnouncementEmail() {
             className: 'headline',
             style: {
               fontFamily: 'Georgia, Cambria, serif',
-              fontSize: '28px',
+              fontSize: '26px',
               fontWeight: '400',
               color: '#ffffff',
               lineHeight: '1.3',
               letterSpacing: '-0.3px',
-              margin: '0 0 20px 0',
+              margin: '0 0 18px 0',
               textAlign: 'center',
             },
           },
-          'A quiet sanctuary for your reading life.'
+          'A quiet, private place for your reading.'
         ),
 
         // --- PULL QUOTE MANIFESTO ---
@@ -152,23 +147,21 @@ export function RebrandAnnouncementEmail() {
               backgroundColor: '#121622',
               borderLeft: '3px solid #d4a373',
               borderRadius: '0 8px 8px 0',
-              padding: '16px 20px',
-              margin: '0 0 28px 0',
+              padding: '14px 18px',
+              margin: '0 0 24px 0',
             },
           },
           e(
             Text,
             {
               style: {
-                fontFamily: 'Georgia, serif',
-                fontStyle: 'italic',
-                fontSize: '15px',
-                lineHeight: '24px',
+                fontSize: '14px',
+                lineHeight: '22px',
                 color: '#cbd5e1',
                 margin: 0,
               },
             },
-            '“We built LibriQ with a simple conviction: reading is sacred. It deserves an intimate space free from algorithmic feeds, social performance, and commercial noise.”'
+            'We started LibriQ because we wanted a clean way to track books without ads, social media feeds, or pressure. Just your shelves, your notes, and your reading pace.'
           )
         ),
 
@@ -177,27 +170,25 @@ export function RebrandAnnouncementEmail() {
           Text,
           {
             style: {
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontSize: '14px',
-              lineHeight: '23px',
+              lineHeight: '22px',
               color: '#94a3b8',
-              margin: '0 0 28px 0',
+              margin: '0 0 24px 0',
             },
           },
-          'Over the past weeks, we have rebuilt the platform from the foundation up. LibriQ v4.8 introduces a tactile, three-dimensional reading environment crafted specifically for deep focus and book lovers.'
+          'Over the last couple of weeks, we made some big improvements to the app. Here is a quick look at what is new:'
         ),
 
-        // --- BESPOKE 3D BOOKSHELF MINIATURE ---
+        // --- 3D BOOKSHELF MINIATURE ---
         e(
           Section,
           {
             style: {
               backgroundColor: '#090b10',
               border: '1px solid #1a202c',
-              borderRadius: '10px',
-              padding: '24px 20px 16px 20px',
-              margin: '0 0 36px 0',
+              borderRadius: '8px',
+              padding: '20px 16px 14px 16px',
+              margin: '0 0 32px 0',
               textAlign: 'center',
             },
           },
@@ -223,48 +214,11 @@ export function RebrandAnnouncementEmail() {
                 e('div', {
                   className: 'shelf-spine',
                   style: {
-                    width: '22px',
-                    height: '66px',
+                    width: '20px',
+                    height: '62px',
                     backgroundColor: '#831843',
                     borderLeft: '2px solid #be185d',
                     borderRadius: '2px 2px 0 0',
-                    boxShadow: 'inset 0 0 6px rgba(0,0,0,0.5)',
-                  },
-                })
-              ),
-              e(
-                'td',
-                {
-                  valign: 'bottom',
-                  style: { padding: '0 3px' },
-                },
-                e('div', {
-                  className: 'shelf-spine',
-                  style: {
-                    width: '26px',
-                    height: '78px',
-                    backgroundColor: '#1e3a8a',
-                    borderLeft: '2px solid #3b82f6',
-                    borderRadius: '2px 2px 0 0',
-                    boxShadow: 'inset 0 0 6px rgba(0,0,0,0.5)',
-                  },
-                })
-              ),
-              e(
-                'td',
-                {
-                  valign: 'bottom',
-                  style: { padding: '0 3px' },
-                },
-                e('div', {
-                  className: 'shelf-spine',
-                  style: {
-                    width: '30px',
-                    height: '84px',
-                    backgroundColor: '#14532d',
-                    borderLeft: '2px solid #22c55e',
-                    borderRadius: '2px 2px 0 0',
-                    boxShadow: 'inset 0 0 6px rgba(0,0,0,0.5)',
                   },
                 })
               ),
@@ -278,11 +232,10 @@ export function RebrandAnnouncementEmail() {
                   className: 'shelf-spine',
                   style: {
                     width: '24px',
-                    height: '72px',
-                    backgroundColor: '#78350f',
-                    borderLeft: '2px solid #d97706',
+                    height: '74px',
+                    backgroundColor: '#1e3a8a',
+                    borderLeft: '2px solid #3b82f6',
                     borderRadius: '2px 2px 0 0',
-                    boxShadow: 'inset 0 0 6px rgba(0,0,0,0.5)',
                   },
                 })
               ),
@@ -297,10 +250,9 @@ export function RebrandAnnouncementEmail() {
                   style: {
                     width: '28px',
                     height: '80px',
-                    backgroundColor: '#4c1d95',
-                    borderLeft: '2px solid #8b5cf6',
+                    backgroundColor: '#14532d',
+                    borderLeft: '2px solid #22c55e',
                     borderRadius: '2px 2px 0 0',
-                    boxShadow: 'inset 0 0 6px rgba(0,0,0,0.5)',
                   },
                 })
               ),
@@ -313,12 +265,45 @@ export function RebrandAnnouncementEmail() {
                 e('div', {
                   className: 'shelf-spine',
                   style: {
-                    width: '24px',
+                    width: '22px',
                     height: '68px',
+                    backgroundColor: '#78350f',
+                    borderLeft: '2px solid #d97706',
+                    borderRadius: '2px 2px 0 0',
+                  },
+                })
+              ),
+              e(
+                'td',
+                {
+                  valign: 'bottom',
+                  style: { padding: '0 3px' },
+                },
+                e('div', {
+                  className: 'shelf-spine',
+                  style: {
+                    width: '26px',
+                    height: '76px',
+                    backgroundColor: '#4c1d95',
+                    borderLeft: '2px solid #8b5cf6',
+                    borderRadius: '2px 2px 0 0',
+                  },
+                })
+              ),
+              e(
+                'td',
+                {
+                  valign: 'bottom',
+                  style: { padding: '0 3px' },
+                },
+                e('div', {
+                  className: 'shelf-spine',
+                  style: {
+                    width: '22px',
+                    height: '64px',
                     backgroundColor: '#0f172a',
                     borderLeft: '2px solid #64748b',
                     borderRadius: '2px 2px 0 0',
-                    boxShadow: 'inset 0 0 6px rgba(0,0,0,0.5)',
                   },
                 })
               )
@@ -327,55 +312,51 @@ export function RebrandAnnouncementEmail() {
           // Cedar Wood Shelf Plinth
           e('div', {
             style: {
-              height: '8px',
+              height: '7px',
               backgroundColor: '#573318',
               borderTop: '2px solid #854d0e',
               borderBottom: '2px solid #271406',
               borderRadius: '2px',
-              margin: '0 auto 12px auto',
-              maxWidth: '240px',
-              boxShadow: '0 4px 10px rgba(0,0,0,0.7)',
+              margin: '0 auto 10px auto',
+              maxWidth: '220px',
             },
           }),
           e(
             Text,
             {
               style: {
-                fontFamily:
-                  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 fontSize: '11px',
-                letterSpacing: '1.5px',
+                letterSpacing: '1px',
                 textTransform: 'uppercase',
                 color: '#d4a373',
+                fontWeight: '600',
                 margin: 0,
               },
             },
-            'Virtual Cedar Shelf Architecture'
+            'The 3D Bookshelf View'
           )
         ),
 
-        // --- CHAPTER / MONOGRAPH SECTIONS ---
+        // --- FEATURE LIST ---
         e(
           Text,
           {
             style: {
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontSize: '11px',
               fontWeight: '700',
-              letterSpacing: '2px',
+              letterSpacing: '1.5px',
               textTransform: 'uppercase',
               color: '#d4a373',
               margin: '0 0 16px 0',
             },
           },
-          'The v4.8 Monograph'
+          'What is new in v4.8'
         ),
 
-        // Monograph I
+        // Feature 1
         e(
           Section,
-          { style: { marginBottom: '22px' } },
+          { style: { marginBottom: '20px' } },
           e(
             Text,
             {
@@ -384,33 +365,31 @@ export function RebrandAnnouncementEmail() {
                 fontSize: '16px',
                 fontWeight: '700',
                 color: '#f8fafc',
-                margin: '0 0 6px 0',
+                margin: '0 0 4px 0',
               },
             },
-            'I. The 3D Digital Bookshelf'
+            '1. The 3D Bookshelf'
           ),
           e(
             Text,
             {
               style: {
-                fontFamily:
-                  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 fontSize: '13px',
                 lineHeight: '21px',
                 color: '#94a3b8',
                 margin: 0,
               },
             },
-            'Your library visualized on rich virtual cedar planks. Orbit with your mouse or finger, illuminate titles with interactive spine hover, and pull volumes into drawer view. Tap the switcher or press "V" on desktop to enter.'
+            'You can now see your books standing on virtual wooden shelves. Rotate and browse through your collection like a physical bookcase, or tap a book to inspect its details. Press "V" on desktop or use the switcher icon in your library to try it.'
           )
         ),
 
         e(Hr, { style: { borderColor: '#1c2333', margin: '16px 0' } }),
 
-        // Monograph II
+        // Feature 2
         e(
           Section,
-          { style: { marginBottom: '22px' } },
+          { style: { marginBottom: '20px' } },
           e(
             Text,
             {
@@ -419,33 +398,31 @@ export function RebrandAnnouncementEmail() {
                 fontSize: '16px',
                 fontWeight: '700',
                 color: '#f8fafc',
-                margin: '0 0 6px 0',
+                margin: '0 0 4px 0',
               },
             },
-            'II. Nocturne: Deep Indigo Identity'
+            '2. A Darker, Cleaner Look'
           ),
           e(
             Text,
             {
               style: {
-                fontFamily:
-                  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 fontSize: '13px',
                 lineHeight: '21px',
                 color: '#94a3b8',
                 margin: 0,
               },
             },
-            'Calibrated specifically for night readers. High-contrast typography resting against velvet-dark slate, removing glare without dimming legibility.'
+            'We refreshed the entire app with a deep indigo dark mode. It has clear contrast that stays comfortable on your eyes during late-night reading sessions.'
           )
         ),
 
         e(Hr, { style: { borderColor: '#1c2333', margin: '16px 0' } }),
 
-        // Monograph III
+        // Feature 3
         e(
           Section,
-          { style: { marginBottom: '22px' } },
+          { style: { marginBottom: '20px' } },
           e(
             Text,
             {
@@ -454,33 +431,31 @@ export function RebrandAnnouncementEmail() {
                 fontSize: '16px',
                 fontWeight: '700',
                 color: '#f8fafc',
-                margin: '0 0 6px 0',
+                margin: '0 0 4px 0',
               },
             },
-            'III. Local-First Offline Speed'
+            '3. Works Completely Offline'
           ),
           e(
             Text,
             {
               style: {
-                fontFamily:
-                  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 fontSize: '13px',
                 lineHeight: '21px',
                 color: '#94a3b8',
                 margin: 0,
               },
             },
-            'Zero loading spinners. Your shelves and reading logs are stored directly on your device via IndexedDB, syncing silently in the background when connectivity returns.'
+            'Your library now loads straight from your device. You can log pages or add notes on the train or without Wi-Fi, and your progress syncs automatically when you are back online.'
           )
         ),
 
         e(Hr, { style: { borderColor: '#1c2333', margin: '16px 0' } }),
 
-        // Monograph IV
+        // Feature 4
         e(
           Section,
-          { style: { marginBottom: '28px' } },
+          { style: { marginBottom: '24px' } },
           e(
             Text,
             {
@@ -489,24 +464,22 @@ export function RebrandAnnouncementEmail() {
                 fontSize: '16px',
                 fontWeight: '700',
                 color: '#f8fafc',
-                margin: '0 0 6px 0',
+                margin: '0 0 4px 0',
               },
             },
-            'IV. Silent Enrichment & Guides'
+            '4. Faster Book Info & Better Help'
           ),
           e(
             Text,
             {
               style: {
-                fontFamily:
-                  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 fontSize: '13px',
                 lineHeight: '21px',
                 color: '#94a3b8',
                 margin: 0,
               },
             },
-            'Automated synopsis and cover retrieval via Open Library, Google Books, and Wikipedia, accompanied by a new in-guide instant topic and shortcut search engine.'
+            'Book summaries and cover art now load faster using Wikipedia, Open Library, and Google Books. We also added instant search in the Help Center so you can look up keyboard shortcuts and tips anytime.'
           )
         ),
 
@@ -517,10 +490,10 @@ export function RebrandAnnouncementEmail() {
             style: {
               backgroundColor: '#121622',
               border: '1px solid #252e42',
-              borderRadius: '10px',
-              padding: '28px 24px',
+              borderRadius: '8px',
+              padding: '24px 20px',
               textAlign: 'center',
-              margin: '32px 0 28px 0',
+              margin: '28px 0 24px 0',
             },
           },
           e(
@@ -528,92 +501,78 @@ export function RebrandAnnouncementEmail() {
             {
               style: {
                 fontFamily: 'Georgia, serif',
-                fontSize: '18px',
-                fontWeight: '400',
+                fontSize: '17px',
                 color: '#ffffff',
-                margin: '0 0 6px 0',
+                margin: '0 0 4px 0',
               },
             },
-            'Your shelves are waiting.'
+            'Your books are waiting.'
           ),
           e(
             Text,
             {
               style: {
-                fontFamily:
-                  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 fontSize: '13px',
                 color: '#94a3b8',
-                margin: '0 0 20px 0',
+                margin: '0 0 18px 0',
               },
             },
-            'All your reading history, private notes, and custom categories remain safe and untouched.'
+            'Your shelves, reading logs, and private notes are right where you left them.'
           ),
           e(
             Button,
             {
               href: 'https://libriq.app',
               style: {
-                backgroundColor: '#3730a3',
-                backgroundImage: 'linear-gradient(180deg, #4338ca 0%, #312e81 100%)',
+                backgroundColor: '#4338ca',
                 border: '1px solid #6366f1',
                 color: '#ffffff',
-                fontFamily:
-                  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 fontSize: '13px',
-                fontWeight: '700',
-                letterSpacing: '1.5px',
-                textTransform: 'uppercase',
-                padding: '13px 32px',
+                fontWeight: '600',
+                letterSpacing: '0.5px',
+                padding: '12px 28px',
                 borderRadius: '6px',
                 textDecoration: 'none',
                 display: 'inline-block',
-                boxShadow: '0 4px 14px rgba(67, 56, 202, 0.4)',
               },
             },
-            'Return to Your Sanctuary →'
+            'Open LibriQ →'
           )
         ),
 
         // --- SIGN OFF ---
         e(
           Section,
-          { style: { textAlign: 'center', margin: '24px 0 28px 0' } },
+          { style: { textAlign: 'center', margin: '20px 0 24px 0' } },
           e(
             Text,
             {
               style: {
-                fontFamily: 'Georgia, serif',
-                fontStyle: 'italic',
-                fontSize: '14px',
+                fontSize: '13px',
                 color: '#94a3b8',
                 margin: '0 0 4px 0',
               },
             },
-            'Curated with patience and craft.'
+            'Happy reading,'
           ),
           e(
             Text,
             {
               style: {
-                fontFamily:
-                  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                fontSize: '12px',
+                fontSize: '13px',
                 fontWeight: '600',
                 color: '#cbd5e1',
-                letterSpacing: '1px',
-                textTransform: 'uppercase',
                 margin: 0,
               },
             },
-            'The LibriQ Keepers'
+            'The LibriQ Team'
           )
         ),
 
-        // Bottom Double Hairline
+        // Hairline Divider
         e(
           Section,
-          { style: { textAlign: 'center', margin: '0 0 24px 0' } },
+          { style: { textAlign: 'center', margin: '0 0 20px 0' } },
           e('div', {
             style: {
               borderTop: '1px solid #1c2333',
@@ -623,7 +582,7 @@ export function RebrandAnnouncementEmail() {
           })
         ),
 
-        // --- COLOPHON FOOTER ---
+        // --- FOOTER ---
         e(
           Section,
           { style: { textAlign: 'center' } },
@@ -631,15 +590,13 @@ export function RebrandAnnouncementEmail() {
             Text,
             {
               style: {
-                fontFamily:
-                  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 fontSize: '11px',
                 lineHeight: '18px',
                 color: '#64748b',
-                margin: '0 0 6px 0',
+                margin: '0 0 4px 0',
               },
             },
-            'Ex Libris LibriQ • ',
+            'LibriQ • ',
             e(
               Link,
               {
@@ -653,29 +610,25 @@ export function RebrandAnnouncementEmail() {
             Text,
             {
               style: {
-                fontFamily:
-                  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 fontSize: '11px',
                 lineHeight: '18px',
                 color: '#475569',
-                margin: '0 0 8px 0',
+                margin: '0 0 6px 0',
               },
             },
-            'Private by design: zero tracking pixels, zero analytics sale, zero advertisements.'
+            'Private by design. No tracking pixels, no ads, ever.'
           ),
           e(
             Text,
             {
               style: {
-                fontFamily:
-                  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 fontSize: '10px',
                 lineHeight: '16px',
                 color: '#475569',
                 margin: 0,
               },
             },
-            'To adjust preferences or unsubscribe, reply to this dispatch or visit Settings in the app.'
+            'To unsubscribe or manage your account, simply reply to this email or visit Settings in the app.'
           )
         )
       )
