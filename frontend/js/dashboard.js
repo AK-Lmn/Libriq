@@ -3,6 +3,7 @@ import { Storage } from './storage.js';
 import { Utils } from './utils.js';
 import { LibriqFirebase } from './firebase-client.js';
 import { resolveAccountDisplayName } from './accountDisplayName.js';
+import { isPollDismissedOrVoted, detectUserOS } from './services/mobileAppPoll.js';
 
 export const Dashboard = {
 
@@ -90,6 +91,7 @@ export const Dashboard = {
           </div>
         </div>
 
+        ${buildMobileAppPollCard()}
         ${buildOnboardingChecklist(books, goals)}
 
         <div class="dashboard-layout">
@@ -575,5 +577,49 @@ function buildOnboardingChecklist(books, goals) {
           </button>
         </div>
       </div>
+    </section>`;
+}
+
+export function buildMobileAppPollCard() {
+  if (isPollDismissedOrVoted()) return '';
+
+  const os = detectUserOS();
+  return `
+    <section class="dashboard-panel dashboard-poll-card" id="dashboardMobilePoll" aria-label="Mobile app survey">
+      <div class="dashboard-poll-content">
+        <div class="dashboard-poll-main">
+          <div class="dashboard-poll-badge">
+            <span class="dashboard-poll-badge-dot"></span>
+            <span>Community Poll</span>
+          </div>
+          <h2 class="dashboard-poll-title">Would you like a native mobile app for LibriQ? 📱</h2>
+          <p class="dashboard-poll-subtitle">
+            We're deciding whether to prioritize an <strong>iOS (Apple App Store)</strong> or <strong>Android (Google Play)</strong> app next. Cast your vote to help us choose!
+          </p>
+        </div>
+        <div class="dashboard-poll-actions" id="dashboardPollActionRow">
+          <button class="btn btn-secondary dashboard-poll-btn ${os === 'iOS' ? 'is-detected' : ''}" type="button" data-action="submit-mobile-poll" data-poll-choice="ios">
+            <span class="poll-btn-emoji">🍏</span>
+            <span>Yes, <strong>iOS</strong></span>
+            ${os === 'iOS' ? '<span class="poll-detected-chip">Your OS</span>' : ''}
+          </button>
+          <button class="btn btn-secondary dashboard-poll-btn ${os === 'Android' ? 'is-detected' : ''}" type="button" data-action="submit-mobile-poll" data-poll-choice="android">
+            <span class="poll-btn-emoji">🤖</span>
+            <span>Yes, <strong>Android</strong></span>
+            ${os === 'Android' ? '<span class="poll-detected-chip">Your OS</span>' : ''}
+          </button>
+          <button class="btn btn-ghost dashboard-poll-btn" type="button" data-action="submit-mobile-poll" data-poll-choice="web_ok">
+            <span class="poll-btn-emoji">🌐</span>
+            <span>Web is fine</span>
+          </button>
+        </div>
+        <div class="dashboard-poll-success" id="dashboardPollSuccess" hidden>
+          <span class="poll-success-icon">✓</span>
+          <span>Vote recorded! Thank you for shaping LibriQ&apos;s roadmap.</span>
+        </div>
+      </div>
+      <button class="dashboard-poll-close" type="button" data-action="dismiss-mobile-poll" aria-label="Dismiss survey">
+        <i class="ph ph-x" aria-hidden="true"></i>
+      </button>
     </section>`;
 }
