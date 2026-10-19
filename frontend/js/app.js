@@ -8,6 +8,7 @@ import { LibriqSyncBeta } from './sync.js';
 import { LibriqFirebase } from './firebase-client.js';
 import { LibriqCloudBackup } from './cloudBackup.js';
 import { initInstallPrompt } from './installPrompt.js';
+import { submitPollVote } from './services/mobileAppPoll.js';
 
 let _booted = false;
 let _whatsNewTimer = null;
@@ -193,7 +194,29 @@ function getReleaseNotes() {
       }
     });
 
+    checkIncomingPollVote();
     registerServiceWorker();
+  }
+
+  function checkIncomingPollVote() {
+    if (typeof window === 'undefined' || !window.location) return;
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const voteParam = urlParams.get('vote')?.toLowerCase();
+      if (voteParam && ['ios', 'android', 'web_ok', 'web'].includes(voteParam)) {
+        const choice = voteParam === 'web' ? 'web_ok' : voteParam;
+        submitPollVote(choice);
+        const label = choice === 'ios' ? 'iOS' : choice === 'android' ? 'Android' : 'Web';
+        setTimeout(() => {
+          Utils.toast?.(`Thank you! Your vote for ${label} has been recorded.`, 'success');
+        }, 700);
+
+        urlParams.delete('vote');
+        const newSearch = urlParams.toString();
+        const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '') + window.location.hash;
+        window.history.replaceState({}, '', newUrl);
+      }
+    } catch {}
   }
 
   function registerServiceWorker() {

@@ -10,6 +10,7 @@
     "build": "node scripts/generate-config.mjs",
     "send:announcement": "node scripts/send-rebrand-announcement.mjs",
     "poll:results": "node scripts/poll-results.mjs",
+    "send:poll": "node scripts/send-mobile-poll-email.mjs",
     "test:data-modules": "node scripts/test-data-modules.mjs",
     "test:storage-modules": "node scripts/test-storage-modules.mjs",
     "test:storage-browser": "node scripts/test-storage-browser.mjs",
