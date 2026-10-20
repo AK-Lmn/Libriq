@@ -10,6 +10,7 @@
 [![Tests](https://img.shields.io/badge/Tests-38%20passing-brightgreen.svg)](tests/)
 [![PWA](https://img.shields.io/badge/PWA-Offline%20Ready-orange.svg)](frontend/manifest.json)
 [![Live App](https://img.shields.io/badge/Demo-libriq.app-22d3ee.svg)](https://libriq.app)
+[![XERJ Corpus Hub contributor](https://hub.xerj.org/contributors/AK-Lmn/badge.svg)](https://hub.xerj.org/contributors/AK-Lmn)
 
 *No social algorithms, zero ads, no clutter. Just your books, your reading streaks, and your private notes.*
 
@@ -21,7 +22,7 @@
 
 ## 🌟 Overview
 
-**LibriQ** is an aesthetic, local-first web app designed for readers who want to track their personal library without the bloat of traditional reading platforms. It combines Google Books and Open Library metadata deduplication, offline PWA reliability, and optional Firestore cloud sync into a unified, glass-styled workspace.
+**LibriQ** is an aesthetic, local-first web app designed for readers who want to track their personal library without the bloat of traditional reading platforms. Selected for inclusion in the [XERJ Corpus Hub](https://hub.xerj.org/contributors/AK-Lmn) ([`xerj-org/xerj`](https://github.com/xerj-org/xerj), 4.2k+ stars) as an open-source reference solution, it combines Google Books and Open Library metadata deduplication, offline PWA reliability, and optional Firestore cloud sync into a unified, glass-styled workspace.
 
 ---
 
