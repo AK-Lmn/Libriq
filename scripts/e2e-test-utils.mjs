@@ -7,7 +7,7 @@ export function phase(testName, message) {
 export function startE2EServer({ port, testName }) {
   const child = spawn(process.execPath, ['scripts/e2e-server.mjs'], {
     stdio: 'inherit',
-    env: { ...process.env, LIBRIQ_E2E_PORT: String(port) },
+    env: { ...process.env, LIBRIQ_E2E_PORT: String(port), LIBRIQ_ENABLE_TEST_API: '1' },
   });
   child.once('error', error => {
     console.error(`[${testName}] local server process error:`, error.message);
