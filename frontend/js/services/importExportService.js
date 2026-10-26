@@ -1,3 +1,5 @@
+export const MAX_IMPORT_FILE_BYTES = 5 * 1024 * 1024; // 5 MB
+
 export function createImportExportService({
   storage,
   constants,
@@ -34,6 +36,10 @@ export function createImportExportService({
   }
 
   async function parseImportFile(file) {
+    if (!file) return { ok: false, reason: 'no-file' };
+    if (typeof file.size === 'number' && file.size > MAX_IMPORT_FILE_BYTES) {
+      return { ok: false, reason: 'file-too-large', maxBytes: MAX_IMPORT_FILE_BYTES };
+    }
     try {
       const payload = parseBackupText(await readFileText(file));
       if (!validateBackup(payload)) return { ok: false, reason: 'invalid-backup' };

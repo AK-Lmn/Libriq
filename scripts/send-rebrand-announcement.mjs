@@ -1,8 +1,19 @@
 // scripts/send-rebrand-announcement.mjs
+// LibriQ rebrand announcement email dispatch.
+// Recipients are loaded exclusively from LIBRIQ_ANNOUNCE_RECIPIENTS (JSON array) or the
+// gitignored scripts/.recipients.json file. No addresses are hardcoded or logged in plaintext.
+
 import { renderAnnouncementEmail } from '../emails/rebrand-announcement.js';
 
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  loadRecipients,
+  maskEmail,
+  readProgress,
+  writeProgress,
+  sendSequentially,
+} from './mail-common.mjs';
 
 function loadEnvFile() {
   if (process.env.RESEND_API_KEY) return;
@@ -36,23 +47,11 @@ if (!RESEND_API_KEY) {
   process.exit(1);
 }
 
-const allRecipients = [
-  'kianxd.00@gmail.com',
-  'blondolle@gmail.com',
-  'saunctuarie@gmail.com',
-  'cleincara@gmail.com',
-  'etherealczarinne@gmail.com',
-  'sunshinegirlybun@gmail.com',
-  'rottenpigs024@gmail.com',
-  'boncayao.allysabianca20@gmail.com',
-  'euryopespare@gmail.com',
-  'm.janevillon@gmail.com',
-  'bestgirlning@gmail.com',
-  'tracksouls287@gmail.com',
-];
-
-const targetArg = process.argv[2];
-const recipients = targetArg ? [targetArg] : allRecipients;
+// Recipients come only from env or the gitignored local file. Never hardcoded.
+const recipients = loadRecipients(
+  'LIBRIQ_ANNOUNCE_RECIPIENTS',
+  path.resolve(process.cwd(), 'scripts/.recipients.json'),
+);
 
 const subject = 'LibriQ is officially back live';
 
@@ -102,7 +101,7 @@ async function sendEmail(to, htmlContent) {
     body: JSON.stringify({
       from: 'LibriQ <updates@libriq.app>',
       to: [to],
-      subject: subject,
+      subject,
       html: htmlContent,
       text: bodyText,
     }),
@@ -125,25 +124,43 @@ async function main() {
     return;
   }
 
+  const maskedList = recipients.map(maskEmail).join(', ');
+  console.log(`\nDomain verified! Beginning dispatch to ${recipients.length} recipient(s): ${maskedList}`);
+
+  if (recipients.length === 0) {
+    console.log('No recipients configured. Set LIBRIQ_ANNOUNCE_RECIPIENTS (JSON array) or create scripts/.recipients.json.');
+    console.log('Example: LIBRIQ_ANNOUNCE_RECIPIENTS="[\"user@example.com\"]" node scripts/send-rebrand-announcement.mjs\n');
+    return;
+  }
+
   console.log('Rendering locked-in LibriQ React Email template...');
   const htmlContent = await renderAnnouncementEmail();
   console.log(`Template compiled: ${htmlContent.length} bytes.`);
 
-  console.log(`\nDomain verified! Beginning dispatch to ${recipients.length} recipient(s)...`);
-  let successCount = 0;
+  const progressPath = path.resolve(process.cwd(), 'scripts/.send-progress-rebrand-announcement.json');
 
-  for (const email of recipients) {
-    try {
-      const res = await sendEmail(email, htmlContent);
-      console.log(`[OK] Sent to ${email} (id: ${res.id})`);
-      successCount++;
-      await new Promise(r => setTimeout(r, 600)); // safe 600ms rate limit
-    } catch (err) {
-      console.error(`[ERROR] Failed to send to ${email}:`, err.message);
-    }
-  }
+  const sendOne = async (email) => {
+    await sendEmail(email, htmlContent);
+  };
 
-  console.log(`\nDispatch finished: ${successCount}/${recipients.length} emails delivered successfully.`);
+  const { sent, failed, skipped } = await sendSequentially({
+    recipients,
+    sendOne,
+    delayMs: 1000, // 1s pace between sends
+    maxRetries: 3,
+    progressPath,
+    onProgress: ({ email, masked, sent: ok, failed: bad, skipped: skip, error }) => {
+      if (skip) {
+        console.log(`Skipping ${masked} (already sent).`);
+      } else if (ok) {
+        console.log(`OK to ${masked}.`);
+      } else {
+        console.log(`FAILED to ${masked}: ${error}`);
+      }
+    },
+  });
+
+  console.log(`\nDispatch finished: ${sent} sent, ${failed} failed, ${skipped} skipped (already complete).`);
 }
 
 main().catch(console.error);

@@ -1,6 +1,17 @@
 // scripts/send-mobile-poll-email.mjs
+// LibriQ community poll email dispatch.
+// Recipients are loaded exclusively from LIBRIQ_POLL_RECIPIENTS (JSON array) or the
+// gitignored scripts/.recipients.json file. No addresses are hardcoded or logged in plaintext.
+
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  loadRecipients,
+  maskEmail,
+  readProgress,
+  writeProgress,
+  sendSequentially,
+} from './mail-common.mjs';
 
 function loadEnvFile() {
   if (process.env.RESEND_API_KEY) return;
@@ -34,20 +45,8 @@ if (!RESEND_API_KEY) {
   process.exit(1);
 }
 
-const allRecipients = [
-  'kianxd.00@gmail.com',
-  'blondolle@gmail.com',
-  'saunctuarie@gmail.com',
-  'cleincara@gmail.com',
-  'etherealczarinne@gmail.com',
-  'sunshinegirlybun@gmail.com',
-  'rottenpigs024@gmail.com',
-  'boncayao.allysabianca20@gmail.com',
-  'euryopespare@gmail.com',
-  'm.janevillon@gmail.com',
-  'bestgirlning@gmail.com',
-  'tracksouls287@gmail.com',
-];
+// Recipients come only from env or the gitignored local file. Never hardcoded.
+const recipients = loadRecipients('LIBRIQ_POLL_RECIPIENTS', path.resolve(process.cwd(), 'scripts/.recipients.json'));
 
 const subject = 'Quick question: iOS or Android?';
 
@@ -86,7 +85,7 @@ async function sendEmail(to, htmlContent) {
     body: JSON.stringify({
       from: 'LibriQ <updates@libriq.app>',
       to: [to],
-      subject: subject,
+      subject,
       html: htmlContent,
       text: bodyText,
     }),
@@ -105,30 +104,33 @@ async function main() {
   const isAll = args.includes('--all');
   const specificEmail = args.find((a) => a.includes('@'));
 
-  let targets = [];
-  if (specificEmail) {
-    targets = [specificEmail];
-  } else if (isAll) {
-    targets = allRecipients;
-  } else {
-    // Default to admin test email first
-    targets = ['kianxd.00@gmail.com'];
-  }
+  let targets = recipients;
+  if (specificEmail) targets = [specificEmail];
+  else if (!isAll) targets = []; // fail closed: no default hardcoded target
 
   const htmlPath = path.resolve(process.cwd(), 'emails', 'mobile-poll.html');
-  const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+  let htmlContent = bodyText;
+  try {
+    htmlContent = fs.readFileSync(htmlPath, 'utf8');
+  } catch {}
 
+  const maskedList = targets.map(maskEmail).join(', ');
   console.log(`\n=============================================================`);
   console.log(`📧 LibriQ Community Poll Email Dispatcher`);
   console.log(`=============================================================`);
   console.log(`Subject:      ${subject}`);
-  console.log(`Recipients:   ${targets.length} target(s): ${targets.join(', ')}`);
+  console.log(`Recipients:   ${targets.length} target(s): ${maskedList}`);
   console.log(`Dry Run:      ${isDryRun ? 'YES (No emails will be sent)' : 'NO (Live sending)'}\n`);
 
+  if (targets.length === 0) {
+    console.log('No recipients configured. Set LIBRIQ_POLL_RECIPIENTS (JSON array) or create scripts/.recipients.json.');
+    console.log('Example: LIBRIQ_POLL_RECIPIENTS="[\"user@example.com\"]" node scripts/send-mobile-poll-email.mjs --dry-run\n');
+    return;
+  }
+
   if (!isAll && !specificEmail) {
-    console.log(`[Tip] Running in single-target preview mode (to kianxd.00@gmail.com).`);
-    console.log(`      To blast to all 12 registered users, run:`);
-    console.log(`      node scripts/send-mobile-poll-email.mjs --all\n`);
+    console.log(`[Tip] Preview mode: no specific target and --all not given, so nothing will be sent.`);
+    console.log(`      Pass a specific email, or use --all to mail all configured recipients.\n`);
   }
 
   if (isDryRun) {
@@ -136,22 +138,30 @@ async function main() {
     return;
   }
 
-  let sent = 0;
-  let failed = 0;
+  const progressPath = path.resolve(process.cwd(), 'scripts/.send-progress-mobile-poll.json');
 
-  for (const recipient of targets) {
-    process.stdout.write(`Sending to ${recipient}... `);
-    try {
-      const res = await sendEmail(recipient, htmlContent);
-      console.log(`OK (ID: ${res.id})`);
-      sent++;
-    } catch (err) {
-      console.log(`FAILED: ${err.message}`);
-      failed++;
-    }
-  }
+  const sendOne = async (email) => {
+    await sendEmail(email, htmlContent);
+  };
 
-  console.log(`\nResults: ${sent} sent, ${failed} failed.`);
+  const { sent, failed, skipped } = await sendSequentially({
+    recipients: targets,
+    sendOne,
+    delayMs: 1000, // 1s pace between sends
+    maxRetries: 3,
+    progressPath,
+    onProgress: ({ email, masked, sent: ok, failed: bad, skipped: skip, error }) => {
+      if (skip) {
+        console.log(`Skipping ${masked} (already sent).`);
+      } else if (ok) {
+        console.log(`OK to ${masked}.`);
+      } else {
+        console.log(`FAILED to ${masked}: ${error}`);
+      }
+    },
+  });
+
+  console.log(`\nResults: ${sent} sent, ${failed} failed, ${skipped} skipped (already complete).`);
   console.log(`=============================================================\n`);
 }
 

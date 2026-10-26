@@ -90,7 +90,7 @@ async function loadFirebaseSdk() {
         sendPasswordResetEmail,
         verifyBeforeUpdateEmail,
       } = authSdk);
-      ({ getFirestore, doc, collection, query, orderBy, onSnapshot, setDoc, getDoc, deleteDoc, getDocs } = firestoreSdk);
+      ({ getFirestore, doc, collection, query, orderBy, limit, onSnapshot, setDoc, getDoc, deleteDoc, getDocs } = firestoreSdk);
       firebaseSdkReady = true;
     });
   }
@@ -115,15 +115,22 @@ function getTestApiBase() {
 }
 
 async function testFetch(path, init = {}) {
-  const res = await fetch(`${getTestApiBase()}${path}`, {
-    headers: { 'content-type': 'application/json', ...(init.headers || {}) },
-    ...init,
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(text || `Test API request failed: ${res.status}`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(`${getTestApiBase()}${path}`, {
+      signal: controller.signal,
+      headers: { 'content-type': 'application/json', ...(init.headers || {}) },
+      ...init,
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(text || `Test API request failed: ${res.status}`);
+    }
+    return res;
+  } finally {
+    clearTimeout(timer);
   }
-  return res;
 }
 
 function detectInAppBrowser(ua = navigator.userAgent || '', platform = navigator.platform || '') {
@@ -1342,6 +1349,7 @@ function createTestFirestore() {
     },
     query: (ref) => ref,
     orderBy: () => ({ __noop: true }),
+    limit: () => ({ __noop: true }),
     async setDoc(ref, value) {
       await testFetch(`/doc?path=${encodeURIComponent(ref.path)}`, {
         method: 'PUT',
@@ -1526,6 +1534,7 @@ export const LibriqFirebase = {
   collection: (...args) => TEST_MODE ? testFirestore.collection(...args) : collection(...args),
   query: (...args) => TEST_MODE ? testFirestore.query(...args) : query(...args),
   orderBy: (...args) => TEST_MODE ? testFirestore.orderBy(...args) : orderBy(...args),
+  limit: (...args) => TEST_MODE ? testFirestore.limit(...args) : limit(...args),
   onSnapshot: (...args) => TEST_MODE ? testFirestore.onSnapshot(...args) : onSnapshot(...args),
   deleteDoc: (...args) => TEST_MODE ? testFirestore.deleteDoc(...args) : deleteDoc(...args),
   getDocs: (...args) => TEST_MODE ? testFirestore.getDocs(...args) : getDocs(...args),

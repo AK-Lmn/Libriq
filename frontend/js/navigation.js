@@ -25,7 +25,7 @@ import { createGoodreadsImportPage } from './features/goodreadsImport/goodreadsI
 import { createQuotesPage } from './features/quotes/quotesPage.js';
 import { createImportMerge } from './services/importMerge.js';
 import { createExportPayload, parseBackupText, serializeBackup, validateBackup } from './services/backupSerialization.js';
-import { createBrowserDownloadFile, createImportExportService, readBrowserFileText } from './services/importExportService.js';
+import { createBrowserDownloadFile, createImportExportService, MAX_IMPORT_FILE_BYTES, readBrowserFileText } from './services/importExportService.js';
 import { parseKindleClippings } from './services/kindleClippingsParser.js';
 import { createKindleImportService } from './services/kindleImportService.js';
 import { createKindleQuoteImport } from './services/kindleQuoteImport.js';
@@ -1997,7 +1997,15 @@ function promptImportData() {
 
 async function importDataFromFile(file) {
   if (!file) return;
+  if (typeof file.size === 'number' && file.size > MAX_IMPORT_FILE_BYTES) {
+    Utils.toast(`Import file is too large (max ${Math.round(MAX_IMPORT_FILE_BYTES / 1024 / 1024)} MB).`, 'error');
+    return;
+  }
   const result = await importExportService.parseImportFile(file);
+  if (!result.ok && result.reason === 'file-too-large') {
+    Utils.toast(`Import file is too large (max ${Math.round(MAX_IMPORT_FILE_BYTES / 1024 / 1024)} MB).`, 'error');
+    return;
+  }
   if (!result.ok && result.reason === 'invalid-json') {
     Utils.toast('That file is not valid JSON.', 'error');
     return;

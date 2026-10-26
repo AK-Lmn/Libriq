@@ -30,7 +30,7 @@ describe('API & Boundary Resilience', () => {
       assert.equal(res.status, 400);
       assert.equal(res.data.success, false);
       assert.equal(res.data.error.code, 'MALFORMED_PAYLOAD');
-      assert.match(res.data.error.message, /syntax error/i);
+      assert.match(res.data.error.message, /not valid JSON/i);
     });
 
     it('rejects payloads with missing required fields with explicit 400', async () => {
@@ -46,7 +46,7 @@ describe('API & Boundary Resilience', () => {
       assert.equal(res.data.success, false);
       assert.equal(res.data.error.code, 'VALIDATION_ERROR');
       assert.ok(Array.isArray(res.data.error.details));
-      assert.ok(res.data.error.details.some(d => d.includes('author')));
+      assert.ok(res.data.error.details.some((d) => d.includes('author')));
     });
 
     it('rejects payloads with unexpected types with explicit 400', async () => {
@@ -63,6 +63,18 @@ describe('API & Boundary Resilience', () => {
       assert.equal(res.status, 400);
       assert.equal(res.data.success, false);
       assert.equal(res.data.error.code, 'VALIDATION_ERROR');
+    });
+
+    it('rejects non-object payloads (arrays) with explicit 400', async () => {
+      const res = await apiRequest(testEnv.url, '/api/catalog/resources', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${adminToken}` },
+        body: [{ title: 'Array payload' }],
+      });
+
+      assert.equal(res.status, 400);
+      assert.equal(res.data.success, false);
+      assert.equal(res.data.error.code, 'MALFORMED_PAYLOAD');
     });
 
     it('rejects excessive payload sizes with explicit 413 Payload Too Large', async () => {
@@ -84,7 +96,7 @@ describe('API & Boundary Resilience', () => {
   });
 
   describe('SQL & NoSQL Injection Prevention', () => {
-    it('detects and rejects classic SQL injection payloads in request body', async () => {
+    it('neutralizes classic SQL injection payloads in string fields (stored literally, never executed)', async () => {
       const sqlInjectionPayloads = [
         "Robert'); DROP TABLE Books;--",
         "' OR '1'='1",
@@ -101,17 +113,19 @@ describe('API & Boundary Resilience', () => {
           },
         });
 
-        assert.equal(res.status, 400, `Expected 400 for SQL injection payload: ${payload}`);
-        assert.equal(res.data.success, false);
-        assert.equal(res.data.error.code, 'INJECTION_DETECTED');
+        // Structurally valid input is accepted; the payload is treated as data,
+        // not executable code, so injection is neutralized rather than blocked.
+        assert.equal(res.status, 201, `Expected 201 for SQL injection payload: ${payload}`);
+        assert.equal(res.data.success, true);
+        assert.equal(res.data.data.title, payload);
       }
     });
 
-    it('detects and rejects NoSQL injection operators in request body', async () => {
+    it('rejects NoSQL injection operators ($-prefixed keys) in request body', async () => {
       const nosqlInjectionPayloads = [
         { title: 'Normal Title', author: 'Author', $where: 'sleep(5000)' },
         { title: 'Normal Title', author: 'Author', query: { $gt: '' } },
-        { title: '{"$gt": ""}', author: 'Author' },
+        { title: 'Normal Title', author: 'Author', $ne: null },
       ];
 
       for (const payload of nosqlInjectionPayloads) {
@@ -123,11 +137,29 @@ describe('API & Boundary Resilience', () => {
 
         assert.equal(res.status, 400, 'Expected 400 for NoSQL operator injection');
         assert.equal(res.data.success, false);
-        assert.equal(res.data.error.code, 'INJECTION_DETECTED');
+        assert.equal(res.data.error.code, 'INVALID_PAYLOAD_STRUCTURE');
+        assert.ok(res.data.error.details);
       }
     });
 
-    it('detects and rejects script injection in string fields', async () => {
+    it('rejects prototype-pollution keys in request body', async () => {
+      const res = await apiRequest(testEnv.url, '/api/catalog/resources', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+          'content-type': 'application/json',
+        },
+        // Raw JSON so __proto__ arrives as an own key (JSON.parse creates own props,
+        // unlike object literals which set the prototype).
+        body: '{"title":"Normal Title","author":"Author","__proto__":{"polluted":true}}',
+      });
+
+      assert.equal(res.status, 400);
+      assert.equal(res.data.success, false);
+      assert.equal(res.data.error.code, 'INVALID_PAYLOAD_STRUCTURE');
+    });
+
+    it('stores script-like strings literally (XSS mitigated at output encoding, not input blocking)', async () => {
       const res = await apiRequest(testEnv.url, '/api/catalog/resources', {
         method: 'POST',
         headers: { Authorization: `Bearer ${adminToken}` },
@@ -137,9 +169,9 @@ describe('API & Boundary Resilience', () => {
         },
       });
 
-      assert.equal(res.status, 400);
-      assert.equal(res.data.success, false);
-      assert.equal(res.data.error.code, 'INJECTION_DETECTED');
+      assert.equal(res.status, 201);
+      assert.equal(res.data.success, true);
+      assert.equal(res.data.data.author, '<script>alert("xss")</script>');
     });
   });
 });

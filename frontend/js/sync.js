@@ -93,6 +93,46 @@ export const LibriqSyncBeta = (() => {
     Storage.saveSyncTombstones?.(tombstones || {});
   }
 
+  const SYNC_FINGERPRINT_KEY = 'libriq_sync_fingerprints';
+
+  function readFingerprints() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(SYNC_FINGERPRINT_KEY) || '{}');
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function writeFingerprints(map) {
+    try {
+      localStorage.setItem(SYNC_FINGERPRINT_KEY, JSON.stringify(map || {}));
+    } catch {
+      debugLog('fingerprint write failed');
+    }
+  }
+
+  function bookFingerprint(book) {
+    const stable = {
+      id: book.id,
+      title: book.title,
+      author: book.author,
+      updatedAt: book.updatedAt,
+      deletedAt: book.deletedAt,
+      currentPage: book.currentPage,
+      status: book.status,
+      isFavorite: book.isFavorite,
+      notes: book.notes,
+      notesUpdatedAt: book.notesUpdatedAt,
+    };
+    let hash = 0;
+    const text = JSON.stringify(stable);
+    for (let i = 0; i < text.length; i++) {
+      hash = ((hash << 5) - hash + text.charCodeAt(i)) | 0;
+    }
+    return String(hash);
+  }
+
   function getTombstoneTimestamp(tombstone) {
     const raw = tombstone?.deletedAt || tombstone?.updatedAt || tombstone?.createdAt || null;
     const time = raw ? new Date(raw).getTime() : NaN;
@@ -396,7 +436,7 @@ export const LibriqSyncBeta = (() => {
       debugLog('sync listener detached', { reason: 'reattach', listenerPath });
     }
     const colRef = LibriqFirebase.collection(LibriqFirebase.getFirestoreClient(), ...segments);
-    const q = LibriqFirebase.query(colRef, LibriqFirebase.orderBy('updatedAt', 'asc'));
+    const q = LibriqFirebase.query(colRef, LibriqFirebase.orderBy('updatedAt', 'asc'), LibriqFirebase.limit(500));
     listenerPath = path;
     currentUid = uid;
     listenerAttached = true;
@@ -666,21 +706,42 @@ export const LibriqSyncBeta = (() => {
       uploadInFlight = true;
       applyingRemoteChanges = true;
       const db = LibriqFirebase.getFirestoreClient();
-      const writes = books.map(book => LibriqFirebase.setDoc(
-        LibriqFirebase.doc(db, ...getSyncBooksCollectionSegments(user.uid), book.id),
-        book,
-      ));
-      const deleteWrites = tombstones.map(tombstone => LibriqFirebase.setDoc(
-        LibriqFirebase.doc(db, ...getSyncBooksCollectionSegments(user.uid), tombstone.id),
-        tombstone,
-      ));
-      const favoriteWrites = books.filter(book => typeof book.isFavorite === 'boolean').map(book => ({ bookId: book.id, isFavorite: book.isFavorite }));
-      debugLog('sync write queued', { reason, favoriteWrites, tombstoneCount: tombstones.length });
-      await Promise.all([...writes, ...deleteWrites]);
+      // Diff-based writes: only upload books/tombstones whose fingerprint changed,
+      // avoiding unbounded re-writes of unchanged data on every sync tick.
+      const fingerprints = readFingerprints();
+      const userFingerprints = fingerprints[user.uid] || {};
+      const nextUserFingerprints = { ...userFingerprints };
+      const writes = [];
+      const deleteWrites = [];
+      for (const book of books) {
+        const fp = bookFingerprint(book);
+        if (userFingerprints[book.id] === fp) continue;
+        writes.push(LibriqFirebase.setDoc(
+          LibriqFirebase.doc(db, ...getSyncBooksCollectionSegments(user.uid), book.id),
+          book,
+        ));
+        nextUserFingerprints[book.id] = fp;
+      }
+      for (const tombstone of tombstones) {
+        const fp = bookFingerprint(tombstone);
+        if (userFingerprints[tombstone.id] === fp) continue;
+        deleteWrites.push(LibriqFirebase.setDoc(
+          LibriqFirebase.doc(db, ...getSyncBooksCollectionSegments(user.uid), tombstone.id),
+          tombstone,
+        ));
+        nextUserFingerprints[tombstone.id] = fp;
+      }
+      if (writes.length || deleteWrites.length) {
+        await Promise.all([...writes, ...deleteWrites]);
+        fingerprints[user.uid] = nextUserFingerprints;
+        writeFingerprints(fingerprints);
+      } else {
+        debugLog('sync write skipped: no changed books or tombstones', { reason });
+      }
       lastWriteAt = new Date().toISOString();
       lastSyncedAt = new Date().toISOString();
       setState(STATUS.SYNCED, 'Waiting for changes', { lastSyncedAt });
-      debugLog('sync write success', { reason, count: books.length, lastWriteAt, favoriteWrites });
+      debugLog('sync write success', { reason, written: writes.length, deleted: deleteWrites.length, lastWriteAt });
       Storage.saveCloudBackupMeta?.({ syncReady: true });
       clearPendingSync(lastSyncedAt);
       scheduleSettledBackup();

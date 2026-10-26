@@ -25,7 +25,12 @@ let suppressScheduling = false;
 let manualSaving = false;
 let autoBackupInProgress = false;
 let suppressAutoBackupUntil = 0;
+let backupFailureCount = 0;
 let activeUid = null;
+/** Firestore document hard limit is 1 MiB; stay comfortably below it. */
+const MAX_BACKUP_BYTES = 1000000; // ~1 MB
+const MAX_BACKUP_RETRIES = 3;
+const SIZE_SUPPRESS_MS = 60 * 60 * 1000; // suppress auto-backup for 1h when over size
 let getSessionPreference = () => null;
 let getCurrentPage = () => null;
 let getSyncState = () => ({});
@@ -120,6 +125,25 @@ async function performBackup(reason = 'manual', automatic = false) {
     updatedAt: new Date().toISOString(),
     backupMode: automatic ? 'automatic' : 'manual',
   };
+  // Size guard: Firestore documents are capped at 1 MiB. Fail fast instead of
+  // hammering the backend with oversized writes.
+  let serialized;
+  try {
+    serialized = JSON.stringify(docData);
+  } catch (error) {
+    setStatus(STATUS.FAILED, 'Backup failed: payload could not be serialized.', error);
+    return false;
+  }
+  const byteSize = new TextEncoder().encode(serialized).length;
+  if (byteSize > MAX_BACKUP_BYTES) {
+    const message = `Backup payload is too large (${byteSize} bytes > ${MAX_BACKUP_BYTES}). Trim your library/activity before backing up.`;
+    setStatus(STATUS.FAILED, message, null);
+    if (automatic) {
+      suppressAutoBackupUntil = Date.now() + SIZE_SUPPRESS_MS;
+      backupFailureCount = Math.max(backupFailureCount, MAX_BACKUP_RETRIES);
+    }
+    return false;
+  }
   manualSaving = !automatic;
   autoBackupInProgress = automatic;
   setStatus(automatic ? STATUS.IDLE : STATUS.SAVING, automatic ? 'Cloud backup active' : 'Saving...');
@@ -151,8 +175,15 @@ async function performBackup(reason = 'manual', automatic = false) {
       suppressScheduling = false;
     }
     setStatus(STATUS.BACKED_UP, formatLastSavedLabel(savedAt));
+    backupFailureCount = 0;
     return true;
   } catch (error) {
+    backupFailureCount += 1;
+    if (automatic && backupFailureCount >= MAX_BACKUP_RETRIES) {
+      suppressAutoBackupUntil = Date.now() + SIZE_SUPPRESS_MS;
+      setStatus(STATUS.PAUSED, 'Cloud backup paused after repeated failures. Your local data is still safe.', error);
+      return false;
+    }
     setStatus(STATUS.FAILED, 'Backup failed. Your local data is still safe.', error);
     return false;
   } finally {

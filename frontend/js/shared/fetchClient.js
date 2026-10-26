@@ -20,15 +20,20 @@ export async function fetchJson(url, options = {}) {
     ...requestInit
   } = options;
 
+  // Clamp retry behaviour so a misbehaving caller cannot retry indefinitely.
+  const safeRetries = Math.max(0, Math.min(Number.isFinite(retries) ? Math.floor(retries) : 0, 5));
+  const safeRetryDelayMs = Math.max(0, Math.min(Number.isFinite(retryDelayMs) ? Math.floor(retryDelayMs) : 250, 10000));
+  const safeTimeoutMs = Math.max(1000, Math.min(Number.isFinite(timeoutMs) ? Math.floor(timeoutMs) : 8000, 60000));
+
   let attempt = 0;
   while (true) {
     try {
-      const response = await request(url, { ...requestInit, timeoutMs, signal });
+      const response = await request(url, { ...requestInit, timeoutMs: safeTimeoutMs, signal });
       return await response.json();
     } catch (error) {
       const normalized = normalizeFetchError(error, url);
-      if (attempt >= retries || !normalized.retryable || signal?.aborted) throw normalized;
-      await delay(retryDelayMs * (2 ** attempt), signal);
+      if (attempt >= safeRetries || !normalized.retryable || signal?.aborted) throw normalized;
+      await delay(safeRetryDelayMs * (2 ** attempt), signal);
       attempt += 1;
     }
   }
@@ -36,8 +41,9 @@ export async function fetchJson(url, options = {}) {
 
 export async function request(url, options = {}) {
   const { timeoutMs = 8000, signal, ...requestInit } = options;
+  const safeTimeoutMs = Math.max(1000, Math.min(Number.isFinite(timeoutMs) ? Math.floor(timeoutMs) : 8000, 60000));
   const timeoutController = new AbortController();
-  const timer = setTimeout(() => timeoutController.abort('timeout'), timeoutMs);
+  const timer = setTimeout(() => timeoutController.abort('timeout'), safeTimeoutMs);
   const combinedSignal = combineSignals(signal, timeoutController.signal);
 
   try {

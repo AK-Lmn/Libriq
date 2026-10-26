@@ -73,6 +73,10 @@ web_modules/
 # LibriQ local runtime config
 frontend/js/config.local.js
 
+# Mail dispatch PII and resumable progress (gitignored - never commit recipient lists)
+scripts/.recipients.json
+scripts/.send-progress-*.json
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
