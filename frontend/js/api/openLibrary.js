@@ -36,7 +36,6 @@ export const OpenLibraryAPI = (() => {
         .map(doc => NormalizeBook.fromOpenLibrary(doc))
         .filter(Boolean);
     } catch (err) {
-      console.warn('[Libriq/OL] Search failed:', err.message);
       _lastFetchFailed = _isNetworkFailure(err);
       return [];
     }
@@ -73,7 +72,6 @@ export const OpenLibraryAPI = (() => {
 
       return NormalizeBook.fromOpenLibrary(doc);
     } catch (err) {
-      console.warn('[Libriq/OL] ISBN lookup failed:', err.message);
       _lastFetchFailed = _isNetworkFailure(err);
       return null;
     }
@@ -107,7 +105,6 @@ export const OpenLibraryAPI = (() => {
         authorRecords: Array.isArray(authorRecords) ? authorRecords.filter(Boolean) : [],
       });
     } catch (err) {
-      console.warn('[Libriq/OL] Enrichment failed:', err.message);
       _lastFetchFailed = _isNetworkFailure(err);
       return base;
     }
@@ -125,7 +122,6 @@ export const OpenLibraryAPI = (() => {
       if (_isExpectedAbort(err)) {
         return [];
       }
-      console.warn('[Libriq/OL] Subject search failed:', err.message);
       _lastFetchFailed = _isNetworkFailure(err);
       return [];
     }

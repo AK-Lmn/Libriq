@@ -43,6 +43,10 @@
 #profilePage .form-textarea { min-height: 120px; resize: vertical; }
 #profilePage .form-input::placeholder { color: var(--text-body); opacity: 1; }
 #profilePage .field-help { font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+#profilePage .field-counter { font-size: 11px; font-family: var(--font-mono); text-align: right; margin-top: var(--space-1); }
+#profilePage .field-counter.near-limit { color: var(--amber); }
+#profilePage .field-counter.at-limit { color: var(--danger); font-weight: var(--weight-semibold); }
+#profilePage .bio-at-limit { border-color: var(--danger) !important; outline-color: var(--danger); box-shadow: 0 0 0 3px rgba(var(--danger-rgb, 220, 50, 50), 0.2); }
 #profilePage .profile-editor-actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--glass-border); }
 #profilePage .profile-editor-actions > span { display: flex; gap: var(--space-2); align-items: center; font-size: 12px; }
 #profilePage .profile-editor-actions .btn { min-height: 44px; background: var(--indigo); color: var(--text-inverse); border: 1px solid var(--indigo); }

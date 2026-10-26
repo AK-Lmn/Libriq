@@ -114,6 +114,7 @@ export function createProfilePage({ storage, utils, constants, actions = {}, doc
                 placeholder="A few words about your reading life…"
                 maxlength="200" rows="4" aria-describedby="profileBioHelp">${utils.sanitize(profile.bio || '')}</textarea>
               <div id="profileBioHelp" class="field-help">A short note about you and your books. Up to 200 characters.</div>
+              <div id="profileBioCounter" class="field-counter">0 / 200</div>
             </div>
             <div class="profile-editor-actions">
             <span>${icon('lock-keyhole')} Always private</span>
@@ -129,6 +130,28 @@ export function createProfilePage({ storage, utils, constants, actions = {}, doc
 
     if (boundMain === main) return;
     boundMain = main;
+
+    // Character counter for bio field
+    const bioInput = main.querySelector('#profileBio');
+    const bioCounter = main.querySelector('#profileBioCounter');
+    let bioLimitToastShown = false;
+    if (bioInput && bioCounter) {
+      const updateCounter = () => {
+        const len = bioInput.value.length;
+        bioCounter.textContent = `${len} / 200`;
+        bioCounter.classList.toggle('at-limit', len >= 200);
+        bioCounter.classList.toggle('near-limit', len >= 160 && len < 200);
+        bioInput.classList.toggle('bio-at-limit', len >= 200);
+        if (len >= 200 && !bioLimitToastShown) {
+          bioLimitToastShown = true;
+          utils.toast?.('Bio limit reached (200 characters).', 'info');
+        }
+        if (len < 200) bioLimitToastShown = false;
+      };
+      bioInput.addEventListener('input', updateCounter);
+      updateCounter();
+    }
+
     main.addEventListener('keydown', event => {
       if (event.key !== 'Escape') return;
       const editor = event.target.closest?.('.profile-editor[open]');

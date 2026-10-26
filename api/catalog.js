@@ -1,4 +1,9 @@
 import crypto from 'node:crypto';
+import { loadConfig } from './config.js';
+
+const config = loadConfig(process.env, false);
+const RESERVATION_TTL_MS = (config.RESERVATION_TTL_SECONDS || 86400) * 1000;
+const CHECKOUT_TTL_MS = (config.CHECKOUT_TTL_SECONDS || 1209600) * 1000;
 
 export class CatalogError extends Error {
   constructor(message, code = 'CATALOG_ERROR', statusCode = 400, details = null) {
@@ -10,10 +15,21 @@ export class CatalogError extends Error {
   }
 }
 
+function toPositiveInteger(value, { field, min = 1, max = 1000000 }) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || !Number.isInteger(numeric)) {
+    throw new CatalogError(`${field} must be a finite integer.`, 'INVALID_INVENTORY_VALUE', 400);
+  }
+  if (numeric < min || numeric > max) {
+    throw new CatalogError(`${field} must be between ${min} and ${max}.`, 'INVALID_INVENTORY_VALUE', 400);
+  }
+  return numeric;
+}
+
 /**
  * In-memory Catalog and Inventory Store.
  * Enforces CRUD operations, soft/hard deletion, state transitions,
- * concurrency conflict prevention, and inventory reconciliation invariants.
+ * concurrency conflict prevention, hold expiry, and inventory reconciliation.
  */
 export class CatalogStore {
   constructor() {
@@ -24,8 +40,70 @@ export class CatalogStore {
     this.resources.clear();
   }
 
+  /**
+   * Drops reservations and checkouts whose deadline has passed so held copies
+   * return to circulation. Called before every read and state transition.
+   */
+  _expireHolds(resource, now = Date.now()) {
+    if (!resource) return { expiredReservations: 0, expiredCheckouts: 0 };
+
+    const before = {
+      reservations: resource.reservations.length,
+      checkouts: resource.checkouts.length,
+    };
+
+    resource.reservations = resource.reservations.filter(reservation => {
+      const expiresAt = new Date(reservation?.expiresAt || 0).getTime();
+      return Number.isFinite(expiresAt) && expiresAt > now;
+    });
+
+    resource.checkouts = resource.checkouts.filter(checkout => {
+      const expiresAt = new Date(checkout?.expiresAt || checkout?.dueAt || 0).getTime();
+      return Number.isFinite(expiresAt) && expiresAt > now;
+    });
+
+    const expiredReservations = before.reservations - resource.reservations.length;
+    const expiredCheckouts = before.checkouts - resource.checkouts.length;
+
+    if (expiredReservations > 0 || expiredCheckouts > 0) {
+      resource.updatedAt = new Date(now).toISOString();
+      resource.lastExpiredAt = resource.updatedAt;
+    }
+
+    return { expiredReservations, expiredCheckouts };
+  }
+
+  /** Expires holds across the whole store; returns a summary for operators. */
+  expireAllHolds(now = Date.now()) {
+    let reservations = 0;
+    let checkouts = 0;
+    let resourcesTouched = 0;
+
+    for (const resource of this.resources.values()) {
+      const result = this._expireHolds(resource, now);
+      if (result.expiredReservations || result.expiredCheckouts) {
+        resourcesTouched += 1;
+        reservations += result.expiredReservations;
+        checkouts += result.expiredCheckouts;
+        this._reconcileCounts(resource);
+      }
+    }
+
+    return { resourcesTouched, expiredReservations: reservations, expiredCheckouts: checkouts };
+  }
+
   _reconcileCounts(resource) {
     const total = resource.totalCopies;
+
+    if (!Number.isInteger(total) || total < 0) {
+      throw new CatalogError(
+        'Inventory count invariant violation: totalCopies is not a valid integer.',
+        'INVENTORY_INVARIANT_VIOLATION',
+        500,
+        { total }
+      );
+    }
+
     const reserved = resource.reservations.length;
     const checkedOut = resource.checkouts.length;
     const available = total - (reserved + checkedOut);
@@ -62,20 +140,20 @@ export class CatalogStore {
       throw new CatalogError('Author is required and must be a string.', 'INVALID_AUTHOR', 400);
     }
 
-    const id = data.id || crypto.randomUUID();
-    if (this.resources.has(id)) {
-      throw new CatalogError(`Resource with ID ${id} already exists.`, 'RESOURCE_EXISTS', 409);
-    }
+    // Identifiers are server-generated so clients cannot choose or probe keys.
+    const id = crypto.randomUUID();
 
     const now = new Date().toISOString();
-    const totalCopies = typeof data.totalCopies === 'number' && data.totalCopies > 0 ? Math.floor(data.totalCopies) : 1;
+    const totalCopies = data.totalCopies === undefined || data.totalCopies === null
+      ? 1
+      : toPositiveInteger(data.totalCopies, { field: 'totalCopies' });
 
     const resource = {
       id,
       title: data.title.trim(),
       author: data.author.trim(),
       isbn: data.isbn ? String(data.isbn).trim() : null,
-      genres: Array.isArray(data.genres) ? data.genres : [],
+      genres: Array.isArray(data.genres) ? data.genres.map(genre => String(genre).trim()).filter(Boolean) : [],
       status: 'available',
       totalCopies,
       availableCopies: totalCopies,
@@ -89,22 +167,50 @@ export class CatalogStore {
     };
 
     this.resources.set(id, resource);
-    return { ...resource };
+    return this._present(resource);
   }
 
-  getResource(id, { includeDeleted = false } = {}) {
+  /** Strips internal hold records from the client-facing shape. */
+  _present(resource, { includeHolders = false } = {}) {
+    const { reservations, checkouts, ...rest } = resource;
+    if (!includeHolders) return { ...rest };
+    return {
+      ...rest,
+      reservations: reservations.map(entry => ({ ...entry })),
+      checkouts: checkouts.map(entry => ({ ...entry })),
+    };
+  }
+
+  getResource(id, { includeDeleted = false, includeHolders = false } = {}) {
     const resource = this.resources.get(id);
     if (!resource) return null;
     if (resource.deletedAt && !includeDeleted) return null;
-    return { ...resource };
+    this._expireHolds(resource);
+    this._reconcileCounts(resource);
+    return this._present(resource, { includeHolders });
   }
 
-  listResources({ includeDeleted = false, status = null, search = '' } = {}) {
-    const results = [];
+  /**
+   * Lists resources with mandatory pagination.
+   * @returns {{ items: Array, total: number, limit: number, offset: number, hasMore: boolean }}
+   */
+  listResources({
+    includeDeleted = false,
+    status = null,
+    search = '',
+    limit = 25,
+    offset = 0,
+    includeHolders = false,
+  } = {}) {
     const searchLower = String(search || '').toLowerCase();
+    const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 25;
+    const safeOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0;
 
+    const matches = [];
     for (const resource of this.resources.values()) {
       if (resource.deletedAt && !includeDeleted) continue;
+      this._expireHolds(resource);
+      this._reconcileCounts(resource);
       if (status && resource.status !== status) continue;
       if (searchLower) {
         const matchesTitle = resource.title.toLowerCase().includes(searchLower);
@@ -112,10 +218,22 @@ export class CatalogStore {
         const matchesIsbn = resource.isbn?.toLowerCase().includes(searchLower);
         if (!matchesTitle && !matchesAuthor && !matchesIsbn) continue;
       }
-      results.push({ ...resource });
+      matches.push(resource);
     }
 
-    return results;
+    matches.sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
+
+    const page = matches
+      .slice(safeOffset, safeOffset + safeLimit)
+      .map(resource => this._present(resource, { includeHolders }));
+
+    return {
+      items: page,
+      total: matches.length,
+      limit: safeLimit,
+      offset: safeOffset,
+      hasMore: safeOffset + page.length < matches.length,
+    };
   }
 
   updateResource(id, updates = {}) {
@@ -124,16 +242,17 @@ export class CatalogStore {
       throw new CatalogError(`Resource ${id} not found.`, 'NOT_FOUND', 404);
     }
 
-    // Do not allow updating internal invariants directly through update
-    const disallowed = ['id', 'reservations', 'checkouts', 'availableCopies', 'reservedCopies', 'checkedOutCopies', 'createdAt'];
+    const disallowed = ['id', 'reservations', 'checkouts', 'availableCopies', 'reservedCopies', 'checkedOutCopies', 'createdAt', 'deletedAt', 'status'];
     for (const key of disallowed) {
       if (key in updates) {
         throw new CatalogError(`Field "${key}" cannot be updated directly.`, 'INVALID_UPDATE_FIELD', 400);
       }
     }
 
+    this._expireHolds(resource);
+
     if (updates.totalCopies !== undefined) {
-      const newTotal = Math.floor(Number(updates.totalCopies));
+      const newTotal = toPositiveInteger(updates.totalCopies, { field: 'totalCopies' });
       const occupied = resource.reservations.length + resource.checkouts.length;
       if (newTotal < occupied) {
         throw new CatalogError(
@@ -145,14 +264,16 @@ export class CatalogStore {
       resource.totalCopies = newTotal;
     }
 
-    if (updates.title) resource.title = String(updates.title).trim();
-    if (updates.author) resource.author = String(updates.author).trim();
+    if (updates.title !== undefined) resource.title = String(updates.title).trim();
+    if (updates.author !== undefined) resource.author = String(updates.author).trim();
     if (updates.isbn !== undefined) resource.isbn = updates.isbn ? String(updates.isbn).trim() : null;
-    if (Array.isArray(updates.genres)) resource.genres = updates.genres;
+    if (Array.isArray(updates.genres)) {
+      resource.genres = updates.genres.map(genre => String(genre).trim()).filter(Boolean);
+    }
 
     resource.updatedAt = new Date().toISOString();
     this._reconcileCounts(resource);
-    return { ...resource };
+    return this._present(resource);
   }
 
   softDeleteResource(id) {
@@ -160,6 +281,8 @@ export class CatalogStore {
     if (!resource || resource.deletedAt) {
       throw new CatalogError(`Resource ${id} not found or already deleted.`, 'NOT_FOUND', 404);
     }
+
+    this._expireHolds(resource);
 
     if (resource.reservations.length > 0 || resource.checkouts.length > 0) {
       throw new CatalogError(
@@ -172,7 +295,7 @@ export class CatalogStore {
     const now = new Date().toISOString();
     resource.deletedAt = now;
     resource.updatedAt = now;
-    return { ...resource };
+    return this._present(resource);
   }
 
   hardDeleteResource(id) {
@@ -180,6 +303,8 @@ export class CatalogStore {
     if (!resource) {
       throw new CatalogError(`Resource ${id} not found.`, 'NOT_FOUND', 404);
     }
+
+    this._expireHolds(resource);
 
     if (resource.reservations.length > 0 || resource.checkouts.length > 0) {
       throw new CatalogError(
@@ -203,17 +328,18 @@ export class CatalogStore {
       throw new CatalogError(`Resource ${id} not found.`, 'NOT_FOUND', 404);
     }
 
-    // Invariant: User cannot double-reserve the same resource
+    const now = Date.now();
+    this._expireHolds(resource, now);
+    this._reconcileCounts(resource);
+
     if (resource.reservations.some(r => r.userId === userId)) {
       throw new CatalogError('User already has an active reservation for this resource.', 'DUPLICATE_RESERVATION', 409);
     }
 
-    // Invariant: User cannot reserve a resource they already checked out
     if (resource.checkouts.some(c => c.userId === userId)) {
       throw new CatalogError('User already has this resource checked out.', 'ALREADY_CHECKED_OUT', 409);
     }
 
-    // Invariant: If no available copies remain, resource cannot be reserved by another user
     if (resource.availableCopies <= 0) {
       throw new CatalogError(
         'Resource cannot be reserved: no copies currently available (checked out or reserved by another user).',
@@ -222,16 +348,16 @@ export class CatalogStore {
       );
     }
 
-    const now = new Date().toISOString();
+    const timestamp = new Date(now).toISOString();
     resource.reservations.push({
       userId,
-      reservedAt: now,
-      expiresAt: new Date(Date.now() + 86400000).toISOString(), // 24h
+      reservedAt: timestamp,
+      expiresAt: new Date(now + RESERVATION_TTL_MS).toISOString(),
     });
 
-    resource.updatedAt = now;
+    resource.updatedAt = timestamp;
     this._reconcileCounts(resource);
-    return { ...resource };
+    return this._present(resource);
   }
 
   checkoutResource(id, userId) {
@@ -244,37 +370,38 @@ export class CatalogStore {
       throw new CatalogError(`Resource ${id} not found.`, 'NOT_FOUND', 404);
     }
 
+    const now = Date.now();
+    this._expireHolds(resource, now);
+    this._reconcileCounts(resource);
+
     if (resource.checkouts.some(c => c.userId === userId)) {
       throw new CatalogError('User already has this resource checked out.', 'ALREADY_CHECKED_OUT', 409);
     }
 
-    // Check if reserved by this user
     const userReservationIdx = resource.reservations.findIndex(r => r.userId === userId);
 
     if (userReservationIdx !== -1) {
-      // User is fulfilling their existing reservation
       resource.reservations.splice(userReservationIdx, 1);
-    } else {
-      // Direct checkout requires an available copy
-      if (resource.availableCopies <= 0) {
-        throw new CatalogError(
-          'Resource is unavailable for checkout: all copies are reserved or checked out.',
-          'RESOURCE_UNAVAILABLE',
-          409
-        );
-      }
+    } else if (resource.availableCopies <= 0) {
+      throw new CatalogError(
+        'Resource is unavailable for checkout: all copies are reserved or checked out.',
+        'RESOURCE_UNAVAILABLE',
+        409
+      );
     }
 
-    const now = new Date().toISOString();
+    const timestamp = new Date(now).toISOString();
+    const dueAt = new Date(now + CHECKOUT_TTL_MS).toISOString();
     resource.checkouts.push({
       userId,
-      checkedOutAt: now,
-      dueAt: new Date(Date.now() + 14 * 86400000).toISOString(), // 14 days
+      checkedOutAt: timestamp,
+      dueAt,
+      expiresAt: dueAt,
     });
 
-    resource.updatedAt = now;
+    resource.updatedAt = timestamp;
     this._reconcileCounts(resource);
-    return { ...resource };
+    return this._present(resource);
   }
 
   returnResource(id, userId) {
@@ -287,23 +414,29 @@ export class CatalogStore {
       throw new CatalogError(`Resource ${id} not found.`, 'NOT_FOUND', 404);
     }
 
+    const now = Date.now();
+    this._expireHolds(resource, now);
+
     const checkoutIdx = resource.checkouts.findIndex(c => c.userId === userId);
     const reservationIdx = resource.reservations.findIndex(r => r.userId === userId);
 
     if (checkoutIdx === -1 && reservationIdx === -1) {
-      throw new CatalogError(`No active checkout or reservation found for user ${userId} on resource ${id}.`, 'NO_ACTIVE_TRANSACTION', 400);
+      throw new CatalogError(
+        'No active checkout or reservation found for this user on this resource.',
+        'NO_ACTIVE_TRANSACTION',
+        400
+      );
     }
 
     if (checkoutIdx !== -1) {
       resource.checkouts.splice(checkoutIdx, 1);
-    } else if (reservationIdx !== -1) {
+    } else {
       resource.reservations.splice(reservationIdx, 1);
     }
 
-    const now = new Date().toISOString();
-    resource.updatedAt = now;
+    resource.updatedAt = new Date(now).toISOString();
     this._reconcileCounts(resource);
-    return { ...resource };
+    return this._present(resource);
   }
 
   reconcileInventory(id) {
@@ -312,6 +445,7 @@ export class CatalogStore {
       throw new CatalogError(`Resource ${id} not found.`, 'NOT_FOUND', 404);
     }
 
+    this._expireHolds(resource);
     this._reconcileCounts(resource);
     const valid = resource.totalCopies === (resource.availableCopies + resource.reservedCopies + resource.checkedOutCopies);
     return {
@@ -327,3 +461,7 @@ export class CatalogStore {
 }
 
 export const defaultCatalog = new CatalogStore();
+export const HOLD_TTL = Object.freeze({
+  reservationMs: RESERVATION_TTL_MS,
+  checkoutMs: CHECKOUT_TTL_MS,
+});

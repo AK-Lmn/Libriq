@@ -30,7 +30,6 @@ export const GoogleBooksAPI = (() => {
         .map(item => NormalizeBook.fromGoogleBooks(item))
         .filter(Boolean);
     } catch (err) {
-      console.warn('[Libriq/GB] Search failed:', err.message);
       _lastFetchFailed = _isNetworkFailure(err);
       return [];
     }
@@ -54,7 +53,6 @@ export const GoogleBooksAPI = (() => {
       const item = data?.items?.[0];
       return item ? NormalizeBook.fromGoogleBooks(item) : null;
     } catch (err) {
-      console.warn('[Libriq/GB] ISBN lookup failed:', err.message);
       _lastFetchFailed = _isNetworkFailure(err);
       return null;
     }

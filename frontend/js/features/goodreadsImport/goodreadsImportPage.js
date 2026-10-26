@@ -1,4 +1,5 @@
 import { AccessibleDialog } from '../../components/ui/dialog.js';
+import { MAX_IMPORT_FILE_BYTES } from '../../services/importExportService.js';
 
 export function createGoodreadsImportPage({
   parseCsv,
@@ -133,6 +134,10 @@ export function createGoodreadsImportPage({
     if (!file) {
       renderInitial();
       setState('initial');
+      return;
+    }
+    if (typeof file.size === 'number' && file.size > MAX_IMPORT_FILE_BYTES) {
+      renderError(`File is too large (max ${Math.round(MAX_IMPORT_FILE_BYTES / 1024 / 1024)} MB).`);
       return;
     }
     if (typeof file.text !== 'function') {

@@ -165,7 +165,8 @@ export const Search = (() => {
       renderResults(localResults, apiResults);
     } catch (err) {
       if (revision !== searchRevision) return;
-      console.error('[Libriq] Search error:', err);
+      // External API failures (rate limiting, network issues) are surfaced
+      // to the user via the recovery UI below; no console noise.
       _clearResults();
       _showRecovery('wifi-slash', 'Couldn’t connect', 'Check your internet and try again, or add the book manually.');
     }

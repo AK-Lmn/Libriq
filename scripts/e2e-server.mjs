@@ -10,8 +10,13 @@ const store = new Map();
 const subscribers = new Map();
 const sockets = new Set();
 
-function sendJson(res, code, data) {
-  res.writeHead(code, { 'content-type': 'application/json' });
+// TEST_MODE is only available when explicitly opted into, never on a default host.
+const testModeEnabled = process.env.LIBRIQ_ENABLE_TEST_API === '1'
+  || process.env.LIBRIQ_E2E_TEST_MODE === '1'
+  || process.env.NODE_ENV === 'test';
+
+function sendJson(res, code, data, extraHeaders = {}) {
+  res.writeHead(code, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...extraHeaders });
   res.end(JSON.stringify(data));
 }
 
@@ -52,6 +57,14 @@ const MIME_TYPES = {
 };
 
 function serveFile(res, filePath) {
+  // Containment is checked via a relative path so sibling directories whose
+  // names share a prefix cannot bypass the guard.
+  const relative = path.relative(root, filePath);
+  if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
+    res.writeHead(403);
+    res.end('Forbidden');
+    return;
+  }
   if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
     res.writeHead(404);
     res.end('Not found');
@@ -69,9 +82,23 @@ function serveFile(res, filePath) {
   fs.createReadStream(filePath).pipe(res);
 }
 
+function isPathAllowed(pathValue) {
+  if (typeof pathValue !== 'string') return false;
+  const segments = pathValue.split('/');
+  if (segments.length === 0 || segments.length > 8) return false;
+  if (segments.some(segment => !segment || segment.includes('..') || segment.includes('\\'))) return false;
+  if (segments.some(segment => !/^[A-Za-z0-9._-]+$/.test(segment))) return false;
+  // Only the documented test collections are addressable.
+  if (!segments[0] || segments[0] !== 'users') return false;
+  return true;
+}
+
 const server = http.createServer(async (req, res) => {
   const parsed = url.parse(req.url, true);
   const pathname = parsed.pathname || '/';
+
+  // Hard limits so a slow client cannot hold the server open indefinitely.
+  res.setTimeout(30000);
 
   if (pathname.startsWith('/api/')) {
     const handled = await handleApiRequest(req, res);
@@ -79,6 +106,11 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname.startsWith('/__libriq_test_api')) {
+    if (!testModeEnabled) {
+      sendJson(res, 404, { error: 'not found' });
+      return;
+    }
+
     if (pathname === '/__libriq_test_api/reset' && req.method === 'POST') {
       store.clear();
       sendJson(res, 200, { ok: true });
@@ -92,7 +124,11 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/__libriq_test_api/doc') {
       const pathValue = parsed.query.path;
-      const segments = String(pathValue || '').split('/');
+      if (!isPathAllowed(pathValue)) {
+        sendJson(res, 400, { error: 'invalid path' });
+        return;
+      }
+      const segments = String(pathValue).split('/');
       const id = segments.pop();
       const collectionPath = segments.join('/');
       const collection = getCollection(collectionPath);
@@ -113,18 +149,22 @@ const server = http.createServer(async (req, res) => {
         try {
           body = await new Promise((resolve, reject) => {
             let raw = '';
-            req.on('data', (chunk) => { raw += chunk; });
-            req.on('end', () => {
-              try {
-                resolve(JSON.parse(raw || '{}'));
-              } catch (parseErr) {
-                reject(parseErr);
-              }
+            let bytes = 0;
+            const timer = setTimeout(() => reject(new Error('timeout')), 10000);
+            req.on('data', (chunk) => {
+              bytes += chunk.length;
+              if (bytes > 1048576) { req.destroy(); reject(new Error('too large')); return; }
+              raw += chunk;
             });
+            req.on('end', () => { clearTimeout(timer); try { resolve(JSON.parse(raw || '{}')); } catch (e) { reject(e); } });
             req.on('error', reject);
           });
         } catch (parseErr) {
           sendJson(res, 400, { error: 'Invalid JSON payload', details: parseErr.message });
+          return;
+        }
+        if (!body || typeof body.data !== 'object' || body.data === null || Array.isArray(body.data)) {
+          sendJson(res, 400, { error: 'invalid data' });
           return;
         }
         collection.set(id, body.data);
@@ -136,24 +176,36 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname === '/__libriq_test_api/collection' && req.method === 'GET') {
-      sendJson(res, 200, [...getCollection(parsed.query.path).values()]);
+      const pathValue = parsed.query.path;
+      if (!isPathAllowed(pathValue)) {
+        sendJson(res, 400, { error: 'invalid path' });
+        return;
+      }
+      sendJson(res, 200, [...getCollection(pathValue).values()]);
       return;
     }
 
     if (pathname === '/__libriq_test_api/subscribe' && req.method === 'GET') {
-      const key = collectionKey(parsed.query.path);
+      const pathValue = parsed.query.path;
+      if (!isPathAllowed(pathValue)) {
+        sendJson(res, 400, { error: 'invalid path' });
+        return;
+      }
+      const key = collectionKey(pathValue);
       res.writeHead(200, {
         'content-type': 'text/event-stream',
         'cache-control': 'no-cache',
         connection: 'keep-alive',
+        'x-content-type-options': 'nosniff',
       });
       const list = subscribers.get(key) || new Set();
       list.add(res);
       subscribers.set(key, list);
       res.write(`data: ${JSON.stringify([...getCollection(key).values()])}\n\n`);
-      req.on('close', () => {
-        list.delete(res);
-      });
+      req.on('close', () => { list.delete(res); });
+      // Cap each SSE stream so a leaked client cannot hold it forever.
+      const cap = setTimeout(() => res.end(), 30 * 60 * 1000);
+      res.on('close', () => clearTimeout(cap));
       return;
     }
 
@@ -162,13 +214,13 @@ const server = http.createServer(async (req, res) => {
   }
 
   let filePath = path.join(root, pathname === '/' ? 'index.html' : pathname);
-  if (!filePath.startsWith(root)) {
-    res.writeHead(403);
-    res.end('Forbidden');
-    return;
-  }
   serveFile(res, filePath);
 });
+
+server.requestTimeout = 30000;
+server.headersTimeout = 10000;
+server.keepAliveTimeout = 5000;
+server.maxRequestsPerSocket = 100;
 
 server.listen(port, '127.0.0.1', () => {
   console.log(`LibriQ E2E server running at http://127.0.0.1:${port}`);

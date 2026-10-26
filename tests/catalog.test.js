@@ -111,8 +111,10 @@ describe('Catalog & Inventory Operations', () => {
       const getRes = await apiRequest(testEnv.url, `/api/catalog/resources/${created.id}`);
       assert.equal(getRes.status, 404);
 
-      // Including deleted returns the item with deletedAt timestamp
-      const getDeletedRes = await apiRequest(testEnv.url, `/api/catalog/resources/${created.id}?includeDeleted=true`);
+      // Including deleted returns the item with deletedAt timestamp (staff only)
+      const getDeletedRes = await apiRequest(testEnv.url, `/api/catalog/resources/${created.id}?includeDeleted=true`, {
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
       assert.equal(getDeletedRes.status, 200);
       assert.ok(getDeletedRes.data.data.deletedAt);
     });
@@ -131,9 +133,15 @@ describe('Catalog & Inventory Operations', () => {
       assert.equal(deleteRes.status, 200);
       assert.equal(deleteRes.data.data.hard, true);
 
-      // Completely removed, even with includeDeleted=true
-      const getRes = await apiRequest(testEnv.url, `/api/catalog/resources/${created.id}?includeDeleted=true`);
+      // Normal get returns 404
+      const getRes = await apiRequest(testEnv.url, `/api/catalog/resources/${created.id}`);
       assert.equal(getRes.status, 404);
+
+      // Completely removed, even with includeDeleted=true (staff only)
+      const getDeletedRes = await apiRequest(testEnv.url, `/api/catalog/resources/${created.id}?includeDeleted=true`, {
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      assert.equal(getDeletedRes.status, 404);
     });
   });
 
@@ -288,7 +296,9 @@ describe('Catalog & Inventory Operations', () => {
       });
 
       // Reconcile inventory
-      const reconcileRes = await apiRequest(testEnv.url, `/api/catalog/resources/${book.id}/reconcile`);
+      const reconcileRes = await apiRequest(testEnv.url, `/api/catalog/resources/${book.id}/reconcile`, {
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
 
       assert.equal(reconcileRes.status, 200);
       const data = reconcileRes.data.data;
@@ -306,7 +316,9 @@ describe('Catalog & Inventory Operations', () => {
       });
 
       // Verify count reconciliation after return
-      const afterReturn = await apiRequest(testEnv.url, `/api/catalog/resources/${book.id}/reconcile`);
+      const afterReturn = await apiRequest(testEnv.url, `/api/catalog/resources/${book.id}/reconcile`, {
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
       assert.equal(afterReturn.data.data.availableCopies, 4);
       assert.equal(afterReturn.data.data.checkedOutCopies, 0);
       assert.equal(afterReturn.data.data.reservedCopies, 1);
