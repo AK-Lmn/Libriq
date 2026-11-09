@@ -21,7 +21,7 @@ export function createRecommendationsPage({ storage, library, bookApi, utils, co
     const books = (storage.getBooks() || []).filter(Boolean);
     const state = _buildRecommendationState(books);
     const rated = books.filter(book => typeof book.rating === 'number' && book.rating > 0);
-    const average = rated.length ? (rated.reduce((sum, book) => sum + book.rating, 0) / rated.length).toFixed(1) : '—';
+    const average = rated.length ? (rated.reduce((sum, book) => sum + book.rating, 0) / rated.length).toFixed(1) : 'None';
     const saved = _savedPicks(books, state);
     const rails = _buildSubjectDiscoveryState(books).rails;
     filters = [{ key: 'all', label: 'For you' }, ...rails.slice(0, 2).map(rail => ({ key: rail.subjectKey, label: rail.label })), { key: 'gutenberg-classics', label: 'Free classics' }];

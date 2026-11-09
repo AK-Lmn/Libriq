@@ -413,7 +413,10 @@ export const Search = (() => {
     if (els.filterAuthor) els.filterAuthor.value = activeFilters.author;
     if (els.filterYear) els.filterYear.value = activeFilters.year;
     if (els.filterGenre) els.filterGenre.value = activeFilters.genre;
-    if (els.filterSource) els.filterSource.value = activeFilters.source;
+    if (els.filterSource) {
+      els.filterSource.value = activeFilters.source;
+      _updateCustomSourceTrigger(activeFilters.source);
+    }
     if (els.filterDesc) els.filterDesc.checked = activeFilters.hasDescription;
     if (els.filterCover) els.filterCover.checked = activeFilters.hasCover;
     toggleAdvancedFilters(filtersOpen);
@@ -467,6 +470,94 @@ export const Search = (() => {
     if (currentQuery) executeSearch(currentQuery);
   }
 
+
+  function _updateCustomSourceTrigger(sourceVal) {
+    const valueEl = document.getElementById('searchFilterSourceValue');
+    const listbox = document.getElementById('searchFilterSourceListbox');
+    const sourceLabels = {
+      all: 'All sources',
+      openlibrary: 'Open Library',
+      google: 'Google Books',
+    };
+    if (valueEl) valueEl.textContent = sourceLabels[sourceVal] || 'All sources';
+    if (listbox) {
+      listbox.querySelectorAll('.custom-select-option').forEach(o => {
+        const matches = (o.getAttribute('data-value') || 'all') === sourceVal;
+        o.classList.toggle('is-selected', matches);
+        o.setAttribute('aria-selected', matches ? 'true' : 'false');
+      });
+    }
+  }
+
+  function wireCustomSourceSelect() {
+    const trigger = document.getElementById('searchFilterSourceTrigger');
+    const listbox = document.getElementById('searchFilterSourceListbox');
+    const input = document.getElementById('searchFilterSource');
+    const valueEl = document.getElementById('searchFilterSourceValue');
+    if (!trigger || !listbox || !input) return;
+
+    const sourceLabels = {
+      all: 'All sources',
+      openlibrary: 'Open Library',
+      google: 'Google Books',
+    };
+
+    const closeListbox = () => {
+      listbox.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+    };
+
+    const openListbox = () => {
+      listbox.hidden = false;
+      trigger.setAttribute('aria-expanded', 'true');
+      const selected = listbox.querySelector('.is-selected') || listbox.firstElementChild;
+      selected?.focus?.();
+    };
+
+    trigger.addEventListener('click', () => {
+      if (listbox.hidden) openListbox();
+      else closeListbox();
+    });
+
+    listbox.querySelectorAll('.custom-select-option').forEach(option => {
+      option.addEventListener('click', () => {
+        const val = option.getAttribute('data-value') || 'all';
+        input.value = val;
+        if (valueEl) valueEl.textContent = sourceLabels[val] || option.textContent;
+        listbox.querySelectorAll('.custom-select-option').forEach(o => {
+          const isSelected = o === option;
+          o.classList.toggle('is-selected', isSelected);
+          o.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+        });
+        closeListbox();
+        trigger.focus();
+        input.dispatchEvent(new Event('input'));
+        input.dispatchEvent(new Event('change'));
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!trigger.contains(e.target) && !listbox.contains(e.target)) {
+        closeListbox();
+      }
+    });
+
+    trigger.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openListbox();
+      }
+    });
+
+    listbox.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeListbox();
+        trigger.focus();
+      }
+    });
+  }
+
   function init() {
     if (initialized) return;
     initialized = true;
@@ -484,6 +575,7 @@ export const Search = (() => {
     });
 
     updateShortcutLabel();
+    wireCustomSourceSelect();
 
     document.getElementById('openSearch')?.addEventListener('click', open);
     document.getElementById('openSearchDesktop')?.addEventListener('click', open);

@@ -1320,6 +1320,11 @@ function renderSessionChoicePage() {
     if (statusEl) { statusEl.textContent = ''; statusEl.hidden = true; }
   };
   const retryAuth = () => {
+    const currentFb = LibriqFirebase.getState();
+    if (!currentFb?.available && typeof window !== 'undefined') {
+      window.location.reload();
+      return;
+    }
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
       scheduleFallback('retry');
       return;

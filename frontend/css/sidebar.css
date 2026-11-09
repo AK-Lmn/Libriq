@@ -369,17 +369,17 @@
 .logo-mark { width: 40px; height: 40px; border-radius: 12px; background: var(--glass-fill-2); border-color: var(--glass-highlight); box-shadow: none; }
 .logo-icon { width: 20px; height: 20px; }
 .logo-text { font: 400 28px var(--font-serif); }
-.sidebar-privacy { display: flex; gap: 8px; align-items: center; margin: 0 8px 20px; color: var(--text-body); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar-privacy { display: flex; gap: 8px; align-items: center; margin: 0 8px 20px; color: var(--text-body); font-size: var(--text-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sidebar-privacy img { width: 12px; height: 12px; }
 .sidebar-search-btn { background: var(--glass-fill-1); border-color: var(--glass-border); color: var(--text-body); }
-.nav-section-label { color: var(--text-body); font: 10px var(--font-mono); letter-spacing: 1.2px; margin: 24px 0 8px; }
+.nav-section-label { color: var(--text-body); font: 500 var(--text-xs) var(--font-mono); letter-spacing: 1.2px; margin: 24px 0 8px; }
 .nav-item { border: 1px solid transparent; border-radius: 8px; color: var(--text-body); min-height: 36px; font-size: 12px; }
 .nav-item.active { background: var(--glass-fill-2); border-color: var(--indigo-22); color: var(--text-strong); }
 .nav-item.active i { color: var(--indigo); }
 .nav-item[data-page="reading"] i, .nav-item[data-page="goals"] i { color: var(--indigo); }
 .nav-item[data-page="finished"] i { color: var(--teal); }
 .nav-item:hover { background: var(--glass-fill-2); }
-.nav-badge, .nav-badge.reading, .nav-badge.success { background: var(--glass-fill-1); color: var(--text-body); font-size: 9px; border-radius: 8px; }
+.nav-badge, .nav-badge.reading, .nav-badge.success { background: var(--glass-fill-1); color: var(--text-body); font-size: var(--text-xs); border-radius: 8px; }
 .sidebar-streak { margin-top: 28px; padding: 16px; border-radius: 20px; background: var(--glass-fill-3); border-top-color: var(--glass-highlight); }
 .streak-flame { animation: none; }
 .streak-flame img { width: 18px; height: 18px; }

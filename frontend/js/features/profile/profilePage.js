@@ -56,8 +56,8 @@ export function createProfilePage({ storage, utils, constants, actions = {}, doc
       ['library', 'Total books', stats.total ?? 0, 'Your personal library'],
       ['book-check', 'Books finished', stats.finished ?? 0, `${stats.finishedThisYear ?? 0} finished this year`],
       ['files', 'Pages read', utils.formatNumber(stats.totalPages ?? 0), 'Across finished books'],
-      ['flame', 'Longest streak', streak?.best ?? '–', 'Consecutive reading days', 'days'],
-      ['star', 'Avg rating', stats.avgRating || '–', `${stats.ratedCount ?? 0} rated books`, '/ 5'],
+      ['flame', 'Longest streak', streak?.best ?? '0', 'Consecutive reading days', 'days'],
+      ['star', 'Avg rating', stats.avgRating || 'None', `${stats.ratedCount ?? 0} rated books`, '/ 5'],
     ];
 
     main.innerHTML = `
@@ -132,8 +132,8 @@ export function createProfilePage({ storage, utils, constants, actions = {}, doc
     boundMain = main;
 
     // Character counter for bio field
-    const bioInput = main.querySelector('#profileBio');
-    const bioCounter = main.querySelector('#profileBioCounter');
+    const bioInput = main.querySelector?.('#profileBio') || documentRoot?.getElementById?.('profileBio');
+    const bioCounter = main.querySelector?.('#profileBioCounter') || documentRoot?.getElementById?.('profileBioCounter');
     let bioLimitToastShown = false;
     if (bioInput && bioCounter) {
       const updateCounter = () => {

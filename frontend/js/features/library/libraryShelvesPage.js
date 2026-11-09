@@ -94,7 +94,8 @@ export function createLibraryShelvesPage({ storage, library, utils, actions = {}
     const pages = books.reduce((sum, book) => sum + Math.max(0, Number(book.currentPage) || 0), 0);
 
     const existing = main.querySelector ? main.querySelector('#statusPage') : pageDocument.getElementById('statusPage');
-    if (existing && (typeof main.contains === 'function' ? main.contains(existing) : main.querySelector?.('#statusPage') === existing)) {
+    if (existing && typeof existing.querySelector === 'function' && (typeof main.contains === 'function' ? main.contains(existing) : main.querySelector?.('#statusPage') === existing)) {
+      if (!existing.dataset) existing.dataset = {};
       existing.dataset.shelf = pageUtils.sanitize(state.status);
       const breadcrumbTitle = existing.querySelector('.library-breadcrumb span:last-of-type');
       if (breadcrumbTitle) breadcrumbTitle.textContent = title;

@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="LibriQ — Your reading life, beautifully organized. Track books, set reading goals, discover new titles, and view reading statistics." />
+  <meta name="description" content="LibriQ: Your reading life, beautifully organized. Track books, set reading goals, discover new titles, and view reading statistics." />
+  <!-- ds-allow-hardcode: mobile browser meta theme-color -->
   <meta name="theme-color" content="#0B0E14" />
-  <meta property="og:title" content="LibriQ — Your reading life, beautifully organized" />
+  <meta property="og:title" content="LibriQ: Your reading life, beautifully organized" />
   <meta property="og:description" content="Track your reading, discover books, and visualize your reading habits." />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="./assets/icons/icon-512.png" />
@@ -276,14 +277,21 @@
             <span>Genre / subject</span>
             <input id="searchFilterGenre" type="text" class="form-input search-filter-input" placeholder="Any genre" autocomplete="off" />
           </label>
-          <label class="search-filter-field">
-            <span>Source</span>
-            <select id="searchFilterSource" class="form-select search-filter-select">
-              <option value="all">All sources</option>
-              <option value="openlibrary">Open Library</option>
-              <option value="google">Google Books</option>
-            </select>
-          </label>
+          <div class="search-filter-field custom-select-field">
+            <span id="searchFilterSourceLabel">Source</span>
+            <div class="custom-select-wrapper" id="searchFilterSourceWrapper">
+              <button type="button" class="form-select custom-select-trigger" id="searchFilterSourceTrigger" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="searchFilterSourceLabel searchFilterSourceTrigger">
+                <span class="custom-select-value" id="searchFilterSourceValue">All sources</span>
+                <i class="ph ph-caret-down" aria-hidden="true"></i>
+              </button>
+              <ul class="custom-select-listbox" id="searchFilterSourceListbox" role="listbox" tabindex="-1" hidden>
+                <li class="custom-select-option is-selected" role="option" data-value="all" aria-selected="true">All sources</li>
+                <li class="custom-select-option" role="option" data-value="openlibrary" aria-selected="false">Open Library</li>
+                <li class="custom-select-option" role="option" data-value="google" aria-selected="false">Google Books</li>
+              </ul>
+              <input type="hidden" id="searchFilterSource" name="source" value="all" />
+            </div>
+          </div>
           <label class="search-filter-check">
             <input id="searchFilterDescription" type="checkbox" />
             <span>Has description</span>

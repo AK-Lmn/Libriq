@@ -150,3 +150,19 @@ vite.config.ts.timestamp-*
 .vite/
 .vercel
 docs/screenshots/*.png
+
+# Fullstack Audit local architecture maps (AI navigation only)
+docs/frontend-atlas/
+docs/backend-atlas/
+docs/adaptive-atlas/
+docs/reference-atlas/
+docs/cloned-repos/
+docs/clone-repo/
+docs/research/
+GLOSSARY.md
+docs/adr/
+docs/graph.json
+docs/llms.txt
+docs/llms-full.txt
+docs/THEME_MIGRATION_PUNCHLIST.md
+graphify-out/

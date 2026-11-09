@@ -1,3 +1,4 @@
+// LibriQ Service Worker v4.8.1
 importScripts('./js/version-classic.js');
 const CACHE_VERSION = `libriq-v${self.LIBRIQ_APP_VERSION}`;
 const CACHE_NAME = `${CACHE_VERSION}-shell-v5-complete-glass`;

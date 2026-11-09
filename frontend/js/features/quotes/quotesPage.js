@@ -201,7 +201,7 @@ export function formatQuoteCitation(quote) {
   const author = String(quote?.bookAuthor || 'Unknown author').trim();
   const title = String(quote?.bookTitle || 'Unknown title').trim();
   const page = quote?.page !== null && quote?.page !== undefined && quote?.page !== '' ? `, p. ${quote.page}` : '';
-  return `"${content}"\n\n— ${author}, ${title}${page}`;
+  return `"${content}"\n\n\u2014 ${author}, ${title}${page}`;
 }
 
 export function formatQuoteMarkdown(quote) {
