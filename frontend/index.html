@@ -203,6 +203,25 @@
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <main id="mainContent" class="main-content" role="main">
+      <div class="session-page session-page--boot">
+        <section class="session-boot-card" aria-labelledby="sessionBootTitle" aria-busy="true">
+          <a class="session-brand" href="./" aria-label="LibriQ home">
+            <span class="session-brand-mark">Q</span><strong>LibriQ</strong>
+          </a>
+          <div class="session-boot-art" aria-hidden="true"><i class="ph ph-book-open-text"></i></div>
+          <span class="session-eyebrow">Your reading space</span>
+          <h1 id="sessionBootTitle">A moment between chapters.</h1>
+          <p>Checking your account before loading your private library.</p>
+          <div class="session-loading-card" role="status" aria-live="polite">
+            <div class="session-loading-spinner" aria-hidden="true"></div>
+            <div>
+              <div class="session-card-title">Opening LibriQ</div>
+              <div class="session-card-body">Your saved reading space will be here shortly.</div>
+            </div>
+          </div>
+          <p class="session-fineprint"><i class="ph ph-lock-key" aria-hidden="true"></i> Your books. Your space.</p>
+        </section>
+      </div>
     </main>
 
     <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Mobile navigation">
