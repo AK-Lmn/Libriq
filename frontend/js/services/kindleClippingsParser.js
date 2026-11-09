@@ -42,7 +42,7 @@ function parseBlock(block) {
   let metadataIndex = 1;
   while (metadataIndex < lines.length && !lines[metadataIndex].trim()) metadataIndex += 1;
   const metadata = lines[metadataIndex]?.trim() || '';
-  const typeMatch = metadata.match(/^[-–—]\s*Your\s+(Highlight|Note)\b/i);
+  const typeMatch = metadata.match(/^[\-\u2013\u2014]\s*Your\s+(Highlight|Note)\b/i);
   if (!typeMatch) return null;
 
   const type = typeMatch[1].toLowerCase();

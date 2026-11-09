@@ -90,12 +90,12 @@ export const Utils = {
   },
 
   formatPages(n) {
-    if (!n) return '–';
+    if (!n) return 'None';
     return n.toLocaleString() + ' pages';
   },
 
   formatDate(isoString) {
-    if (!isoString) return '–';
+    if (!isoString) return 'None';
     const d = new Date(isoString);
     return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   },
@@ -223,7 +223,7 @@ export const Utils = {
       const attrs = interactive
         ? `data-rating="${n}" data-book-id="${Utils.sanitize(bookId)}" onclick="Library.setRating(${_inlineString(bookId)}, ${n})"`
         : '';
-      return `<span class="star ${filled}" ${attrs}>★</span>`;
+      return `<span class="star ${filled}" ${attrs}><i class="ph${filled ? '-fill' : ''} ph-star" aria-hidden="true"></i></span>`;
     }).join('');
 
     return `<div class="star-rating ${interactive ? '' : 'readonly'}">${stars}</div>`;
@@ -256,6 +256,7 @@ export const Utils = {
   },
 
   genreColor(genre) {
+    /* ds-allow-hardcode: genre color taxonomy mapping */
     const colors = {
       'Fantasy':          '#7C6CD4',
       'Science Fiction':  '#4A9EDB',

@@ -115,7 +115,7 @@ export const Library = (() => {
           <label class="form-label">Your rating</label>
           <div class="star-rating star-lg" id="addBookStars">
             ${[1,2,3,4,5].map(n =>
-              `<button class="star" type="button" data-action="set-add-rating" data-rating="${n}" aria-label="Rate ${n} out of 5" aria-pressed="false">★</button>`
+              `<button class="star" type="button" data-action="set-add-rating" data-rating="${n}" aria-label="Rate ${n} out of 5" aria-pressed="false"><i class="ph ph-star" aria-hidden="true"></i></button>`
             ).join('')}
           </div>
           <input type="hidden" name="rating" id="ratingInput" value="">
@@ -305,7 +305,7 @@ export const Library = (() => {
     if (book.pageCount && currentPage >= book.pageCount) {
       updates.status = LIBRIQ.STATUS.FINISHED;
       updates.dateFinished = new Date().toISOString();
-      Utils.toast(`🎉 Congratulations! You finished "${book.title}"`, 'success');
+      Utils.toast(`Congratulations! You finished "${book.title}"`, 'success');
     }
 
     Storage.updateBook(bookId, updates);
@@ -351,7 +351,7 @@ export const Library = (() => {
     const newRating = current.rating === rating ? null : rating;
     Storage.updateBook(bookId, { rating: newRating });
     _logActivity('rating_updated', Storage.getBookById(bookId), { rating: newRating }, current.source || 'system');
-    Utils.toast(newRating ? `Rated ${newRating} ★` : 'Rating cleared', 'info');
+    Utils.toast(newRating ? `Rated ${newRating} of 5` : 'Rating cleared', 'info');
     const detailsModal = document.getElementById('bookDetailsModal');
     if (detailsModal && !detailsModal.hasAttribute('hidden')) {
       Library.showDetailsModal(bookId);
@@ -454,7 +454,7 @@ export const Library = (() => {
           <label class="form-label">Your rating</label>
           <div class="star-rating star-lg" id="manualBookStars">
             ${[1,2,3,4,5].map(n =>
-              `<button class="star${n <= (book.rating || 0) ? ' filled' : ''}" type="button" data-action="set-manual-rating" data-rating="${n}" aria-label="Rate ${n} out of 5" aria-pressed="${n === book.rating}">★</button>`
+              `<button class="star${n <= (book.rating || 0) ? ' filled' : ''}" type="button" data-action="set-manual-rating" data-rating="${n}" aria-label="Rate ${n} out of 5" aria-pressed="${n === book.rating}"><i class="ph ph-star" aria-hidden="true"></i></button>`
             ).join('')}
           </div>
           <input type="hidden" name="rating" id="manualRatingInput" value="${book.rating || ''}">
@@ -474,7 +474,7 @@ export const Library = (() => {
 
   function toggleFavorite(bookId) {
     const book = Storage.toggleFavorite(bookId);
-    const msg = book?.isFavorite ? 'Added to favorites ❤️' : 'Removed from favorites';
+    const msg = book?.isFavorite ? 'Added to favorites' : 'Removed from favorites';
     _logActivity(book?.isFavorite ? 'favorite_added' : 'favorite_removed', book, {}, book?.source || 'system');
     Utils.toast(msg, book?.isFavorite ? 'success' : 'info');
     return book;
@@ -780,7 +780,7 @@ export const Library = (() => {
         <div class="library-card-progress ${isReading ? 'reading-progress' : ''}">
           <div class="progress-label">
             <span class="progress-text">${progressText}</span>
-            <span class="progress-pct">${isReading ? pageCount ? `${pct}%` : '—' : isFinished && pageCount ? '100%' : '—'}</span>
+            <span class="progress-pct">${isReading ? pageCount ? `${pct}%` : '' : isFinished && pageCount ? '100%' : ''}</span>
           </div>
           ${isReading || isFinished ? `<div class="progress-bar" role="progressbar" aria-label="Reading progress for ${Utils.sanitize(book.title)}" aria-valuemin="0" aria-valuemax="100" ${pageCount ? `aria-valuenow="${isFinished ? 100 : pct}"` : ''} aria-valuetext="${progressText}">
             <div class="progress-fill" style="width:${pageCount ? isFinished ? 100 : pct : 0}%"></div>

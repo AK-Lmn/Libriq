@@ -1,6 +1,6 @@
 export const librarySortOptions = [
-  ['recently-added', 'Recently added'], ['title-az', 'Title A–Z'],
-  ['author-az', 'Author A–Z'], ['highest-rated', 'Highest rated'],
+  ['recently-added', 'Recently added'], ['title-az', 'Title A-Z'],
+  ['author-az', 'Author A-Z'], ['highest-rated', 'Highest rated'],
   ['reading-progress', 'Reading progress'], ['recently-updated', 'Recently updated'],
 ];
 
@@ -120,7 +120,7 @@ export function buildBookSpine(book, utils, actions = {}) {
       <div class="spine-author">${sanitize(book.author || '')}</div>
     </div>
     <div class="spine-bottom-accent"></div>
-    ${book.isFavorite ? '<span class="spine-favorite-star" title="Favorite">★</span>' : ''}
+    ${book.isFavorite ? '<span class="spine-favorite-star" title="Favorite"><i class="ph-fill ph-star" aria-hidden="true"></i></span>' : ''}
     <div class="spine-popover">
       <div class="spine-popover-cover">
         ${book.coverUrl ? `<img src="${sanitize(book.coverUrl)}" alt="" loading="lazy" decoding="async" />` : '<div class="spine-popover-no-cover"><i class="ph ph-book"></i></div>'}
@@ -130,7 +130,7 @@ export function buildBookSpine(book, utils, actions = {}) {
         <span class="spine-popover-author">${sanitize(book.author || 'Unknown')}</span>
         <div class="spine-popover-meta">
           ${isReading ? `<span class="spine-status-badge reading">Reading · ${currentPage}/${totalPages} (${pct}%)</span>` : ''}
-          ${isFinished ? `<span class="spine-status-badge finished">Finished ★ ${book.rating ? `${book.rating}/5` : ''}</span>` : ''}
+          ${isFinished ? `<span class="spine-status-badge finished">Finished ${book.rating ? `· ${book.rating}/5` : ''}</span>` : ''}
           ${book.status === 'wishlist' ? '<span class="spine-status-badge wishlist">Want to Read</span>' : ''}
         </div>
         <span class="spine-popover-hint">Click to inspect</span>

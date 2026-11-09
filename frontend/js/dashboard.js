@@ -216,7 +216,7 @@ export const Dashboard = {
                     <div class="goal-stat-label">Weeks left</div>
                   </div>
                   <div class="goal-stat">
-                    <div class="goal-stat-value">${stats.avgRating || '–'}</div>
+                    <div class="goal-stat-value">${stats.avgRating || 'None'}</div>
                     <div class="goal-stat-label">Avg rating</div>
                   </div>
                 </div>
@@ -274,7 +274,7 @@ function buildFeaturedReadingHero(book) {
         <div class="progress-bar dashboard-progress-bar">
           <div class="progress-fill ${pct >= 100 ? 'complete' : ''}" style="width:${pct}%"></div>
         </div>
-        <p class="dashboard-page-count">Page ${book.currentPage || 0} / ${book.pageCount || '–'}</p>
+        <p class="dashboard-page-count">Page ${book.currentPage || 0} / ${book.pageCount || '0'}</p>
         <p class="dashboard-hero-quote">${Utils.sanitize(buildFeaturedQuote(book))}</p>
         <div class="dashboard-hero-actions">
           <button class="btn btn-primary" type="button" data-action="update-progress" data-book-id="${Utils.sanitize(book.id)}">
@@ -592,29 +592,29 @@ export function buildMobileAppPollCard() {
             <span class="dashboard-poll-badge-dot"></span>
             <span>Community Poll</span>
           </div>
-          <h2 class="dashboard-poll-title">Would you like a native mobile app for LibriQ? 📱</h2>
+          <h2 class="dashboard-poll-title">Would you like a native mobile app for LibriQ?</h2>
           <p class="dashboard-poll-subtitle">
             We're deciding whether to prioritize an <strong>iOS (Apple App Store)</strong> or <strong>Android (Google Play)</strong> app next. Cast your vote to help us choose!
           </p>
         </div>
         <div class="dashboard-poll-actions" id="dashboardPollActionRow">
           <button class="btn btn-secondary dashboard-poll-btn ${os === 'iOS' ? 'is-detected' : ''}" type="button" data-action="submit-mobile-poll" data-poll-choice="ios">
-            <span class="poll-btn-emoji">🍏</span>
+            <span class="poll-btn-icon"><i class="ph ph-apple-logo" aria-hidden="true"></i></span>
             <span>Yes, <strong>iOS</strong></span>
             ${os === 'iOS' ? '<span class="poll-detected-chip">Your OS</span>' : ''}
           </button>
           <button class="btn btn-secondary dashboard-poll-btn ${os === 'Android' ? 'is-detected' : ''}" type="button" data-action="submit-mobile-poll" data-poll-choice="android">
-            <span class="poll-btn-emoji">🤖</span>
+            <span class="poll-btn-icon"><i class="ph ph-android-logo" aria-hidden="true"></i></span>
             <span>Yes, <strong>Android</strong></span>
             ${os === 'Android' ? '<span class="poll-detected-chip">Your OS</span>' : ''}
           </button>
           <button class="btn btn-ghost dashboard-poll-btn" type="button" data-action="submit-mobile-poll" data-poll-choice="web_ok">
-            <span class="poll-btn-emoji">🌐</span>
+            <span class="poll-btn-icon"><i class="ph ph-globe" aria-hidden="true"></i></span>
             <span>Web is fine</span>
           </button>
         </div>
         <div class="dashboard-poll-success" id="dashboardPollSuccess" hidden>
-          <span class="poll-success-icon">✓</span>
+          <span class="poll-success-icon"><i class="ph ph-check" aria-hidden="true"></i></span>
           <span>Vote recorded! Thank you for shaping LibriQ&apos;s roadmap.</span>
         </div>
       </div>

@@ -44,7 +44,7 @@ export function createStatisticsPage({ storage, utils, constants, actions, docum
             ['book-check', 'Books finished', stats.finished, `${stats.finishedThisYear} finished this year`],
             ['files', 'Pages read', utils.formatNumber(stats.totalPages), 'Across finished books'],
             ['flame', 'Longest streak', `${streak.longest} <small>days</small>`, 'Consecutive reading days'],
-            ['star', 'Avg rating', `${stats.avgRating || '–'} <small>/ 5</small>`, `${stats.ratedCount || 0} rated books`],
+            ['star', 'Avg rating', `${stats.avgRating || 'None'} <small>/ 5</small>`, `${stats.ratedCount || 0} rated books`],
           ].map(([asset, label, value, footnote]) => `
             <div class="stat-card">
               <div class="stat-card-heading"><span class="stat-card-icon">${icon(asset)}</span><span class="stat-card-label">${label}</span></div>
@@ -73,7 +73,7 @@ export function createStatisticsPage({ storage, utils, constants, actions, docum
               ${[
                 ['Books finished', recap.finishedCount, goal ? `of your ${goal}-book goal` : 'Set your reading goal'],
                 ['Pages read', utils.formatNumber(recap.pagesRead), `${utils.formatNumber(Math.round(recap.pagesRead / recap.finishedCount))} pages per book`],
-                ['Average rating', recap.avgRating || '–', `${recap.ratedCount} rated books`],
+                ['Average rating', recap.avgRating || 'None', `${recap.ratedCount} rated books`],
                 ['Most active month', recap.activeMonthLabel, `${Math.max(...recap.monthCounts)} books`],
               ].map(([label, value, note]) => `<div class="recap-metric"><span>${label}</span><strong>${value}</strong><small>${note}</small></div>`).join('')}
             </div>
@@ -120,7 +120,7 @@ export function createStatisticsPage({ storage, utils, constants, actions, docum
                 ${[
                   ['Total books', stats.total], ['Reading', stats.reading], ['Finished', stats.finished],
                   ['Want to read', stats.wishlist], ['Did not finish', books.filter(book => book.status === constants.STATUS.DNF).length], ['Favorites', stats.favorites],
-                  ['Avg rating', stats.avgRating ? `${stats.avgRating} / 5` : '–'],
+                  ['Avg rating', stats.avgRating ? `${stats.avgRating} / 5` : 'None'],
                   ['Pages read', utils.formatNumber(stats.totalPages)], ['Current streak', `${streak.current} days`],
                   ['Longest streak', `${streak.longest} days`],
                 ].map(([label, val]) => `<div class="activity-item"><span class="activity-subtitle">${label}</span><span class="activity-time">${val}</span></div>`).join('')}

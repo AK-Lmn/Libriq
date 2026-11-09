@@ -54,7 +54,7 @@ export function buildYearlyRecap(books, year, { finishedStatus, monthLabels }) {
     if (!Number.isNaN(month)) monthCounts[month]++;
   });
   const activeMonthIndex = monthCounts.indexOf(Math.max(...monthCounts));
-  const activeMonthLabel = activeMonthIndex >= 0 ? monthLabels[activeMonthIndex] : '–';
+  const activeMonthLabel = activeMonthIndex >= 0 ? monthLabels[activeMonthIndex] : 'None';
 
   const longestBook = finishedBooks
     .filter(book => Number(book.pageCount) > 0)
