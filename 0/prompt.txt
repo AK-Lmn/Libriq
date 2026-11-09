@@ -1,0 +1,2058 @@
+<USER_REQUEST>
+{
+  "lighthouseVersion": "13.5.0",
+  "requestedUrl": "https://www.libriq.app/",
+  "mainDocumentUrl": "https://www.libriq.app/",
+  "finalDisplayedUrl": "https://www.libriq.app/",
+  "finalUrl": "https://www.libriq.app/",
+  "fetchTime": "2026-11-09T14:57:03.396Z",
+  "gatherMode": "navigation",
+  "runWarnings": [
+    "There may be stored data affecting loading performance in this location: IndexedDB. Audit this page in an incognito window to prevent those resources from affecting your scores.",
+    "The page loaded too slowly to finish within the time limit. Results may be incomplete."
+  ],
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "environment": {
+    "networkUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+    "hostUserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+    "benchmarkIndex": 2825.5,
+    "credits": {
+      "axe-core": "4.13.0"
+    }
+  },
+  "audits": {
+    "is-on-https": {
+      "id": "is-on-https",
+      "title": "Uses HTTPS",
+      "description": "All sites should be protected with HTTPS, even ones that don't handle sensitive data. This includes avoiding [mixed content](https://developers.google.com/web/fundamentals/security/prevent-mixed-content/what-is-mixed-content), where some resources are loaded over HTTP despite the initial request being served over HTTPS. HTTPS prevents intruders from tampering with or passively listening in on the communications between your app and your users, and is a prerequisite for HTTP/2 and many new web platform APIs. [Learn more about HTTPS](https://developer.chrome.com/docs/lighthouse/pwa/is-on-https/).",
+      "score": 1,
+      "scoreDisplayMode": "binary",
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "url",
+            "valueType": "url",
+            "label": "Insecure URL"
+          },
+          {
+            "key": "resolution",
+            "valueType": "text",
+            "label": "Request Resolution"
+          }
+        ],
+        "items": []
+      }
+    },
+    "redirects-http": {
+      "id": "redirects-http",
+      "title": "Redirects HTTP traffic to HTTPS",
+      "description": "Make sure that you redirect all HTTP traffic to HTTPS in order to enable secure web features for all your users. [Learn more](https://developer.chrome.com/docs/lighthouse/pwa/redirects-http/).",
+      "score": null,
+      "scoreDisplayMode": "notApplicable"
+    },
+    "first-contentful-paint": {
+      "id": "first-contentful-paint",
+      "title": "First Contentful Paint",
+      "description": "First Contentful Paint marks the time at which the first text or image is painted. [Learn more about the First Contentful Paint metric](https://developer.chrome.com/docs/lighthouse/performance/first-contentful-paint/).",
+      "score": 0.82,
+      "scoreDisplayMode": "numeric",
+      "numericValue": 1085.2649999999999,
+      "numericUnit": "millisecond",
+      "displayValue": "1.1 s",
+      "scoringOptions": {
+        "p10": 934,
+        "median": 1600
+      }
+    },
+    "largest-contentful-paint": {
+      "id": "largest-contentful-paint",
+      "title": "Largest Contentful Paint",
+      "description": "Largest Contentful Paint marks the time at which the largest text or image is painted. [Learn more about the Largest Contentful Paint metric](https://developer.chrome.com/docs/lighthouse/performance/lighthouse-largest-contentful-paint/)",
+      "score": 0.54,
+      "scoreDisplayMode": "numeric",
+      "numericValue": 2264.9854,
+      "numericUnit": "millisecond",
+      "displayValue": "2.3 s",
+      "scoringOptions": {
+        "p10": 1200,
+        "median": 2400
+      }
+    },
+    "speed-index": {
+      "id": "speed-index",
+      "title": "Speed Index",
+      "description": "Speed Index shows how quickly the contents of a page are visibly populated. [Learn more about the Speed Index metric](https://developer.chrome.com/docs/lighthouse/performance/speed-index/).",
+      "score": 0.06,
+      "scoreDisplayMode": "numeric",
+      "numericValue": 4422.849201488975,
+      "numericUnit": "millisecond",
+      "displayValue": "4.4 s",
+      "scoringOptions": {
+        "p10": 1311,
+        "median": 2300
+      }
+    },
+    "screenshot-thumbnails": {
+      "id": "screenshot-thumbnails",
+      "title": "Screenshot Thumbnails",
+      "description": "This is what the load of your site looked like.",
+      "score": 1,
+      "scoreDisplayMode": "informative",
+      "details": {
+        "type": "filmstrip",
+        "scale": 7111,
+        "items": [
+          {
+            "timing": 889,
+            "timestamp": 9061651852,
+            "data": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/REDACTED/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAFcAfIDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAj/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AJrAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//9k="
+          },
+          {
+            "timing": 1778,
+            "timestamp": 9062540727,
+            "data": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/REDACTED/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAFcAfIDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAj/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AJrAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//9k="
+          },
+          {
+            "timing": 2667,
+            "timestamp": 9063429602,
+            "data": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/REDACTED/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAFcAfIDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAj/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AJrAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//9k="
+          },
+          {
+            "timing": 3556,
+            "timestamp": 9064318477,
+            "data": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/REDACTED/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAFcAfIDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAj/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AJrAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//9k="
+          },
+          {
+            "timing": 4444,
+            "timestamp": 9065207352,
+            "data": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/REDACTED/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAFcAfIDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAj/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AJrAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//9k="
+          },
+          {
+            "timing": 5333,
+            "timestamp": 9066096227,
+            "data": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/REDACTED/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAFcAfIDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAj/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AJrAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//9k="
+          },
+          {
+            "timing": 6222,
+            "timestamp": 9066985102,
+            "data": "data:image/jpeg;base64,REDACTED"
+          },
+          {
+            "timing": 7111,
+            "timestamp": 9067873977,
+            "data": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/REDACTED/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAFcAfIDASIAAhEBAxEB/8QAHQAAAgIDAQEBAAAAAAAAAAAAAAUEBgIDBwEICf/REDACTED/xAAaAQEBAQEBAQEAAAAAAAAAAAAAAQIDBAUG/8QAMxEBAAICAAQDBQgCAgMAAAAAAAECAxEEEiExE0FRBRRhcZEVIlKBobHR8DJCBuFDwfH/2gAMAwEAAhEDEQA/REDACTED/5Mg/Jk/wDup/00eTIPyZP/ALqf9NXUepsgop/5Mg/Jk/8Aup/00eTIPyZP/up/REDACTED/REDACTED/REDACTED/REDACTED/FKaKJo18dty2GkOW/9IkAKUleNXmgE+/REDACTED/REDACTED/wCqjy0v/ukb9/REDACTED/wDdI37/APqo8tL/AO6Rv3/9VNR6iVeD/REDACTED/REDACTED/REDACTED/REDACTED/MtfUFHQM/REDACTED/REDACTED/REDACTED/REDACTED/IjFXDjjgiG/REDACTED/aAd8e+ukXzh+22vha3cQossZ9h22sBTIedIEh1S/REDACTED/wBOnG5O2EHUN+e/REDACTED/REDACTED/tFj6PvptSm5f2ix/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/Oo76rmaM0Fj8cj/ADqO+vDMj/REDACTED/REDACTED/REDACTED/REDACTED/JUf5TvePyo8lR/lO94/KmGDjONqKBf5Kj/Kd7x+VHkqP8p3vH5UwooF/kqP8AKd7x+VHkqP8AKd7x+VMKKBf5Kj/Kd7x+VHkqP8p3vH5UwooF/kqP8p3vH5UeSo/yne8flTCigX+So/yne8flR5Kj/Kd7x+VMKKBf5Kj/ACne8flR5Kj/ACne8flTCigX+So/yne8flR5Kj/Kd7x+VMKKBf5Kj/Kd7x+VHkqP8p3vH5UwooF/kqP8p3vH5UeSo/yne8flTCigX+So/wAp3vH5UeSo/wAp3vH5UwooF/kqP8p3vH5UeSo/yne8flTCigX+So/yne8flR5Kj/Kd7x+VMKKBf5Kj/Kd7x+VHkqP8p3vH5UwooF/REDACTED/REDACTED/wAp3vH5UeSo/wAp3vH5VYUWS6OOvtogSVOMZ6RIbOUYCic/REDACTED/lO94/KjyVH+U73j8qcmBMABMWRvj/lnrOB1ddYqiSUpKlR3gkAkkoOAAcH7dqBR5Kj/Kd7x+VHkqP8p3vH5UwooF/REDACTED/REDACTED/lO94/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/H+BpMn0hTm+erN/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/wAis3XLGUoLbUsE4Cgceby9u/REDACTED/P7KUPeiKBRfPVm/j/A0mT6QpzfPVm/j/REDACTED/XN/EPvoQtFX/REDACTED/BUCVIIBxnI/hWL2ilZtbtC1iZmIh9Qw/REDACTED/REDACTED/REDACTED/61/REDACTED/REDACTED/svudIjc3+PZc13e3o9KWz9Cs/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/rm/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/bDBTHJGEq6ANatOrGNtX0/TVPucRqG60hmU1JC2wsqb/ZJ/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/8K2otLOnz1uE9owK98kx/lO/WH5UGnywPmD9f+FHlgfMH6/8K3eSY/ynfrD8qPJMf5Tv1h+VBp8sD5g/X/hR5YHzB+v/AArd5Jj/ACnfrD8qPJMf5Tv1h+VBp8sD5g/X/hR5YHzB+v8Awrd5Jj/Kd+sPyo8kx/lO/WH5UGnywPmD9f8AhR5YHzB+v/Ct3kmP8p36w/KjyTH+U79YflQafLA+YP1/4UeWB8wfr/wrd5Jj/Kd+sPyo8kx/lO/WH5UGnywPmD9f+FHlj+4/f/REDACTED/REDACTED/XN/EPvp3xD6nE96qSM/rm/REDACTED/0VJXScM3COT+rkHb3gH8a6jx/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/akU6Vx/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/6/wNJk+kKc3z1Zv4/REDACTED/2dOTjr6/fTUcU4kB/REDACTED/LHtqSmyXNTS3BBkaEDJOg/REDACTED/bILywrVqcSVHlyyTy9n/REDACTED/2VBooooooooIXEPqcT3qpIz+ub+IffTviH1OJ71UkZ/XN/EPvoQtFSDyFR6kHkKg7/AP0UJWJV5i5+SvHvB/REDACTED/REDACTED/REDACTED/KJ/huOFyz5frC/AADAGBWLyAtlaDyUkiqa5fLisE+MxW/hA/HNQXrzcFEhUxXZ5uB9wry5f+QcPj/1mfp/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/qbUkqCUAheEIB6/lBR+k/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/rm/REDACTED/8ASVsLQxCsl0fVj/REDACTED/1mfzn+SeKyT5/pD6OFvtWokzZT5Ox0ZV/REDACTED/REDACTED/TbveLh6/dZ8n/zpC1/REDACTED/7Ygf/AOhv/REDACTED/REDACTED/REDACTED/REDACTED/nQmfZQptfktQUlwqKdZUkpzsNz2ddIaKBy/MtLjRCIK0OFsJ1ZJwrkSBq/REDACTED/REDACTED/REDACTED/REDACTED/wADSYcxTm+erN/REDACTED/REDACTED/REDACTED/REDACTED/XN/REDACTED/REDACTED/REDACTED/REDACTED/hYhSo9ploWHGygF3KSgKBWCCo7kZHdyrOxS/Jsftd+sPyo8mx+136w/REDACTED/REDACTED/REDACTED/LX9lHk1v5a/REDACTED/REDACTED/REDACTED/wNJhTm+erN/REDACTED/REDACTED/REDACTED/REDACTED/f/hU2G9FKPLB+Y/f/AIUeWD8x+/8AwpsN6KUeWD8x+/8Awo8sH5j9/wDhTYb0Uo8sH5j9/wDhR5YPzH7/APCmw3opR5YPzH7/APCjywfmP3/4U2G9AODkc6UeWD8x+/8Awo8sH5j9/REDACTED/wCFHlg/Mfv/AMK1zJpaPKq/mGf3vzo8qr+YZ/e/Oqv5YPzH7/8ACjywfmP3/wCFOY0tHlVfzDP7350eVV/MM/vfnVX8sH5j9/8AhR5YPzH7/REDACTED//CjywfmP3/4VNrpZfKbvyG+4/nR5Td+Q33H86rXlg/Mfv/wo8sH5j9/+FTZpZfKbvyG+4/nWmTLckAJVgJG+BSDywfmP3/4UeWD8x+//AAps0b0Uo8sH5j9/+FHlg/Mfv/wpsN6KUeWD8x+//CjywfmP3/4U2G9FKPLB+Y/f/hR5YPzH7/8ACmw3opR5YPzH7/8ACjywfmP3/wCFNjfez/REDACTED/REDACTED/REDACTED/REDACTED/wADSYU5vnqzfx/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/j/REDACTED/JLfzi+6u1/REDACTED/REDACTED/S38N+5Zf7MPkzyS384vuo8kt/OL7q+uI3g+srCGmURLkpXRuJSS/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/tzTyS386vuo8kt/REDACTED/rdhTCxEW2tCkHziPORkY5/REDACTED/u/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/ALKgauZV0fOkVFBvmvpkSFOoZbZBAGhAwBgY/jWiiiiiiiigXXz1Zv4/wNJhTm+erN/REDACTED/REDACTED/iFB3jwBJUq/REDACTED/wBGaUqFdL/REDACTED/rCEp5csDH31hwqhfE0KK3NuMhcKKGH/REDACTED/SPSY/aZa97jvyfqoiZ5EiO54u6Q22EHbny/REDACTED/F/SPh/REDACTED/B5+OOf/ACV+hGK+APC9/wAacU/+ovf/REDACTED/wn/REDACTED/REDACTED/REDACTED/PXX1f4LS1/REDACTED/P+/REDACTED/REDACTED/REDACTED/vo+YJ39qxv8AD/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/RJ/REDACTED/REDACTED/j/REDACTED/iFFfTP8ARS/4muv/AJSP/REDACTED/ia6/+Uj/REDACTED/REDACTED/REDACTED/xpxT/REDACTED/ABpxT/6i9/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/TporOp3WJ38/REDACTED/asb/D/AJjVt4ZfDUl5LhUhtbenpE/snqyOyqlO/tWN/h/REDACTED/nO1ZXl/REDACTED/REDACTED/REDACTED/REDACTED/wBOay/REDACTED/rX999tH9a/vvtps0tnjknGPGHsfGa0VWv61/ffbR/Wv777abNLLRVa/rX999tH9a/vvtps0stFVr+tf3320f1r+++2mzSy0VWv61/ffbR/Wv777abNLLRVa/REDACTED/REDACTED/REDACTED/iFFfTP9FL/ia6/wDlI/8AtX1LXyX/REDACTED/REDACTED/REDACTED/j/REDACTED/C9/xpxT/6i9/8pr7b/REDACTED/REDACTED/REDACTED/nnThUV65XLp7e+FR1vl9Oc60de/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/SJ0xbut1a4ih3q/REDACTED/REDACTED/REDACTED/FreNzHSP7qXScNqzqJ6z1/REDACTED/uUtclCwNLXRNp3SpSwTqOOW3Peu5Ni/REDACTED/vza8CJmLRP5f35Piqd/asb/AA/5jXWvAcpr/REDACTED/mNdQ8ECUqv0oq/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/iH3VDY/XN/REDACTED/v0un/h6x/Vd/wBdUzgVpL4uCFjZCUOnGxUASCg/REDACTED/D4rzzXrEz8m65L1jUS0f79Lp/wCHrH9V3/XR/v0un/h+x/Vd/REDACTED/wAP2P6rv+uj/fpdP/D1j+q7/rrVbTHdWieqBCEjxhpIIZGE/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/WD5Mg/REDACTED/REDACTED/asb/D/REDACTED/w/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/gaTCnN89Wb+P8DSYVFTaKKKyr//2Q=="
+          }
+        ]
+      }
+    },
+    "final-screenshot": {
+      "id": "final-screenshot",
+      "title": "Final Screenshot",
+      "description": "The last screenshot captured of the pageload.",
+      "score": 1,
+      "scoreDisplayMode": "informative",
+      "details": {
+        "type": "screenshot",
+        "timing": 43242,
+        "timestamp": 9104004972,
+        "data": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/REDACTED/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAFcAfIDASIAAhEBAxEB/8QAHQAAAgIDAQEBAAAAAAAAAAAAAAUEBgIDBwEICf/REDACTED/xAAaAQEBAQEBAQEAAAAAAAAAAAAAAQIDBAUG/8QAMxEBAAICAAQDBQgCAgMAAAAAAAECAxEEEiExE0FRBRRhcZEVIlKBobHR8DJCBuFDwfH/2gAMAwEAAhEDEQA/REDACTED/5Mg/Jk/wDup/00eTIPyZP/ALqf9NXUepsgop/5Mg/Jk/8Aup/00eTIPyZP/up/REDACTED/REDACTED/REDACTED/REDACTED/FKaKJo18dty2GkOW/9IkAKUleNXmgE+/REDACTED/REDACTED/wCqjy0v/ukb9/REDACTED/wDdI37/APqo8tL/AO6Rv3/9VNR6iVeD/REDACTED/REDACTED/REDACTED/REDACTED/MtfUFHQM/REDACTED/REDACTED/REDACTED/REDACTED/IjFXDjjgiG/REDACTED/aAd8e+ukXzh+22vha3cQossZ9h22sBTIedIEh1S/REDACTED/wBOnG5O2EHUN+e/REDACTED/REDACTED/tFj6PvptSm5f2ix/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/Oo76rmaM0Fj8cj/ADqO+vDMj/REDACTED/REDACTED/REDACTED/REDACTED/JUf5TvePyo8lR/lO94/KmGDjONqKBf5Kj/Kd7x+VHkqP8p3vH5UwooF/kqP8AKd7x+VHkqP8AKd7x+VMKKBf5Kj/Kd7x+VHkqP8p3vH5UwooF/kqP8p3vH5UeSo/yne8flTCigX+So/yne8flR5Kj/Kd7x+VMKKBf5Kj/ACne8flR5Kj/ACne8flTCigX+So/yne8flR5Kj/Kd7x+VMKKBf5Kj/Kd7x+VHkqP8p3vH5UwooF/kqP8p3vH5UeSo/yne8flTCigX+So/wAp3vH5UeSo/wAp3vH5UwooF/kqP8p3vH5UeSo/yne8flTCigX+So/yne8flR5Kj/Kd7x+VMKKBf5Kj/Kd7x+VHkqP8p3vH5UwooF/REDACTED/REDACTED/wAp3vH5UeSo/wAp3vH5VYUWS6OOvtogSVOMZ6RIbOUYCic/REDACTED/lO94/KjyVH+U73j8qcmBMABMWRvj/lnrOB1ddYqiSUpKlR3gkAkkoOAAcH7dqBR5Kj/Kd7x+VHkqP8p3vH5UwooF/REDACTED/REDACTED/lO94/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/H+BpMn0hTm+erN/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/wAis3XLGUoLbUsE4Cgceby9u/REDACTED/P7KUPeiKBRfPVm/j/A0mT6QpzfPVm/j/REDACTED/XN/EPvoQtFX/REDACTED/BUCVIIBxnI/hWL2ilZtbtC1iZmIh9Qw/REDACTED/REDACTED/REDACTED/61/REDACTED/REDACTED/svudIjc3+PZc13e3o9KWz9Cs/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/rm/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/bDBTHJGEq6ANatOrGNtX0/TVPucRqG60hmU1JC2wsqb/ZJ/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/8K2otLOnz1uE9owK98kx/lO/WH5UGnywPmD9f+FHlgfMH6/8K3eSY/ynfrD8qPJMf5Tv1h+VBp8sD5g/X/hR5YHzB+v/AArd5Jj/ACnfrD8qPJMf5Tv1h+VBp8sD5g/X/hR5YHzB+v8Awrd5Jj/Kd+sPyo8kx/lO/WH5UGnywPmD9f8AhR5YHzB+v/Ct3kmP8p36w/KjyTH+U79YflQafLA+YP1/4UeWB8wfr/wrd5Jj/Kd+sPyo8kx/lO/WH5UGnywPmD9f+FHlj+4/f/REDACTED/REDACTED/XN/EPvp3xD6nE96qSM/rm/REDACTED/0VJXScM3COT+rkHb3gH8a6jx/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/akU6Vx/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/6/wNJk+kKc3z1Zv4/REDACTED/2dOTjr6/fTUcU4kB/REDACTED/LHtqSmyXNTS3BBkaEDJOg/REDACTED/bILywrVqcSVHlyyTy9n/REDACTED/2VBooooooooIXEPqcT3qpIz+ub+IffTviH1OJ71UkZ/XN/EPvoQtFSDyFR6kHkKg7/AP0UJWJV5i5+SvHvB/REDACTED/REDACTED/REDACTED/KJ/huOFyz5frC/AADAGBWLyAtlaDyUkiqa5fLisE+MxW/hA/HNQXrzcFEhUxXZ5uB9wry5f+QcPj/1mfp/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/qbUkqCUAheEIB6/lBR+k/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/rm/REDACTED/8ASVsLQxCsl0fVj/REDACTED/1mfzn+SeKyT5/pD6OFvtWokzZT5Ox0ZV/REDACTED/REDACTED/TbveLh6/dZ8n/zpC1/REDACTED/7Ygf/AOhv/REDACTED/REDACTED/REDACTED/REDACTED/nQmfZQptfktQUlwqKdZUkpzsNz2ddIaKBy/MtLjRCIK0OFsJ1ZJwrkSBq/REDACTED/REDACTED/REDACTED/REDACTED/wADSYcxTm+erN/REDACTED/REDACTED/REDACTED/REDACTED/XN/REDACTED/REDACTED/REDACTED/REDACTED/hYhSo9ploWHGygF3KSgKBWCCo7kZHdyrOxS/Jsftd+sPyo8mx+136w/REDACTED/REDACTED/REDACTED/LX9lHk1v5a/REDACTED/REDACTED/REDACTED/wNJhTm+erN/REDACTED/REDACTED/REDACTED/REDACTED/f/hU2G9FKPLB+Y/f/AIUeWD8x+/8AwpsN6KUeWD8x+/8Awo8sH5j9/wDhTYb0Uo8sH5j9/wDhR5YPzH7/APCmw3opR5YPzH7/APCjywfmP3/4U2G9AODkc6UeWD8x+/8Awo8sH5j9/REDACTED/wCFHlg/Mfv/AMK1zJpaPKq/mGf3vzo8qr+YZ/e/Oqv5YPzH7/8ACjywfmP3/wCFOY0tHlVfzDP7350eVV/MM/vfnVX8sH5j9/8AhR5YPzH7/REDACTED//CjywfmP3/4VNrpZfKbvyG+4/nR5Td+Q33H86rXlg/Mfv/wo8sH5j9/+FTZpZfKbvyG+4/nWmTLckAJVgJG+BSDywfmP3/4UeWD8x+//AAps0b0Uo8sH5j9/+FHlg/Mfv/wpsN6KUeWD8x+//CjywfmP3/4U2G9FKPLB+Y/f/hR5YPzH7/8ACmw3opR5YPzH7/8ACjywfmP3/wCFNjfez/REDACTED/REDACTED/REDACTED/REDACTED/wADSYU5vnqzfx/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/j/REDACTED/JLfzi+6u1/REDACTED/REDACTED/S38N+5Zf7MPkzyS384vuo8kt/OL7q+uI3g+srCGmURLkpXRuJSS/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/tzTyS386vuo8kt/REDACTED/rdhTCxEW2tCkHziPORkY5/REDACTED/u/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/ALKgauZV0fOkVFBvmvpkSFOoZbZBAGhAwBgY/jWiiiiiiiigXXz1Zv4/wNJhTm+erN/REDACTED/REDACTED/iFB3jwBJUq/REDACTED/wBGaUqFdL/REDACTED/rCEp5csDH31hwqhfE0KK3NuMhcKKGH/REDACTED/SPSY/aZa97jvyfqoiZ5EiO54u6Q22EHbny/REDACTED/F/SPh/REDACTED/B5+OOf/ACV+hGK+APC9/wAacU/+ovf/REDACTED/wn/REDACTED/REDACTED/REDACTED/PXX1f4LS1/REDACTED/P+/REDACTED/REDACTED/REDACTED/vo+YJ39qxv8AD/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/RJ/REDACTED/REDACTED/j/REDACTED/iFFfTP8ARS/4muv/AJSP/REDACTED/ia6/+Uj/REDACTED/REDACTED/REDACTED/xpxT/REDACTED/ABpxT/6i9/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/TporOp3WJ38/REDACTED/asb/D/AJjVt4ZfDUl5LhUhtbenpE/snqyOyqlO/tWN/h/REDACTED/nO1ZXl/REDACTED/REDACTED/REDACTED/REDACTED/wBOay/REDACTED/rX999tH9a/vvtps0tnjknGPGHsfGa0VWv61/ffbR/Wv777abNLLRVa/rX999tH9a/vvtps0stFVr+tf3320f1r+++2mzSy0VWv61/ffbR/Wv777abNLLRVa/REDACTED/REDACTED/REDACTED/iFFfTP9FL/ia6/wDlI/8AtX1LXyX/REDACTED/REDACTED/REDACTED/j/REDACTED/C9/xpxT/6i9/8pr7b/REDACTED/REDACTED/REDACTED/nnThUV65XLp7e+FR1vl9Oc60de/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/SJ0xbut1a4ih3q/REDACTED/REDACTED/REDACTED/FreNzHSP7qXScNqzqJ6z1/REDACTED/uUtclCwNLXRNp3SpSwTqOOW3Peu5Ni/REDACTED/vza8CJmLRP5f35Piqd/asb/AA/5jXWvAcpr/REDACTED/mNdQ8ECUqv0oq/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/iH3VDY/XN/REDACTED/v0un/h6x/Vd/wBdUzgVpL4uCFjZCUOnGxUASCg/REDACTED/D4rzzXrEz8m65L1jUS0f79Lp/wCHrH9V3/XR/v0un/h+x/Vd/REDACTED/wAP2P6rv+uj/fpdP/D1j+q7/rrVbTHdWieqBCEjxhpIIZGE/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/WD5Mg/REDACTED/REDACTED/asb/D/REDACTED/w/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/REDACTED/gaTCnN89Wb+P8DSYVFTaKKKyr//2Q=="
+      }
+    },
+    "total-blocking-time": {
+      "id": "total-blocking-time",
+      "title": "Total Blocking Time",
+      "description": "Sum of all time periods between FCP and Time to Interactive, when task length exceeded 50ms, expressed in milliseconds. [Learn more about the Total Blocking Time metric](https://developer.chrome.com/docs/lighthouse/performance/lighthouse-total-blocking-time/).",
+      "score": 1,
+      "scoreDisplayMode": "numeric",
+      "numericValue": 0,
+      "numericUnit": "millisecond",
+      "displayValue": "0 ms",
+      "scoringOptions": {
+        "p10": 150,
+        "median": 350
+      }
+    },
+    "max-potential-fid": {
+      "id": "max-potential-fid",
+      "title": "Max Potential First Input Delay",
+      "description": "The maximum potential First Input Delay that your users could experience is the duration of the longest task. [Learn more about the Maximum Potential First Input Delay metric](https://developer.chrome.com/docs/lighthouse/performance/lighthouse-max-potential-fid/).",
+      "score": 1,
+      "scoreDisplayMode": "numeric",
+      "numericValue": 47,
+      "numericUnit": "millisecond",
+      "displayValue": "50 ms"
+    },
+    "cumulative-layout-shift": {
+      "id": "cumulative-layout-shift",
+      "title": "Cumulative Layout Shift",
+      "description": "Cumulative Layout Shift measures the movement of visible elements within the viewport. [Learn more about the Cumulative Layout Shift metric](https://web.dev/articles/cls).",
+      "score": 1,
+      "scoreDisplayMode": "numeric",
+      "numericValue": 0,
+      "numericUnit": "unitless",
+      "displayValue": "0",
+      "scoringOptions": {
+        "p10": 0.1,
+        "median": 0.25
+      },
+      "details": {
+        "type": "debugdata",
+        "items": [
+          {
+            "cumulativeLayoutShiftMainFrame": 0,
+            "newEngineResult": {
+              "cumulativeLayoutShift": 0,
+              "cumulativeLayoutShiftMainFrame": 0
+            },
+            "newEngineResultDiffered": false
+          }
+        ]
+      }
+    },
+    "errors-in-console": {
+      "id": "errors-in-console",
+      "title": "No browser errors logged to the console",
+      "description": "Errors logged to the console indicate unresolved problems. They can come from network request failures and other browser concerns. [Learn more about this errors in console diagnostic audit](https://developer.chrome.com/docs/lighthouse/best-practices/errors-in-console/)",
+      "score": 1,
+      "scoreDisplayMode": "binary",
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "sourceLocation",
+            "valueType": "source-location",
+            "label": "Source"
+          },
+          {
+            "key": "description",
+            "valueType": "code",
+            "label": "Description"
+          }
+        ],
+        "items": []
+      }
+    },
+    "server-response-time": {
+      "id": "server-response-time",
+      "title": "Initial server response time was short",
+      "description": "Keep the server response time for the main document short because all other requests depend on it. [Learn more about the Time to First Byte metric](https://developer.chrome.com/docs/lighthouse/performance/time-to-first-byte/).",
+      "score": 1,
+      "scoreDisplayMode": "metricSavings",
+      "numericValue": 33,
+      "numericUnit": "millisecond",
+      "displayValue": "Root document took 30 ms",
+      "metricSavings": {
+        "FCP": 0,
+        "LCP": 0
+      },
+      "details": {
+        "type": "opportunity",
+        "headings": [
+          {
+            "key": "url",
+            "valueType": "url",
+            "label": "URL"
+          },
+          {
+            "key": "responseTime",
+            "valueType": "timespanMs",
+            "label": "Time Spent"
+          }
+        ],
+        "items": [
+          {
+            "url": "https://www.libriq.app/",
+            "responseTime": 33
+          }
+        ],
+        "overallSavingsMs": 0
+      },
+      "guidanceLevel": 1
+    },
+    "interactive": {
+      "id": "interactive",
+      "title": "Time to Interactive",
+      "description": "Time to Interactive is the amount of time it takes for the page to become fully interactive. [Learn more about the Time to Interactive metric](https://developer.chrome.com/docs/lighthouse/performance/interactive/).",
+      "score": 0.92,
+      "scoreDisplayMode": "numeric",
+      "numericValue": 2264.9854,
+      "numericUnit": "millisecond",
+      "displayValue": "2.3 s"
+    },
+    "user-timings": {
+      "id": "user-timings",
+      "title": "User Timing marks and measures",
+      "description": "Consider instrumenting your app with the User Timing API to measure your app's real-world performance during key user experiences. [Learn more about User Timing marks](https://developer.chrome.com/docs/lighthouse/performance/user-timings/).",
+      "score": null,
+      "scoreDisplayMode": "notApplicable",
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "name",
+            "valueType": "text",
+            "label": "Name"
+          },
+          {
+            "key": "timingType",
+            "valueType": "text",
+            "label": "Type"
+          },
+          {
+            "key": "startTime",
+            "valueType": "ms",
+            "granularity": 0.01,
+            "label": "Start Time"
+          },
+          {
+            "key": "duration",
+            "valueType": "ms",
+            "granularity": 0.01,
+            "label": "Duration"
+          }
+        ],
+        "items": []
+      },
+      "guidanceLevel": 2
+    },
+    "redirects": {
+      "id": "redirects",
+      "title": "Avoid multiple page redirects",
+      "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/performance/redirects/).",
+      "score": 1,
+      "scoreDisplayMode": "metricSavings",
+      "numericValue": 0,
+      "numericUnit": "millisecond",
+      "displayValue": "",
+      "metricSavings": {
+        "LCP": 0,
+        "FCP": 0
+      },
+      "details": {
+        "type": "opportunity",
+        "headings": [],
+        "items": [],
+        "overallSavingsMs": 0
+      },
+      "guidanceLevel": 2
+    },
+    "image-aspect-ratio": {
+      "id": "image-aspect-ratio",
+      "title": "Displays images with correct aspect ratio",
+      "description": "Image display dimensions should match natural aspect ratio. [Learn more about image aspect ratio](https://developer.chrome.com/docs/lighthouse/best-practices/image-aspect-ratio/).",
+      "score": 1,
+      "scoreDisplayMode": "binary",
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "node",
+            "valueType": "node",
+            "label": ""
+          },
+          {
+            "key": "url",
+            "valueType": "url",
+            "label": "URL"
+          },
+          {
+            "key": "displayedAspectRatio",
+            "valueType": "text",
+            "label": "Aspect Ratio (Displayed)"
+          },
+          {
+            "key": "actualAspectRatio",
+            "valueType": "text",
+            "label": "Aspect Ratio (Actual)"
+          }
+        ],
+        "items": []
+      }
+    },
+    "image-size-responsive": {
+      "id": "image-size-responsive",
+      "title": "Serves images with appropriate resolution",
+      "description": "Image natural dimensions should be proportional to the display size and the pixel ratio to maximize image clarity. [Learn how to provide responsive images](https://web.dev/articles/serve-responsive-images).",
+      "score": 1,
+      "scoreDisplayMode": "binary",
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "node",
+            "valueType": "node",
+            "label": ""
+          },
+          {
+            "key": "url",
+            "valueType": "url",
+            "label": "URL"
+          },
+          {
+            "key": "displayedSize",
+            "valueType": "text",
+            "label": "Displayed size"
+          },
+          {
+            "key": "actualSize",
+            "valueType": "text",
+            "label": "Actual size"
+          },
+          {
+            "key": "expectedSize",
+            "valueType": "text",
+            "label": "Expected size"
+          }
+        ],
+        "items": []
+      }
+    },
+    "deprecations": {
+      "id": "deprecations",
+      "title": "Avoids deprecated APIs",
+      "description": "Deprecated APIs will eventually be removed from the browser. [Learn more about deprecated APIs](https://developer.chrome.com/docs/lighthouse/best-practices/deprecations/).",
+      "score": 1,
+      "scoreDisplayMode": "binary",
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "value",
+            "valueType": "text",
+            "label": "Deprecation / Warning"
+          },
+          {
+            "key": "source",
+            "valueType": "source-location",
+            "label": "Source"
+          }
+        ],
+        "items": []
+      }
+    },
+    "third-party-cookies": {
+      "id": "third-party-cookies",
+      "title": "Uses third-party cookies",
+      "description": "Third-party cookies may be blocked in some contexts. [Learn more about preparing for third-party cookie restrictions](https://privacysandbox.google.com/cookies/prepare/overview).",
+      "score": 0,
+      "scoreDisplayMode": "binary",
+      "displayValue": "38 cookies found",
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "name",
+            "valueType": "text",
+            "label": "Name"
+          },
+          {
+            "key": "url",
+            "valueType": "url",
+            "label": "URL"
+          }
+        ],
+        "items": [
+          {
+            "name": "COMPASS",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "COMPASS",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "COMPASS",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "COMPASS",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-OSID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-OSID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "GSP",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-OSID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-OSID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-OSID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-OSID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-OSID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-OSID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-OSID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-OSID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-OSID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-OSID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-OSID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-OSID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Host-3PLSID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-OSID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "COMPASS",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "LSOLH",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-OSID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "COMPASS",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "COMPASS",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "COMPASS",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "COMPASS",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "COMPASS",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "COMPASS",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "COMPASS",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "COMPASS",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-3PAPISID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-3PSID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "NID",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-3PSIDTS",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-3PSIDRTS",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          },
+          {
+            "name": "__Secure-3PSIDCC",
+            "url": "https://books.google.com/books/content?id=fic5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+          }
+        ]
+      }
+    },
+    "mainthread-work-breakdown": {
+      "id": "mainthread-work-breakdown",
+      "title": "Minimizes main-thread work",
+      "description": "Consider reducing the time spent parsing, compiling and executing JS. You may find delivering smaller JS payloads helps with this. [Learn how to minimize main-thread work](https://developer.chrome.com/docs/lighthouse/performance/mainthread-work-breakdown/)",
+      "score": 1,
+      "scoreDisplayMode": "metricSavings",
+      "numericValue": 785.1469999999781,
+      "numericUnit": "millisecond",
+      "displayValue": "0.8 s",
+      "metricSavings": {
+        "TBT": 0
+      },
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "groupLabel",
+            "valueType": "text",
+            "label": "Category"
+          },
+          {
+            "key": "duration",
+            "valueType": "ms",
+            "granularity": 1,
+            "label": "Time Spent"
+          }
+        ],
+        "items": [
+          {
+            "group": "other",
+            "groupLabel": "Other",
+            "duration": 381.7609999999754
+          },
+          {
+            "group": "scriptEvaluation",
+            "groupLabel": "Script Evaluation",
+            "duration": 194.1730000000018
+          },
+          {
+            "group": "styleLayout",
+            "groupLabel": "Style & Layout",
+            "duration": 111.20900000000007
+          },
+          {
+            "group": "paintCompositeRender",
+            "groupLabel": "Rendering",
+            "duration": 42.896000000000825
+          },
+          {
+            "group": "garbageCollection",
+            "groupLabel": "Garbage Collection",
+            "duration": 22.210999999999995
+          },
+          {
+            "group": "parseHTML",
+            "groupLabel": "Parse HTML & CSS",
+            "duration": 21.699
+          },
+          {
+            "group": "scriptParseCompile",
+            "groupLabel": "Script Parsing & Compilation",
+            "duration": 11.197999999999997
+          }
+        ],
+        "sortedBy": [
+          "duration"
+        ]
+      },
+      "guidanceLevel": 1
+    },
+    "bootup-time": {
+      "id": "bootup-time",
+      "title": "JavaScript execution time",
+      "description": "Consider reducing the time spent parsing, compiling, and executing JS. You may find delivering smaller JS payloads helps with this. [Learn how to reduce Javascript execution time](https://developer.chrome.com/docs/lighthouse/performance/bootup-time/).",
+      "score": 1,
+      "scoreDisplayMode": "metricSavings",
+      "numericValue": 182.73900000000089,
+      "numericUnit": "millisecond",
+      "displayValue": "0.2 s",
+      "metricSavings": {
+        "TBT": 0
+      },
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "url",
+            "valueType": "url",
+            "label": "URL"
+          },
+          {
+            "key": "total",
+            "granularity": 1,
+            "valueType": "ms",
+            "label": "Total CPU Time"
+          },
+          {
+            "key": "scripting",
+            "granularity": 1,
+            "valueType": "ms",
+            "label": "Script Evaluation"
+          },
+          {
+            "key": "scriptParseCompile",
+            "granularity": 1,
+            "valueType": "ms",
+            "label": "Script Parse"
+          }
+        ],
+        "items": [
+          {
+            "url": "Unattributable",
+            "total": 385.7929999999837,
+            "scripting": 38.66100000000059,
+            "scriptParseCompile": 0
+          },
+          {
+            "url": "https://www.googletagmanager.com/gtag/js?id=G-W5DQL4RTCF",
+            "total": 96.90800000000013,
+            "scripting": 72.73900000000013,
+            "scriptParseCompile": 8.66
+          },
+          {
+            "url": "https://www.libriq.app/",
+            "total": 82.39800000000011,
+            "scripting": 5.765999999999998,
+            "scriptParseCompile": 0.366
+          },
+          {
+            "url": "https://www.libriq.app/js/navigation.js",
+            "total": 81.789,
+            "scripting": 3.8569999999999984,
+            "scriptParseCompile": 0.124
+          },
+          {
+            "url": "https://www.libriq.app/vendor/firebase-auth.js",
+            "total": 59.87800000000016,
+            "scripting": 52.52800000000016,
+            "scriptParseCompile": 0.038
+          }
+        ],
+        "summary": {
+          "wastedMs": 182.73900000000089
+        },
+        "sortedBy": [
+          "total"
+        ]
+      },
+      "guidanceLevel": 1
+    },
+    "diagnostics": {
+      "id": "diagnostics",
+      "title": "Diagnostics",
+      "description": "Collection of useful page vitals.",
+      "score": 1,
+      "scoreDisplayMode": "informative",
+      "details": {
+        "type": "debugdata",
+        "items": [
+          {
+            "numRequests": 141,
+            "numScripts": 61,
+            "numStylesheets": 31,
+            "numFonts": 5,
+            "numTasks": 5177,
+            "numTasksOver10ms": 9,
+            "numTasksOver25ms": 4,
+            "numTasksOver50ms": 1,
+            "numTasksOver100ms": 0,
+            "numTasksOver500ms": 0,
+            "rtt": 0.1675,
+            "throughput": 15529416.991867498,
+            "maxRtt": 169.82599999999996,
+            "maxServerLatency": 318.203,
+            "totalByteWeight": 1235862,
+            "totalTaskTime": 785.1469999999916,
+            "mainDocumentTransferSize": 5282
+          }
+        ]
+      }
+    },
+    "network-requests": {
+      "id": "network-requests",
+      "title": "Network Requests",
+      "description": "Lists the network requests that were made during page load.",
+      "score": 1,
+      "scoreDisplayMode": "informative",
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "url",
+            "valueType": "url",
+            "label": "URL"
+          },
+          {
+            "key": "protocol",
+            "valueType": "text",
+            "label": "Protocol"
+          },
+          {
+            "key": "networkRequestTime",
+            "valueType": "ms",
+            "granularity": 1,
+            "label": "Network Request Time"
+          },
+          {
+            "key": "networkEndTime",
+            "valueType": "ms",
+            "granularity": 1,
+            "label": "Network End Time"
+          },
+          {
+            "key": "transferSize",
+            "valueType": "bytes",
+            "displayUnit": "kb",
+            "granularity": 1,
+            "label": "Transfer Size"
+          },
+          {
+            "key": "resourceSize",
+            "valueType": "bytes",
+            "displayUnit": "kb",
+            "granularity": 1,
+            "label": "Resource Size"
+          },
+          {
+            "key": "statusCode",
+            "valueType": "text",
+            "label": "Status Code"
+          },
+          {
+            "key": "mimeType",
+            "valueType": "text",
+            "label": "MIME Type"
+          },
+          {
+            "key": "resourceType",
+            "valueType": "text",
+            "label": "Resource Type"
+          }
+        ],
+        "items": [
+          {
+            "url": "https://www.libriq.app/",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 0,
+            "networkRequestTime": 1.196000000461936,
+            "networkEndTime": 104.46099999919534,
+            "finished": true,
+            "transferSize": 5282,
+            "resourceSize": 21653,
+            "statusCode": 200,
+            "mimeType": "text/html",
+            "resourceType": "Document",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.googletagmanager.com/gtag/js?id=G-W5DQL4RTCF",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 162.47200000099838,
+            "networkRequestTime": 174.34799999929965,
+            "networkEndTime": 315.20900000073016,
+            "finished": true,
+            "transferSize": 181233,
+            "resourceSize": 540342,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "Low",
+            "experimentalFromMainFrame": true,
+            "entity": "Google Tag Manager"
+          },
+          {
+            "url": "https://www.libriq.app/assets/fonts/fonts.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 162.7050000000745,
+            "networkRequestTime": 179.60500000044703,
+            "networkEndTime": 242.92400000058115,
+            "finished": true,
+            "transferSize": 777,
+            "resourceSize": 647,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/vendor/phosphor/style.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 162.91100000031292,
+            "networkRequestTime": 179.78900000080466,
+            "networkEndTime": 233.5719999987632,
+            "finished": true,
+            "transferSize": 29710,
+            "resourceSize": 249306,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/tokens.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 163.02600000053644,
+            "networkRequestTime": 235.23399999924004,
+            "networkEndTime": 278.5,
+            "finished": true,
+            "transferSize": 2985,
+            "resourceSize": 10735,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/reset.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 163.12700000032783,
+            "networkRequestTime": 244.38399999961257,
+            "networkEndTime": 282.23599999956787,
+            "finished": true,
+            "transferSize": 777,
+            "resourceSize": 1452,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/base.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 163.214999999851,
+            "networkRequestTime": 279.9660000000149,
+            "networkEndTime": 319.49699999950826,
+            "finished": true,
+            "transferSize": 2145,
+            "resourceSize": 7519,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/components.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 163.2829999998212,
+            "networkRequestTime": 283.378999998793,
+            "networkEndTime": 322.8519999999553,
+            "finished": true,
+            "transferSize": 990,
+            "resourceSize": 854,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/sidebar.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 163.3449999988079,
+            "networkRequestTime": 321.0319999996573,
+            "networkEndTime": 373.7039999999106,
+            "finished": true,
+            "transferSize": 3423,
+            "resourceSize": 14843,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/features/dashboard.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 163.46399999968708,
+            "networkRequestTime": 324.0559999998659,
+            "networkEndTime": 375.28900000080466,
+            "finished": true,
+            "transferSize": 5007,
+            "resourceSize": 23070,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/navigation-chrome.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 163.53600000031292,
+            "networkRequestTime": 327.9560000002384,
+            "networkEndTime": 375.04299999959767,
+            "finished": true,
+            "transferSize": 787,
+            "resourceSize": 1739,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/animations.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 163.58899999968708,
+            "networkRequestTime": 415.820000000298,
+            "networkEndTime": 456.1720000002533,
+            "finished": true,
+            "transferSize": 618,
+            "resourceSize": 1744,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/assets/icons/icon.svg",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 163.63900000043213,
+            "networkRequestTime": 798.6850000005215,
+            "networkEndTime": 839.4539999999106,
+            "finished": true,
+            "transferSize": 1112,
+            "resourceSize": 973,
+            "statusCode": 200,
+            "mimeType": "image/svg+xml",
+            "resourceType": "Image",
+            "priority": "Medium",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/assets/dashboard/desktop-lock-keyhole.svg",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 163.71400000154972,
+            "networkRequestTime": 798.8289999999106,
+            "networkEndTime": 840.3279999997467,
+            "finished": true,
+            "transferSize": 1096,
+            "resourceSize": 958,
+            "statusCode": 200,
+            "mimeType": "image/svg+xml",
+            "resourceType": "Image",
+            "priority": "Medium",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/assets/dashboard/desktop-flame.svg",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 163.7489999998361,
+            "networkRequestTime": 842.7970000002533,
+            "networkEndTime": 888.1270000003278,
+            "finished": true,
+            "transferSize": 1025,
+            "resourceSize": 891,
+            "statusCode": 200,
+            "mimeType": "image/svg+xml",
+            "resourceType": "Image",
+            "priority": "Medium",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/config.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 163.80000000074506,
+            "networkRequestTime": 794.0109999999404,
+            "networkEndTime": 833.6789999995381,
+            "finished": true,
+            "transferSize": 583,
+            "resourceSize": 404,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "Medium",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/appModules.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 163.87599999830127,
+            "networkRequestTime": 798.5159999988973,
+            "networkEndTime": 835.2970000002533,
+            "finished": true,
+            "transferSize": 706,
+            "resourceSize": 1453,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/manifest.json?v=2",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 178.13900000043213,
+            "networkRequestTime": 843.2390000000596,
+            "networkEndTime": 888.3800000008196,
+            "finished": true,
+            "transferSize": 791,
+            "resourceSize": 690,
+            "statusCode": 200,
+            "mimeType": "application/json",
+            "resourceType": "Manifest",
+            "priority": "Medium",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/components/button.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 323.6840000003576,
+            "networkRequestTime": 416.8130000010133,
+            "networkEndTime": 458.8229999989271,
+            "finished": true,
+            "transferSize": 899,
+            "resourceSize": 2272,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/components/card.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 323.7730000000447,
+            "networkRequestTime": 417.163999998942,
+            "networkEndTime": 459.0699999984354,
+            "finished": true,
+            "transferSize": 5338,
+            "resourceSize": 30490,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/components/toast.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 323.90399999916553,
+            "networkRequestTime": 458.3090000003576,
+            "networkEndTime": 504.8519999999553,
+            "finished": true,
+            "transferSize": 1153,
+            "resourceSize": 3152,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/components/form.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 323.9769999999553,
+            "networkRequestTime": 461.41699999943376,
+            "networkEndTime": 511.18299999833107,
+            "finished": true,
+            "transferSize": 1259,
+            "resourceSize": 3051,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/components/polish.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 324.05399999953806,
+            "networkRequestTime": 462.04800000041723,
+            "networkEndTime": 502.1409999988973,
+            "finished": true,
+            "transferSize": 2882,
+            "resourceSize": 12078,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/components/utilities.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 324.09600000083447,
+            "networkRequestTime": 503.179999999702,
+            "networkEndTime": 547.5379999987781,
+            "finished": true,
+            "transferSize": 1104,
+            "resourceSize": 3087,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/components/dialog.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 324.1469999998808,
+            "networkRequestTime": 506.121000001207,
+            "networkEndTime": 600.9959999993443,
+            "finished": true,
+            "transferSize": 8331,
+            "resourceSize": 51809,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/features/settings.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 324.2180000003427,
+            "networkRequestTime": 513.3780000004917,
+            "networkEndTime": 553.2080000005662,
+            "finished": true,
+            "transferSize": 5927,
+            "resourceSize": 32123,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/features/library.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 324.3070000000298,
+            "networkRequestTime": 548.8119999989867,
+            "networkEndTime": 593.2809999994934,
+            "finished": true,
+            "transferSize": 6694,
+            "resourceSize": 33990,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/features/insights.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 324.4189999997616,
+            "networkRequestTime": 554.1309999991208,
+            "networkEndTime": 594.1669999994338,
+            "finished": true,
+            "transferSize": 5045,
+            "resourceSize": 25430,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/features/session.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 324.4869999997318,
+            "networkRequestTime": 594.5539999995381,
+            "networkEndTime": 651.3100000005215,
+            "finished": true,
+            "transferSize": 5136,
+            "resourceSize": 24960,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/features/goals.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 324.5559999998659,
+            "networkRequestTime": 595.7160000000149,
+            "networkEndTime": 644.2009999994189,
+            "finished": true,
+            "transferSize": 1524,
+            "resourceSize": 5102,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/features/discover.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 325.19899999909103,
+            "networkRequestTime": 602.1160000003874,
+            "networkEndTime": 644.410000000149,
+            "finished": true,
+            "transferSize": 3354,
+            "resourceSize": 19502,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/features/profile.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 325.2519999984652,
+            "networkRequestTime": 646.2529999986291,
+            "networkEndTime": 699.5069999992847,
+            "finished": true,
+            "transferSize": 2173,
+            "resourceSize": 8296,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/features/help.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 325.3050000015646,
+            "networkRequestTime": 646.89100000076,
+            "networkEndTime": 684.9639999996871,
+            "finished": true,
+            "transferSize": 3048,
+            "resourceSize": 13384,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/features/book-details.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 325.38199999928474,
+            "networkRequestTime": 653.0230000000447,
+            "networkEndTime": 691.8729999996722,
+            "finished": true,
+            "transferSize": 2795,
+            "resourceSize": 15010,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/features/book-dialogs.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 325.5269999988377,
+            "networkRequestTime": 686.4709999989718,
+            "networkEndTime": 723.7580000013113,
+            "finished": true,
+            "transferSize": 3804,
+            "resourceSize": 19511,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/features/quotes.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 325.57499999925494,
+            "networkRequestTime": 693.1239999998361,
+            "networkEndTime": 734.106000000611,
+            "finished": true,
+            "transferSize": 2291,
+            "resourceSize": 9306,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/features/kindle-import.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 325.6189999990165,
+            "networkRequestTime": 700.8070000000298,
+            "networkEndTime": 740.8410000000149,
+            "finished": true,
+            "transferSize": 2608,
+            "resourceSize": 11663,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/features/goodreads-import.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 325.6609999984503,
+            "networkRequestTime": 725.1140000000596,
+            "networkEndTime": 761.8039999995381,
+            "finished": true,
+            "transferSize": 2440,
+            "resourceSize": 11088,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/css/features/support-dialogs.css",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 325.7039999999106,
+            "networkRequestTime": 735.3519999999553,
+            "networkEndTime": 792.3279999997467,
+            "finished": true,
+            "transferSize": 2471,
+            "resourceSize": 11905,
+            "statusCode": 200,
+            "mimeType": "text/css",
+            "resourceType": "Stylesheet",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/vendor/phosphor/Phosphor.woff2",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 380.82300000078976,
+            "networkRequestTime": 742.0570000000298,
+            "networkEndTime": 790.7450000010431,
+            "finished": true,
+            "transferSize": 147751,
+            "resourceSize": 147380,
+            "statusCode": 200,
+            "mimeType": "font/woff2",
+            "resourceType": "Font",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/assets/fonts/inter-latin.woff2",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 380.9210000000894,
+            "networkRequestTime": 763.1549999993294,
+            "networkEndTime": 819.8509999997914,
+            "finished": true,
+            "transferSize": 48471,
+            "resourceSize": 48256,
+            "statusCode": 200,
+            "mimeType": "font/woff2",
+            "resourceType": "Font",
+            "priority": "VeryHigh",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-W5DQL4RTCF&gtm=45je6b41v9257221415za208zd9257221415xf1&_p=1794236225217&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&cid=426958256.1783581871&frm=0&ngs=1&pscdl=noapi&rcb=4&sr=1920x1080&uaa=x86&uab=64&uafvl=Not-A.Brand%3B99.0.0.0%7CGoogle%2520Chrome%3B157.0.8103.39%7CChromium%3B157.0.8103.39&uam=&uamb=0&uap=macOS&uapv=10.15.7&uaw=0&ul=en-gb&_s=1&tag_exp=115938466~115938469~118012007~118897920~118897930~120213116~120385423~120412526~120420416~120469145~120469153~121246026~121246034~123814183&sid=1794236142&sct=16&seg=1&dl=https%3A%2F%2Fwww.libriq.app%2F&dt=LibriQ&en=page_view&_ee=1&tfd=412",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 412.2730000000447,
+            "networkRequestTime": 413.816000001505,
+            "networkEndTime": 485.88900000043213,
+            "finished": true,
+            "transferSize": 558,
+            "resourceSize": 0,
+            "statusCode": 204,
+            "mimeType": "text/plain",
+            "resourceType": "Fetch",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "Google Analytics"
+          },
+          {
+            "url": "https://www.libriq.app/js/data.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 845.8020000010729,
+            "networkRequestTime": 846.4890000000596,
+            "networkEndTime": 900.3039999995381,
+            "finished": true,
+            "transferSize": 2505,
+            "resourceSize": 8296,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/storage.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 845.8660000003874,
+            "networkRequestTime": 890.3570000007749,
+            "networkEndTime": 930.515000000596,
+            "finished": true,
+            "transferSize": 5928,
+            "resourceSize": 22829,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/utils.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 845.9399999994785,
+            "networkRequestTime": 891.0329999998212,
+            "networkEndTime": 931.2839999999851,
+            "finished": true,
+            "transferSize": 3472,
+            "resourceSize": 8894,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/version.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 901.7169999983162,
+            "networkRequestTime": 902.4079999998212,
+            "networkEndTime": 962.1840000003576,
+            "finished": true,
+            "transferSize": 261,
+            "resourceSize": 36,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/components/ui/dialog.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 932.4550000000745,
+            "networkRequestTime": 933.1759999990463,
+            "networkEndTime": 972.9199999999255,
+            "finished": true,
+            "transferSize": 2276,
+            "resourceSize": 7679,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/api/index.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 975.843999998644,
+            "networkRequestTime": 976.5679999999702,
+            "networkEndTime": 1016.663999998942,
+            "finished": true,
+            "transferSize": 1832,
+            "resourceSize": 5488,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/library.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 976.0010000001639,
+            "networkRequestTime": 976.7679999992251,
+            "networkEndTime": 1018.8800000008196,
+            "finished": true,
+            "transferSize": 9967,
+            "resourceSize": 41062,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/search.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 976.1490000002086,
+            "networkRequestTime": 976.9269999992102,
+            "networkEndTime": 1017.7579999994487,
+            "finished": true,
+            "transferSize": 5970,
+            "resourceSize": 22028,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/dashboard.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 976.3029999993742,
+            "networkRequestTime": 1018.3810000009835,
+            "networkEndTime": 1056.1309999991208,
+            "finished": true,
+            "transferSize": 7537,
+            "resourceSize": 30483,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/navigation.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 976.413999998942,
+            "networkRequestTime": 1020.7550000008196,
+            "networkEndTime": 1061.0669999998063,
+            "finished": true,
+            "transferSize": 22529,
+            "resourceSize": 98668,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/firebase-client.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 976.551000000909,
+            "networkRequestTime": 1022.0749999992549,
+            "networkEndTime": 1065.4340000003576,
+            "finished": true,
+            "transferSize": 12136,
+            "resourceSize": 58708,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/sync.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 976.6850000005215,
+            "networkRequestTime": 1057.9220000002533,
+            "networkEndTime": 1097.9830000009388,
+            "finished": true,
+            "transferSize": 11101,
+            "resourceSize": 47791,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/cloudBackup.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 976.8329999987036,
+            "networkRequestTime": 1064.53200000152,
+            "networkEndTime": 1104.5729999989271,
+            "finished": true,
+            "transferSize": 5666,
+            "resourceSize": 19533,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/app.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 976.9759999997914,
+            "networkRequestTime": 1068.481000000611,
+            "networkEndTime": 1107.2669999990612,
+            "finished": true,
+            "transferSize": 3368,
+            "resourceSize": 10415,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/favicon.ico?v=2",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 981.7190000005066,
+            "networkRequestTime": 1099.6140000000596,
+            "networkEndTime": 1142.321000000462,
+            "finished": true,
+            "transferSize": 1306,
+            "resourceSize": 1120,
+            "statusCode": 200,
+            "mimeType": "image/vnd.microsoft.icon",
+            "resourceType": "Other",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/assets/icons/icon-192.png?v=2",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 983.5759999994189,
+            "networkRequestTime": 1105.7709999997169,
+            "networkEndTime": 1393.7429999988526,
+            "finished": true,
+            "transferSize": 6299,
+            "resourceSize": 6072,
+            "statusCode": 200,
+            "mimeType": "image/png",
+            "resourceType": "Other",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/api/bookIdentity.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 1018.2640000004321,
+            "networkRequestTime": 1108.6980000007898,
+            "networkEndTime": 1407.9439999982715,
+            "finished": true,
+            "transferSize": 1709,
+            "resourceSize": 4785,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/api/normalizeBook.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 1018.355000000447,
+            "networkRequestTime": 1143.8289999999106,
+            "networkEndTime": 1442.129999998957,
+            "finished": true,
+            "transferSize": 3564,
+            "resourceSize": 11307,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/api/openLibrary.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 1018.4509999994189,
+            "networkRequestTime": 1394.73399999924,
+            "networkEndTime": 1688.0209999997169,
+            "finished": true,
+            "transferSize": 3853,
+            "resourceSize": 14483,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/api/googleBooks.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 1018.5419999994338,
+            "networkRequestTime": 1409.1090000011027,
+            "networkEndTime": 1700.573999999091,
+            "finished": true,
+            "transferSize": 1212,
+            "resourceSize": 2534,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/api/gutendex.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 1018.6119999997318,
+            "networkRequestTime": 1443.8680000007153,
+            "networkEndTime": 1741.6500000003725,
+            "finished": true,
+            "transferSize": 2362,
+            "resourceSize": 6583,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/api/internetArchive.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 1018.7080000005662,
+            "networkRequestTime": 1689.4429999999702,
+            "networkEndTime": 1978.0959999989718,
+            "finished": true,
+            "transferSize": 2091,
+            "resourceSize": 6602,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/api/wikipedia.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 1018.7909999992698,
+            "networkRequestTime": 1702.336000001058,
+            "networkEndTime": 2029.8029999993742,
+            "finished": true,
+            "transferSize": 1261,
+            "resourceSize": 3036,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+            "url": "https://www.libriq.app/js/api/mergeBooks.js",
+            "sessionTargetType": "page",
+            "protocol": "h2",
+            "cache": "none",
+            "rendererStartTime": 1018.8509999997914,
+            "networkRequestTime": 1743.1559999994934,
+            "networkEndTime": 2049.070000000298,
+            "finished": true,
+            "transferSize": 1177,
+            "resourceSize": 3672,
+            "statusCode": 200,
+            "mimeType": "application/javascript",
+            "resourceType": "Script",
+            "priority": "High",
+            "experimentalFromMainFrame": true,
+            "entity": "libriq.app"
+          },
+          {
+         
+<truncated 546527 bytes>
+
+NOTE: The output was truncated because it was too long. Use a more targeted query or a smaller range to get the information you need.
+
+---
+
+Proceed
+
+---
+
+did u commit and push already?
+
+---
+
+yes
