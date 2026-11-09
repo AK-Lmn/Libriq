@@ -54,6 +54,8 @@ await writeFile(path.join(vendorDir, 'firebase-firestore.js'), firestoreSource
   .replace('from"https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js"', 'from"./firebase-app.js"')
   .replace('from"https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js"', 'from"./firebase-auth.js"'), 'utf8');
 
+await bundleCss();
+
 if (isVercelBuild) {
   await writeFile(configPath, contents, 'utf8');
 } else {
@@ -75,6 +77,36 @@ try {
 }
 
 console.log(`[Libriq] Wrote ${isVercelBuild ? path.relative(rootDir, configPath) : path.relative(rootDir, localConfigPath)}${envKey ? ' with Google Books key' : ' with empty config'}.`);
+
+async function bundleCss() {
+  const cssDir = path.join(rootDir, 'frontend', 'css');
+  const files = [
+    'components/button.css',
+    'components/card.css',
+    'components/toast.css',
+    'components/form.css',
+    'components/polish.css',
+    'components/utilities.css',
+    'components/dialog.css',
+    'features/settings.css',
+    'features/library.css',
+    'features/insights.css',
+    'features/session.css',
+    'features/goals.css',
+    'features/discover.css',
+    'features/profile.css',
+    'features/help.css',
+    'features/book-details.css',
+    'features/book-dialogs.css',
+    'features/quotes.css',
+    'features/kindle-import.css',
+    'features/goodreads-import.css',
+    'features/support-dialogs.css',
+  ];
+  const contents = await Promise.all(files.map(f => readFile(path.join(cssDir, f), 'utf8')));
+  const bundled = `/* Auto-bundled components & features to eliminate @import render-blocking waterfall */\n` + contents.join('\n\n');
+  await writeFile(path.join(cssDir, 'components.css'), bundled, 'utf8');
+}
 
 async function loadLocalEnvFile(envPath) {
   try {

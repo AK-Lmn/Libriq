@@ -199,6 +199,7 @@ export const Utils = {
           <img src="${Utils.sanitize(coverUrl)}"
                alt="Cover of ${Utils.sanitize(book.title)}"
                loading="lazy"
+               referrerpolicy="no-referrer"
                decoding="async"
                onerror="if(this.dataset.fallbackTriggered==='1') return; this.dataset.fallbackTriggered='1'; this.removeAttribute('src'); this.parentElement.innerHTML=Utils.buildCoverPlaceholder(${_inlineString(book.title)})">
         </div>`;
