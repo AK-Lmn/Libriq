@@ -20,6 +20,7 @@ let doc;
 let collection;
 let query;
 let orderBy;
+let limit;
 let onSnapshot;
 let setDoc;
 let getDoc;
