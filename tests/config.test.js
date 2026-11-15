@@ -29,7 +29,8 @@ describe('Environment Variable Validation & Startup Configuration', () => {
     assert.equal(result.config.PORT, 4173);
     assert.equal(result.config.NODE_ENV, 'development');
     assert.equal(result.config.MAX_PAYLOAD_BYTES, 102400);
-    assert.ok(result.config.AUTH_SECRET);
+    // No hardcoded fallback: an unset secret stays empty and is resolved per process.
+    assert.equal(result.config.AUTH_SECRET, '');
   });
 
   it('rejects invalid PORT configuration', () => {
@@ -51,7 +52,7 @@ describe('Environment Variable Validation & Startup Configuration', () => {
   it('rejects insecure/short AUTH_SECRET in production mode', () => {
     const productionWithWeakSecret = {
       NODE_ENV: 'production',
-      AUTH_SECRET: 'libriq-insecure-dev-secret-key-32-chars-min!!', // contains 'insecure'
+      AUTH_SECRET: 'insecure-placeholder-value-that-is-long-enough', // contains 'insecure'
     };
     const result = validateConfig(productionWithWeakSecret);
 
