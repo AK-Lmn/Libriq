@@ -3,25 +3,15 @@
  * Provides schema validation, fail-fast sanity checks, and type coercion.
  */
 
-import crypto from 'node:crypto';
-
-/**
- * Per-process random signing secret used only outside production when AUTH_SECRET
- * is unset. Nothing is hardcoded, so a host that forgets NODE_ENV=production cannot
- * end up signing tokens with a publicly known key; tokens just do not survive a restart.
- */
-let ephemeralDevSecret = null;
-function getEphemeralDevSecret() {
-  if (ephemeralDevSecret === null) ephemeralDevSecret = crypto.randomBytes(32).toString('hex');
-  return ephemeralDevSecret;
-}
+/** Development-only signing secret. Never valid in production. */
+export const INSECURE_DEV_SECRET = 'libriq-insecure-dev-secret-key-32-chars-min!!';
 
 /** Maximum token lifetime the issuer will ever grant, regardless of request input. */
 export const TOKEN_TTL_HARD_CAP_SECONDS = 86400; // 24h
 
 function isInsecureSecret(value) {
   const text = String(value || '');
-  return /insecure|changeme|example|default/i.test(text);
+  return text === INSECURE_DEV_SECRET || /insecure|changeme|example|default/i.test(text);
 }
 
 export const CONFIG_SCHEMA = {
@@ -39,13 +29,12 @@ export const CONFIG_SCHEMA = {
   },
   AUTH_SECRET: {
     type: 'string',
-    default: '',
+    default: INSECURE_DEV_SECRET,
     validate: (val, env) => {
       if (env.NODE_ENV === 'production') {
         return typeof val === 'string' && val.length >= 32 && !isInsecureSecret(val);
       }
-      // Empty outside production means "use a per-process random secret".
-      return typeof val === 'string' && (val.length === 0 || val.length >= 16);
+      return typeof val === 'string' && val.length >= 16;
     },
     message: 'AUTH_SECRET must be at least 16 characters (32 in production, and must not be the shared development default).',
   },
@@ -214,10 +203,10 @@ export function loadConfig(rawEnv = process.env, failFast = true) {
  */
 export function resolveAuthSecret(rawEnv = process.env) {
   const result = validateConfig(rawEnv);
-  const configured = result.config.AUTH_SECRET;
+  const secret = result.config.AUTH_SECRET;
   const isProduction = (rawEnv.NODE_ENV || 'development') === 'production';
 
-  if (isProduction && (!result.valid || isInsecureSecret(configured) || String(configured || '').length < 32)) {
+  if (isProduction && (!result.valid || isInsecureSecret(secret) || String(secret).length < 32)) {
     const err = new Error(
       'AUTH_SECRET is missing, too short, or using the development default. Refusing to sign tokens in production.'
     );
@@ -225,8 +214,6 @@ export function resolveAuthSecret(rawEnv = process.env) {
     err.errors = result.errors.length ? result.errors : [CONFIG_SCHEMA.AUTH_SECRET.message];
     throw err;
   }
-
-  const secret = (!isProduction && !configured) ? getEphemeralDevSecret() : configured;
 
   if (typeof secret !== 'string' || secret.length < 16) {
     const err = new Error('AUTH_SECRET must be at least 16 characters.');
