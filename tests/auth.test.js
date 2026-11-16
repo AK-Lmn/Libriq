@@ -1,8 +1,8 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
-import { issueToken, verifyToken, resetAuthSecretCache } from '../api/auth.js';
-import { resolveAuthSecret } from '../api/config.js';
+import { issueToken, verifyToken, resetAuthSecretCache } from '../server/auth.js';
+import { resolveAuthSecret } from '../server/config.js';
 import { createTestServer, apiRequest } from './helpers/testServer.js';
 
 function b64url(obj) {

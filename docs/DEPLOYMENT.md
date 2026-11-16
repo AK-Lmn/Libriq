@@ -29,7 +29,15 @@ FIREBASE_PROJECT_ID=
 FIREBASE_STORAGE_BUCKET=
 FIREBASE_MESSAGING_SENDER_ID=
 FIREBASE_APP_ID=
+# Optional
+FIREBASE_APPCHECK_SITE_KEY=
 ```
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `GOOGLE_BOOKS_API_KEY` | No | Keyed Google Books requests. Falls back to the public endpoint. |
+| `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIREBASE_PROJECT_ID`, `FIREBASE_STORAGE_BUCKET`, `FIREBASE_MESSAGING_SENDER_ID`, `FIREBASE_APP_ID` | Yes on Vercel | Firebase web client config. A Vercel build fails and names any that are missing. Local builds still succeed without them. |
+| `FIREBASE_APPCHECK_SITE_KEY` | No | reCAPTCHA Enterprise site key for Firebase App Check. When set, the client initialises App Check after Firebase starts. A failure is logged and never blocks sign-in. Leave unset to skip App Check. Turn on enforcement in the Firebase console only after the metrics show real clients sending tokens. |
 
 Run `npm run build` after creating or changing the environment file. The build generates browser configuration for local testing.
 

@@ -107,4 +107,9 @@ const html = fs.readFileSync('frontend/index.html', 'utf8');
 assert.doesNotMatch(html, /<script[^>]+src="js\/sync\.js"/);
 assert.equal((html.match(/src="js\/appModules\.js"/g) || []).length, 1);
 
+// Remote Firestore books must go through createBook so numeric fields get coerced.
+const toLocalBookSource = source.slice(source.indexOf('function _toLocalBook'), source.indexOf('function _mergeOptionalField'));
+assert.match(toLocalBookSource, /return createBook\(/);
+assert.match(source, /function _mergeRemoteIntoLocal[\s\S]*?return createBook\(/);
+
 console.log('Sync module and bootstrap tests passed');

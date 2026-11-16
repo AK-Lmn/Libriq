@@ -20,6 +20,21 @@ export const LIBRIQ = {
   MONTHS: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
 };
 
+// Numeric book fields are interpolated into HTML; coerce untrusted input (backups, sync) to real numbers.
+export function toInt(value, { min = -Infinity, max = Infinity, fallback = 0 } = {}) {
+  if (value === null || value === undefined || value === '') return fallback;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, Math.trunc(n)));
+}
+
+export function toRating(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  return Math.min(5, Math.max(0, n));
+}
+
 export function createBook(data) {
   const now = new Date().toISOString();
   return {
@@ -28,8 +43,8 @@ export function createBook(data) {
     author:       data.author       || 'Unknown Author',
     coverUrl:     data.coverUrl     || null,
     isbn:         data.isbn         || null,
-    pageCount:    data.pageCount    || 0,
-    publishYear:  data.publishYear  || null,
+    pageCount:    toInt(data.pageCount, { min: 0 }),
+    publishYear:  toInt(data.publishYear, { min: -9999, max: 9999, fallback: null }) || null,
     publisher:    data.publisher    || null,
     description:  data.description  || null,
     shortDescription: data.shortDescription || data.description || null,
@@ -39,8 +54,8 @@ export function createBook(data) {
     subjectPlaces: data.subjectPlaces || [],
     subjectTimes: data.subjectTimes || [],
     language:     data.language     || 'English',
-    firstPublishYear: data.firstPublishYear || null,
-    editionCount: data.editionCount || null,
+    firstPublishYear: toInt(data.firstPublishYear, { min: -9999, max: 9999, fallback: null }) || null,
+    editionCount: toInt(data.editionCount, { min: 0, fallback: null }) || null,
     coverId:      data.coverId      || null,
 
     status:       data.status       || LIBRIQ.STATUS.WISHLIST,
@@ -51,9 +66,9 @@ export function createBook(data) {
     updatedAt:    data.updatedAt    || data.dateFinished || data.dateStarted || data.dateAdded || now,
     deletedAt:    data.deletedAt    ?? null,
 
-    currentPage:  data.currentPage  || 0,
+    currentPage:  toInt(data.currentPage, { min: 0 }),
 
-    rating:       data.rating       ?? null,
+    rating:       toRating(data.rating),
     review:       data.review       || null,
 
     isFavorite:   data.isFavorite   || false,
@@ -64,7 +79,7 @@ export function createBook(data) {
     quotes:       Array.isArray(data.quotes) ? data.quotes.map(q => ({
       id: q.id || crypto.randomUUID(),
       text: String(q.text || ''),
-      page: q.page ?? null,
+      page: toInt(q.page, { min: 0, fallback: null }),
       note: q.note ?? '',
       ...(q.source ? { source: q.source } : {}),
       createdAt: q.createdAt || now,

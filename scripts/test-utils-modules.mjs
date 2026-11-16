@@ -62,6 +62,8 @@ assert.equal(Utils.readingProgress(50, 200), 25);
 assert.equal(Utils.readingProgress(300, 200), 100);
 assert.equal(Utils.formatPages(1234), '1,234 pages');
 assert.equal(Utils.formatPages(0), 'None');
+assert.equal(Utils.formatPages('<img src=x onerror=alert(1)>'), 'None');
+assert.equal(Utils.formatPages('320'), '320 pages');
 assert.equal(Utils.formatDate('2026-01-02T12:00:00.000Z'), 'Jan 2, 2026');
 const nativeDateNow = Date.now;
 Date.now = () => new Date('2026-01-02T12:00:30.000Z').getTime();

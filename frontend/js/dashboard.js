@@ -274,7 +274,7 @@ function buildFeaturedReadingHero(book) {
         <div class="progress-bar dashboard-progress-bar">
           <div class="progress-fill ${pct >= 100 ? 'complete' : ''}" style="width:${pct}%"></div>
         </div>
-        <p class="dashboard-page-count">Page ${book.currentPage || 0} / ${book.pageCount || '0'}</p>
+        <p class="dashboard-page-count">Page ${Number(book.currentPage) || 0} / ${Number(book.pageCount) || 0}</p>
         <p class="dashboard-hero-quote">${Utils.sanitize(buildFeaturedQuote(book))}</p>
         <div class="dashboard-hero-actions">
           <button class="btn btn-primary" type="button" data-action="update-progress" data-book-id="${Utils.sanitize(book.id)}">

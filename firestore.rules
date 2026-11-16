@@ -1,0 +1,25 @@
+rules_version = '2';
+
+// Source of truth for Cloud Firestore security rules.
+// Deploy: firebase deploy --only firestore:rules   (see docs/FIREBASE.md)
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(uid) { return request.auth != null && request.auth.uid == uid; }
+
+    // Everything a signed-in user owns: sync/v1/books, activity, profile, goals,
+    // streak, backups, polls/mobile_app. Owner-only, read and write.
+    match /users/{uid}/{document=**} { allow read, write: if isOwner(uid); }
+
+    // Aggregate poll votes, one doc per account keyed by uid. Write-only from
+    // clients; results are read with project IAM credentials (scripts/poll-results.mjs).
+    match /polls/{pollId}/votes/{voterUid} {
+      allow read: if false;
+      allow delete: if isOwner(voterUid);  // account deletion cleanup
+      allow create, update: if isOwner(voterUid)
+        && request.resource.data.keys().hasOnly(['choice', 'os', 'createdAt'])
+        && request.resource.data.choice in ['ios', 'android', 'web_ok']
+        && request.resource.data.os is string && request.resource.data.os.size() <= 16
+        && request.resource.data.createdAt is string && request.resource.data.createdAt.size() <= 40;
+    }
+  }
+}

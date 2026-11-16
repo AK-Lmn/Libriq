@@ -2,7 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
-import { handleApiRequest } from '../api/app.js';
+import { handleApiRequest } from '../server/app.js';
 
 const root = path.resolve(process.cwd(), 'frontend');
 const port = Number(process.env.LIBRIQ_E2E_PORT || 4173);

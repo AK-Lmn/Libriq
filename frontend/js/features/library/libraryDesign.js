@@ -130,7 +130,7 @@ export function buildBookSpine(book, utils, actions = {}) {
         <span class="spine-popover-author">${sanitize(book.author || 'Unknown')}</span>
         <div class="spine-popover-meta">
           ${isReading ? `<span class="spine-status-badge reading">Reading · ${currentPage}/${totalPages} (${pct}%)</span>` : ''}
-          ${isFinished ? `<span class="spine-status-badge finished">Finished ${book.rating ? `· ${book.rating}/5` : ''}</span>` : ''}
+          ${isFinished ? `<span class="spine-status-badge finished">Finished ${book.rating ? `· ${sanitize(book.rating)}/5` : ''}</span>` : ''}
           ${book.status === 'wishlist' ? '<span class="spine-status-badge wishlist">Want to Read</span>' : ''}
         </div>
         <span class="spine-popover-hint">Click to inspect</span>

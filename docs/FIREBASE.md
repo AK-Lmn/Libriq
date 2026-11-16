@@ -52,31 +52,63 @@ Clear Local Cache remains a diagnostics action and is distinct from deleting acc
 
 ## Firestore Rules
 
-Cloud backup and Account Sync require rules for both the backup document and sync namespace. These rules are preserved exactly from the original README:
+[`firestore.rules`](../firestore.rules) at the repo root is the source of truth. `firebase.json` points the Firebase CLI at it. Don't edit rules in the Console; change the file and deploy it.
 
-```rules
-rules_version = '2';
+Paths the browser reads or writes, and the rule that covers each:
 
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /users/{userId}/backups/{backupId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
+| Path | Who | Rule |
+| --- | --- | --- |
+| `users/{uid}/sync/v1/books/{bookId}` | owner | `users/{uid}/{document=**}` |
+| `users/{uid}/activity/{activityId}` | owner | `users/{uid}/{document=**}` |
+| `users/{uid}/profile/current` | owner | `users/{uid}/{document=**}` |
+| `users/{uid}/goals/current` | owner | `users/{uid}/{document=**}` |
+| `users/{uid}/streak/current` | owner | `users/{uid}/{document=**}` |
+| `users/{uid}/backups/current` | owner | `users/{uid}/{document=**}` |
+| `users/{uid}/polls/mobile_app` | owner | `users/{uid}/{document=**}` |
+| `polls/mobile_app/votes/{uid}` | owner, create/update only | `polls/{pollId}/votes/{voterUid}`: no client reads or deletes; fields limited to `choice`, `os`, `createdAt` |
 
-    match /users/{userId}/sync/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-  }
-}
+Anything outside these paths is denied by default.
+
+### Deploying
+
+The repo has no `.firebaserc`, so the project id stays out of git. Pass it on the command line (or run `firebase use --add` locally; `.firebaserc` is per-developer).
+
+1. Copy the current live rules from Firebase Console -> Firestore Database -> Rules into a scratch file and diff them against `firestore.rules`. Anything live that the file doesn't cover will stop working after deploy.
+2. Deploy:
+
+   ```sh
+   firebase deploy --only firestore:rules --project <project-id>
+   ```
+
+3. In the Console Rules playground, check that an unauthenticated `get`/`list` on `polls/mobile_app/votes` is denied.
+
+### Reading poll results
+
+Poll votes are not publicly readable. `scripts/poll-results.mjs` reads them through the Firestore REST API with your own Google credentials:
+
+```sh
+gcloud auth login                 # a Google account with IAM access to the project
+npm run poll:results              # uses `gcloud auth print-access-token`
+npm run poll:results -- --demo    # sample output, no network
 ```
 
-Cloud-backed activity additionally requires:
+The account needs read access to Firestore, for example `roles/datastore.viewer`. You can pass a token instead of having the script call gcloud: `FIRESTORE_ACCESS_TOKEN=$(gcloud auth print-access-token) npm run poll:results`. `FIREBASE_PROJECT_ID` comes from `.env` or the environment. The script prints only `choice` and `os` counts.
 
-```rules
-match /users/{uid}/activity/{activityId} {
-  allow read, write: if request.auth != null && request.auth.uid == uid;
-}
+### Cleaning up legacy poll data
+
+Before this change, votes stored the voter's email, uid, user agent and an anonymous `voter_*` id. `scripts/cleanup-poll-pii.mjs` is a one-off fix for existing data in `polls/mobile_app/votes`:
+
+- docs with ids starting `voter_` (anonymous, no account) are deleted
+- uid-keyed docs have `email`, `userAgent`, `voterId`, `uid` and `timestamp` removed
+
+It uses the same gcloud token as `poll-results.mjs` and needs write access (`roles/datastore.user`). It prints counts only, never ids or field values.
+
+```sh
+node scripts/cleanup-poll-pii.mjs           # dry run: counts only, no writes
+node scripts/cleanup-poll-pii.mjs --apply   # delete anonymous docs, strip PII fields
 ```
+
+Run the dry run first and check the counts. Deploy the new rules before or right after `--apply` so old clients can't write the fields back.
 
 ## Privacy Boundary
 
