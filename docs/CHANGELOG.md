@@ -2,6 +2,10 @@
 
 This document preserves the full version history and notable patch notes previously maintained in the project README.
 
+## v4.8.3
+
+- `js/config.js` and the version files are no longer cached for a day. The service worker fetches them network-first, so config changes (Firebase, App Check, API keys) reach returning visitors on their next load
+
 ## v4.8.2 - Security Hardening
 
 A security pass over the app, its Firestore access, and the deployment setup.
