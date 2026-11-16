@@ -2,6 +2,11 @@
 
 This document preserves the full version history and notable patch notes previously maintained in the project README.
 
+## v4.8.4
+
+- Fixed: buttons, dialog backdrops, loading skeletons and the Settings page lost their base styles. Four CSS files were saved with a byte-order mark, which the CSS bundler (added in the Nov 9 performance pass) glued onto the first selector of each file, so browsers dropped those rules. The bundler now strips it, and a test guards against it
+- The Content-Security-Policy header is now enforced (it was report-only since 4.8.2). Signed-out and signed-in flows were checked with no violations
+
 ## v4.8.3
 
 - `js/config.js` and the version files are no longer cached for a day. The service worker fetches them network-first, so config changes (Firebase, App Check, API keys) reach returning visitors on their next load
