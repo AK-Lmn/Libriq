@@ -1558,7 +1558,7 @@ function renderSessionChoicePage() {
             <div class="session-demo-book-info">
               <div class="session-demo-book-title">${Utils.sanitize(b.title)}</div>
               <div class="session-demo-book-author">${Utils.sanitize(b.author || 'Unknown')}</div>
-              <div class="session-demo-book-meta">${b.year ? b.year : ''}${b.pageCount ? ` • ${b.pageCount} pages` : ''}</div>
+              <div class="session-demo-book-meta">${b.year ? Utils.sanitize(b.year) : ''}${b.pageCount ? ` • ${Utils.sanitize(b.pageCount)} pages` : ''}</div>
             </div>
             <button type="button" class="btn btn-sm btn-primary session-demo-save-btn" data-title="${Utils.sanitize(b.title)}">
               <i class="ph ph-plus"></i> Save

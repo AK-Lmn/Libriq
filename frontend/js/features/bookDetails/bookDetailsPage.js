@@ -129,7 +129,7 @@ export function createBookDetailsPage({
           <div class="book-details-rating-panel">
             <div class="book-details-rating" id="bookDetailsRating" role="group" aria-label="Your rating">
               <div class="star-rating">${[1, 2, 3, 4, 5].map(value => `<button class="star ${book.rating !== null && value <= book.rating ? 'filled' : ''}" type="button" data-action="set-book-rating" data-rating="${value}" aria-pressed="${value === book.rating}" aria-label="Rate ${value} out of 5">${icon(book.rating !== null && value <= book.rating ? 'star-filled' : 'star-empty')}</button>`).join('')}</div>
-              <span class="book-details-rating-text">${book.rating ? `${book.rating}/5` : 'Not rated'}</span>
+              <span class="book-details-rating-text">${book.rating ? `${Utils.sanitize(book.rating)}/5` : 'Not rated'}</span>
             </div>
             <p class="book-details-hint">Your rating · just for you</p>
           </div>
@@ -174,7 +174,7 @@ export function createBookDetailsPage({
             <div class="progress-fill" style="width:${pct}%"></div>
           </div>
           <div class="book-details-progress-pages">
-            Page ${book.currentPage.toLocaleString()} of ${book.pageCount.toLocaleString()}
+            Page ${(Number(book.currentPage) || 0).toLocaleString()} of ${(Number(book.pageCount) || 0).toLocaleString()}
           </div>
         </section>` : ''}
 

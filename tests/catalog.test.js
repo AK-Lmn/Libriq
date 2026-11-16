@@ -1,6 +1,6 @@
 import { describe, it, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { issueToken } from '../api/auth.js';
+import { issueToken } from '../server/auth.js';
 import { createTestServer, apiRequest } from './helpers/testServer.js';
 
 describe('Catalog & Inventory Operations', () => {

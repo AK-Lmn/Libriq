@@ -223,6 +223,7 @@ const SHELL_ASSETS = [
   './vendor/firebase-app.js',
   './vendor/firebase-auth.js',
   './vendor/firebase-firestore.js',
+  './vendor/firebase-app-check.js',
 ];
 
 self.addEventListener('install', (event) => {

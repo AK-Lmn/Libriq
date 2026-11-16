@@ -287,7 +287,7 @@ export const Search = (() => {
         <div class="search-result-author">${Utils.sanitize(book.author)}</div>
         ${sourceBadgeHtml}
         <div class="search-result-meta">
-          ${book.publishYear ? `${book.publishYear} · ` : ''}
+          ${book.publishYear ? `${Utils.sanitize(book.publishYear)} · ` : ''}
           ${book.pageCount ? Utils.formatPages(book.pageCount) : ''}
         </div>
       </div>
