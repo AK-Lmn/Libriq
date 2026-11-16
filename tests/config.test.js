@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { validateConfig, loadConfig } from '../api/config.js';
+import { validateConfig, loadConfig } from '../server/config.js';
 
 describe('Environment Variable Validation & Startup Configuration', () => {
   it('validates a clean, valid environment configuration', () => {

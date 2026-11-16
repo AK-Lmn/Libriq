@@ -29,14 +29,14 @@ jobs:
 
       - name: JavaScript Syntax & Static Analysis
         run: |
-          node --check api/app.js
-          node --check api/auth.js
-          node --check api/catalog.js
-          node --check api/config.js
-          node --check api/response.js
-          node --check api/middleware/auth.js
-          node --check api/middleware/validate.js
-          node --check api/middleware/errorHandler.js
+          node --check server/app.js
+          node --check server/auth.js
+          node --check server/catalog.js
+          node --check server/config.js
+          node --check server/response.js
+          node --check server/middleware/auth.js
+          node --check server/middleware/validate.js
+          node --check server/middleware/errorHandler.js
           node --check scripts/generate-config.mjs
           node --check scripts/e2e-server.mjs
           node --check frontend/js/sync.js

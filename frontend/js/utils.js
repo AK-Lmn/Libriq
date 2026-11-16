@@ -90,8 +90,9 @@ export const Utils = {
   },
 
   formatPages(n) {
-    if (!n) return 'None';
-    return n.toLocaleString() + ' pages';
+    const pages = Number(n);
+    if (!Number.isFinite(pages) || pages <= 0) return 'None';
+    return Math.trunc(pages).toLocaleString() + ' pages';
   },
 
   formatDate(isoString) {

@@ -16,16 +16,6 @@ export function detectUserOS(ua = (typeof navigator !== 'undefined' ? navigator.
   return 'Other';
 }
 
-export function getVoterId() {
-  if (typeof localStorage === 'undefined') return 'voter_anonymous';
-  let voterId = localStorage.getItem(POLL_STORAGE_KEYS.VOTER_ID);
-  if (!voterId) {
-    voterId = `voter_${Math.random().toString(36).slice(2, 10)}_${Date.now()}`;
-    localStorage.setItem(POLL_STORAGE_KEYS.VOTER_ID, voterId);
-  }
-  return voterId;
-}
-
 export function isPollDismissedOrVoted() {
   if (typeof localStorage === 'undefined') return false;
   return Boolean(
@@ -40,65 +30,43 @@ export function dismissPoll() {
   }
 }
 
-export async function submitPollVote(choice, { firebaseClient, firestoreInstance } = {}) {
-  const os = detectUserOS();
-  const voterId = getVoterId();
-  const timestamp = new Date().toISOString();
+export const POLL_CHOICES = Object.freeze(['ios', 'android', 'web_ok']);
 
-  // Save locally first
-  if (typeof localStorage !== 'undefined') {
-    localStorage.setItem(POLL_STORAGE_KEYS.VOTED, choice);
-    localStorage.setItem(POLL_STORAGE_KEYS.DISMISSED, '1');
+// Votes carry only what firestore.rules allows on polls/{pollId}/votes/{uid}:
+// { choice, os, createdAt }. No email, uid, user agent or device id.
+export async function submitPollVote(choice, { firebaseClient, firestoreInstance } = {}) {
+  if (!POLL_CHOICES.includes(choice)) {
+    return { success: false, error: 'invalid_choice' };
   }
 
   const votePayload = {
-    choice, // 'ios' | 'android' | 'web_ok'
-    os,
-    voterId,
-    timestamp,
-    createdAt: timestamp,
-    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+    choice,
+    os: detectUserOS(),
+    createdAt: new Date().toISOString(),
   };
 
+  // Save locally first so the card hides even when the remote write is skipped.
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(POLL_STORAGE_KEYS.VOTED, choice);
+    localStorage.setItem(POLL_STORAGE_KEYS.DISMISSED, '1');
+    // Drop the legacy anonymous voter id; it is no longer used.
+    localStorage.removeItem?.(POLL_STORAGE_KEYS.VOTER_ID);
+  }
+
   const client = firebaseClient || globalThis.LibriqFirebase;
-  if (!client) {
+  const uid = client?.getState?.()?.user?.uid || null;
+  const db = uid ? (firestoreInstance || client.getFirestoreClient?.()) : null;
+
+  // Accounts are mandatory: only signed-in users write to Firestore.
+  if (!uid || !db || typeof client.doc !== 'function' || typeof client.setDoc !== 'function') {
     return { success: true, localOnly: true, payload: votePayload };
   }
 
-  const user = client.getState?.()?.user || null;
-  if (user?.uid) {
-    votePayload.uid = user.uid;
-    if (user.email) votePayload.email = user.email;
-  }
-
-  const writePromises = [];
-
-  // 1. If user is logged in, write to their user profile tree (always permitted by Firestore rules)
-  if (user?.uid && typeof client.doc === 'function' && typeof client.setDoc === 'function') {
-    try {
-      const db = firestoreInstance || client.getFirestoreClient?.();
-      if (db) {
-        const userRef = client.doc(db, 'users', user.uid, 'polls', 'mobile_app');
-        writePromises.push(client.setDoc(userRef, votePayload, { merge: true }).catch(() => null));
-      }
-    } catch {}
-  }
-
-  // 2. Also write to top-level public polls collection: polls/mobile_app/votes/{voteId}
-  if (typeof client.doc === 'function' && typeof client.setDoc === 'function') {
-    try {
-      const db = firestoreInstance || client.getFirestoreClient?.();
-      if (db) {
-        const targetId = user?.uid || voterId;
-        const pollRef = client.doc(db, 'polls', 'mobile_app', 'votes', targetId);
-        writePromises.push(client.setDoc(pollRef, votePayload, { merge: true }).catch(() => null));
-      }
-    } catch {}
-  }
-
-  if (writePromises.length > 0) {
-    await Promise.allSettled(writePromises);
-  }
+  const refs = [
+    client.doc(db, 'users', uid, 'polls', 'mobile_app'),
+    client.doc(db, 'polls', 'mobile_app', 'votes', uid),
+  ];
+  await Promise.allSettled(refs.map((ref) => Promise.resolve().then(() => client.setDoc(ref, votePayload))));
 
   return { success: true, payload: votePayload };
 }

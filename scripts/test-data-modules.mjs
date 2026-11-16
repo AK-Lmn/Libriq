@@ -95,6 +95,40 @@ assert.deepEqual(suppliedBook.quotes[0], {
   updatedAt: '2024-02-02T00:00:00.000Z',
 });
 
+// Regression: numeric book fields must be coerced so HTML payloads cannot reach innerHTML sinks.
+const { toInt, toRating } = await import('../frontend/js/data.js');
+const xss = '<img src=x onerror=alert(1)>';
+assert.equal(toInt('12', { fallback: 0 }), 12);
+assert.equal(toInt('12.9', { fallback: 0 }), 12);
+assert.equal(toInt(xss, { fallback: 0 }), 0);
+assert.equal(toInt(-5, { min: 0, fallback: 0 }), 0);
+assert.equal(toInt(Infinity, { fallback: null }), null);
+assert.equal(toInt(null, { fallback: null }), null);
+assert.equal(toRating(xss), null);
+assert.equal(toRating(undefined), null);
+assert.equal(toRating('4'), 4);
+assert.equal(toRating(3.5), 3.5);
+assert.equal(toRating(0), 0);
+assert.equal(toRating(9), 5);
+const hostileBook = createBook({
+  rating: xss, pageCount: xss, currentPage: `1${xss}`, publishYear: xss,
+  firstPublishYear: xss, editionCount: xss, quotes: [{ text: 'q', page: xss }],
+});
+assert.equal(hostileBook.rating, null);
+assert.equal(hostileBook.pageCount, 0);
+assert.equal(hostileBook.currentPage, 0);
+assert.equal(hostileBook.publishYear, null);
+assert.equal(hostileBook.firstPublishYear, null);
+assert.equal(hostileBook.editionCount, null);
+assert.equal(hostileBook.quotes[0].page, null);
+const numericStrings = createBook({ rating: '4', pageCount: '320', currentPage: '45', publishYear: '1999' });
+assert.equal(numericStrings.rating, 4);
+assert.equal(numericStrings.pageCount, 320);
+assert.equal(numericStrings.currentPage, 45);
+assert.equal(numericStrings.publishYear, 1999);
+assert.equal(createBook({ publishYear: -380 }).publishYear, -380);
+assert.equal(createBook({}).rating, null);
+
 const patch = createBookPatch({ title: 'Patch', createdAt: 'created', updatedAt: 'updated', deletedAt: '' });
 assert.deepEqual(patch, { title: 'Patch', createdAt: 'created', updatedAt: 'updated', deletedAt: '' });
 const profile = createProfile({
@@ -127,7 +161,7 @@ assert.deepEqual(SEED_BOOKS.map(({ id, title, author }) => ({ id, title, author 
 ]);
 assert.equal(new Set(SEED_BOOKS.map(book => book.id)).size, SEED_BOOKS.length);
 
-for (const exported of ['LIBRIQ', 'createBook', 'createBookPatch', 'createProfile', 'SEED_BOOKS']) {
+for (const exported of ['LIBRIQ', 'toInt', 'toRating', 'createBook', 'createBookPatch', 'createProfile', 'SEED_BOOKS']) {
   assert.match(dataSource, new RegExp(`export (?:const|function) ${exported}\\b`));
 }
 

@@ -1,6 +1,6 @@
 import http from 'node:http';
-import { handleApiRequest } from '../../api/app.js';
-import { CatalogStore } from '../../api/catalog.js';
+import { handleApiRequest } from '../../server/app.js';
+import { CatalogStore } from '../../server/catalog.js';
 
 /**
  * Creates an isolated test server instance with its own catalog store.

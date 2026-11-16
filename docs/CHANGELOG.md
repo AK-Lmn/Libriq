@@ -2,6 +2,19 @@
 
 This document preserves the full version history and notable patch notes previously maintained in the project README.
 
+## v4.8.2 - Security Hardening
+
+A security pass over the app, its Firestore access, and the deployment setup.
+
+- Mobile-app poll votes no longer store or expose voter email addresses
+- Cloud backup restore escapes imported text, closing an XSS path
+- Firestore security rules now live in the repo (`firestore.rules`) and deploy through `firebase.json`
+- A `Content-Security-Policy-Report-Only` header and a `Permissions-Policy` header are sent on every page; the CSP will be enforced once reports come back clean
+- The dev and test API moved from `api/` to `server/`, so Vercel no longer deploys it as broken serverless functions
+- Optional Firebase App Check through reCAPTCHA Enterprise, turned on by setting `FIREBASE_APPCHECK_SITE_KEY`
+- Vercel builds now fail early when Firebase config variables are missing
+- Firebase SDK 12.19.0 and Playwright 1.65.1; the unused `resend` package was removed. Vendored SDK imports are now rewritten based on the installed Firebase version
+
 ## v4.7.0
 
 LibriQ 4.7 stabilizes the cloud-first experience with richer discovery, synced activity history, clickable recommendation cards, and smoother session restore.

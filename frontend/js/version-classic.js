@@ -1,1 +1,1 @@
-self.LIBRIQ_APP_VERSION = "4.8.1";
+self.LIBRIQ_APP_VERSION = "4.8.2";

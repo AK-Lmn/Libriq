@@ -98,6 +98,23 @@ async function loadFirebaseSdk() {
   return firebaseSdkPromise;
 }
 
+// Optional Firebase App Check. Only runs when a reCAPTCHA Enterprise site key is
+// configured; any failure is logged and never blocks sign-in.
+function initAppCheck(firebaseApp, siteKey) {
+  const key = String(siteKey || '').trim();
+  if (!key || TEST_MODE) return;
+  import('../vendor/firebase-app-check.js')
+    .then(({ initializeAppCheck, ReCaptchaEnterpriseProvider }) => {
+      initializeAppCheck(firebaseApp, {
+        provider: new ReCaptchaEnterpriseProvider(key),
+        isTokenAutoRefreshEnabled: true,
+      });
+    })
+    .catch((err) => {
+      console.warn('[Libriq] App Check unavailable:', err);
+    });
+}
+
 function prepareRuntime() {
   if (runtimePrepared) return;
   const runtimeLocation = globalThis.location || { hostname: '', search: '' };
@@ -302,7 +319,10 @@ function init() {
   }
 
   try {
-    app = getApps().length ? getApp() : initializeApp(config);
+    const { appCheckSiteKey, ...firebaseOptions } = config;
+    const isNewApp = !getApps().length;
+    app = isNewApp ? initializeApp(firebaseOptions) : getApp();
+    if (isNewApp) initAppCheck(app, appCheckSiteKey);
     auth = getAuth(app);
     try {
       firestore = getFirestore(app);
@@ -1467,6 +1487,13 @@ async function deleteCurrentUserAccount() {
   await deleteCurrentUserLibraryData();
   await deleteFirestoreDocPath(['users', user.uid, 'profile', 'current']);
   await deleteFirestoreDocPath(['users', user.uid, 'backups', 'current']);
+  await deleteFirestoreDocPath(['users', user.uid, 'polls', 'mobile_app']);
+  if (!TEST_MODE) {
+    // Aggregate vote lives outside users/{uid}; best effort so it never blocks account deletion.
+    await deleteFirestoreDocPath(['polls', 'mobile_app', 'votes', user.uid]).catch((err) => {
+      console.warn('[LibriQ] Poll vote cleanup failed:', err?.code || err);
+    });
+  }
   if (TEST_MODE) {
     await signOutUser();
     return true;

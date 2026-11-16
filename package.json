@@ -1,7 +1,7 @@
 {
   "name": "libriq",
   "private": true,
-  "version": "4.8.1",
+  "version": "4.8.2",
   "type": "module",
   "scripts": {
     "start": "node scripts/e2e-server.mjs",
@@ -75,11 +75,10 @@
   },
   "devDependencies": {
     "@react-email/components": "^1.0.12",
-    "playwright": "^1.55.0",
-    "react": "^19.3.1",
-    "resend": "^6.33.0"
+    "playwright": "^1.65.1",
+    "react": "^19.3.1"
   },
   "dependencies": {
-    "firebase": "^12.15.0"
+    "firebase": "^12.19.0"
   }
 }
