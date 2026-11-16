@@ -7,7 +7,7 @@ const port = Number(process.env.LIBRIQ_E2E_PORT || 4173);
 const baseUrl = `http://127.0.0.1:${port}/?libriq_e2e_test_mode=1`;
 
 function startServer() {
-  const child = spawn(process.execPath, ['scripts/e2e-server.mjs'], { stdio: 'inherit', env: { ...process.env, LIBRIQ_E2E_PORT: String(port) } });
+  const child = spawn(process.execPath, ['scripts/e2e-server.mjs'], { stdio: 'inherit', env: { ...process.env, LIBRIQ_E2E_PORT: String(port), LIBRIQ_ENABLE_TEST_API: '1' } });
   return child;
 }
 
