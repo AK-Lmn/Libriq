@@ -281,10 +281,34 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Runtime config (Firebase, App Check, API keys) must reflect the latest deploy.
+  if (isRuntimeConfig(url)) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
   if (isAppShellAsset(url)) {
     event.respondWith(cacheFirst(request));
   }
 });
+
+function isRuntimeConfig(url) {
+  return /\/js\/(config|version|version-classic)\.js$/.test(url.pathname);
+}
+
+async function networkFirst(request) {
+  const cache = await caches.open(CACHE_NAME);
+  try {
+    const response = await fetch(request, { cache: 'no-cache' });
+    if (response && response.ok) {
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cached = await cache.match(request);
+    return cached || Response.error();
+  }
+}
 
 async function handleNavigationRequest(request) {
   try {

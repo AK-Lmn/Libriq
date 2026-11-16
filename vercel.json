@@ -48,6 +48,15 @@
       ]
     },
     {
+      "source": "/js/(config|version|version-classic)\\.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         {
