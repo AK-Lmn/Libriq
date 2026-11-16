@@ -13,7 +13,9 @@ for (const asset of assets) assert.ok((await fs.stat(path.resolve(root, asset)))
 assert.ok(assets.includes('./css/components.css'));
 assert.ok(assets.includes('./js/navigationChrome.js'));
 assert.match(worker, /shell-v5-complete-glass/);
-const files = await fs.readdir(root, { recursive: true });
+// readdir returns OS separators; precache entries use URL-style forward slashes.
+const toPosix = value => value.split(path.sep).join('/');
+const files = (await fs.readdir(root, { recursive: true })).map(toPosix);
 for (const file of files.filter(file => /\.(?:css|js|svg)$/.test(file))) {
   if (/^assets\/revamp\//.test(file)) assert.ok(assets.includes(`./${file}`), `${file} is precached`);
   if (!file.endsWith('.css')) continue;
@@ -23,7 +25,7 @@ for (const file of files.filter(file => /\.(?:css|js|svg)$/.test(file))) {
     if (/^(?:data:|https?:|#|var\()/.test(reference)) continue;
     const target = path.resolve(root, path.dirname(file), reference.split(/[?#]/)[0]);
     assert.ok((await fs.stat(target)).size > 0, `${file}: ${reference} exists and is nonempty`);
-    assert.ok(assets.includes(`./${path.relative(root, target)}`), `${file}: ${reference} is precached`);
+    assert.ok(assets.includes(`./${toPosix(path.relative(root, target))}`), `${file}: ${reference} is precached`);
   }
 }
 

@@ -138,9 +138,21 @@ async function bundleCss() {
     'features/support-dialogs.css',
   ];
   // Strip a leading byte-order mark: mid-bundle it would glue onto the next selector and void that rule.
-  const contents = await Promise.all(files.map(async f => (await readFile(path.join(cssDir, f), 'utf8')).replace(/^﻿/, '')));
+  // Rebase relative url()s: they are written relative to each source file, but the bundle lives in css/.
+  const contents = await Promise.all(files.map(async (f) => {
+    const css = (await readFile(path.join(cssDir, f), 'utf8')).replace(/^\uFEFF/, '');
+    return rebaseCssUrls(css, path.posix.dirname(f));
+  }));
   const bundled = `/* Auto-bundled components & features to eliminate @import render-blocking waterfall */\n` + contents.join('\n\n');
   await writeFile(path.join(cssDir, 'components.css'), bundled, 'utf8');
+}
+
+function rebaseCssUrls(css, fromDir) {
+  return css.replace(/url\(\s*(['"]?)([^'"()\s]+)\1\s*\)/g, (match, quote, ref) => {
+    if (/^(?:data:|https?:|\/\/|\/|#|var\()/i.test(ref)) return match;
+    const rebased = path.posix.normalize(path.posix.join(fromDir, ref));
+    return `url(${quote}${rebased}${quote})`;
+  });
 }
 
 async function loadLocalEnvFile(envPath) {

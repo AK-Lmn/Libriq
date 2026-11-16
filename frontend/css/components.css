@@ -1486,10 +1486,10 @@ html:not([data-theme="dark"]) #recommendationsPage .recommendations-intro-meta .
 .toast > span { min-width: 0; overflow-wrap: anywhere; }
 .toast i { display: block; width: 20px; height: 20px; margin-top: 1px; flex: 0 0 auto; background: var(--toast-accent); mask: var(--toast-icon) center / contain no-repeat; -webkit-mask: var(--toast-icon) center / contain no-repeat; }
 .toast i::before { content: none; }
-.toast { --toast-icon: url('../../assets/revamp/account/18-4308-info.svg'); }
-.toast-success { --toast-icon: url('../../assets/revamp/account/23-5548-circle-check.svg'); }
-.toast-error { --toast-icon: url('../../assets/revamp/library/x.svg'); }
-.toast-warning { --toast-icon: url('../../assets/revamp/library/alert.svg'); }
+.toast { --toast-icon: url('../assets/revamp/account/18-4308-info.svg'); }
+.toast-success { --toast-icon: url('../assets/revamp/account/23-5548-circle-check.svg'); }
+.toast-error { --toast-icon: url('../assets/revamp/library/x.svg'); }
+.toast-warning { --toast-icon: url('../assets/revamp/library/alert.svg'); }
 .toast-success { --toast-accent: var(--teal); }
 .toast-error { --toast-accent: var(--color-danger); }
 .toast-info { --toast-accent: var(--indigo); }
@@ -5735,29 +5735,29 @@ html[data-theme] #settingsPage .settings-footer span { font: 400 10px var(--font
   mask: var(--library-icon) center / contain no-repeat;
   -webkit-mask: var(--library-icon) center / contain no-repeat;
 }
-:is(#libraryPage, #statusPage) .library-icon--alert { --library-icon: url("../../assets/revamp/library/alert.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--bookmark-active { --library-icon: url("../../assets/revamp/library/bookmark-active.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--bookmark { --library-icon: url("../../assets/revamp/library/bookmark.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--books { --library-icon: url("../../assets/revamp/library/books.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--chevron { --library-icon: url("../../assets/revamp/library/chevron.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--grid { --library-icon: url("../../assets/revamp/library/grid.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--heart-active { --library-icon: url("../../assets/revamp/library/heart-active.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--heart { --library-icon: url("../../assets/revamp/library/heart.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--lock { --library-icon: url("../../assets/revamp/library/lock.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--plus { --library-icon: url("../../assets/revamp/library/plus.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--search { --library-icon: url("../../assets/revamp/library/search.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--shelf-search { --library-icon: url("../../assets/revamp/library/shelf-search.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--shield { --library-icon: url("../../assets/revamp/library/shield.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--sort { --library-icon: url("../../assets/revamp/library/sort.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--status-dnf { --library-icon: url("../../assets/revamp/library/status-dnf.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--status-finished { --library-icon: url("../../assets/revamp/library/status-finished.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--status-reading { --library-icon: url("../../assets/revamp/library/status-reading.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--status-wishlist { --library-icon: url("../../assets/revamp/library/status-wishlist.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--shelf-empty-favorites { --library-icon: url("../../assets/revamp/library/shelf-empty-favorites.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--shelf-empty-finished { --library-icon: url("../../assets/revamp/library/shelf-empty-finished.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--shelf-empty-reading { --library-icon: url("../../assets/revamp/library/shelf-empty-reading.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--shelf-empty-wishlist { --library-icon: url("../../assets/revamp/library/shelf-empty-wishlist.svg"); }
-:is(#libraryPage, #statusPage) .library-icon--x { --library-icon: url("../../assets/revamp/library/x.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--alert { --library-icon: url("../assets/revamp/library/alert.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--bookmark-active { --library-icon: url("../assets/revamp/library/bookmark-active.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--bookmark { --library-icon: url("../assets/revamp/library/bookmark.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--books { --library-icon: url("../assets/revamp/library/books.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--chevron { --library-icon: url("../assets/revamp/library/chevron.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--grid { --library-icon: url("../assets/revamp/library/grid.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--heart-active { --library-icon: url("../assets/revamp/library/heart-active.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--heart { --library-icon: url("../assets/revamp/library/heart.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--lock { --library-icon: url("../assets/revamp/library/lock.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--plus { --library-icon: url("../assets/revamp/library/plus.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--search { --library-icon: url("../assets/revamp/library/search.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--shelf-search { --library-icon: url("../assets/revamp/library/shelf-search.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--shield { --library-icon: url("../assets/revamp/library/shield.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--sort { --library-icon: url("../assets/revamp/library/sort.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--status-dnf { --library-icon: url("../assets/revamp/library/status-dnf.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--status-finished { --library-icon: url("../assets/revamp/library/status-finished.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--status-reading { --library-icon: url("../assets/revamp/library/status-reading.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--status-wishlist { --library-icon: url("../assets/revamp/library/status-wishlist.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--shelf-empty-favorites { --library-icon: url("../assets/revamp/library/shelf-empty-favorites.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--shelf-empty-finished { --library-icon: url("../assets/revamp/library/shelf-empty-finished.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--shelf-empty-reading { --library-icon: url("../assets/revamp/library/shelf-empty-reading.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--shelf-empty-wishlist { --library-icon: url("../assets/revamp/library/shelf-empty-wishlist.svg"); }
+:is(#libraryPage, #statusPage) .library-icon--x { --library-icon: url("../assets/revamp/library/x.svg"); }
 :is(#libraryPage, #statusPage) .library-icon--search,
 :is(#libraryPage, #statusPage) .library-icon--shelf-search { width: 18px; height: 18px; }
 :is(#libraryPage, #statusPage) .library-icon--shield { width: 14px; height: 14px; }
@@ -6580,7 +6580,7 @@ html[data-theme] #settingsPage .settings-footer span { font: 400 10px var(--font
 #statsPage .stats-recap > .goal-header { margin: 0; }
 #statsPage .goal-title { font: 400 28px/1.3 var(--font-display); color: var(--text-strong); }
 #statsPage .stats-section-meta { font-size: 12px; color: var(--text-body); margin-top: var(--space-1); }
-#statsPage #recapYearSelect { min-height: 40px; border-top: 1px solid var(--glass-highlight); border-radius: var(--r-md); padding: 0 36px 0 16px; font-size: 12px; background: var(--glass-fill-3) url('../../assets/revamp/insights/stats-chevron-down.svg') right 12px center / 14px no-repeat; appearance: none; }
+#statsPage #recapYearSelect { min-height: 40px; border-top: 1px solid var(--glass-highlight); border-radius: var(--r-md); padding: 0 36px 0 16px; font-size: 12px; background: var(--glass-fill-3) url('../assets/revamp/insights/stats-chevron-down.svg') right 12px center / 14px no-repeat; appearance: none; }
 :is(#statsPage, #activityPage) option { background: var(--glass-solid-3); color: var(--text-strong); }
 :is(#statsPage, #activityPage) :is(select, button, summary):focus-visible { outline: 2px solid var(--indigo); outline-offset: 3px; }
 #statsPage .recap-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
@@ -6654,13 +6654,13 @@ html[data-theme] #settingsPage .settings-footer span { font: 400 10px var(--font
 #activityPage #activityFilters { display: flex; align-items: center; gap: var(--space-3); }
 #activityPage .activity-filter-menu { position: relative; }
 #activityPage .activity-filter-menu > summary, #activityPage .activity-select { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; border-radius: var(--r-pill); background: var(--glass-fill-2); border: 1px solid var(--glass-highlight); color: var(--text-body); font-size: 14px; padding: 0 36px 0 16px; cursor: pointer; list-style: none; }
-#activityPage .activity-filter-menu > summary { background: var(--glass-fill-2) url('../../assets/revamp/insights/activity-chevron-down.svg') right 12px center / 16px no-repeat; }
+#activityPage .activity-filter-menu > summary { background: var(--glass-fill-2) url('../assets/revamp/insights/activity-chevron-down.svg') right 12px center / 16px no-repeat; }
 #activityPage .activity-filter-menu summary::-webkit-details-marker { display: none; }
 #activityPage .activity-filter-options { position: absolute; top: calc(100% + 8px); left: 0; z-index: 5; width: 210px; padding: 8px; background: var(--glass-solid-3); border: 1px solid var(--glass-highlight); border-radius: var(--r-lg); box-shadow: var(--shadow-glass); }
 #activityPage .activity-chip { display: flex; justify-content: space-between; width: 100%; min-height: 44px; padding: 8px 12px; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--text-strong); font-size: 14px; }
 #activityPage .activity-chip.active { background: var(--glass-fill-3); }
-#activityPage .activity-select { appearance: none; background: var(--glass-fill-2) url('../../assets/revamp/insights/activity-chevron-down.svg') right 12px center / 16px no-repeat; max-width: 210px; }
-#activityPage .activity-sort { min-height: 44px; font-size: 12px; color: var(--text-body); appearance: none; padding: 0 24px 0 0; background: url('../../assets/revamp/insights/activity-arrow-down-wide-narrow.svg') right center / 16px no-repeat; }
+#activityPage .activity-select { appearance: none; background: var(--glass-fill-2) url('../assets/revamp/insights/activity-chevron-down.svg') right 12px center / 16px no-repeat; max-width: 210px; }
+#activityPage .activity-sort { min-height: 44px; font-size: 12px; color: var(--text-body); appearance: none; padding: 0 24px 0 0; background: url('../assets/revamp/insights/activity-arrow-down-wide-narrow.svg') right center / 16px no-repeat; }
 #activityPage .activity-history { display: flex; flex-direction: column; gap: var(--space-8); }
 #activityPage .activity-day-group { display: flex; flex-direction: column; gap: var(--space-4); }
 #activityPage .activity-day-label { font-size: 14px; font-weight: 500; color: var(--text-body); }
@@ -6968,21 +6968,21 @@ button.session-card:hover:not(:disabled) { border-color: var(--indigo); }
   flex-shrink: 0;
 }
 :is(.session-page, .session-backup-callout, .install-prompt) i.ph::before { content: none; }
-.session-page .ph-book-open-text, .session-page .ph-book-open, .session-page .ph-book { --session-icon: url('../../assets/dashboard/desktop-book-open.svg'); }
-.session-page .ph-lock-key { --session-icon: url('../../assets/dashboard/desktop-lock-keyhole.svg'); }
-.session-page .ph-cloud-check, .session-backup-callout .ph-cloud-check { --session-icon: url('../../assets/revamp/account/23-5548-cloud-upload.svg'); }
-.session-page .ph-warning-circle, .session-page .ph-wifi-slash { --session-icon: url('../../assets/revamp/library/alert.svg'); }
-.session-page .ph-sparkle { --session-icon: url('../../assets/dashboard/desktop-sparkles.svg'); }
-.session-page .ph-magnifying-glass { --session-icon: url('../../assets/revamp/account/18-4308-search1.svg'); }
-.session-page .ph-arrow-square-out, .session-page .ph-arrow-right { --session-icon: url('../../assets/dashboard/desktop-arrow-up-right.svg'); }
-.session-page .ph-user-circle { --session-icon: url('../../assets/dashboard/desktop-user-round.svg'); }
-.session-page .ph-envelope-simple { --session-icon: url('../../assets/revamp/account/23-5548-user-round.svg'); }
+.session-page .ph-book-open-text, .session-page .ph-book-open, .session-page .ph-book { --session-icon: url('../assets/dashboard/desktop-book-open.svg'); }
+.session-page .ph-lock-key { --session-icon: url('../assets/dashboard/desktop-lock-keyhole.svg'); }
+.session-page .ph-cloud-check, .session-backup-callout .ph-cloud-check { --session-icon: url('../assets/revamp/account/23-5548-cloud-upload.svg'); }
+.session-page .ph-warning-circle, .session-page .ph-wifi-slash { --session-icon: url('../assets/revamp/library/alert.svg'); }
+.session-page .ph-sparkle { --session-icon: url('../assets/dashboard/desktop-sparkles.svg'); }
+.session-page .ph-magnifying-glass { --session-icon: url('../assets/revamp/account/18-4308-search1.svg'); }
+.session-page .ph-arrow-square-out, .session-page .ph-arrow-right { --session-icon: url('../assets/dashboard/desktop-arrow-up-right.svg'); }
+.session-page .ph-user-circle { --session-icon: url('../assets/dashboard/desktop-user-round.svg'); }
+.session-page .ph-envelope-simple { --session-icon: url('../assets/revamp/account/23-5548-user-round.svg'); }
 .session-page i.ph-google-logo { background: none; mask: none; -webkit-mask: none; }
 .session-page i.ph-google-logo::before { content: 'G'; font: var(--weight-semi) 1.2rem var(--font-sans); }
-.session-page .ph-arrow-clockwise { --session-icon: url('../../assets/revamp/account/23-5548-refresh-cw.svg'); }
-.session-page .ph-house-simple { --session-icon: url('../../assets/dashboard/mobile-house.svg'); }
-.session-page .ph-x, .install-prompt .ph-x { --session-icon: url('../../assets/revamp/book-details/close.svg'); }
-.install-prompt .ph-download-simple { --session-icon: url('../../assets/revamp/account/23-5548-download.svg'); }
+.session-page .ph-arrow-clockwise { --session-icon: url('../assets/revamp/account/23-5548-refresh-cw.svg'); }
+.session-page .ph-house-simple { --session-icon: url('../assets/dashboard/mobile-house.svg'); }
+.session-page .ph-x, .install-prompt .ph-x { --session-icon: url('../assets/revamp/book-details/close.svg'); }
+.install-prompt .ph-download-simple { --session-icon: url('../assets/revamp/account/23-5548-download.svg'); }
 
 body.session-choice-active { overflow-x: hidden; overflow-y: auto; }
 body.session-choice-active .app-shell { display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr; min-height: 100dvh; }
@@ -7353,7 +7353,7 @@ html[data-theme="light"] #goalsPage.goals-page .activity-item:nth-child(2) .acti
 #profilePage .field-help { font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
 #profilePage .field-counter { font-size: 11px; font-family: var(--font-mono); text-align: right; margin-top: var(--space-1); }
 #profilePage .field-counter.near-limit { color: var(--amber); }
-#profilePage .field-counter.at-limit { color: var(--danger); font-weight: var(--weight-semibold); }
+#profilePage .field-counter.at-limit { color: color-mix(in srgb, var(--danger) 65%, var(--text-strong)); font-weight: var(--weight-semibold); }
 #profilePage .bio-at-limit { border-color: var(--danger) !important; outline-color: var(--danger); box-shadow: 0 0 0 3px rgba(var(--danger-rgb, 220, 50, 50), 0.2); }
 #profilePage .profile-editor-actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--glass-border); }
 #profilePage .profile-editor-actions > span { display: flex; gap: var(--space-2); align-items: center; font-size: 12px; }
@@ -7408,15 +7408,15 @@ html[data-theme="light"] #goalsPage.goals-page .activity-item:nth-child(2) .acti
 #helpPage .help-personal-note h3 { color: var(--text-strong); font: 400 20px var(--font-serif); }
 #helpPage .help-personal-note p { font-size: 14px; line-height: 1.65; }
 #helpPage .help-contents > p { font-size: 12px; line-height: 1.6; }
-#helpPage .help-reading-column { display: grid; gap: 32px; min-width: 0; }
+#helpPage .help-reading-column { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; min-width: 0; }
 #helpPage :is(.help-introduction, .help-section, .help-return-card) { padding: 32px; border-radius: 20px; background: var(--glass-fill-3); border: 1px solid var(--glass-border); border-top-color: var(--glass-highlight); box-shadow: var(--shadow-glass); backdrop-filter: blur(calc(var(--glass-blur-card) / 2)); -webkit-backdrop-filter: blur(calc(var(--glass-blur-card) / 2)); }
-#helpPage .help-introduction { display: grid; gap: 24px; }
+#helpPage .help-introduction { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
 #helpPage .help-eyebrow { display: flex; gap: 8px; align-items: center; font: 600 11px var(--font-sans); letter-spacing: 1.32px; color: var(--text-strong); }
 #helpPage .page-title { font: 400 38px/1.15 var(--font-serif); letter-spacing: -1px; }
 #helpPage .help-introduction > p { font-size: 16px; line-height: 1.6; }
 
 /* In-guide instant search */
-#helpPage .help-search-container { display: grid; gap: 8px; }
+#helpPage .help-search-container { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 #helpPage .help-search-input-wrapper { display: flex; align-items: center; gap: 10px; background: var(--glass-fill-2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 0 14px; transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease; }
 #helpPage .help-search-input-wrapper:focus-within { border-color: var(--indigo, #6366F1); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); background: var(--glass-fill-3); }
 #helpPage .help-search-icon { color: var(--text-muted); font-size: 18px; flex-shrink: 0; }
@@ -7452,7 +7452,7 @@ html[data-theme="light"] #goalsPage.goals-page .activity-item:nth-child(2) .acti
 #helpPage .help-shortcuts-guide > p { font-size: 13px; color: var(--text-body); margin: 0; }
 #helpPage .help-shortcuts-table-wrapper { overflow-x: auto; border-radius: 10px; border: 1px solid var(--glass-border); }
 #helpPage .help-shortcuts-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
-#helpPage .help-shortcuts-table th { padding: 10px 14px; background: var(--glass-fill-1); color: var(--text-muted); font: 600 11px var(--font-sans); letter-spacing: 0.5px; border-bottom: 1px solid var(--glass-border); text-transform: uppercase; }
+#helpPage .help-shortcuts-table th { padding: 10px 14px; background: var(--glass-fill-1); color: var(--text-body); font: 600 11px var(--font-sans); letter-spacing: 0.5px; border-bottom: 1px solid var(--glass-border); text-transform: uppercase; }
 #helpPage .help-shortcuts-table td { padding: 12px 14px; border-bottom: 1px solid var(--glass-border); vertical-align: middle; color: var(--text-body); }
 #helpPage .help-shortcuts-table tr:last-child td { border-bottom: none; }
 #helpPage .help-shortcuts-table tr:hover td { background: var(--glass-fill-1); }
@@ -7913,17 +7913,17 @@ html[data-theme] :is(#searchModal, #addBookModal) .ph {
   -webkit-mask: var(--book-dialog-icon) center / contain no-repeat;
 }
 html[data-theme] :is(#searchModal, #addBookModal) .ph::before { content: none; }
-html[data-theme] :is(#searchModal, #addBookModal) .ph-magnifying-glass { --book-dialog-icon: url('../../assets/revamp/library/search.svg'); }
-html[data-theme] :is(#searchModal, #addBookModal) :is(.ph-books, .ph-book) { --book-dialog-icon: url('../../assets/revamp/library/books.svg'); }
-html[data-theme] :is(#searchModal, #addBookModal) .ph-funnel { --book-dialog-icon: url('../../assets/revamp/library/sort.svg'); }
-html[data-theme] :is(#searchModal, #addBookModal) .ph-pencil { --book-dialog-icon: url('../../assets/revamp/book-details/edit.svg'); }
-html[data-theme] :is(#searchModal, #addBookModal) .ph-plus { --book-dialog-icon: url('../../assets/revamp/library/plus.svg'); }
-html[data-theme] :is(#searchModal, #addBookModal) .ph-x { --book-dialog-icon: url('../../assets/revamp/library/x.svg'); }
-html[data-theme] :is(#searchModal, #addBookModal) .ph-bookmark { --book-dialog-icon: url('../../assets/revamp/library/bookmark.svg'); }
-html[data-theme] :is(#searchModal, #addBookModal) .ph-book-open { --book-dialog-icon: url('../../assets/dashboard/desktop-book-open.svg'); }
-html[data-theme] :is(#searchModal, #addBookModal) :is(.ph-check-circle, .ph-floppy-disk) { --book-dialog-icon: url('../../assets/revamp/book-details/check.svg'); }
-html[data-theme] :is(#searchModal, #addBookModal) .ph-wifi-slash { --book-dialog-icon: url('../../assets/revamp/library/alert.svg'); }
-html[data-theme] :is(#searchModal, #addBookModal) .ph-arrow-right { --book-dialog-icon: url('../../assets/revamp/book-details/arrow-left.svg'); transform: rotate(180deg); }
+html[data-theme] :is(#searchModal, #addBookModal) .ph-magnifying-glass { --book-dialog-icon: url('../assets/revamp/library/search.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) :is(.ph-books, .ph-book) { --book-dialog-icon: url('../assets/revamp/library/books.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) .ph-funnel { --book-dialog-icon: url('../assets/revamp/library/sort.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) .ph-pencil { --book-dialog-icon: url('../assets/revamp/book-details/edit.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) .ph-plus { --book-dialog-icon: url('../assets/revamp/library/plus.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) .ph-x { --book-dialog-icon: url('../assets/revamp/library/x.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) .ph-bookmark { --book-dialog-icon: url('../assets/revamp/library/bookmark.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) .ph-book-open { --book-dialog-icon: url('../assets/dashboard/desktop-book-open.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) :is(.ph-check-circle, .ph-floppy-disk) { --book-dialog-icon: url('../assets/revamp/book-details/check.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) .ph-wifi-slash { --book-dialog-icon: url('../assets/revamp/library/alert.svg'); }
+html[data-theme] :is(#searchModal, #addBookModal) .ph-arrow-right { --book-dialog-icon: url('../assets/revamp/book-details/arrow-left.svg'); transform: rotate(180deg); }
 
 html[data-theme] :is(#searchModal, #addBookModal) .modal {
   width: 100%;
@@ -8376,11 +8376,11 @@ html[data-theme] #addBookModal .progress-summary span { font: 400 12px/1.5 var(-
 #quotesPage button:hover { background: var(--indigo-12); }
 #quotesPage .ph { display: inline-block; width: 1em; height: 1em; flex-shrink: 0; background: currentColor; mask: var(--quote-icon) center / contain no-repeat; -webkit-mask: var(--quote-icon) center / contain no-repeat; }
 #quotesPage .ph::before { content: none; }
-#quotesPage .ph-lock-simple { --quote-icon: url('../../assets/dashboard/desktop-lock-keyhole.svg'); }
-#quotesPage .ph-magnifying-glass { --quote-icon: url('../../assets/revamp/library/search.svg'); }
-#quotesPage .ph-book-open { --quote-icon: url('../../assets/dashboard/desktop-book-open.svg'); }
-#quotesPage .ph-pencil-simple { --quote-icon: url('../../assets/dashboard/desktop-notebook-pen.svg'); }
-#quotesPage .ph-book-bookmark { --quote-icon: url('../../assets/dashboard/desktop-bookmark.svg'); }
+#quotesPage .ph-lock-simple { --quote-icon: url('../assets/dashboard/desktop-lock-keyhole.svg'); }
+#quotesPage .ph-magnifying-glass { --quote-icon: url('../assets/revamp/library/search.svg'); }
+#quotesPage .ph-book-open { --quote-icon: url('../assets/dashboard/desktop-book-open.svg'); }
+#quotesPage .ph-pencil-simple { --quote-icon: url('../assets/dashboard/desktop-notebook-pen.svg'); }
+#quotesPage .ph-book-bookmark { --quote-icon: url('../assets/dashboard/desktop-bookmark.svg'); }
 #quotesPage :is(.ph-x, .ph-quotes) { background: none; mask: none; -webkit-mask: none; font-family: var(--font-serif); font-style: normal; }
 #quotesPage .ph-x::before { content: '×'; display: block; font: 400 24px/1 var(--font-ui); }
 #quotesPage .ph-quotes::before { content: '“'; display: block; font: 500 1.5em/1 var(--font-serif); }
@@ -8486,12 +8486,12 @@ html[data-theme] #addBookModal .progress-summary span { font: 400 12px/1.5 var(-
 #kindleImportModal :is(p, h3, dt) { overflow-wrap: anywhere; }
 #kindleImportModal .ph { display: inline-block; width: 1em; height: 1em; flex-shrink: 0; background: currentColor; mask: var(--kindle-icon) center / contain no-repeat; -webkit-mask: var(--kindle-icon) center / contain no-repeat; }
 #kindleImportModal .ph::before { content: none; }
-#kindleImportModal .ph-book-open { --kindle-icon: url('../../assets/dashboard/desktop-book-open.svg'); }
-#kindleImportModal .ph-file-text { --kindle-icon: url('../../assets/revamp/account/23-5548-file-text.svg'); }
-#kindleImportModal .ph-lock-simple { --kindle-icon: url('../../assets/dashboard/desktop-lock-keyhole.svg'); }
-#kindleImportModal .ph-hourglass { --kindle-icon: url('../../assets/dashboard/desktop-timer.svg'); }
-#kindleImportModal :is(.ph-eye, .ph-warning-circle) { --kindle-icon: url('../../assets/revamp/account/18-4308-info.svg'); }
-#kindleImportModal .ph-check-circle { --kindle-icon: url('../../assets/dashboard/desktop-circle-check.svg'); }
+#kindleImportModal .ph-book-open { --kindle-icon: url('../assets/dashboard/desktop-book-open.svg'); }
+#kindleImportModal .ph-file-text { --kindle-icon: url('../assets/revamp/account/23-5548-file-text.svg'); }
+#kindleImportModal .ph-lock-simple { --kindle-icon: url('../assets/dashboard/desktop-lock-keyhole.svg'); }
+#kindleImportModal .ph-hourglass { --kindle-icon: url('../assets/dashboard/desktop-timer.svg'); }
+#kindleImportModal :is(.ph-eye, .ph-warning-circle) { --kindle-icon: url('../assets/revamp/account/18-4308-info.svg'); }
+#kindleImportModal .ph-check-circle { --kindle-icon: url('../assets/dashboard/desktop-circle-check.svg'); }
 #kindleImportModal .ph-x { background: none; mask: none; -webkit-mask: none; font-style: normal; }
 #kindleImportModal .ph-x::before { content: '×'; display: block; font: 400 24px/1 var(--font-ui); }
 
@@ -8907,10 +8907,10 @@ html[data-theme] :is(#whatsNewModal, #backupImportModal, #dangerConfirmModal, .a
   -webkit-mask: var(--support-icon) center / contain no-repeat;
 }
 html[data-theme] :is(#whatsNewModal, #backupImportModal, #dangerConfirmModal, .action-confirmation) :is(.ph-x, .ph-check, .ph-warning, .ph-info)::before { content: none; }
-html[data-theme] :is(#whatsNewModal, #backupImportModal, #dangerConfirmModal, .action-confirmation) .ph-x { --support-icon: url('../../assets/revamp/book-details/close.svg'); }
-html[data-theme] #whatsNewModal .ph-check { --support-icon: url('../../assets/revamp/book-details/check.svg'); }
-html[data-theme] :is(#dangerConfirmModal, .action-confirmation) .ph-warning { --support-icon: url('../../assets/revamp/book-details/delete.svg'); }
-html[data-theme] .action-confirmation .ph-info { --support-icon: url('../../assets/revamp/account/18-4308-info.svg'); }
+html[data-theme] :is(#whatsNewModal, #backupImportModal, #dangerConfirmModal, .action-confirmation) .ph-x { --support-icon: url('../assets/revamp/book-details/close.svg'); }
+html[data-theme] #whatsNewModal .ph-check { --support-icon: url('../assets/revamp/book-details/check.svg'); }
+html[data-theme] :is(#dangerConfirmModal, .action-confirmation) .ph-warning { --support-icon: url('../assets/revamp/book-details/delete.svg'); }
+html[data-theme] .action-confirmation .ph-info { --support-icon: url('../assets/revamp/account/18-4308-info.svg'); }
 
 @media (max-width: 640px) {
   html[data-theme] :is(#whatsNewModal, #backupImportModal, #dangerConfirmModal, .action-confirmation) {

@@ -11,15 +11,15 @@
 #helpPage .help-personal-note h3 { color: var(--text-strong); font: 400 20px var(--font-serif); }
 #helpPage .help-personal-note p { font-size: 14px; line-height: 1.65; }
 #helpPage .help-contents > p { font-size: 12px; line-height: 1.6; }
-#helpPage .help-reading-column { display: grid; gap: 32px; min-width: 0; }
+#helpPage .help-reading-column { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; min-width: 0; }
 #helpPage :is(.help-introduction, .help-section, .help-return-card) { padding: 32px; border-radius: 20px; background: var(--glass-fill-3); border: 1px solid var(--glass-border); border-top-color: var(--glass-highlight); box-shadow: var(--shadow-glass); backdrop-filter: blur(calc(var(--glass-blur-card) / 2)); -webkit-backdrop-filter: blur(calc(var(--glass-blur-card) / 2)); }
-#helpPage .help-introduction { display: grid; gap: 24px; }
+#helpPage .help-introduction { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
 #helpPage .help-eyebrow { display: flex; gap: 8px; align-items: center; font: 600 11px var(--font-sans); letter-spacing: 1.32px; color: var(--text-strong); }
 #helpPage .page-title { font: 400 38px/1.15 var(--font-serif); letter-spacing: -1px; }
 #helpPage .help-introduction > p { font-size: 16px; line-height: 1.6; }
 
 /* In-guide instant search */
-#helpPage .help-search-container { display: grid; gap: 8px; }
+#helpPage .help-search-container { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 #helpPage .help-search-input-wrapper { display: flex; align-items: center; gap: 10px; background: var(--glass-fill-2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 0 14px; transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease; }
 #helpPage .help-search-input-wrapper:focus-within { border-color: var(--indigo, #6366F1); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); background: var(--glass-fill-3); }
 #helpPage .help-search-icon { color: var(--text-muted); font-size: 18px; flex-shrink: 0; }
@@ -55,7 +55,7 @@
 #helpPage .help-shortcuts-guide > p { font-size: 13px; color: var(--text-body); margin: 0; }
 #helpPage .help-shortcuts-table-wrapper { overflow-x: auto; border-radius: 10px; border: 1px solid var(--glass-border); }
 #helpPage .help-shortcuts-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
-#helpPage .help-shortcuts-table th { padding: 10px 14px; background: var(--glass-fill-1); color: var(--text-muted); font: 600 11px var(--font-sans); letter-spacing: 0.5px; border-bottom: 1px solid var(--glass-border); text-transform: uppercase; }
+#helpPage .help-shortcuts-table th { padding: 10px 14px; background: var(--glass-fill-1); color: var(--text-body); font: 600 11px var(--font-sans); letter-spacing: 0.5px; border-bottom: 1px solid var(--glass-border); text-transform: uppercase; }
 #helpPage .help-shortcuts-table td { padding: 12px 14px; border-bottom: 1px solid var(--glass-border); vertical-align: middle; color: var(--text-body); }
 #helpPage .help-shortcuts-table tr:last-child td { border-bottom: none; }
 #helpPage .help-shortcuts-table tr:hover td { background: var(--glass-fill-1); }
