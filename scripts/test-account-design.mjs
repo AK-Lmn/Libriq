@@ -115,7 +115,14 @@ try {
         return {
           scroll: document.documentElement.scrollWidth, width: document.documentElement.clientWidth,
           content: root.getBoundingClientRect().toJSON(),
-          overflow: [...root.querySelectorAll('*')].filter(el => el.getClientRects().length && el.getBoundingClientRect().right > innerWidth + 1).map(el => el.className),
+          // Content inside a horizontal scroller (e.g. Help's mobile topic pills) is reachable, not clipped.
+          overflow: [...root.querySelectorAll('*')].filter(el => {
+            if (!el.getClientRects().length || el.getBoundingClientRect().right <= innerWidth + 1) return false;
+            for (let parent = el.parentElement; parent && parent !== root; parent = parent.parentElement) {
+              if (/auto|scroll/.test(getComputedStyle(parent).overflowX)) return false;
+            }
+            return true;
+          }).map(el => el.className),
           assets: [...root.querySelectorAll('img')].filter(img => !img.complete || !img.naturalWidth).map(img => img.src),
           icons: [...root.querySelectorAll('img[src*="/account/"]')].filter(img => img.getClientRects().length).map(img => ({ url: img.src, natural: [img.naturalWidth, img.naturalHeight], rendered: [img.offsetWidth, img.offsetHeight] })),
           font: ['Inter', 'Lora', 'IBM Plex Mono'].every(font => document.fonts.check(`14px "${font}"`)),
@@ -126,7 +133,8 @@ try {
         };
       }, feature);
       assert.deepEqual(errors, [], name);
-      assert.equal(geometry.scroll, geometry.width, `${name}: no document overflow`);
+      // <=, not ===: with `scrollbar-gutter: stable` Chromium reports scrollWidth below clientWidth.
+      assert.ok(geometry.scroll <= geometry.width, `${name}: no document overflow`);
       assert.deepEqual(geometry.overflow, [], `${name}: no clipped overflowing content`);
       assert.deepEqual(geometry.assets, [], `${name}: all local Figma assets loaded`);
       for (const icon of geometry.icons) {

@@ -149,7 +149,8 @@ try {
       });
       assert.deepEqual(errors, [], name);
       assert.deepEqual(failedAssets, [], name);
-      assert.equal(geometry.scroll, geometry.width, `${name}: no horizontal overflow`);
+      // <=, not ===: with `scrollbar-gutter: stable` Chromium reports scrollWidth below clientWidth.
+      assert.ok(geometry.scroll <= geometry.width, `${name}: no horizontal overflow`);
       if (geometry.pageOverflow) {
         console.log(name, geometry, await page.evaluate(() => {
           const root = document.querySelector('#mainContent .page').getBoundingClientRect();
@@ -220,7 +221,7 @@ try {
           assert.equal(await page.locator('.stats-recap .rated-book-row:visible').count(), 5);
           await page.locator('.stats-more-ratings').first().evaluate(details => { details.open = false; });
           await page.locator('.chart-bar-wrap').nth(11).hover();
-          assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), width, `${name}: last-bar tooltip fits`);
+          assert.ok(await page.evaluate(() => document.documentElement.scrollWidth) <= width, `${name}: last-bar tooltip fits`);
           await page.locator('#recapYearSelect').selectOption('2026');
           assert.equal(await page.evaluate(() => sessionStorage.getItem('libriq_stats_recap_year')), '2026');
         }

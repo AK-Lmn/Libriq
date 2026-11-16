@@ -175,7 +175,11 @@ try {
         await page.locator('#profileName').fill('Updated Reader');
         await page.locator('#profileBio').fill('Private reading notes.');
         await page.getByRole('button', { name: 'Save Profile' }).click();
-        assert.deepEqual(await page.evaluate(() => window.fixture.profile), { name: 'Updated Reader', bio: 'Private reading notes.' });
+        // Render backfills the join date from auth metadata (3225f84); the save itself only touches name and bio.
+        const { name: savedName, bio: savedBio, createdAt, joinDate } = await page.evaluate(() => window.fixture.profile);
+        assert.deepEqual({ name: savedName, bio: savedBio }, { name: 'Updated Reader', bio: 'Private reading notes.' });
+        assert.equal(createdAt, '2025-06-17T00:00:00.000Z');
+        assert.equal(joinDate, createdAt);
         assert.equal(await page.locator('.toast-success').innerText(), 'Profile saved');
         await page.screenshot({ path: path.join(output, `${name}-saved.png`), fullPage: true });
         await page.locator('#profileBio').focus();

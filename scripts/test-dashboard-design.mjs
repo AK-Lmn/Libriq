@@ -102,7 +102,8 @@ try {
       assets: [...document.querySelectorAll('#dashboardPage img')].every(img => img.complete && img.naturalWidth > 0),
       font: document.fonts.check('14px Inter') && document.fonts.check('14px Lora'),
     }));
-    assert.equal(geometry.scroll, geometry.width, `${name}: no horizontal overflow`);
+    // <=, not ===: with `scrollbar-gutter: stable` Chromium reports scrollWidth below clientWidth.
+    assert.ok(geometry.scroll <= geometry.width, `${name}: no horizontal overflow`);
     assert.equal(geometry.columns, width > 768 ? 2 : 1, `${name}: responsive columns`);
     assert.ok(geometry.assets, `${name}: local Figma assets loaded`);
     assert.ok(geometry.font, `${name}: local fonts loaded`);
