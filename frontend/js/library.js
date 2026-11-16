@@ -67,7 +67,7 @@ export const Library = (() => {
           <div class="book-preview-title">${Utils.sanitize(book.title)}</div>
           <div class="book-preview-author">${Utils.sanitize(book.author)}</div>
           <div class="book-preview-meta">
-            ${book.publishYear ? `<span class="badge">${book.publishYear}</span>` : ''}
+            ${book.publishYear ? `<span class="badge">${Utils.sanitize(book.publishYear)}</span>` : ''}
             ${book.pageCount ? `<span class="badge">${Utils.formatPages(book.pageCount)}</span>` : ''}
             ${genres.map(g => `<span class="badge badge-accent">${Utils.sanitize(g)}</span>`).join('')}
           </div>
@@ -861,7 +861,7 @@ export const Library = (() => {
             <div class="progress-bar progress-bar--spaced" role="progressbar" aria-label="Reading progress" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100">
               <div class="progress-fill" style="width:${pct}%"></div>
             </div>
-            <span class="text-xs text-tertiary">${book.currentPage || 0}${book.pageCount ? ` / ${book.pageCount}` : ''} pages · ${pct}% complete</span>
+            <span class="text-xs text-tertiary">${Number(book.currentPage) || 0}${book.pageCount ? ` / ${Number(book.pageCount) || 0}` : ''} pages · ${Number(pct) || 0}% complete</span>
           </div>
         </div>
       </div>
@@ -870,16 +870,16 @@ export const Library = (() => {
         <div class="form-group">
           <label class="form-label" for="progressPageInput">
             Current page
-            ${book.pageCount ? `<span class="text-tertiary">of ${book.pageCount}</span>` : ''}
+            ${book.pageCount ? `<span class="text-tertiary">of ${Number(book.pageCount) || 0}</span>` : ''}
           </label>
           <input
             type="number"
             id="progressPageInput"
             name="currentPage"
             class="form-input"
-            value="${book.currentPage}"
+            value="${Number(book.currentPage) || 0}"
             min="0"
-            max="${book.pageCount || 99999}"
+            max="${Number(book.pageCount) || 99999}"
             step="1"
             required
             aria-describedby="progressPageHint"

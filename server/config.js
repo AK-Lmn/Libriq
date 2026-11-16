@@ -127,6 +127,13 @@ export const CONFIG_SCHEMA = {
     validate: (val) => typeof val === 'string',
     message: 'GOOGLE_BOOKS_API_KEY must be a string.',
   },
+  FIREBASE_APPCHECK_SITE_KEY: {
+    type: 'string',
+    default: '',
+    required: false,
+    validate: (val) => typeof val === 'string',
+    message: 'FIREBASE_APPCHECK_SITE_KEY must be a string (reCAPTCHA Enterprise site key).',
+  },
 };
 
 function coerce(schema, rawVal) {

@@ -1,6 +1,14 @@
 // scripts/poll-results.mjs
+// Reads polls/mobile_app/votes with the caller's own Google credentials.
+// The collection is not publicly readable (see firestore.rules); you need
+// IAM access to the Firebase project, e.g. roles/datastore.viewer.
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+
+// Only these fields are ever read or printed. Legacy docs may still hold
+// email/uid/userAgent; they are dropped here and never shown.
+const VOTE_FIELDS = ['choice', 'os', 'createdAt'];
 
 function loadEnv() {
   const envPath = path.resolve(process.cwd(), '.env');
@@ -30,9 +38,23 @@ function renderProgressBar(percentage, maxBars = 16) {
   return '█'.repeat(filled) + '░'.repeat(empty);
 }
 
+export function getAccessToken(env = process.env) {
+  if (env.FIRESTORE_ACCESS_TOKEN) return env.FIRESTORE_ACCESS_TOKEN.trim();
+  try {
+    // gcloud is a .cmd shim on Windows, which Node cannot spawn without cmd.exe.
+    const [cmd, args] = process.platform === 'win32'
+      ? [process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', 'gcloud auth print-access-token']]
+      : ['gcloud', ['auth', 'print-access-token']];
+    return execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  } catch {
+    return '';
+  }
+}
+
 function parseFirestoreFields(fields = {}) {
   const out = {};
   for (const [key, val] of Object.entries(fields)) {
+    if (!VOTE_FIELDS.includes(key)) continue;
     if (val.stringValue !== undefined) out[key] = val.stringValue;
     else if (val.integerValue !== undefined) out[key] = Number(val.integerValue);
     else if (val.timestampValue !== undefined) out[key] = val.timestampValue;
@@ -133,46 +155,65 @@ async function main() {
     process.exit(1);
   }
 
-  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/polls/mobile_app/votes`;
+  const token = getAccessToken(env);
+  if (!token) {
+    printAuthHelp('No access token. Install the Google Cloud CLI and sign in, or set FIRESTORE_ACCESS_TOKEN.');
+    process.exitCode = 1;
+    return;
+  }
+
+  const baseUrl = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents/polls/mobile_app/votes`;
+  const votes = [];
+  let pageToken = '';
 
   try {
-    const res = await fetch(url);
-    if (res.status === 403) {
-      console.log('\n=============================================================');
-      console.log('⚠️  Firestore Permission Notice');
-      console.log('=============================================================');
-      console.log('Firestore security rules currently require read permission for the /polls collection.');
-      console.log('\nTo enable public poll voting and terminal results:');
-      console.log('1. Go to Firebase Console -> Firestore Database -> Rules');
-      console.log('2. Add this block under match /databases/{database}/documents:');
-      console.log('\n   match /polls/{pollId}/votes/{voteId} {');
-      console.log('     allow read, write: if true;');
-      console.log('   }\n');
-      console.log('3. Click "Publish".');
-      console.log('(You can also test the output format anytime by running: npm run poll:results -- --demo)');
-      console.log('=============================================================\n');
-      return;
-    }
+    do {
+      const url = new URL(baseUrl);
+      url.searchParams.set('pageSize', '300');
+      if (pageToken) url.searchParams.set('pageToken', pageToken);
 
-    if (res.status === 404) {
-      displayResults([]);
-      return;
-    }
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
 
-    if (!res.ok) {
-      const errText = await res.text().catch(() => '');
-      console.error(`Error querying Firestore (HTTP ${res.status}): ${errText}`);
-      return;
-    }
+      if (res.status === 401 || res.status === 403) {
+        printAuthHelp(`Firestore returned HTTP ${res.status} for project "${projectId}".`);
+        process.exitCode = 1;
+        return;
+      }
+      if (res.status === 404) break;
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        console.error(`Error querying Firestore (HTTP ${res.status}): ${errText.slice(0, 500)}`);
+        process.exitCode = 1;
+        return;
+      }
 
-    const data = await res.json();
-    const documents = Array.isArray(data.documents) ? data.documents : [];
-    const votes = documents.map((doc) => parseFirestoreFields(doc.fields));
+      const data = await res.json();
+      for (const doc of Array.isArray(data.documents) ? data.documents : []) {
+        votes.push(parseFirestoreFields(doc.fields));
+      }
+      pageToken = data.nextPageToken || '';
+    } while (pageToken);
 
     displayResults(votes);
   } catch (err) {
     console.error('Failed to fetch poll results:', err.message);
+    process.exitCode = 1;
   }
+}
+
+function printAuthHelp(reason) {
+  console.log('\n=============================================================');
+  console.log('Firestore access denied');
+  console.log('=============================================================');
+  console.log(reason);
+  console.log('\nPoll votes are private. Read them with your own Google account:');
+  console.log('1. gcloud auth login            (sign in as a project member)');
+  console.log('2. Make sure that account has IAM access to the Firebase project,');
+  console.log('   e.g. roles/datastore.viewer (Cloud Console -> IAM & Admin).');
+  console.log('3. Re-run: npm run poll:results');
+  console.log('\nOr pass a token directly: FIRESTORE_ACCESS_TOKEN=$(gcloud auth print-access-token)');
+  console.log('Preview the output format offline: npm run poll:results -- --demo');
+  console.log('=============================================================\n');
 }
 
 main().catch(console.error);

@@ -18,7 +18,7 @@ Object.defineProperty(globalThis, 'navigator', {
 
 const {
   detectUserOS,
-  getVoterId,
+  POLL_CHOICES,
   isPollDismissedOrVoted,
   dismissPoll,
   submitPollVote,
@@ -38,12 +38,8 @@ assert.equal(detectUserOS('Mozilla/5.0 (Windows NT 10.0; Win64; x64)'), 'Windows
 assert.equal(detectUserOS('Mozilla/5.0 (X11; Ubuntu; Linux x86_64)'), 'Linux');
 assert.equal(detectUserOS('Unknown/1.0'), 'Other');
 
-// 2. Voter ID stability
-mockStorage.clear();
-const voterId1 = getVoterId();
-assert.ok(voterId1.startsWith('voter_'));
-const voterId2 = getVoterId();
-assert.equal(voterId1, voterId2, 'Voter ID must be persistent in localStorage');
+// 2. Allowed choices
+assert.deepEqual([...POLL_CHOICES], ['ios', 'android', 'web_ok']);
 
 // 3. Poll State (initial, dismissed, voted)
 mockStorage.clear();
@@ -62,33 +58,87 @@ assert.equal(isPollDismissedOrVoted(), true);
 assert.equal(mockStorage.get(POLL_STORAGE_KEYS.DISMISSED), '1');
 assert.equal(buildMobileAppPollCard(), '', 'Card should not render once dismissed');
 
-// 4. Submit Poll Vote
+// 4. Submit Poll Vote (signed in)
 mockStorage.clear();
+mockStorage.set(POLL_STORAGE_KEYS.VOTER_ID, 'voter_legacy_1');
 const mockWrites = [];
-const mockFirebaseClient = {
-  getState: () => ({ user: { uid: 'user_test_123', email: 'reader@example.com' } }),
+const makeClient = (user) => ({
+  getState: () => ({ user }),
   getFirestoreClient: () => ({}),
   doc: (db, ...segments) => segments.join('/'),
-  setDoc: async (ref, payload) => {
-    mockWrites.push({ ref, payload });
+  setDoc: async (ref, payload, options) => {
+    mockWrites.push({ ref, payload, options });
   },
+});
+const signedInClient = makeClient({ uid: 'user_test_123', email: 'reader@example.com' });
+
+const ALLOWED_KEYS = ['choice', 'createdAt', 'os'];
+const assertCleanPayload = (payload) => {
+  assert.deepEqual(Object.keys(payload).sort(), ALLOWED_KEYS, 'payload must only contain choice, os, createdAt');
+  for (const banned of ['email', 'uid', 'userAgent', 'voterId', 'timestamp']) {
+    assert.equal(banned in payload, false, `payload must not contain ${banned}`);
+  }
+  assert.equal(JSON.stringify(payload).includes('reader@example.com'), false);
+  assert.equal(typeof payload.createdAt, 'string');
+  assert.ok(!Number.isNaN(Date.parse(payload.createdAt)), 'createdAt must be an ISO string');
+  assert.ok(payload.createdAt.length <= 40);
+  assert.ok(payload.os.length <= 16);
 };
 
-const result = await submitPollVote('ios', { firebaseClient: mockFirebaseClient });
+const result = await submitPollVote('ios', { firebaseClient: signedInClient });
 assert.equal(result.success, true);
+assert.equal(result.localOnly, undefined);
 assert.equal(result.payload.choice, 'ios');
-assert.equal(result.payload.uid, 'user_test_123');
-assert.equal(result.payload.email, 'reader@example.com');
+assert.equal(result.payload.os, 'iOS');
+assertCleanPayload(result.payload);
 assert.equal(mockStorage.get(POLL_STORAGE_KEYS.VOTED), 'ios');
 assert.equal(mockStorage.get(POLL_STORAGE_KEYS.DISMISSED), '1');
+assert.equal(mockStorage.has(POLL_STORAGE_KEYS.VOTER_ID), false, 'legacy voter id should be cleared');
 assert.equal(isPollDismissedOrVoted(), true);
 assert.equal(buildMobileAppPollCard(), '', 'Card should not render once voted');
 
-// Verify Firestore writes: should have written to user doc and public votes doc
+// Firestore writes: user doc and public votes doc, both keyed by uid, clean payloads
 assert.equal(mockWrites.length, 2);
-assert.equal(mockWrites[0].ref, 'users/user_test_123/polls/mobile_app');
-assert.equal(mockWrites[0].payload.choice, 'ios');
-assert.equal(mockWrites[1].ref, 'polls/mobile_app/votes/user_test_123');
-assert.equal(mockWrites[1].payload.choice, 'ios');
+assert.deepEqual(mockWrites.map((w) => w.ref).sort(), [
+  'polls/mobile_app/votes/user_test_123',
+  'users/user_test_123/polls/mobile_app',
+]);
+for (const w of mockWrites) {
+  assert.equal(w.payload.choice, 'ios');
+  assertCleanPayload(w.payload);
+  assert.equal(w.options?.merge, undefined, 'writes must overwrite so legacy PII fields are dropped');
+}
+
+// 5. Signed out: local only, no Firestore writes
+for (const client of [makeClient(null), makeClient({ email: 'no-uid@example.com' }), undefined]) {
+  mockStorage.clear();
+  mockWrites.length = 0;
+  const prevGlobal = globalThis.LibriqFirebase;
+  delete globalThis.LibriqFirebase;
+  const signedOut = await submitPollVote('android', { firebaseClient: client });
+  globalThis.LibriqFirebase = prevGlobal;
+  assert.equal(signedOut.success, true);
+  assert.equal(signedOut.localOnly, true);
+  assertCleanPayload(signedOut.payload);
+  assert.equal(mockWrites.length, 0, 'no Firestore write when signed out');
+  assert.equal(mockStorage.get(POLL_STORAGE_KEYS.VOTED), 'android');
+}
+
+// 6. Invalid choice rejected: no local state, no writes
+for (const bad of ['web', 'IOS', '', null, undefined, 'ios; drop', { choice: 'ios' }]) {
+  mockStorage.clear();
+  mockWrites.length = 0;
+  const rejected = await submitPollVote(bad, { firebaseClient: signedInClient });
+  assert.equal(rejected.success, false);
+  assert.equal(rejected.error, 'invalid_choice');
+  assert.equal(mockWrites.length, 0);
+  assert.equal(mockStorage.has(POLL_STORAGE_KEYS.VOTED), false);
+}
+
+// 7. A failing remote write does not throw
+mockWrites.length = 0;
+const failingClient = { ...signedInClient, setDoc: () => { throw new Error('permission-denied'); } };
+const failed = await submitPollVote('web_ok', { firebaseClient: failingClient });
+assert.equal(failed.success, true);
 
 console.log('All mobileAppPoll tests passed successfully!');

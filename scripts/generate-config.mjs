@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile, copyFile } from 'node:fs/promises';
 import path from 'node:path';
-import { validateConfig } from '../api/config.js';
+import { validateConfig } from '../server/config.js';
 
 const rootDir = process.cwd();
 const configPath = path.join(rootDir, 'frontend', 'js', 'config.js');
@@ -40,19 +40,30 @@ const firebaseConfig = {
 const hasFirebaseConfig = Object.values(firebaseConfig).every(Boolean);
 const isVercelBuild = Boolean(String(process.env.VERCEL || process.env.VERCEL_ENV || '').trim());
 
+if (isVercelBuild && !hasFirebaseConfig) {
+  // Names only: never echo values into build logs.
+  const envNames = {
+    apiKey: 'FIREBASE_API_KEY',
+    authDomain: 'FIREBASE_AUTH_DOMAIN',
+    projectId: 'FIREBASE_PROJECT_ID',
+    storageBucket: 'FIREBASE_STORAGE_BUCKET',
+    messagingSenderId: 'FIREBASE_MESSAGING_SENDER_ID',
+    appId: 'FIREBASE_APP_ID',
+  };
+  const missing = Object.keys(firebaseConfig).filter(key => !firebaseConfig[key]).map(key => envNames[key]);
+  throw new Error(`[Libriq] Vercel build is missing required Firebase env vars: ${missing.join(', ')}. Set them in the Vercel project settings.`);
+}
+
+const appCheckSiteKey = String(process.env.FIREBASE_APPCHECK_SITE_KEY || '').trim();
+const clientFirebaseConfig = appCheckSiteKey ? { ...firebaseConfig, appCheckSiteKey } : firebaseConfig;
+
 const configLines = [];
 if (envKey) configLines.push(`  googleBooksApiKey: ${JSON.stringify(envKey)}`);
-if (hasFirebaseConfig) configLines.push(`  firebase: ${JSON.stringify(firebaseConfig, null, 2).replace(/\n/g, '\n  ')}`);
+if (hasFirebaseConfig) configLines.push(`  firebase: ${JSON.stringify(clientFirebaseConfig, null, 2).replace(/\n/g, '\n  ')}`);
 const contents = `window.LibriqConfig = {\n${configLines.join(',\n')}${configLines.length ? '\n' : ''}};\n`;
 
 await mkdir(vendorDir, { recursive: true });
-await copyFile(path.join(rootDir, 'node_modules', 'firebase', 'firebase-app.js'), path.join(vendorDir, 'firebase-app.js'));
-const authSource = await readFile(path.join(rootDir, 'node_modules', 'firebase', 'firebase-auth.js'), 'utf8');
-await writeFile(path.join(vendorDir, 'firebase-auth.js'), authSource.replace('from"https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js"', 'from"./firebase-app.js"'), 'utf8');
-const firestoreSource = await readFile(path.join(rootDir, 'node_modules', 'firebase', 'firebase-firestore.js'), 'utf8');
-await writeFile(path.join(vendorDir, 'firebase-firestore.js'), firestoreSource
-  .replace('from"https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js"', 'from"./firebase-app.js"')
-  .replace('from"https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js"', 'from"./firebase-auth.js"'), 'utf8');
+await vendorFirebaseSdk();
 
 await bundleCss();
 
@@ -77,6 +88,29 @@ try {
 }
 
 console.log(`[Libriq] Wrote ${isVercelBuild ? path.relative(rootDir, configPath) : path.relative(rootDir, localConfigPath)}${envKey ? ' with Google Books key' : ' with empty config'}.`);
+
+async function vendorFirebaseSdk() {
+  const firebaseDir = path.join(rootDir, 'node_modules', 'firebase');
+  const firebasePkg = JSON.parse(await readFile(path.join(firebaseDir, 'package.json'), 'utf8'));
+  const sdkVersion = String(firebasePkg.version || '').trim();
+  if (!sdkVersion) throw new Error('[Libriq] Could not read firebase version from node_modules/firebase/package.json.');
+  const cdnAppImport = `from"https://www.gstatic.com/firebasejs/${sdkVersion}/firebase-app.js"`;
+
+  await copyFile(path.join(firebaseDir, 'firebase-app.js'), path.join(vendorDir, 'firebase-app.js'));
+
+  // Each SDK module imports firebase-app from the CDN; point it at the vendored copy instead.
+  for (const file of ['firebase-auth.js', 'firebase-firestore.js', 'firebase-app-check.js']) {
+    const source = await readFile(path.join(firebaseDir, file), 'utf8');
+    if (!source.includes(cdnAppImport)) {
+      throw new Error(`[Libriq] ${file} does not contain the expected import ${cdnAppImport}; update the vendoring rewrite for firebase ${sdkVersion}.`);
+    }
+    const rewritten = source.split(cdnAppImport).join('from"./firebase-app.js"');
+    if (/from"https:\/\/www\.gstatic\.com\//.test(rewritten)) {
+      throw new Error(`[Libriq] ${file} still imports from www.gstatic.com after vendoring; add a rewrite for it.`);
+    }
+    await writeFile(path.join(vendorDir, file), rewritten, 'utf8');
+  }
+}
 
 async function bundleCss() {
   const cssDir = path.join(rootDir, 'frontend', 'css');
