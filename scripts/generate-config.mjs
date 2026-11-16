@@ -137,7 +137,8 @@ async function bundleCss() {
     'features/goodreads-import.css',
     'features/support-dialogs.css',
   ];
-  const contents = await Promise.all(files.map(f => readFile(path.join(cssDir, f), 'utf8')));
+  // Strip a leading byte-order mark: mid-bundle it would glue onto the next selector and void that rule.
+  const contents = await Promise.all(files.map(async f => (await readFile(path.join(cssDir, f), 'utf8')).replace(/^﻿/, '')));
   const bundled = `/* Auto-bundled components & features to eliminate @import render-blocking waterfall */\n` + contents.join('\n\n');
   await writeFile(path.join(cssDir, 'components.css'), bundled, 'utf8');
 }

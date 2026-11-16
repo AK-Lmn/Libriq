@@ -1,5 +1,5 @@
 /* Auto-bundled components & features to eliminate @import render-blocking waterfall */
-﻿.btn {
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1650,7 +1650,7 @@ html:not([data-theme="dark"]) #recommendationsPage .recommendations-intro-meta .
 }
 
 
-﻿.skeleton {
+.skeleton {
   background: linear-gradient(
     90deg,
     var(--surface-3) 25%,
@@ -2316,7 +2316,7 @@ html:not([data-theme="dark"]) #recommendationsPage .recommendations-intro-meta .
 .session-card-stack--compact { margin: 0 auto; max-width: 420px; }
 
 
-﻿.modal-overlay {
+.modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 200;
@@ -4585,7 +4585,7 @@ html[data-theme="dark"] #searchModal .search-result-meta {
 }
 
 
-﻿.settings-page {
+.settings-page {
   max-width: 1120px;
 }
 
