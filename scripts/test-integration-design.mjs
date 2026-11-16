@@ -157,9 +157,9 @@ try {
     for (const window of [...routes, ...overlays]) {
       if (process.env.LIBRIQ_INTEGRATION_WINDOWS && !process.env.LIBRIQ_INTEGRATION_WINDOWS.split(',').includes(window)) continue;
       await render(page, window, theme, state);
-      if (routes.includes(window)) await page.waitForFunction(({ window, width }) => {
-        const top = width > 768 && ['library', 'recommendations', 'settings', 'help'].includes(window);
-        const x = width > 768 && !top ? window === 'profile' ? 208 : window === 'activity' ? 224 : ['reading', 'wishlist', 'finished', 'favorites', 'abandoned'].includes(window) ? 232 : 240 : 0;
+      // Since 978b557 every route shares one 240px desktop sidebar (no top-nav routes, no per-route widths).
+      if (routes.includes(window)) await page.waitForFunction(({ width }) => {
+        const x = width > 768 ? 240 : 0;
         return document.getElementById('mainContent').getBoundingClientRect().x === x;
       }, { window, width }, { timeout: 5000 });
       const result = await inspect(page);
@@ -173,13 +173,13 @@ try {
       assert.deepEqual(result.hubs, ['Library', 'Insights', 'Discover', 'Account']);
       assert.ok(result.badges.every(Boolean));
       if (routes.includes(window)) {
-        const top = width > 768 && ['library', 'recommendations', 'settings', 'help'].includes(window);
-        assert.equal(result.navigation, top ? 'top' : 'side', name);
+        assert.equal(result.navigation, 'side', name);
         assert.deepEqual(result.navs, width > 768 ? ['.sidebar'] : ['.mobile-topbar', '.mobile-bottom-nav'], `${name}: no duplicate chrome`);
-        assert.equal(result.content.x, width > 768 && !top ? window === 'profile' ? 208 : window === 'activity' ? 224 : ['reading', 'wishlist', 'finished', 'favorites', 'abandoned'].includes(window) ? 232 : 240 : 0, `${name}: source gutter`);
+        assert.equal(result.content.x, width > 768 ? 240 : 0, `${name}: source gutter`);
         if (width <= 768) assert.equal(result.bottom, 'fixed');
       }
-      if (window === 'library' && variant === 'desktop-dark') {
+      // Hub dropdown behaviour (Escape, one-open-at-a-time) only exists in top navigation, which no route uses since 978b557.
+      if (window === 'library' && variant === 'desktop-dark' && result.navigation === 'top') {
         const summary = page.locator('.nav-hub > summary').first();
         await summary.focus(); await page.keyboard.press('Enter');
         assert.equal(await page.locator('.nav-hub').first().getAttribute('open'), '');
