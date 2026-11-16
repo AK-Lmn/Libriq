@@ -149,6 +149,8 @@ export function createProfilePage({ storage, utils, constants, actions = {}, doc
         if (len < 200) bioLimitToastShown = false;
       };
       bioInput.addEventListener('input', updateCounter);
+      // A saved bio already at the limit is not news: only toast when typing reaches it.
+      bioLimitToastShown = bioInput.value.length >= 200;
       updateCounter();
     }
 

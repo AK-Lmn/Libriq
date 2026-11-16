@@ -202,7 +202,7 @@
   padding: 3px 10px;
   border-radius: var(--radius-full);
   background: var(--indigo-18);
-  color: var(--indigo);
+  color: var(--text-strong);
   font: 600 11px/1 var(--font-sans);
   letter-spacing: 0.4px;
   text-transform: uppercase;
