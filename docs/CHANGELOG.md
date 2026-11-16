@@ -2,6 +2,18 @@
 
 This document preserves the full version history and notable patch notes previously maintained in the project README.
 
+## v4.8.4
+
+- Fixed: buttons, dialog backdrops, loading skeletons and the Settings page lost their base styles. Four CSS files were saved with a byte-order mark, which the CSS bundler (added in the Nov 9 performance pass) glued onto the first selector of each file, so browsers dropped those rules. The bundler now strips it, and a test guards against it
+- Fixed: relative `url()` paths in bundled CSS are rebased to `css/`, so icon references resolve correctly
+- Fixed: the Help page overflowed narrow phones (320px). Its grid columns now shrink to the screen
+- Fixed: Phosphor icon fonts are precached, so icons keep working offline
+- Fixed: an offline session no longer downloads the Firebase SDK (a regression from August); signing in still loads it on demand
+- Accessibility: the Community Poll badge, Help shortcut table headers and the bio limit counter now meet WCAG AA contrast
+- Fixed: opening Profile with a saved 200-character bio no longer shows a "Bio limit reached" toast
+- Browser design tests updated for the unified 240px sidebar, `scrollbar-gutter`, phone emulation and the profile join-date backfill; all suites pass again
+- The Content-Security-Policy header is now enforced (it was report-only since 4.8.2). Signed-out and signed-in flows were checked with no violations
+
 ## v4.8.3
 
 - `js/config.js` and the version files are no longer cached for a day. The service worker fetches them network-first, so config changes (Firebase, App Check, API keys) reach returning visitors on their next load

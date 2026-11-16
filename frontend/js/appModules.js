@@ -38,7 +38,18 @@ window.LibriqStorage = Storage;
 window.LibriqFirebase = LibriqFirebase;
 window.LibriqSyncBeta = LibriqSyncBeta;
 window.LibriqCloudBackup = LibriqCloudBackup;
-LibriqFirebase.init();
+// An explicit offline session must not download the Firebase SDK; sign-in
+// paths lazy-load it through ensureInitialized(). Fresh sessions (no stored
+// preference) still init eagerly so auth restore can't stall on first load.
+const firebaseTestMode = new URLSearchParams(globalThis.location?.search || '').get('libriq_e2e_test_mode') === '1'
+  || localStorage.getItem('libriq_e2e_test_mode') === '1';
+const storedSessionMode = localStorage.getItem('libriq_session_pref')
+  || localStorage.getItem('libriq_preferred_session_mode');
+const offlineSession = storedSessionMode === 'offline'
+  && !firebaseTestMode
+  && !Storage.getActiveAccountUid?.();
+if (offlineSession) LibriqFirebase.defer();
+else LibriqFirebase.init();
 LibriqSyncBeta.init();
 LibriqCloudBackup.init({
   getSessionPreference: () => Navigation.getSessionPreference(),

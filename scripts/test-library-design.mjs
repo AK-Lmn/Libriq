@@ -144,7 +144,8 @@ try {
       ['existing-shell', 1440, 'dark', false, false, true],
     ]) {
       const name = `${shelf ? 'shelf' : 'library'}-${label}`;
-      const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
+      // Phone widths emulate a touch device: real phones use overlay scrollbars, so `scrollbar-gutter` takes no width.
+      const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce', ...(width < 768 ? { isMobile: true, hasTouch: true } : {}) });
       const page = await context.newPage();
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
