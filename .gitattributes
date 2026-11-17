@@ -1,0 +1,13 @@
+# Store and check out text as LF on every OS, so Windows checkouts and the
+# build (which writes LF) don't fight over line endings.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
