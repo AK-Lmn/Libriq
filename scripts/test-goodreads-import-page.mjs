@@ -47,6 +47,7 @@ const feature = createGoodreadsImportPage({
   parseCsv(text) {
     calls.parse += 1;
     if (text === 'invalid') return { ok: false, error: 'Invalid CSV' };
+    if (text === 'hostile') return { ok: false, error: '<img src=x onerror=alert(1)>' };
     return {
       ok: true,
       books: [
@@ -116,5 +117,11 @@ assert.match(preview.innerHTML, /No books found/);
 feature.open();
 await modal.emit('change', { target: { matches: () => true, files: [{ text: async () => 'invalid' }] } });
 assert.match(preview.innerHTML, /Could not read this Goodreads CSV/);
+
+// Parser errors can echo file content; they must render as text.
+feature.open();
+await modal.emit('change', { target: { matches: () => true, files: [{ text: async () => 'hostile' }] } });
+assert.ok(preview.innerHTML.includes('&lt;img src=x onerror=alert(1)&gt;'));
+assert.doesNotMatch(preview.innerHTML, /<img/);
 
 console.log('Goodreads import page tests passed successfully!');

@@ -1,3 +1,4 @@
+import { escapeHtml } from '../../shared/escapeHtml.js';
 export const librarySortOptions = [
   ['recently-added', 'Recently added'], ['title-az', 'Title A-Z'],
   ['author-az', 'Author A-Z'], ['highest-rated', 'Highest rated'],
@@ -87,7 +88,7 @@ export function getSpinePalette(book) {
 }
 
 export function buildBookSpine(book, utils, actions = {}) {
-  const sanitize = utils?.sanitize || (s => String(s ?? ''));
+  const sanitize = utils?.sanitize || escapeHtml;
   const { palette, height } = getSpinePalette(book);
   const pages = Math.max(80, Math.min(1000, Number(book.pageCount) || 280));
   const width = Math.max(30, Math.min(52, 28 + Math.round((pages - 80) / 920 * 24)));

@@ -2188,9 +2188,11 @@ async function confirmDeleteAccount() {
     Navigation.goTo('session');
     Utils.toast('Account deleted.', 'success');
   } catch (err) {
+    // Deletion stopped; reconnect sync so this device keeps syncing.
+    window.LibriqSyncBeta?.refresh?.();
     const code = String(err?.code || '');
     if (code.includes('requires-recent-login')) {
-      Utils.toast('For security, please sign in again before deleting your account.', 'warning');
+      Utils.toast('For security, sign out and sign in again, then delete your account within a few minutes.', 'warning');
     } else {
       console.warn('[Libriq] Delete account failed:', err);
       Utils.toast('Could not delete your account right now.', 'error');

@@ -1,3 +1,4 @@
+import { escapeHtml } from '../../shared/escapeHtml.js';
 import { AccessibleDialog } from '../../components/ui/dialog.js';
 import { MAX_IMPORT_FILE_BYTES } from '../../services/importExportService.js';
 
@@ -314,7 +315,7 @@ export function createGoodreadsImportPage({
     preview.innerHTML = `
       <div class="goodreads-import-message goodreads-import-message--${state}" id="${state === 'error' || state === 'empty' ? 'goodreadsImportError' : 'goodreadsImportStatus'}" ${state === 'error' ? 'role="alert"' : ''}>
         <i class="ph ${icon}" aria-hidden="true"></i>
-        <div><h3>${title}</h3><p>${body}</p></div>
+        <div><h3>${escapeHtml(title)}</h3><p>${escapeHtml(body)}</p></div>
       </div>`;
   }
 
@@ -326,6 +327,3 @@ export function createGoodreadsImportPage({
   return { open, close, getPreview: () => previewResult, getSelectedFile: () => selectedFile };
 }
 
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
-}

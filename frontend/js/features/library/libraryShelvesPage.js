@@ -1,6 +1,6 @@
 import { customShelves, libraryIcon, libraryTools, sortLibraryBooks, renderBookshelfView } from './libraryDesign.js';
+import { escapeHtml as escapeText } from '../../shared/escapeHtml.js';
 
-const escapeText = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 const shelfCopy = {
   reading: ['Reading Now', 'The books keeping you company.', 'Nothing in progress', 'Pick a book and start reading.'],
   wishlist: ['Want to Read', 'Your next chapter starts here.', 'Queue is clear', 'Add books you want to read next.'],
