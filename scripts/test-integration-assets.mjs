@@ -86,6 +86,13 @@ try {
     }, asset);
     assert.ok(loaded, `${asset} available offline`);
   }
+  // index.html and the manifest ask for icons with ?v=2; precache keys have no query.
+  for (const versioned of ['./manifest.json?v=2', './assets/icons/icon-192.png?v=2', './assets/icons/favicon.svg?v=2']) {
+    const ok = await page.evaluate(async url => {
+      try { return (await fetch(url)).ok; } catch { return false; }
+    }, versioned);
+    assert.ok(ok, `${versioned} available offline`);
+  }
   // Deploy B ships. The new worker must install fully, wait instead of taking
   // over the open page, and precache fresh files (not day-old HTTP-cache copies).
   await context.setOffline(false);

@@ -35,6 +35,7 @@ import { executeGoodreadsImport } from './services/goodreadsImportExecution.js';
 import { resolveAccountDisplayName } from './accountDisplayName.js';
 import { applyNavigationChrome, initializeNavigationChrome } from './navigationChrome.js';
 import { savePendingBook } from './services/pendingIntents.js';
+import { coverImgAttrs } from './shared/coverSize.js';
 
 export function completeGoodreadsImport({ previewResult, storage, toast, rerender } = {}) {
   const result = executeGoodreadsImport({
@@ -1574,7 +1575,7 @@ function renderSessionChoicePage() {
       demoBooks = topBooks;
       demoResults.innerHTML = topBooks.map((b, index) => {
         const cover = b.coverUrl
-          ? `<img src="${Utils.sanitize(b.coverUrl)}" class="session-demo-book-cover" alt="" onerror="this.src='./icons/icon-192.png'" />`
+          ? `<img ${coverImgAttrs(b.coverUrl, 'cover-sm', Utils.sanitize)} loading="lazy" class="session-demo-book-cover" alt="" onerror="this.onerror=null;this.removeAttribute('srcset');this.src='./assets/icons/icon-192.png'" />`
           : `<div class="session-demo-book-cover-placeholder"><i class="ph ph-book"></i></div>`;
         return `
           <div class="session-demo-book-card" data-title="${Utils.sanitize(b.title)}" data-index="${index}">

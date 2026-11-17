@@ -302,11 +302,15 @@ const SESSION_PREF_KEY = 'libriq_session_pref';
       return;
     }
 
-    navigator.serviceWorker.register('./service-worker.js')
+    // Precaching downloads the whole shell; start it after the first load so
+    // it doesn't compete with the files the page needs right now.
+    const register = () => navigator.serviceWorker.register('./service-worker.js')
       .then((registration) => watchForServiceWorkerUpdate(registration))
       .catch((err) => {
         console.warn('[LibriQ] Service worker registration failed:', err);
       });
+    if (document.readyState === 'complete') register();
+    else window.addEventListener('load', register, { once: true });
   }
 
   function waitForAuthThenRoute() {

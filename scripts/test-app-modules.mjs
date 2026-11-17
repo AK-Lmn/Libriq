@@ -145,7 +145,11 @@ assert.equal(registerCalls, 0);
 
 globalThis.location = { protocol: 'https:', hostname: 'libriq.example' };
 const productionApp = await import('../frontend/js/app.js?production-service-worker');
+globalThis.document.readyState = 'interactive';
 productionApp.bootApp();
+await Promise.resolve();
+assert.equal(registerCalls, 0, 'precaching waits for the page to finish loading');
+globalThis.dispatchEvent(new Event('load'));
 await Promise.resolve();
 assert.equal(registerCalls, 1);
 
@@ -173,6 +177,7 @@ Object.defineProperty(globalThis, 'navigator', {
   configurable: true,
 });
 const updateApp = await import('../frontend/js/app.js?service-worker-update');
+globalThis.document.readyState = 'complete';
 updateApp.bootApp();
 await new Promise(resolve => setImmediate(resolve));
 const updatePrompt = updateToasts.find(toast => toast.options?.action);

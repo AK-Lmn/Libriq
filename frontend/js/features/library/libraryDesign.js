@@ -1,4 +1,5 @@
 import { escapeHtml } from '../../shared/escapeHtml.js';
+import { coverImgAttrs } from '../../shared/coverSize.js';
 export const librarySortOptions = [
   ['recently-added', 'Recently added'], ['title-az', 'Title A-Z'],
   ['author-az', 'Author A-Z'], ['highest-rated', 'Highest rated'],
@@ -124,7 +125,7 @@ export function buildBookSpine(book, utils, actions = {}) {
     ${book.isFavorite ? '<span class="spine-favorite-star" title="Favorite"><i class="ph-fill ph-star" aria-hidden="true"></i></span>' : ''}
     <div class="spine-popover">
       <div class="spine-popover-cover">
-        ${book.coverUrl ? `<img src="${sanitize(book.coverUrl)}" alt="" loading="lazy" decoding="async" />` : '<div class="spine-popover-no-cover"><i class="ph ph-book"></i></div>'}
+        ${book.coverUrl ? `<img ${coverImgAttrs(book.coverUrl, 'cover-sm', sanitize)} alt="" loading="lazy" decoding="async" />` : '<div class="spine-popover-no-cover"><i class="ph ph-book"></i></div>'}
       </div>
       <div class="spine-popover-info">
         <strong class="spine-popover-title">${sanitize(book.title)}</strong>
