@@ -1,4 +1,5 @@
-import { mkdir, readFile, writeFile, copyFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, writeFile, copyFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { validateConfig } from '../server/config.js';
 
@@ -14,9 +15,33 @@ await writeFile(
   `export const APP_VERSION = ${JSON.stringify(appVersion)};\n`,
   'utf8',
 );
+// Every deploy needs its own service-worker cache, or a deploy without a
+// version bump keeps the old cache and refreshes files into it one by one.
+// On Vercel: the commit SHA, or a hash of the shipped source if the SHA isn't
+// exposed. Local builds use a fixed id so the tracked file doesn't churn.
+async function hashShippedSource() {
+  const hash = createHash('sha256');
+  const skip = /(?:^|\/)(?:version|version-classic|config|config\.local)\.js$|(?:^|\/)components\.css$/;
+  for (const dir of ['js', 'css']) {
+    const entries = (await readdir(path.join(rootDir, 'frontend', dir), { recursive: true }))
+      .map(entry => entry.split(path.sep).join('/'))
+      .filter(entry => /\.(?:js|css)$/.test(entry) && !skip.test(entry))
+      .sort();
+    for (const entry of entries) {
+      hash.update(`${dir}/${entry}\0`);
+      hash.update(await readFile(path.join(rootDir, 'frontend', dir, entry)));
+    }
+  }
+  for (const file of ['index.html', 'service-worker.js']) hash.update(await readFile(path.join(rootDir, 'frontend', file)));
+  return hash.digest('hex').slice(0, 12);
+}
+const onVercel = Boolean(String(process.env.VERCEL || process.env.VERCEL_ENV || '').trim());
+const buildId = onVercel
+  ? (String(process.env.VERCEL_GIT_COMMIT_SHA || '').trim().slice(0, 12) || await hashShippedSource())
+  : 'local';
 await writeFile(
   path.join(rootDir, 'frontend', 'js', 'version-classic.js'),
-  `self.LIBRIQ_APP_VERSION = ${JSON.stringify(appVersion)};\n`,
+  `self.LIBRIQ_APP_VERSION = ${JSON.stringify(appVersion)};\nself.LIBRIQ_BUILD_ID = ${JSON.stringify(buildId)};\n`,
   'utf8',
 );
 

@@ -1,6 +1,7 @@
 // LibriQ Service Worker v4.8.1
 importScripts('./js/version-classic.js');
-const CACHE_VERSION = `libriq-v${self.LIBRIQ_APP_VERSION}`;
+// One cache per deploy: a deploy is installed completely or not at all.
+const CACHE_VERSION = `libriq-v${self.LIBRIQ_APP_VERSION}-${self.LIBRIQ_BUILD_ID || 'local'}`;
 const CACHE_NAME = `${CACHE_VERSION}-shell-v5-complete-glass`;
 const IS_LOCAL_DEV = ['localhost', '127.0.0.1', '::1'].includes(self.location.hostname);
 
@@ -237,9 +238,17 @@ self.addEventListener('install', (event) => {
       return;
     }
     const cache = await caches.open(CACHE_NAME);
-    await cache.addAll(SHELL_ASSETS.map(scopeUrl));
-    self.skipWaiting();
+    // cache: 'reload' skips the HTTP cache. /js/* is cached for a day, so a
+    // plain addAll could store yesterday's modules next to today's.
+    await cache.addAll(SHELL_ASSETS.map(asset => new Request(scopeUrl(asset), { cache: 'reload' })));
+    // First install has no page to disturb. An update waits until the page
+    // asks for it (Reload), so open tabs never mix modules from two deploys.
+    if (!self.registration.active) self.skipWaiting();
   })());
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -314,12 +323,23 @@ async function networkFirst(request) {
   }
 }
 
+function isAppShellNavigation(url) {
+  const scopePath = new URL(self.registration.scope).pathname;
+  return url.pathname === scopePath || url.pathname === `${scopePath}index.html`;
+}
+
 async function handleNavigationRequest(request) {
+  const cache = await caches.open(CACHE_NAME);
+  // The app page comes from the same deploy as the cached JS and CSS. A newer
+  // index.html from the network would run against this deploy's modules.
+  if (isAppShellNavigation(new URL(request.url))) {
+    const shell = await cache.match(scopeUrl('./index.html'));
+    if (shell) return shell;
+  }
   try {
     const response = await fetch(request);
     return response;
   } catch {
-    const cache = await caches.open(CACHE_NAME);
     const cached = await cache.match(scopeUrl('./index.html'));
     if (cached) return cached;
     return new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
@@ -329,10 +349,9 @@ async function handleNavigationRequest(request) {
 async function cacheFirst(request) {
   const cache = await caches.open(CACHE_NAME);
   const cached = await cache.match(request);
-  if (cached) {
-    fetchAndCache(request, cache);
-    return cached;
-  }
+  // No background refresh: this cache belongs to one deploy, and refreshing
+  // it would pull the next deploy's files in one at a time.
+  if (cached) return cached;
 
   try {
     const response = await fetch(request);
@@ -341,18 +360,7 @@ async function cacheFirst(request) {
     }
     return response;
   } catch {
-    return cached || Response.error();
-  }
-}
-
-async function fetchAndCache(request, cache) {
-  try {
-    const response = await fetch(request);
-    if (response && response.ok) {
-      cache.put(request, response.clone());
-    }
-  } catch {
-    // Ignore network failures; cached response is already being served.
+    return Response.error();
   }
 }
 

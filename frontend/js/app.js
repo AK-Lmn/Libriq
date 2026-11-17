@@ -230,6 +230,39 @@ function getReleaseNotes() {
     } catch {}
   }
 
+  // A new deploy installs in the background and waits. The page keeps
+  // running the files it started with until the reader chooses to reload.
+  function watchForServiceWorkerUpdate(registration) {
+    if (!registration || !navigator.serviceWorker?.controller) return;
+    let prompted = false;
+    const promptFor = (worker) => {
+      if (prompted || !worker) return;
+      prompted = true;
+      Utils.toast('A new version of LibriQ is ready.', 'info', {
+        persistent: true,
+        action: {
+          label: 'Reload',
+          onClick: () => {
+            let reloaded = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+              if (reloaded) return;
+              reloaded = true;
+              location.reload();
+            });
+            worker.postMessage({ type: 'SKIP_WAITING' });
+          },
+        },
+      });
+    };
+    if (registration.waiting) promptFor(registration.waiting);
+    registration.addEventListener?.('updatefound', () => {
+      const installing = registration.installing;
+      installing?.addEventListener('statechange', () => {
+        if (installing.state === 'installed' && navigator.serviceWorker.controller) promptFor(installing);
+      });
+    });
+  }
+
   function registerServiceWorker() {
     if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
     if (typeof location === 'undefined' || location.protocol === 'file:') return;
@@ -255,6 +288,7 @@ function getReleaseNotes() {
     }
 
     navigator.serviceWorker.register('./service-worker.js')
+      .then((registration) => watchForServiceWorkerUpdate(registration))
       .catch((err) => {
         console.warn('[LibriQ] Service worker registration failed:', err);
       });
