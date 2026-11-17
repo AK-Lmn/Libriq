@@ -36,7 +36,11 @@ if (!RESEND_API_KEY) {
   process.exit(1);
 }
 
-const targetEmail = process.argv[2] || 'kianxd.00@gmail.com';
+const targetEmail = process.argv[2] || process.env.LIBRIQ_TEST_EMAIL;
+if (!targetEmail) {
+  console.error('Usage: node scripts/send-styled-test-email.mjs <recipient> (or set LIBRIQ_TEST_EMAIL)');
+  process.exit(1);
+}
 const subject = 'LibriQ is officially back live';
 
 const plainTextFallback = `Hi reader,

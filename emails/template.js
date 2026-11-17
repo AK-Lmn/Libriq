@@ -545,7 +545,12 @@ export function LibriqEmailLayout({
                 margin: 0,
               },
             },
-            'To unsubscribe or manage your account, simply reply to this email or visit Settings in the app.'
+            'To unsubscribe or manage your account, simply reply to this email or visit Settings in the app. ',
+            React.createElement(
+              Link,
+              { href: 'https://libriq.app/privacy.html', style: { color: '#64748b' } },
+              'Privacy Policy'
+            )
           )
         )
       )

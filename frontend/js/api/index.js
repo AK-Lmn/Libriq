@@ -12,7 +12,7 @@ export const BookAPI = (() => {
   if (typeof window !== 'undefined') window.LibriqApiMeta = window.LibriqApiMeta || Object.freeze({
     appName: 'LibriQ',
     appVersion: '4.6',
-    contactEmail: 'klamano23@gmail.com',
+    contactEmail: 'support@libriq.app',
   });
 
   let _lastSearchMeta = {
