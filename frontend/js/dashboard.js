@@ -333,7 +333,7 @@ function buildRecentBooksRow(books) {
             <strong>${Utils.sanitize(book.title)}</strong>
             <span>${Utils.formatDate(book.dateUpdated || book.dateStarted || book.dateAdded || new Date())}</span>
             <span class="dashboard-recent-author">${Utils.sanitize(book.author || 'Unknown author')}</span>
-            <span class="dashboard-recent-status" data-status="${Utils.sanitize(book.status || '')}">${Utils.sanitize(book.status || 'Saved').replaceAll('_', ' ')}</span>
+            <span class="dashboard-recent-status" data-status="${Utils.sanitize(book.status || '')}">${Utils.statusLabel(book.status)}</span>
           </div>
         </button>
       `).join('')}

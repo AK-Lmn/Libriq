@@ -33,7 +33,7 @@ export function createRecommendationsPage({ storage, library, bookApi, utils, co
       <div class="page recommendations-page discover-page" id="recommendationsPage">
         <header class="discover-introduction">
           <div class="discover-state-row">
-            <span class="discover-eyebrow">${state.hasSignal ? '<span class="discover-state-dark">DARK · GLASS</span><span class="discover-state-light">LIGHT · GLASS</span><span class="discover-state-solid">REDUCED TRANSPARENCY · SOLID</span>' : 'EMPTY LIBRARY SIGNAL'}</span>
+            <span class="discover-eyebrow">${state.hasSignal ? 'Picked from your library' : 'Getting started'}</span>
             <span class="discover-privacy">${buildDiscoverIcon('lock-keyhole', 12)} Just for you</span>
           </div>
           <h1 class="discover-title">Your next chapter.</h1>
