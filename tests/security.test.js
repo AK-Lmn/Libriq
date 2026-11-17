@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { escapeHtml } from '../frontend/js/shared/escapeHtml.js';
 import { hasRecentSignIn } from '../frontend/js/firebase-client.js';
 
@@ -49,7 +49,10 @@ test('account deletion checks the sign-in before deleting any data', async () =>
 });
 
 test('CI workflows use a read-only token and actions pinned to commits', async () => {
-  for (const file of ['.github/workflows/ci.yml', '.github/workflows/sync-ci.yml']) {
+  const dir = new URL('../.github/workflows/', import.meta.url);
+  const files = (await readdir(dir)).filter(name => /.ya?ml$/.test(name)).map(name => `.github/workflows/${name}`);
+  assert.ok(files.length > 0);
+  for (const file of files) {
     const workflow = await read(file);
     assert.match(workflow, /^permissions:\r?\n  contents: read\r?$/m, `${file} sets read-only permissions`);
     for (const [, ref] of workflow.matchAll(/uses:\s*[\w.-]+\/[\w.-]+@(\S+)/g)) {

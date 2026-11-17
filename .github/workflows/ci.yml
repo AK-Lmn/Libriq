@@ -13,13 +13,13 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    name: Lint, Build, and Automated Tests
+  unit:
+    name: Build and unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
@@ -27,41 +27,48 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci
-
-      - name: JavaScript Syntax & Static Analysis
-        run: |
-          node --check server/app.js
-          node --check server/auth.js
-          node --check server/catalog.js
-          node --check server/config.js
-          node --check server/response.js
-          node --check server/middleware/auth.js
-          node --check server/middleware/validate.js
-          node --check server/middleware/errorHandler.js
-          node --check scripts/generate-config.mjs
-          node --check scripts/e2e-server.mjs
-          node --check frontend/js/sync.js
-          node --check frontend/js/firebase-client.js
-          node --check frontend/js/navigation.js
-          node --check frontend/js/storage.js
-          node --check frontend/js/app.js
-          node --check frontend/js/data.js
 
       - name: Build
         run: npm run build
 
-      - name: Run Core Test Suite
+      - name: node --test suite
         run: npm test
 
-      - name: Run Critical Module Regression Checks
-        run: |
-          npm run test:data-modules
-          npm run test:storage-modules
-          npm run test:utils-modules
-          npm run test:api-modules
-          npm run test:identity
+      - name: Unit test scripts (no browser)
+        run: npm run test:unit
+
+  browser:
+    name: Browser tests (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build
+        run: npm run build
+
+      # Includes the sync E2E that used to run in sync-ci.yml. One retry per
+      # script; anything that only passes on retry is listed at the end.
+      - name: Browser test scripts
+        run: npm run test:browser
