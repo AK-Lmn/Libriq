@@ -1481,12 +1481,38 @@ async function deleteCurrentUserLibraryData() {
   return true;
 }
 
+// Firebase refuses deleteUser unless the user signed in within about five
+// minutes. Leave a margin so the check fails before Firebase would.
+const RECENT_SIGN_IN_MS = 4 * 60 * 1000;
+
+export function hasRecentSignIn(authTime, now = Date.now()) {
+  const signedInAt = Date.parse(authTime || '');
+  if (!Number.isFinite(signedInAt)) return false;
+  const age = now - signedInAt;
+  return age >= -60 * 1000 && age <= RECENT_SIGN_IN_MS;
+}
+
+function recentLoginRequiredError() {
+  const error = new Error('For security, please sign in again before deleting your account.');
+  error.code = 'auth/requires-recent-login';
+  return error;
+}
+
+async function assertRecentSignIn() {
+  if (!auth?.currentUser) throw new Error('Firebase is unavailable.');
+  const { authTime } = await auth.currentUser.getIdTokenResult();
+  if (!hasRecentSignIn(authTime)) throw recentLoginRequiredError();
+}
+
 async function deleteCurrentUserAccount() {
   const user = getCurrentUser();
   if (!user?.uid) throw new Error('Firebase is unavailable.');
+  // Check before wiping anything. Data can only be deleted while the user
+  // exists, so a deleteUser refusal after the wipe used to leave an empty
+  // account behind.
+  if (!TEST_MODE) await assertRecentSignIn();
   await deleteCurrentUserLibraryData();
   await deleteFirestoreDocPath(['users', user.uid, 'profile', 'current']);
-  await deleteFirestoreDocPath(['users', user.uid, 'backups', 'current']);
   await deleteFirestoreDocPath(['users', user.uid, 'polls', 'mobile_app']);
   if (!TEST_MODE) {
     // Aggregate vote lives outside users/{uid}; best effort so it never blocks account deletion.
@@ -1502,11 +1528,7 @@ async function deleteCurrentUserAccount() {
   try {
     await deleteUser(auth.currentUser);
   } catch (err) {
-    if (String(err?.code || '').includes('requires-recent-login')) {
-      const friendly = new Error('For security, please sign in again before deleting your account.');
-      friendly.code = 'auth/requires-recent-login';
-      throw friendly;
-    }
+    if (String(err?.code || '').includes('requires-recent-login')) throw recentLoginRequiredError();
     throw err;
   }
   return true;
