@@ -128,7 +128,6 @@ const SHELL_ASSETS = [
   './vendor/phosphor/style.css',
   './vendor/phosphor/Phosphor.woff2',
   './vendor/phosphor/Phosphor-Fill.woff2',
-  './vendor/phosphor/Phosphor-Bold.woff2',
   './assets/dashboard/desktop-arrow-up-right.svg',
   './assets/dashboard/desktop-book-open.svg',
   './assets/dashboard/desktop-book-pedestal-shadow.svg',
@@ -151,6 +150,7 @@ const SHELL_ASSETS = [
   './assets/dashboard/desktop-user-round.svg',
   './assets/dashboard/mobile-house.svg',
   './assets/icons/icon.svg',
+  './assets/icons/favicon.svg',
   './assets/icons/favicon-16x16.png',
   './assets/icons/favicon-32x32.png',
   './assets/icons/favicon-48x48.png',
@@ -354,7 +354,9 @@ async function handleNavigationRequest(request) {
 
 async function cacheFirst(request) {
   const cache = await caches.open(CACHE_NAME);
-  const cached = await cache.match(request);
+  // Precache keys have no query string, but the page asks for icons and the
+  // manifest with ?v=2. This cache holds one deploy, so the query adds nothing.
+  const cached = await cache.match(request, { ignoreSearch: true });
   // No background refresh: this cache belongs to one deploy, and refreshing
   // it would pull the next deploy's files in one at a time.
   if (cached) return cached;

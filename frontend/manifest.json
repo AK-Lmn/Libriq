@@ -1,7 +1,9 @@
 {
+  "id": "/",
   "name": "LibriQ",
   "short_name": "LibriQ",
-  "description": "A calm, local-first personal book tracker.",
+  "description": "A private reading tracker. Track books and goals, and bring in Goodreads and Kindle highlights.",
+  "categories": ["books", "lifestyle", "productivity"],
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
