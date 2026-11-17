@@ -1,0 +1,21 @@
+# LibriQ
+
+> LibriQ is a private reading tracker for the web. Readers track books, set reading goals and streaks, and bring in their Goodreads library and Kindle highlights. It works offline as an installable PWA. There are no ads and no social feed. An account is required.
+
+## What it does
+
+- Track books as Reading, Want to Read, Finished or Did Not Finish, with progress, ratings, notes and quotes
+- Import a Goodreads CSV export and Kindle "My Clippings.txt" highlights
+- Yearly reading goals, streaks and reading statistics
+- Recommendations drawn from the reader's own library
+- Sync between devices on the same account, plus JSON export
+
+## Pages
+
+- [Home and sign-in](https://www.libriq.app/): the app itself
+- [Privacy Policy](https://www.libriq.app/privacy.html): what is stored and who processes it
+- [Terms of Service](https://www.libriq.app/terms.html)
+
+## Contact
+
+support@libriq.app
