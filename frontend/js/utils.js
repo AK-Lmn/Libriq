@@ -231,7 +231,7 @@ export const Utils = {
     return `<div class="star-rating ${interactive ? '' : 'readonly'}">${stars}</div>`;
   },
 
-  toast(message, type = 'success', { persistent = false } = {}) {
+  toast(message, type = 'success', { persistent = false, action = null } = {}) {
     const container = document.getElementById('toastContainer');
     if (!container) return;
 
@@ -255,8 +255,16 @@ export const Utils = {
     };
 
     if (persistent) {
-      // Stays until the reader closes it; used when data could not be saved.
-      toast.setAttribute('role', 'alert');
+      // Stays until the reader closes it (a failed save, an update to load).
+      toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+      if (action?.label && typeof action.onClick === 'function') {
+        const actionBtn = document.createElement('button');
+        actionBtn.type = 'button';
+        actionBtn.className = 'toast-dismiss toast-action';
+        actionBtn.textContent = action.label;
+        actionBtn.addEventListener('click', () => { action.onClick(); dismiss(); }, { once: true });
+        toast.appendChild(actionBtn);
+      }
       const close = document.createElement('button');
       close.type = 'button';
       close.className = 'toast-dismiss';
