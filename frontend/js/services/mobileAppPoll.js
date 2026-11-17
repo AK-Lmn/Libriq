@@ -66,7 +66,10 @@ export async function submitPollVote(choice, { firebaseClient, firestoreInstance
     client.doc(db, 'users', uid, 'polls', 'mobile_app'),
     client.doc(db, 'polls', 'mobile_app', 'votes', uid),
   ];
-  await Promise.allSettled(refs.map((ref) => Promise.resolve().then(() => client.setDoc(ref, votePayload))));
+  const settled = await Promise.allSettled(refs.map((ref) => Promise.resolve().then(() => client.setDoc(ref, votePayload))));
+  if (settled.every(result => result.status === 'rejected')) {
+    return { success: false, error: 'write_failed', payload: votePayload };
+  }
 
   return { success: true, payload: votePayload };
 }

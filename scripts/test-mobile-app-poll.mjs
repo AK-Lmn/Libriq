@@ -135,10 +135,12 @@ for (const bad of ['web', 'IOS', '', null, undefined, 'ios; drop', { choice: 'io
   assert.equal(mockStorage.has(POLL_STORAGE_KEYS.VOTED), false);
 }
 
-// 7. A failing remote write does not throw
+// 7. A failing remote write does not throw, and reports the failure so a
+//    queued emailed vote stays queued for the next attempt.
 mockWrites.length = 0;
 const failingClient = { ...signedInClient, setDoc: () => { throw new Error('permission-denied'); } };
 const failed = await submitPollVote('web_ok', { firebaseClient: failingClient });
-assert.equal(failed.success, true);
+assert.equal(failed.success, false);
+assert.equal(failed.error, 'write_failed');
 
 console.log('All mobileAppPoll tests passed successfully!');

@@ -9,6 +9,8 @@ import { LibriqFirebase } from './firebase-client.js';
 import { LibriqCloudBackup } from './cloudBackup.js';
 import { initInstallPrompt } from './installPrompt.js';
 import { submitPollVote } from './services/mobileAppPoll.js';
+import { BookAPI } from './api/index.js';
+import { PENDING_KEYS, claimPendingBook, flushPendingPollVote, queuePollVote } from './services/pendingIntents.js';
 import { RELEASE_NOTES_VERSION, getReleaseNotes, hasSeenRelease } from './services/releaseNotes.js';
 
 let _booted = false;
@@ -187,7 +189,35 @@ const SESSION_PREF_KEY = 'libriq_session_pref';
     });
 
     checkIncomingPollVote();
+    LibriqFirebase.subscribe?.(state => claimPendingIntents(state));
     registerServiceWorker();
+  }
+
+  // A vote from the poll email or a book picked in the sign-in demo search may
+  // arrive before the account is ready. Claim them once a user is signed in;
+  // Storage is already scoped to that account by then.
+  let _flushingVote = false;
+  function claimPendingIntents(state) {
+    const signedIn = Boolean(state?.user?.uid);
+    if (!signedIn) return;
+
+    if (!_flushingVote) {
+      _flushingVote = true;
+      flushPendingPollVote({ isSignedIn: true, submit: submitPollVote })
+        .catch(error => console.warn('[Libriq] Queued poll vote failed:', error))
+        .finally(() => { _flushingVote = false; });
+    }
+
+    const claimed = claimPendingBook({
+      getBooks: () => Storage.getBooks(),
+      isSameBook: (a, b) => BookAPI.isSameBook(a, b),
+      addBook: book => Storage.addBook(book),
+    });
+    if (claimed.status === 'added') {
+      Utils.toast?.(`"${claimed.book.title}" is waiting in Want to Read.`, 'success');
+      Navigation.updateBadges?.();
+      Navigation.renderCurrentPage?.();
+    }
   }
 
   function checkIncomingPollVote() {
@@ -197,7 +227,11 @@ const SESSION_PREF_KEY = 'libriq_session_pref';
       const voteParam = urlParams.get('vote')?.toLowerCase();
       if (voteParam && ['ios', 'android', 'web_ok', 'web'].includes(voteParam)) {
         const choice = voteParam === 'web' ? 'web_ok' : voteParam;
-        submitPollVote(choice);
+        // Hide the card now; the account write waits for sign-in.
+        queuePollVote(choice);
+        submitPollVote(choice).then(result => {
+          if (result?.success && !result.localOnly) localStorage.removeItem(PENDING_KEYS.POLL_VOTE);
+        }).catch(() => {});
         const label = choice === 'ios' ? 'iOS' : choice === 'android' ? 'Android' : 'Web';
         setTimeout(() => {
           Utils.toast?.(`Thank you! Your vote for ${label} has been recorded.`, 'success');
