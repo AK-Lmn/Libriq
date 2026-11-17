@@ -1,3 +1,4 @@
+import { runWhenIdleAfterLoad } from './shared/afterLoad.js';
 import { Storage } from './storage.js';
 
 let initializeApp;
@@ -100,19 +101,25 @@ async function loadFirebaseSdk() {
 
 // Optional Firebase App Check. Only runs when a reCAPTCHA Enterprise site key is
 // configured; any failure is logged and never blocks sign-in.
+// It starts after the page loads: reCAPTCHA is ~360 KB that the first screen
+// doesn't need. That is only safe while App Check is not enforced for Auth and
+// Firestore (Nov 2026: Firestore "Unenforced", Auth "Monitoring"). If
+// enforcement is turned on, initialise it immediately again.
 function initAppCheck(firebaseApp, siteKey) {
   const key = String(siteKey || '').trim();
   if (!key || TEST_MODE) return;
-  import('../vendor/firebase-app-check.js')
-    .then(({ initializeAppCheck, ReCaptchaEnterpriseProvider }) => {
-      initializeAppCheck(firebaseApp, {
-        provider: new ReCaptchaEnterpriseProvider(key),
-        isTokenAutoRefreshEnabled: true,
+  runWhenIdleAfterLoad(() => {
+    import('../vendor/firebase-app-check.js')
+      .then(({ initializeAppCheck, ReCaptchaEnterpriseProvider }) => {
+        initializeAppCheck(firebaseApp, {
+          provider: new ReCaptchaEnterpriseProvider(key),
+          isTokenAutoRefreshEnabled: true,
+        });
+      })
+      .catch((err) => {
+        console.warn('[Libriq] App Check unavailable:', err);
       });
-    })
-    .catch((err) => {
-      console.warn('[Libriq] App Check unavailable:', err);
-    });
+  });
 }
 
 function prepareRuntime() {

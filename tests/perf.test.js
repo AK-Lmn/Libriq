@@ -71,3 +71,39 @@ test('every cover <img> goes through coverImgAttrs, and error fallbacks clear sr
   has(nav, "<img ${coverImgAttrs(b.coverUrl, 'cover-sm', Utils.sanitize)} loading=\"lazy\"");
   has(nav, "this.removeAttribute('srcset');this.src='./assets/icons/icon-192.png'");
 });
+
+test('runWhenIdleAfterLoad waits for load, then for idle time', async () => {
+  const { runWhenIdleAfterLoad } = await import('../frontend/js/shared/afterLoad.js');
+  const listeners = {};
+  const idle = [];
+  const env = {
+    document: { readyState: 'loading' },
+    window: {
+      addEventListener: (type, fn, options) => { listeners[type] = { fn, options }; },
+      requestIdleCallback: (fn, options) => idle.push({ fn, options }),
+    },
+  };
+  let ran = 0;
+  runWhenIdleAfterLoad(() => { ran += 1; }, env);
+  assert.equal(ran, 0);
+  assert.equal(idle.length, 0, 'nothing is scheduled before load');
+  assert.deepEqual(listeners.load.options, { once: true });
+  listeners.load.fn();
+  assert.equal(idle.length, 1);
+  assert.equal(idle[0].options.timeout, 3000, 'runs within 3 s even if the page never idles');
+  idle[0].fn();
+  assert.equal(ran, 1);
+
+  // Already loaded, and no requestIdleCallback (Safari): falls back to a timer.
+  const timers = [];
+  runWhenIdleAfterLoad(() => { ran += 1; }, { document: { readyState: 'complete' }, window: {}, setTimeout: (fn, ms) => timers.push({ fn, ms }) });
+  assert.equal(timers.length, 1);
+  timers[0].fn();
+  assert.equal(ran, 2);
+});
+
+test('App Check starts after load instead of during boot', async () => {
+  const client = await read('frontend/js/firebase-client.js');
+  const body = client.slice(client.indexOf('function initAppCheck'), client.indexOf('function prepareRuntime'));
+  assert.ok(body.includes('runWhenIdleAfterLoad(() => {'), 'App Check import is deferred');
+});
