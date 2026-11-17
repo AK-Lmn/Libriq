@@ -193,14 +193,30 @@ try {
       }
       if (window === 'library' && variant === 'mobile-dark') {
         assert.ok(await page.locator('#sidebar').evaluate(el => el.inert));
+        assert.equal(await page.locator('#mobileMenuBtn').getAttribute('aria-expanded'), 'false');
+        assert.equal(await page.locator('#mobileMenuBtn').getAttribute('aria-controls'), 'sidebar');
         await page.locator('#mobileMenuBtn').click();
         assert.ok(await page.locator('#sidebar').evaluate(el => !el.inert && el.contains(document.activeElement)));
+        assert.equal(await page.locator('#mobileMenuBtn').getAttribute('aria-expanded'), 'true');
         await page.keyboard.press('Escape');
         assert.ok(await page.locator('#sidebar').evaluate(el => el.inert));
+        assert.equal(await page.locator('#mobileMenuBtn').getAttribute('aria-expanded'), 'false');
         assert.ok(await page.locator('#mobileMenuBtn').evaluate(el => el === document.activeElement));
+        assert.equal(await page.locator('#themeToggle').getAttribute('aria-pressed'), 'true', 'dark theme shows the toggle as pressed');
         await page.locator('.mobile-bottom-item[data-page="stats"]').click();
         assert.equal(await page.locator('body').getAttribute('data-route'), 'stats');
         assert.equal(await page.locator('.mobile-bottom-item[data-page="stats"]').getAttribute('aria-current'), 'page');
+        const heading = (await page.locator('#mainContent h1').first().textContent()).trim();
+        assert.equal(await page.title(), `${heading} · LibriQ`, 'route sets document.title');
+        assert.ok(await page.locator('#mainContent h1').first().evaluate(el => el === document.activeElement), 'route moves focus to the page heading');
+        const skip = page.locator('a.skip-link');
+        assert.equal(await skip.getAttribute('href'), '#mainContent');
+        assert.equal(await page.evaluate(() => document.querySelector('a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])')?.classList.contains('skip-link')), true, 'skip link is the first focusable element');
+        assert.ok(await skip.evaluate(el => el.getBoundingClientRect().bottom <= 0), 'skip link is off screen until focused');
+        await skip.focus();
+        await page.waitForFunction(() => document.querySelector('a.skip-link').getBoundingClientRect().top >= 0);
+        await skip.evaluate(el => el.blur());
+        await page.waitForFunction(() => document.querySelector('a.skip-link').getBoundingClientRect().bottom <= 0);
         await page.locator('#mobileMenuBtn').click();
         await page.setViewportSize({ width: 1440, height: 900 });
         await page.waitForFunction(() => !document.getElementById('sidebar').classList.contains('open'));

@@ -458,11 +458,13 @@ export const Navigation = (() => {
       });
       closeMobileSidebar();
     },
-    afterNavigate: ({ name, root }) => {
+    afterNavigate: ({ name, previousRoute, root }) => {
       LibriqCloudBackup.refresh();
       if (root) root.scrollTop = 0;
       window.dispatchEvent(new CustomEvent('libriq:page-changed', { detail: { page: name } }));
       syncUrlForRoute(name);
+      announceRoute(root, name, _hasNavigated && previousRoute !== name);
+      _hasNavigated = true;
     },
     renderError: ({ error, name, root }) => {
       console.error(`[LibriQ] Failed to render ${name} page:`, error);
@@ -477,6 +479,19 @@ export const Navigation = (() => {
       }
     },
   }).registerAll(pages);
+
+  let _hasNavigated = false;
+
+  // Screen readers get no page-load cue in a single-page app: name the tab after
+  // the page and, after the first render, move focus to its heading.
+  function announceRoute(root, name, moveFocus) {
+    const heading = root?.querySelector?.('h1');
+    const text = ['boot', 'session'].includes(name) ? '' : heading?.textContent?.trim();
+    document.title = text ? `${text} · LibriQ` : 'LibriQ';
+    if (!moveFocus || !heading) return;
+    if (!heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1');
+    heading.focus({ preventScroll: true });
+  }
 
   function syncUrlForRoute(name) {
     if (typeof window === 'undefined' || !window.location || typeof history === 'undefined' || typeof history.replaceState !== 'function') return;
@@ -611,6 +626,7 @@ export const Navigation = (() => {
     sidebar.setAttribute('aria-hidden', 'false');
     sidebar.classList.add('open');
     overlay.classList.add('visible');
+    document.getElementById('mobileMenuBtn')?.setAttribute('aria-expanded', 'true');
     document.body.style.overflow = 'hidden';
     sidebar.querySelector('.nav-item.active')?.focus();
   }
@@ -625,6 +641,7 @@ export const Navigation = (() => {
     sidebar.setAttribute('aria-hidden', String(mobile));
     sidebar.classList.remove('open');
     overlay.classList.remove('visible');
+    document.getElementById('mobileMenuBtn')?.setAttribute('aria-expanded', 'false');
     document.body.style.overflow = '';
   }
 
@@ -684,11 +701,10 @@ export const Navigation = (() => {
   function _updateThemeToggleUI(theme) {
     document.querySelector?.('meta[name="theme-color"]')?.setAttribute('content', theme === 'light' ? '#EEF1F6' : '#0B0E14');
     const icon  = document.getElementById('themeIcon');
-    const label = document.getElementById('themeLabel');
     const iconDesktop = document.getElementById('themeIconDesktop');
     if (icon)  icon.className   = theme === 'dark' ? 'ph ph-moon' : 'ph ph-sun';
     if (iconDesktop) iconDesktop.className = theme === 'dark' ? 'ph ph-moon' : 'ph ph-sun';
-    if (label) label.textContent = theme === 'dark' ? 'Dark mode' : 'Light mode';
+    document.getElementById('themeToggle')?.setAttribute('aria-pressed', String(theme === 'dark'));
   }
 
   function updateDesktopStatusPill() {
