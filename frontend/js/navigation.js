@@ -34,6 +34,7 @@ import { createGoodreadsImportService } from './services/goodreadsImportService.
 import { executeGoodreadsImport } from './services/goodreadsImportExecution.js';
 import { resolveAccountDisplayName } from './accountDisplayName.js';
 import { applyNavigationChrome, initializeNavigationChrome } from './navigationChrome.js';
+import { savePendingBook } from './services/pendingIntents.js';
 
 export function completeGoodreadsImport({ previewResult, storage, toast, rerender } = {}) {
   const result = executeGoodreadsImport({
@@ -1537,17 +1538,20 @@ function renderSessionChoicePage() {
   const demoResults = document.getElementById('sessionDemoResults');
   let demoDebounceTimer = null;
 
-  const triggerSignupForBook = (title) => {
+  let demoBooks = [];
+  const triggerSignupForBook = (book) => {
+    const title = book?.title || '';
+    savePendingBook(book);
     Navigation.setEmailAuthMode?.('signup');
     const form = document.getElementById('emailAuthForm');
     if (form) form.scrollIntoView({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
     document.getElementById('sessionEmailInput')?.focus();
-    Utils.toast?.(`Create an account to save "${title}" to your library!`, 'info');
+    Utils.toast?.(`Create an account and "${title}" will be in your library.`, 'info');
   };
 
   const executeDemoSearch = async (query) => {
     const q = (query || '').trim();
-    if (!q || q.length < 2) {
+    if (!q || q.length < 3) {
       if (demoResults) {
         demoResults.innerHTML = '';
         demoResults.hidden = true;
@@ -1565,19 +1569,20 @@ function renderSessionChoicePage() {
         return;
       }
       const topBooks = results.slice(0, 3);
-      demoResults.innerHTML = topBooks.map(b => {
+      demoBooks = topBooks;
+      demoResults.innerHTML = topBooks.map((b, index) => {
         const cover = b.coverUrl
           ? `<img src="${Utils.sanitize(b.coverUrl)}" class="session-demo-book-cover" alt="" onerror="this.src='./icons/icon-192.png'" />`
           : `<div class="session-demo-book-cover-placeholder"><i class="ph ph-book"></i></div>`;
         return `
-          <div class="session-demo-book-card" data-title="${Utils.sanitize(b.title)}">
+          <div class="session-demo-book-card" data-title="${Utils.sanitize(b.title)}" data-index="${index}">
             ${cover}
             <div class="session-demo-book-info">
               <div class="session-demo-book-title">${Utils.sanitize(b.title)}</div>
               <div class="session-demo-book-author">${Utils.sanitize(b.author || 'Unknown')}</div>
               <div class="session-demo-book-meta">${b.year ? Utils.sanitize(b.year) : ''}${b.pageCount ? ` • ${Utils.sanitize(b.pageCount)} pages` : ''}</div>
             </div>
-            <button type="button" class="btn btn-sm btn-primary session-demo-save-btn" data-title="${Utils.sanitize(b.title)}">
+            <button type="button" class="btn btn-sm btn-primary session-demo-save-btn" data-title="${Utils.sanitize(b.title)}" data-index="${index}">
               <i class="ph ph-plus"></i> Save
             </button>
           </div>
@@ -1588,8 +1593,8 @@ function renderSessionChoicePage() {
       demoResults.querySelectorAll('.session-demo-save-btn, .session-demo-book-card').forEach(el => {
         el.addEventListener('click', (e) => {
           e.stopPropagation();
-          const title = el.dataset.title || el.closest('.session-demo-book-card')?.dataset.title;
-          if (title) triggerSignupForBook(title);
+          const book = demoBooks[Number(el.dataset.index)];
+          if (book?.title) triggerSignupForBook(book);
         });
       });
     } catch (err) {
