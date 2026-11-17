@@ -54,6 +54,8 @@ export const Storage = (() => {
       return true;
     } catch (e) {
       console.warn(`[Libriq] Storage write error (${key}):`, e);
+      const quota = e?.name === 'QuotaExceededError' || e?.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e?.code === 22;
+      _dispatchChange('storage:write-failed', { key, quota });
       return false;
     }
   }
@@ -277,7 +279,7 @@ export const Storage = (() => {
     const books = getBooks();
     const book  = createBook(bookData);
     books.unshift(book);
-    saveBooks(books);
+    if (!saveBooks(books)) return null;
     _dispatchChange('book:added', book);
     return book;
   }
@@ -287,7 +289,7 @@ export const Storage = (() => {
     const idx   = books.findIndex(b => b.id === id);
     if (idx === -1) return null;
     books[idx] = { ...books[idx], ...updates, updatedAt: new Date().toISOString() };
-    saveBooks(books);
+    if (!saveBooks(books)) return null;
     _dispatchChange('book:updated', books[idx]);
     return books[idx];
   }
@@ -295,7 +297,7 @@ export const Storage = (() => {
   function removeBook(id) {
     const books    = getBooks();
     const filtered = books.filter(b => b.id !== id);
-    saveBooks(filtered);
+    if (!saveBooks(filtered)) return false;
     _dispatchChange('book:removed', { id });
     return true;
   }

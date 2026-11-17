@@ -627,7 +627,7 @@ export function createBookDetailsPage({
     removeBtn.addEventListener('click', async () => {
       if (!await confirm(`Remove "${book.title}" from your library?`, { title: 'Remove book?', confirmLabel: 'Remove book', trigger: removeBtn })) return;
       closeDetailsModal();
-      Storage.removeBook(book.id);
+      if (!Storage.removeBook(book.id)) return;
       Utils.toast(`"${book.title}" removed`, 'info');
       Navigation.updateBadges();
       Navigation.renderCurrentPage();

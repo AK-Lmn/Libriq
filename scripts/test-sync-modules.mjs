@@ -112,4 +112,15 @@ const toLocalBookSource = source.slice(source.indexOf('function _toLocalBook'), 
 assert.match(toLocalBookSource, /return createBook\(/);
 assert.match(source, /function _mergeRemoteIntoLocal[\s\S]*?return createBook\(/);
 
+// A capped listener returns only the oldest books and the initial snapshot
+// then replaces the local library with that subset.
+const attachListenerSource = source.slice(source.indexOf('function attachListener'), source.indexOf('function queueUpload'));
+assert.match(attachListenerSource, /LibriqFirebase\.query\(/);
+assert.doesNotMatch(attachListenerSource, /\blimit\(/, 'sync listener must not cap the books query');
+
+// A failed local save must not be reported as synced.
+assert.doesNotMatch(source, /^\s*Storage\.saveBooks\(/m, 'sync must check the saveBooks result');
+assert.match(source, /const saved = Storage\.saveBooks\(activeRemoteBooks\);[\s\S]*?if \(!saved\)/);
+assert.match(source, /const saved = Storage\.saveBooks\(nextBooks\);[\s\S]*?if \(!saved\)/);
+
 console.log('Sync module and bootstrap tests passed');
