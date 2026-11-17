@@ -6,7 +6,7 @@ export function shouldLoadAnalytics(hostname) {
   return Boolean(hostname) && !LOCAL_HOST.test(hostname);
 }
 
-if (typeof document !== 'undefined' && shouldLoadAnalytics(location.hostname)) {
+if (typeof document !== 'undefined' && shouldLoadAnalytics(globalThis.location?.hostname)) {
   window.va = window.va || function va(...args) { (window.vaq = window.vaq || []).push(args); };
   const script = document.createElement('script');
   script.defer = true;
