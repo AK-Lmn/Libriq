@@ -149,6 +149,45 @@ productionApp.bootApp();
 await Promise.resolve();
 assert.equal(registerCalls, 1);
 
+// A deploy that is already waiting must be offered, not forced: the page asks
+// before the new worker takes over, then reloads once it has.
+const updateToasts = [];
+const originalToast = Utils.toast;
+Utils.toast = (message, type, options) => { updateToasts.push({ message, type, options }); };
+const swMessages = [];
+const swListeners = {};
+let reloads = 0;
+globalThis.location = { protocol: 'https:', hostname: 'libriq.example', reload: () => { reloads += 1; } };
+Object.defineProperty(globalThis, 'navigator', {
+  value: {
+    onLine: true,
+    serviceWorker: {
+      controller: {},
+      addEventListener: (type, listener) => { swListeners[type] = listener; },
+      register: async () => ({
+        waiting: { postMessage: message => swMessages.push(message) },
+        addEventListener() {},
+      }),
+    },
+  },
+  configurable: true,
+});
+const updateApp = await import('../frontend/js/app.js?service-worker-update');
+updateApp.bootApp();
+await new Promise(resolve => setImmediate(resolve));
+const updatePrompt = updateToasts.find(toast => toast.options?.action);
+assert.ok(updatePrompt, 'waiting deploy shows an update prompt');
+assert.equal(updatePrompt.options.persistent, true);
+assert.equal(updatePrompt.options.action.label, 'Reload');
+assert.deepEqual(swMessages, [], 'new worker does not take over before the reader chooses');
+updatePrompt.options.action.onClick();
+assert.deepEqual(swMessages, [{ type: 'SKIP_WAITING' }]);
+assert.equal(reloads, 0);
+swListeners.controllerchange();
+swListeners.controllerchange();
+assert.equal(reloads, 1, 'reloads once after the new worker takes over');
+Utils.toast = originalToast;
+
 let authCallback;
 let unsubscribeCalls = 0;
 globalThis.location = { protocol: 'file:', hostname: '' };
