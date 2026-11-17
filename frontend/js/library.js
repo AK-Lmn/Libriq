@@ -770,7 +770,7 @@ export const Library = (() => {
       ${Utils.buildCover(book, 'cover-md')}
       <div class="book-card-info">
         <button type="button" class="btn btn-icon btn-sm card-fav-btn ${book.isFavorite ? 'active' : ''}" data-action="toggle-favorite" aria-label="${book.isFavorite ? 'Unfavorite' : 'Favorite'} ${Utils.sanitize(book.title)}" aria-pressed="${Boolean(book.isFavorite)}">
-          ${icon(book.isFavorite ? 'heart-active' : 'heart')}${icon(book.isFavorite ? 'bookmark-active' : 'bookmark')}<i class="${book.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart'}" aria-hidden="true"></i>
+          ${icon(book.isFavorite ? 'heart-active' : 'heart')}${icon(book.isFavorite ? 'bookmark-active' : 'bookmark')}
         </button>
         <button type="button" class="btn btn-ghost book-card-title card-details-btn" data-action="show-book-details" aria-label="Details for ${Utils.sanitize(book.title)}">${Utils.sanitize(book.title)}</button>
         <div class="book-card-author">${Utils.sanitize(book.author || 'Author not added')}</div>
@@ -817,7 +817,7 @@ export const Library = (() => {
       favBtn.classList.toggle('active', Boolean(updated.isFavorite));
       favBtn.setAttribute('aria-pressed', String(Boolean(updated.isFavorite)));
       favBtn.setAttribute('aria-label', `${updated.isFavorite ? 'Unfavorite' : 'Favorite'} ${book.title}`);
-      favBtn.innerHTML = `${icon(updated.isFavorite ? 'heart-active' : 'heart')}${icon(updated.isFavorite ? 'bookmark-active' : 'bookmark')}<i class="${updated.isFavorite ? 'ph-fill ph-heart' : 'ph ph-heart'}" aria-hidden="true"></i>`;
+      favBtn.innerHTML = `${icon(updated.isFavorite ? 'heart-active' : 'heart')}${icon(updated.isFavorite ? 'bookmark-active' : 'bookmark')}`;
       Navigation.updateBadges();
       Navigation.renderCurrentPage();
     });

@@ -212,6 +212,7 @@ const SHELL_ASSETS = [
   './js/services/backupSerialization.js',
   './js/services/importExportService.js',
   './js/services/importMerge.js',
+  './js/services/releaseNotes.js',
   './js/services/kindleClippingsParser.js',
   './js/services/kindleImportService.js',
   './js/services/kindleQuoteImport.js',

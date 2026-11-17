@@ -9,31 +9,13 @@ import { LibriqFirebase } from './firebase-client.js';
 import { LibriqCloudBackup } from './cloudBackup.js';
 import { initInstallPrompt } from './installPrompt.js';
 import { submitPollVote } from './services/mobileAppPoll.js';
+import { RELEASE_NOTES_VERSION, getReleaseNotes, hasSeenRelease } from './services/releaseNotes.js';
 
 let _booted = false;
 let _whatsNewTimer = null;
 const RELEASE_KEY = 'libriq_seen_version';
 const SESSION_PREF_KEY = 'libriq_session_pref';
 
-function getWhatsNewVersion() {
-  return LIBRIQ.VERSION;
-}
-
-function getReleaseNotes() {
-  return {
-    [getWhatsNewVersion()]: {
-      title: "What's New in LibriQ v4.8.0",
-      subtitle: '3D Digital Bookshelf view, refreshed Ribbon Q identity, and UI polish.',
-      sections: [
-        ['3D Digital Bookshelf View', 'Experience your collection like a physical bookcase. Switch seamlessly between the classic cover grid and 3D spine shelves with realistic depth and paper thickness.'],
-        ['Refreshed Brand Identity', 'The signature Ribbon Q logo mark has been precision-upgraded in Deep Indigo & Slate across all navigation headers, favicons, and PWA app icons.'],
-        ['Spine Hover Previews', 'Hovering or focusing on any spine brings it forward with an instant floating card showing book cover, author, and reading progress.'],
-        ['Dark & Light Theme Harmony', 'Refined glass tokens and shelf planks adapt naturally between deep OLED dark mode and clean editorial paper light mode.'],
-      ],
-      note: 'All shelf filters, sorting options, and book details work seamlessly with the new Bookshelf view.',
-    },
-  };
-}
 
   function resetShellUI() {
     if (typeof Search !== 'undefined' && Search.close) Search.close();
@@ -54,14 +36,14 @@ function getReleaseNotes() {
 
   function shouldShowWhatsNew() {
     const seen = localStorage.getItem(RELEASE_KEY) || '';
-    if (seen === getWhatsNewVersion()) return false;
+    if (hasSeenRelease(seen)) return false;
 
     // Suppress for fresh accounts (no prior version seen and empty library)
     // to prevent Day-1 changelog cognitive overload
     if (!seen) {
       const books = Storage.getBooks?.() || [];
       if (books.length === 0) {
-        localStorage.setItem(RELEASE_KEY, getWhatsNewVersion());
+        localStorage.setItem(RELEASE_KEY, RELEASE_NOTES_VERSION);
         return false;
       }
     }
@@ -73,8 +55,7 @@ function getReleaseNotes() {
     const body = document.getElementById('whatsNewBody');
     if (!modal || !body) return;
 
-    const notes = getReleaseNotes()[getWhatsNewVersion()];
-    if (!notes) return;
+    const notes = getReleaseNotes();
 
     modal.querySelector('.modal-title')?.replaceChildren(document.createTextNode(notes.title));
     modal.querySelector('.whats-new-subtitle')?.replaceChildren(document.createTextNode(notes.subtitle));
@@ -120,7 +101,7 @@ function getReleaseNotes() {
   }
 
   function dismissWhatsNew() {
-    localStorage.setItem(RELEASE_KEY, getWhatsNewVersion());
+    localStorage.setItem(RELEASE_KEY, RELEASE_NOTES_VERSION);
     closeWhatsNew();
     Navigation.routeAfterAuthReady?.();
     if (Navigation.currentPage === 'session') {

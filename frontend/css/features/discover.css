@@ -97,9 +97,7 @@
 #recommendationsPage.discover-page .discover-private-note { color: var(--discover-muted); font-size: 12px; min-width: 0; }
 #recommendationsPage.discover-page .discover-icon { display: inline-flex; align-items: center; flex-shrink: 0; vertical-align: middle; }
 #recommendationsPage.discover-page .discover-icon img { display: block; max-width: none; object-fit: contain; }
-#recommendationsPage.discover-page .discover-icon img.discover-icon-light, #recommendationsPage.discover-page .discover-state-light, #recommendationsPage.discover-page .discover-state-solid { display: none; }
-[data-theme="light"] #recommendationsPage.discover-page .discover-state-light { display: inline; }
-[data-theme="light"] #recommendationsPage.discover-page .discover-state-dark { display: none; }
+#recommendationsPage.discover-page .discover-icon img.discover-icon-light { display: none; }
 [data-theme="light"] #recommendationsPage.discover-page .discover-icon-switch img.discover-icon-dark { display: none; }
 [data-theme="light"] #recommendationsPage.discover-page .discover-icon img.discover-icon-light { display: block; }
 #recommendationsPage.discover-page .discover-empty { padding: 48px; display: flex; flex-direction: column; gap: 32px; }
@@ -187,14 +185,10 @@
 @media (prefers-reduced-transparency: reduce) {
   #recommendationsPage.discover-page .discover-glass { background: var(--glass-solid-3); backdrop-filter: none; -webkit-backdrop-filter: none; }
   #recommendationsPage.discover-page .discover-book-silhouettes span, #recommendationsPage.discover-page .discover-filter { background: var(--glass-solid-2); }
-  #recommendationsPage.discover-page .discover-state-dark, #recommendationsPage.discover-page .discover-state-light { display: none; }
-  #recommendationsPage.discover-page .discover-state-solid { display: inline; }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   #recommendationsPage.discover-page .discover-glass { background: var(--glass-solid-3); backdrop-filter: none; -webkit-backdrop-filter: none; }
   #recommendationsPage.discover-page .discover-book-silhouettes span, #recommendationsPage.discover-page .discover-filter { background: var(--glass-solid-2); }
-  #recommendationsPage.discover-page .discover-state-dark, #recommendationsPage.discover-page .discover-state-light { display: none; }
-  #recommendationsPage.discover-page .discover-state-solid { display: inline; }
 }
 @media (prefers-reduced-motion: reduce) {
   #recommendationsPage.discover-page, #recommendationsPage.discover-page * { animation: none; transition: none; }
