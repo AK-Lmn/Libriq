@@ -8,6 +8,19 @@ const read = file => readFile(new URL(`../${file}`, import.meta.url), 'utf8');
 test('test scripts are split into a unit tier and a browser tier', () => {
   assert.equal(classifyScript("import { chromium } from 'playwright';"), 'browser');
   assert.equal(classifyScript("import assert from 'node:assert/strict';"), 'unit');
+  // A script that imports a sibling browser script needs a browser too
+  // (test-integrated-actions.mjs reuses test-integration-design.mjs).
+  const siblings = {
+    'test-design.mjs': "import { chromium } from 'playwright';",
+    'helper.mjs': "import { x } from './test-design.mjs';",
+    'loop-a.mjs': "import './loop-b.mjs';",
+    'loop-b.mjs': "import './loop-a.mjs';",
+  };
+  const readSibling = name => siblings[name] ?? null;
+  assert.equal(classifyScript("import { browser } from './test-design.mjs';", readSibling), 'browser');
+  assert.equal(classifyScript("import { x } from './helper.mjs';", readSibling), 'browser', 'follows imports more than one level deep');
+  assert.equal(classifyScript("import './loop-a.mjs';", readSibling), 'unit', 'import cycles terminate');
+  assert.equal(classifyScript("import { readFile } from '../frontend/js/data.js';", readSibling), 'unit', 'app modules are not scripts');
   const scripts = [
     { name: 'test-a.mjs', tier: 'unit' },
     { name: 'test-b.mjs', tier: 'browser' },

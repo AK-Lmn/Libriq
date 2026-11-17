@@ -10,8 +10,21 @@ import { fileURLToPath } from 'node:url';
 
 const TIMEOUT_MS = 5 * 60 * 1000;
 
-export function classifyScript(source) {
-  return /from ['"]playwright['"]|require\(['"]playwright['"]\)/.test(source) ? 'browser' : 'unit';
+const PLAYWRIGHT_IMPORT = /from ['"]playwright['"]|require\(['"]playwright['"]\)/;
+// Static imports of another script in scripts/ ('./name.mjs').
+const SIBLING_IMPORT = /(?:from|import)\s*['"]\.\/([\w.-]+\.mjs)['"]/g;
+
+// A script needs a browser if it, or any sibling script it imports, uses
+// Playwright. readSibling(name) returns that script's source, or null.
+export function classifyScript(source, readSibling = () => null, seen = new Set()) {
+  if (PLAYWRIGHT_IMPORT.test(source)) return 'browser';
+  for (const [, name] of source.matchAll(SIBLING_IMPORT)) {
+    if (seen.has(name)) continue;
+    seen.add(name);
+    const sibling = readSibling(name);
+    if (sibling && classifyScript(sibling, readSibling, seen) === 'browser') return 'browser';
+  }
+  return 'unit';
 }
 
 export function selectScripts(scripts, tier) {
@@ -19,11 +32,11 @@ export function selectScripts(scripts, tier) {
 }
 
 async function discover(dir) {
-  const names = (await readdir(dir)).filter(name => /^test-.*\.mjs$/.test(name)).sort();
-  return Promise.all(names.map(async name => ({
-    name,
-    tier: classifyScript(await readFile(path.join(dir, name), 'utf8')),
-  })));
+  const all = (await readdir(dir)).filter(name => name.endsWith('.mjs'));
+  const sources = new Map(await Promise.all(all.map(async name => [name, await readFile(path.join(dir, name), 'utf8')])));
+  const readSibling = name => sources.get(name) ?? null;
+  return all.filter(name => /^test-.*\.mjs$/.test(name)).sort()
+    .map(name => ({ name, tier: classifyScript(sources.get(name), readSibling) }));
 }
 
 function runOnce(file) {
