@@ -231,6 +231,7 @@ const SHELL_ASSETS = [
   './js/api/openLibrary.js',
   './js/shared/fetchClient.js',
   './js/shared/escapeHtml.js',
+  './js/shared/coverSize.js',
   './vendor/firebase-app.js',
   './vendor/firebase-auth.js',
   './vendor/firebase-firestore.js',

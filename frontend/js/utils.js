@@ -1,5 +1,6 @@
 import { LIBRIQ } from './data.js';
 import { AccessibleDialog } from './components/ui/dialog.js';
+import { coverImgAttrs } from './shared/coverSize.js';
 
 const dialogControllers = new WeakMap();
 
@@ -197,12 +198,12 @@ export const Utils = {
     if (coverUrl) {
       return `
         <div class="book-cover ${sizeClass}" data-cover-fallback="true">
-          <img src="${Utils.sanitize(coverUrl)}"
+          <img ${coverImgAttrs(coverUrl, sizeClass, Utils.sanitize)}
                alt="Cover of ${Utils.sanitize(book.title)}"
                loading="lazy"
                referrerpolicy="no-referrer"
                decoding="async"
-               onerror="if(this.dataset.fallbackTriggered==='1') return; this.dataset.fallbackTriggered='1'; this.removeAttribute('src'); this.parentElement.innerHTML=Utils.buildCoverPlaceholder(${_inlineString(book.title)})">
+               onerror="if(this.dataset.fallbackTriggered==='1') return; this.dataset.fallbackTriggered='1'; this.removeAttribute('srcset'); this.removeAttribute('src'); this.parentElement.innerHTML=Utils.buildCoverPlaceholder(${_inlineString(book.title)})">
         </div>`;
     }
     return `
