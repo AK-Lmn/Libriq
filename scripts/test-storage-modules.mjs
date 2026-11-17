@@ -285,4 +285,41 @@ for (const file of [
   assert.doesNotMatch(consumerSource, /(?:window|globalThis)\.(?:Storage|LibriqStorage)/);
 }
 
+// A full localStorage must not look like a successful save.
+class FullStorage extends MemoryStorage {
+  constructor(entries) { super(entries); this.full = false; }
+  setItem(key, value) {
+    if (this.full) {
+      const error = new Error('The quota has been exceeded.');
+      error.name = 'QuotaExceededError';
+      throw error;
+    }
+    super.setItem(key, value);
+  }
+}
+const fullStore = new FullStorage([
+  ['libriq_installed', '2025-01-01T00:00:00.000Z'],
+  ['libriq:local:books', JSON.stringify([returningBook])],
+]);
+const fullEvents = installBrowserFixture(fullStore);
+const { Storage: fullStorage } = await importFresh();
+fullStorage.bootstrap();
+fullStore.full = true;
+fullEvents.length = 0;
+
+assert.equal(fullStorage.saveBooks([returningBook, { id: 'x' }]), false);
+assert.equal(fullStorage.addBook({ id: 'too-many', title: 'Overflow', author: 'Reader' }), null);
+assert.equal(fullStorage.updateBook('existing', { currentPage: 12 }), null);
+assert.equal(fullStorage.removeBook('existing'), false);
+assert.deepEqual(fullStorage.getBooks(), [returningBook]);
+const fullEventTypes = fullEvents.map(event => event.type);
+assert.ok(fullEventTypes.includes('libriq:storage:write-failed'), 'write failure must be announced');
+assert.ok(!fullEventTypes.some(type => type.startsWith('libriq:book:')), 'no book change event after a failed save');
+const failure = fullEvents.find(event => event.type === 'libriq:storage:write-failed');
+assert.equal(failure.detail.quota, true);
+
+const librarySource = await readFile(new URL('../frontend/js/library.js', import.meta.url), 'utf8');
+assert.match(appSource, /libriq:storage:write-failed/);
+assert.match(librarySource, /const book = Storage\.addBook\([\s\S]*?\);\s*if \(!book\)/);
+
 console.log('Storage module tests passed.');

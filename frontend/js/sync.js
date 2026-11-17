@@ -10,6 +10,7 @@ export const LibriqSyncBeta = (() => {
   const USER_DISABLED_KEY = 'libriq_account_sync_user_disabled';
   const DEBUG_KEY = 'libriq_debug_sync';
   const TOMBSTONE_MIN_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+  const LOCAL_SAVE_FAILED_MESSAGE = 'This device is out of storage. Your books are safe in the cloud.';
   const STATUS = {
     OFF: 'off',
     SYNCING: 'syncing',
@@ -436,7 +437,9 @@ export const LibriqSyncBeta = (() => {
       debugLog('sync listener detached', { reason: 'reattach', listenerPath });
     }
     const colRef = LibriqFirebase.collection(LibriqFirebase.getFirestoreClient(), ...segments);
-    const q = LibriqFirebase.query(colRef, LibriqFirebase.orderBy('updatedAt', 'asc'), LibriqFirebase.limit(500));
+    // No limit: a capped query returns only the oldest books, and the initial
+    // snapshot replaces the local library with that subset.
+    const q = LibriqFirebase.query(colRef, LibriqFirebase.orderBy('updatedAt', 'asc'));
     listenerPath = path;
     currentUid = uid;
     listenerAttached = true;
@@ -839,9 +842,14 @@ export const LibriqSyncBeta = (() => {
 
     applyingRemoteChanges = true;
     suppressWriteUntil = Date.now() + 1500;
-    Storage.saveBooks(nextBooks);
-    Storage.saveCloudBackupMeta?.({ syncReady: true });
+    const saved = Storage.saveBooks(nextBooks);
+    if (saved) Storage.saveCloudBackupMeta?.({ syncReady: true });
     applyingRemoteChanges = false;
+    if (!saved) {
+      setState(STATUS.ERROR, LOCAL_SAVE_FAILED_MESSAGE);
+      debugLog('remote changes not saved locally', { count: nextBooks.length });
+      return;
+    }
     setState(conflicts > 0 ? STATUS.CONFLICT : STATUS.SYNCED, conflicts > 0 ? 'Some sync conflicts were kept on this device.' : 'Waiting for changes', {
       conflictCount: conflicts,
       lastSyncedAt: new Date().toISOString(),
@@ -861,9 +869,14 @@ export const LibriqSyncBeta = (() => {
       .map(_toLocalBook);
     applyingRemoteChanges = true;
     suppressWriteUntil = Date.now() + 2000;
-    Storage.saveBooks(activeRemoteBooks);
-    Storage.saveCloudBackupMeta?.({ syncReady: true });
+    const saved = Storage.saveBooks(activeRemoteBooks);
+    if (saved) Storage.saveCloudBackupMeta?.({ syncReady: true });
     applyingRemoteChanges = false;
+    if (!saved) {
+      setState(STATUS.ERROR, LOCAL_SAVE_FAILED_MESSAGE);
+      debugLog('initial remote snapshot not saved locally', { uid, count: activeRemoteBooks.length });
+      return;
+    }
     setState(STATUS.SYNCED, activeRemoteBooks.length ? 'Waiting for changes' : 'No synced books yet', {
       conflictCount: 0,
       lastSyncedAt: new Date().toISOString(),

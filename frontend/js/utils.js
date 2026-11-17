@@ -231,7 +231,7 @@ export const Utils = {
     return `<div class="star-rating ${interactive ? '' : 'readonly'}">${stars}</div>`;
   },
 
-  toast(message, type = 'success') {
+  toast(message, type = 'success', { persistent = false } = {}) {
     const container = document.getElementById('toastContainer');
     if (!container) return;
 
@@ -249,12 +249,25 @@ export const Utils = {
       <span>${Utils.sanitize(message)}</span>
     `;
 
-    container.appendChild(toast);
-
-    setTimeout(() => {
+    const dismiss = () => {
       toast.classList.add('removing');
       toast.addEventListener('animationend', () => toast.remove());
-    }, 3500);
+    };
+
+    if (persistent) {
+      // Stays until the reader closes it; used when data could not be saved.
+      toast.setAttribute('role', 'alert');
+      const close = document.createElement('button');
+      close.type = 'button';
+      close.className = 'toast-dismiss';
+      close.textContent = 'Dismiss';
+      close.addEventListener('click', dismiss, { once: true });
+      toast.appendChild(close);
+    }
+
+    container.appendChild(toast);
+    if (!persistent) setTimeout(dismiss, 3500);
+    return toast;
   },
 
   genreColor(genre) {
