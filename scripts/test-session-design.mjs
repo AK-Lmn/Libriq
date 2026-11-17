@@ -70,6 +70,10 @@ async function render(page, target, theme) {
     });
     Storage.saveBooks([]);
     Storage.saveProfile({ name: target === 'existing-account' ? user.displayName : 'Fixture Reader', theme });
+    // Every fixture but "signup" is a reader who has signed in here before;
+    // "signup" is a first visit and must open on Create account by itself.
+    if (target === 'signup') localStorage.removeItem('libriq_returning_reader');
+    else localStorage.setItem('libriq_returning_reader', '1');
     const { Navigation } = await import('./js/navigation.js');
     state.Navigation = Navigation;
     globalThis.sessionDesignFixture = state;
@@ -90,7 +94,7 @@ async function render(page, target, theme) {
     }
     if (target === 'service-fallback') auth.available = false;
     Navigation.goTo('session');
-    if (['signup', 'reset', 'reset-invalid', 'reset-sent'].includes(target)) Navigation.setEmailAuthMode(target === 'signup' ? 'signup' : 'reset');
+    if (['reset', 'reset-invalid', 'reset-sent'].includes(target)) Navigation.setEmailAuthMode('reset');
     if (['invalid-credentials', 'auth-submitting', 'network-fallback'].includes(target)) {
       document.getElementById('sessionEmailInput').value = 'reader@example.test';
       document.getElementById('sessionPasswordInput').value = 'fixture-password';
@@ -214,6 +218,10 @@ try {
           assert.equal(await surface.evaluate(el => Number(getComputedStyle(el).backgroundColor.match(/[\d.]+/g)?.[3] ?? 1)), 1, `${name}: opaque fallback`);
           assert.equal(await surface.evaluate(el => getComputedStyle(el).backdropFilter), 'none', `${name}: no fallback blur`);
         }
+      }
+      if (target === 'signup') {
+        assert.equal(await page.locator('#emailAuthForm').getAttribute('data-auth-mode'), 'signup', `${name}: first visit opens on Create account`);
+        assert.equal(await page.locator('#sessionAuthTitle').textContent(), 'Make room for your next chapter.');
       }
       if (target === 'signin') {
         assert.equal(await page.locator('#emailAuthForm').getAttribute('data-auth-mode'), 'signin');

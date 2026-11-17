@@ -91,7 +91,6 @@ export const Dashboard = {
           </div>
         </div>
 
-        ${buildMobileAppPollCard()}
         ${buildOnboardingChecklist(books, goals)}
 
         <div class="dashboard-layout">
@@ -103,6 +102,8 @@ export const Dashboard = {
               </div>
               ${featuredBook ? buildFeaturedReadingHero(featuredBook) : buildFeaturedEmptyHero()}
             </section>
+
+            ${buildMobileAppPollCard()}
 
             <section class="dashboard-panel dashboard-recent-panel">
               <div class="section-header dashboard-section-header">

@@ -5,6 +5,8 @@ import {
   SEED_BOOKS,
 } from './data.js';
 
+import { markReturningReader } from './shared/authMode.js';
+
 export const Storage = (() => {
   const INSTALL_KEY = 'libriq_installed';
 
@@ -136,8 +138,13 @@ export const Storage = (() => {
     if (changed && nextUid) {
       _migrateLegacyScopedData(previousUid, nextUid);
     }
-    if (activeUid) localStorage.setItem(ACTIVE_UID_KEY, activeUid);
-    else localStorage.removeItem(ACTIVE_UID_KEY);
+    if (activeUid) {
+      localStorage.setItem(ACTIVE_UID_KEY, activeUid);
+      // Survives sign-out, so the next visit opens on "Sign in".
+      markReturningReader(localStorage);
+    } else {
+      localStorage.removeItem(ACTIVE_UID_KEY);
+    }
     _writeDefaults();
     if (changed) _dispatchChange('storage:scope-changed', { uid: activeUid });
     return changed;
