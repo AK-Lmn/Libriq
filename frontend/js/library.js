@@ -275,6 +275,7 @@ export const Library = (() => {
       dateFinished: status === 'finished' ? new Date().toISOString() : null,
       tags,
     });
+    if (!book) return;
 
     _logActivity('book_added', book, { status }, book.source || 'api');
 
@@ -335,6 +336,7 @@ export const Library = (() => {
     }
 
     const book = Storage.updateBook(bookId, updates);
+    if (!book) return null;
     _logActivity('status_changed', book, { status: newStatus }, book?.source || 'system');
     if (newStatus === LIBRIQ.STATUS.FINISHED) {
       _logActivity('book_finished', book, { status: newStatus }, book?.source || 'system');
@@ -483,7 +485,7 @@ export const Library = (() => {
 
   async function removeBook(bookId, title) {
     if (!await confirmAction(`Remove "${title}" from your library?`, { title: 'Remove book?', confirmLabel: 'Remove book' })) return;
-    Storage.removeBook(bookId);
+    if (!Storage.removeBook(bookId)) return;
     Utils.toast(`"${title}" removed`, 'info');
     Navigation.updateBadges();
     Navigation.renderCurrentPage();
@@ -547,6 +549,7 @@ export const Library = (() => {
       dateFinished: status === LIBRIQ.STATUS.FINISHED ? dateAdded : null,
       tags: _parseShelfInput(formData.get('tags')),
     });
+    if (!book) return;
 
     _logActivity('manual_book_added', book, { status, rating: book.rating || null }, 'manual');
 

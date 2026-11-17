@@ -128,6 +128,16 @@ function getReleaseNotes() {
     }
   }
 
+  let storageFailureToast = null;
+  function showStorageWriteFailure(detail = {}) {
+    // One sticky alert at a time; a full disk fires on every save attempt.
+    if (storageFailureToast?.isConnected) return;
+    const message = detail.quota
+      ? "This device is out of storage, so your last change wasn't saved. Export a backup from Settings, then free up browser storage."
+      : "Your last change couldn't be saved on this device. Export a backup from Settings and reload LibriQ.";
+    storageFailureToast = Utils.toast(message, 'error', { persistent: true }) || null;
+  }
+
   function wireGlobalEvents() {
     window.addEventListener('libriq:book:added',   () => Navigation.updateBadges());
     window.addEventListener('libriq:book:updated', () => Navigation.updateBadges());
@@ -142,6 +152,7 @@ function getReleaseNotes() {
     window.addEventListener('libriq:goals:updated', () => LibriqCloudBackup.scheduleIfAllowed('goals-updated'));
     window.addEventListener('libriq:streak:updated', () => LibriqCloudBackup.scheduleIfAllowed('streak-updated'));
     window.addEventListener('libriq:activity:updated', () => LibriqCloudBackup.scheduleIfAllowed('activity-updated'));
+    window.addEventListener('libriq:storage:write-failed', (event) => showStorageWriteFailure(event?.detail));
     window.addEventListener('libriq:page-changed', (event) => {
       if (event?.detail?.page === 'session') {
         cancelScheduledWhatsNew();
