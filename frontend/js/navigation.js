@@ -1172,6 +1172,7 @@ function renderSessionChoicePage() {
           <p class="session-fineprint">
             <i class="ph ph-lock-key" aria-hidden="true"></i> Your library is private. Sign in to save and sync across devices.
           </p>
+          <p class="session-legal">By continuing, you agree to the <a href="./terms.html">Terms</a> and <a href="./privacy.html">Privacy Policy</a>.</p>
         </div>
         <div class="session-copy">
           <span class="session-eyebrow"><i class="ph ph-book-open-text"></i> A calmer way to track what you read</span>

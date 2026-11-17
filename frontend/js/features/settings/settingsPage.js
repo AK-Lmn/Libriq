@@ -107,7 +107,7 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
                   ['Local first', 'Your library stays available on this device, even offline.'],
                   ['Account required', 'LibriQ requires an account. Offline access does not bypass account creation.'],
                   ['You control the cloud', 'Backup and Account Sync use your account. Switch sync off at any time.'],
-                  ['Analytics', 'Anonymous page views help understand general traffic. Your library is not a public profile.'],
+                  ['Analytics', 'Cookieless page counts through Vercel Web Analytics. Nothing that identifies you or your library.'],
                   ['Private notes and quotes', 'Notes and quotes are part of your library data when included in a backup or sync.'],
                 ].map(([title, subtitle]) => `<div class="settings-row"><div class="activity-text"><div class="activity-title">${title}</div><div class="activity-subtitle">${subtitle}</div></div></div>`).join('')}
               </div>
@@ -118,6 +118,7 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
               <p class="settings-version">v${utils.sanitize(constants.VERSION)}</p>
               <p class="settings-copy">A quiet home for your reading life. Lora, Inter &amp; IBM Plex Mono. Built with care and open-source tools.</p>
               <p class="settings-copy">Book data from <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> and <a href="https://books.google.com" target="_blank" rel="noopener noreferrer">Google Books</a>.</p>
+              <p class="settings-copy"><a href="./privacy.html">Privacy Policy</a> · <a href="./terms.html">Terms of Service</a> · <a href="mailto:support@libriq.app">support@libriq.app</a></p>
               <p class="settings-copy">Use your browser’s Install app or Add to Home Screen option when available. Account services and offline access depend on this device’s state.</p>
             </section>
           </div>

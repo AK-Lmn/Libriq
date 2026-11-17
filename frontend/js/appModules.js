@@ -1,3 +1,4 @@
+import './analytics.js';
 import {
   LIBRIQ,
   createBook,
