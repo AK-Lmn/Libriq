@@ -238,7 +238,7 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
               <div class="activity-subtitle">We’ll send a confirmation link to your new address.</div>
             </div>
             <div class="settings-account-email-controls">
-              <input class="form-input" id="changeEmailInput" type="email" value="${utils.sanitize(emailInfo.email)}" placeholder="New email address" />
+              <input class="form-input" id="changeEmailInput" type="email" aria-label="New email address" autocomplete="email" value="${utils.sanitize(emailInfo.email)}" placeholder="New email address" />
               <button class="btn btn-secondary btn-sm" type="button" id="changeEmailBtn" data-action="change-email">
                 Change email address
               </button>

@@ -49,6 +49,7 @@
   <link rel="stylesheet" href="css/animations.css" />
 </head>
 <body class="auth-booting">
+  <a class="skip-link" href="#mainContent">Skip to content</a>
   <div id="app" class="app-shell">
     <aside id="sidebar" class="sidebar" role="navigation" aria-label="Main navigation">
       <div class="sidebar-logo">
@@ -60,7 +61,7 @@
       <p class="sidebar-privacy"><img src="./assets/dashboard/desktop-lock-keyhole.svg" alt="" aria-hidden="true" /> Your books. Your space.</p>
 
       <button class="sidebar-search-btn" id="openSearch" aria-label="Search books">
-        <i class="ph ph-magnifying-glass"></i>
+        <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
         <span>Search books</span>
         <kbd id="searchShortcutBadge">⌘K</kbd>
       </button>
@@ -71,41 +72,41 @@
           <ul class="nav-list" role="list">
           <li>
             <button class="nav-item active" data-page="dashboard" aria-current="page">
-              <i class="ph ph-house"></i>
+              <i class="ph ph-house" aria-hidden="true"></i>
               <span>Dashboard</span>
             </button>
           </li>
           <li>
             <button class="nav-item" data-page="library">
-              <i class="ph ph-books"></i>
+              <i class="ph ph-books" aria-hidden="true"></i>
               <span>My Library</span>
               <span class="nav-badge" id="badge-library">0</span>
             </button>
           </li>
           <li>
             <button class="nav-item" data-page="reading">
-              <i class="ph ph-book-open"></i>
+              <i class="ph ph-book-open" aria-hidden="true"></i>
               <span>Reading Now</span>
               <span class="nav-badge reading" id="badge-reading">0</span>
             </button>
           </li>
           <li>
             <button class="nav-item" data-page="wishlist">
-              <i class="ph ph-bookmark"></i>
+              <i class="ph ph-bookmark" aria-hidden="true"></i>
               <span>Want to Read</span>
               <span class="nav-badge" id="badge-wishlist">0</span>
             </button>
           </li>
           <li>
             <button class="nav-item" data-page="finished">
-              <i class="ph ph-check-circle"></i>
+              <i class="ph ph-check-circle" aria-hidden="true"></i>
               <span>Finished</span>
               <span class="nav-badge success" id="badge-finished">0</span>
             </button>
           </li>
           <li>
             <button class="nav-item" data-page="favorites">
-              <i class="ph ph-heart"></i>
+              <i class="ph ph-heart" aria-hidden="true"></i>
               <span>Favorites</span>
             </button>
           </li>
@@ -117,19 +118,19 @@
           <ul class="nav-list" role="list">
           <li>
             <button class="nav-item" data-page="stats">
-              <i class="ph ph-chart-bar"></i>
+              <i class="ph ph-chart-bar" aria-hidden="true"></i>
               <span>Statistics</span>
             </button>
           </li>
           <li>
             <button class="nav-item" data-page="goals">
-              <i class="ph ph-target"></i>
+              <i class="ph ph-target" aria-hidden="true"></i>
               <span>Reading Goals</span>
             </button>
           </li>
           <li>
             <button class="nav-item" data-page="activity">
-              <i class="ph ph-clock-counter-clockwise"></i>
+              <i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i>
               <span>Activity Log</span>
             </button>
           </li>
@@ -141,13 +142,13 @@
           <ul class="nav-list" role="list">
           <li>
             <button class="nav-item" data-page="recommendations">
-              <i class="ph ph-sparkle"></i>
+              <i class="ph ph-sparkle" aria-hidden="true"></i>
               <span>Recommendations</span>
             </button>
           </li>
           <li>
             <button class="nav-item" data-page="help">
-              <i class="ph ph-lifebuoy"></i>
+              <i class="ph ph-lifebuoy" aria-hidden="true"></i>
               <span>Help & Guide</span>
             </button>
           </li>
@@ -159,13 +160,13 @@
           <ul class="nav-list" role="list">
           <li>
             <button class="nav-item" data-page="profile">
-              <i class="ph ph-user-circle"></i>
+              <i class="ph ph-user-circle" aria-hidden="true"></i>
               <span>Profile</span>
             </button>
           </li>
           <li>
             <button class="nav-item" data-page="settings">
-              <i class="ph ph-gear"></i>
+              <i class="ph ph-gear" aria-hidden="true"></i>
               <span>Settings</span>
             </button>
           </li>
@@ -181,34 +182,34 @@
         </div>
       </div>
 
-      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-        <i class="ph ph-moon" id="themeIcon"></i>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="true">
+        <i class="ph ph-moon" aria-hidden="true" id="themeIcon"></i>
         <span id="themeLabel">Dark mode</span>
       </button>
     </aside>
 
     <header class="mobile-topbar">
-      <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
-        <i class="ph ph-list"></i>
+      <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="sidebar">
+        <i class="ph ph-list" aria-hidden="true"></i>
       </button>
       <div class="mobile-logo">
         <img class="mobile-logo-icon" src="./assets/icons/icon.svg" alt="LibriQ logo" />
         <span>LibriQ</span>
       </div>
       <button class="mobile-search-btn" id="mobileSearchBtn" aria-label="Search">
-        <i class="ph ph-magnifying-glass"></i>
+        <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
       </button>
     </header>
 
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <main id="mainContent" class="main-content" role="main">
+    <main id="mainContent" class="main-content" tabindex="-1">
       <div class="session-page session-page--boot">
         <section class="session-boot-card" aria-labelledby="sessionBootTitle" aria-busy="true">
           <a class="session-brand" href="./" aria-label="LibriQ home">
             <span class="session-brand-mark">Q</span><strong>LibriQ</strong>
           </a>
-          <div class="session-boot-art" aria-hidden="true"><i class="ph ph-book-open-text"></i></div>
+          <div class="session-boot-art" aria-hidden="true"><i class="ph ph-book-open-text" aria-hidden="true"></i></div>
           <span class="session-eyebrow">Your reading space</span>
           <h1 id="sessionBootTitle">A moment between chapters.</h1>
           <p>Checking your account before loading your private library.</p>
@@ -226,24 +227,24 @@
 
     <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Mobile navigation">
       <button class="mobile-bottom-item active" data-page="dashboard" aria-label="Home Dashboard">
-        <i class="ph ph-house"></i>
+        <i class="ph ph-house" aria-hidden="true"></i>
         <span>Home</span>
       </button>
       <button class="mobile-bottom-item" data-page="library" aria-label="My Library">
-        <i class="ph ph-books"></i>
+        <i class="ph ph-books" aria-hidden="true"></i>
         <span>Library</span>
       </button>
       <button class="mobile-bottom-item mobile-bottom-action" id="mobileBottomSearchBtn" type="button" aria-label="Search and Add Books">
         <div class="mobile-bottom-action-pill">
-          <i class="ph ph-plus"></i>
+          <i class="ph ph-plus" aria-hidden="true"></i>
         </div>
       </button>
       <button class="mobile-bottom-item" data-page="stats" aria-label="Reading Insights">
-        <i class="ph ph-chart-bar"></i>
+        <i class="ph ph-chart-bar" aria-hidden="true"></i>
         <span>Insights</span>
       </button>
       <button class="mobile-bottom-item" data-page="settings" aria-label="Settings">
-        <i class="ph ph-gear"></i>
+        <i class="ph ph-gear" aria-hidden="true"></i>
         <span>Settings</span>
       </button>
     </nav>
@@ -274,7 +275,7 @@
       </div>
       <div class="search-advanced-toggle-row">
         <button class="search-advanced-toggle" id="searchAdvancedToggle" type="button" aria-expanded="false" aria-controls="searchAdvancedFilters">
-          <i class="ph ph-funnel"></i>
+          <i class="ph ph-funnel" aria-hidden="true"></i>
           <span>Filters</span>
           <span class="search-filter-count" id="searchFilterCount">0</span>
         </button>
@@ -334,7 +335,7 @@
         <span><kbd>↵</kbd> select</span>
         <span><kbd>ESC</kbd> close</span>
         <button class="search-footer-action" type="button" id="searchManualEntry">
-          <i class="ph ph-pencil"></i>
+          <i class="ph ph-pencil" aria-hidden="true"></i>
           Manual Entry
         </button>
       </div>
@@ -349,7 +350,7 @@
           <h2 class="modal-title" id="addBookModalTitle">Add to Library</h2>
         </div>
         <button class="modal-close" id="closeAddBook" aria-label="Close">
-          <i class="ph ph-x"></i>
+          <i class="ph ph-x" aria-hidden="true"></i>
         </button>
       </div>
       <div class="modal-body" id="addBookBody">
@@ -362,7 +363,7 @@
       <div class="modal-header">
         <h2 class="modal-title" id="bookDetailsModalTitle">Book Details</h2>
         <button class="modal-close" aria-label="Close">
-          <i class="ph ph-x"></i>
+          <i class="ph ph-x" aria-hidden="true"></i>
         </button>
       </div>
       <div class="modal-body" id="bookDetailsBody">
@@ -378,7 +379,7 @@
           <p class="whats-new-subtitle">Better discovery, synced activity, and a smoother cloud-first experience.</p>
         </div>
         <button class="modal-close" id="closeWhatsNew" aria-label="Close release notes">
-          <i class="ph ph-x"></i>
+          <i class="ph ph-x" aria-hidden="true"></i>
         </button>
       </div>
       <div class="modal-body" id="whatsNewBody">
@@ -410,7 +411,7 @@
       </div>
       <div class="modal-footer whats-new-footer">
         <button class="btn btn-primary" id="whatsNewContinue" type="button">
-          <i class="ph ph-check"></i> Got it
+          <i class="ph ph-check" aria-hidden="true"></i> Got it
         </button>
       </div>
     </div>
@@ -424,7 +425,7 @@
           <p class="whats-new-subtitle" id="backupImportSubtitle">Review the backup before choosing how to apply it.</p>
         </div>
         <button class="modal-close" id="closeBackupImport" aria-label="Close import preview">
-          <i class="ph ph-x"></i>
+          <i class="ph ph-x" aria-hidden="true"></i>
         </button>
       </div>
       <div class="modal-body" id="backupImportBody"></div>
@@ -444,12 +445,12 @@
           <p class="whats-new-subtitle" id="dangerConfirmBody">This action cannot be undone.</p>
         </div>
         <button class="modal-close" id="closeDangerConfirm" aria-label="Close confirmation">
-          <i class="ph ph-x"></i>
+          <i class="ph ph-x" aria-hidden="true"></i>
         </button>
       </div>
       <div class="modal-body" id="dangerConfirmContent">
         <div class="modal-danger-panel">
-          <div class="modal-danger-icon" aria-hidden="true"><i class="ph ph-warning"></i></div>
+          <div class="modal-danger-icon" aria-hidden="true"><i class="ph ph-warning" aria-hidden="true"></i></div>
           <div>
             <div class="modal-danger-copy" id="dangerConfirmBodyCopy">This action cannot be undone.</div>
             <div class="modal-warning-note" style="margin-top: var(--space-3);">Typed confirmation is required before this action can run.</div>

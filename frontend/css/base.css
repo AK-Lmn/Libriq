@@ -192,6 +192,25 @@ kbd {
   border: 0;
 }
 
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 10000;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--text-inverse);
+  font-weight: var(--weight-semi);
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus { transform: none; }
+
+/* Route changes move focus to the page h1; it is not a control, so no ring. */
+h1[tabindex="-1"]:focus { outline: none; }
+
 .flex { display: flex; }
 .flex-col { flex-direction: column; }
 .items-center { align-items: center; }

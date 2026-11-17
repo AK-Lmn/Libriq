@@ -22,6 +22,7 @@ export function applyNavigationChrome(route, root = document) {
     if (hidden && sidebar.contains?.(root.activeElement)) root.getElementById?.('mobileMenuBtn')?.focus();
     sidebar.inert = hidden;
     sidebar.setAttribute('aria-hidden', String(hidden));
+    root.getElementById?.('mobileMenuBtn')?.setAttribute?.('aria-expanded', String(mobile && !hidden));
   }
 }
 
