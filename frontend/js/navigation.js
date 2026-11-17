@@ -482,13 +482,15 @@ export const Navigation = (() => {
   }).registerAll(pages);
 
   let _hasNavigated = false;
+  // The descriptive title from index.html; sign-in and boot screens keep it for crawlers.
+  const DEFAULT_TITLE = (typeof document !== 'undefined' && document.title) || 'LibriQ';
 
   // Screen readers get no page-load cue in a single-page app: name the tab after
   // the page and, after the first render, move focus to its heading.
   function announceRoute(root, name, moveFocus) {
     const heading = root?.querySelector?.('h1');
     const text = ['boot', 'session'].includes(name) ? '' : heading?.textContent?.trim();
-    document.title = text ? `${text} · LibriQ` : 'LibriQ';
+    document.title = text ? `${text} · LibriQ` : DEFAULT_TITLE;
     if (!moveFocus || !heading) return;
     if (!heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1');
     heading.focus({ preventScroll: true });
