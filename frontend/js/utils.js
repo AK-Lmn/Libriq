@@ -215,6 +215,8 @@ export const Utils = {
   buildCover(book, sizeClass = 'cover-md') {
     const coverUrl = _safeCoverUrl(book.coverUrl);
     if (coverUrl) {
+      // Whoever renders a cover gets the fallback listener, even without the app boot.
+      if (typeof document !== 'undefined') Utils.installDelegatedHandlers(document);
       return `
         <div class="book-cover ${sizeClass}" data-cover-fallback="true" data-cover-title="${Utils.sanitize(book.title)}">
           <img ${coverImgAttrs(coverUrl, sizeClass, Utils.sanitize)}
@@ -256,7 +258,10 @@ export const Utils = {
       return `<span class="star ${filled}" ${attrs}><i class="ph${filled ? '-fill' : ''} ph-star" aria-hidden="true"></i></span>`;
     }).join('');
 
-    if (interactive) return `<div class="star-rating">${stars}</div>`;
+    if (interactive) {
+      if (typeof document !== 'undefined') Utils.installDelegatedHandlers(document);
+      return `<div class="star-rating">${stars}</div>`;
+    }
     // Read-only: one image with a text equivalent instead of five silent icons.
     const label = rating ? `Rated ${rating} out of 5` : 'Not rated';
     return `<div class="star-rating readonly" role="img" aria-label="${label}">${stars}</div>`;
