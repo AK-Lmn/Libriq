@@ -1578,7 +1578,7 @@ function renderSessionChoicePage() {
       demoBooks = topBooks;
       demoResults.innerHTML = topBooks.map((b, index) => {
         const cover = b.coverUrl
-          ? `<img ${coverImgAttrs(b.coverUrl, 'cover-sm', Utils.sanitize)} loading="lazy" class="session-demo-book-cover" alt="" onerror="this.onerror=null;this.removeAttribute('srcset');this.src='./assets/icons/icon-192.png'" />`
+          ? `<img ${coverImgAttrs(b.coverUrl, 'cover-sm', Utils.sanitize)} loading="lazy" class="session-demo-book-cover" alt="" data-fallback-src="./assets/icons/icon-192.png" />`
           : `<div class="session-demo-book-cover-placeholder"><i class="ph ph-book"></i></div>`;
         return `
           <div class="session-demo-book-card" data-title="${Utils.sanitize(b.title)}" data-index="${index}">
