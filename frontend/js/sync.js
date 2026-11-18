@@ -4,6 +4,7 @@ import { Storage } from './storage.js';
 import { Utils } from './utils.js';
 import { LibriqFirebase } from './firebase-client.js';
 import { LibriqCloudBackup } from './cloudBackup.js';
+import { commitInChunks } from './services/syncUpload.js';
 
 export const LibriqSyncBeta = (() => {
   const STORAGE_KEY = 'libriq_sync_beta_enabled';
@@ -44,6 +45,9 @@ export const LibriqSyncBeta = (() => {
   let awaitingInitialSnapshot = false;
   let queuedUploadBeforeInitialSnapshot = false;
   let uploadInFlight = false;
+  // A snapshot that arrives while our own upload is in flight is kept here and
+  // applied afterwards, instead of being dropped.
+  let deferredSnapshot = null;
   let lastAuthUid = null;
 
   function isUserDisabled() {
@@ -448,10 +452,34 @@ export const LibriqSyncBeta = (() => {
     debugLog('sync listener attach attempt', { uid, listenerPath });
     try {
       listenerUnsub = LibriqFirebase.onSnapshot(q, (snapshot) => {
-        if (applyingRemoteChanges) return;
         const remoteBooks = [];
         snapshot.forEach((docSnap) => remoteBooks.push(docSnap.data()));
         const snapshotFromCache = Boolean(snapshot?.metadata?.fromCache);
+        if (applyingRemoteChanges) {
+          if (uploadInFlight) deferredSnapshot = { uid, remoteBooks, snapshotFromCache };
+          return;
+        }
+        handleSnapshot(uid, remoteBooks, snapshotFromCache);
+      }, (err) => {
+        lastError = err?.message || String(err || 'unknown');
+        console.warn('[LibriQ][Sync] listener error:', err);
+        setState(STATUS.ERROR, 'Sync error. Your local data is safe.');
+        debugLog('listener error', { uid, listenerPath, error: lastError });
+      });
+    } catch (err) {
+      lastError = err?.message || String(err || 'unknown');
+      listenerAttached = false;
+      listenerUnsub = null;
+      attachInFlight = false;
+      debugLog('listener attach failed', { uid, listenerPath, error: lastError });
+      setState(STATUS.ERROR, 'Sync unavailable. Your local data is safe.');
+      return;
+    }
+    attachInFlight = false;
+    debugLog('sync listener attached', { uid, listenerPath });
+  }
+
+  function handleSnapshot(uid, remoteBooks, snapshotFromCache) {
         lastSnapshotAt = new Date().toISOString();
         const wasAwaitingInitialSnapshot = awaitingInitialSnapshot;
         const hadQueuedLocalChange = queuedUploadBeforeInitialSnapshot;
@@ -474,23 +502,6 @@ export const LibriqSyncBeta = (() => {
           applyRemoteBooks(remoteBooks);
         }
         queuedUploadBeforeInitialSnapshot = false;
-      }, (err) => {
-        lastError = err?.message || String(err || 'unknown');
-        console.warn('[LibriQ][Sync] listener error:', err);
-        setState(STATUS.ERROR, 'Sync error. Your local data is safe.');
-        debugLog('listener error', { uid, listenerPath, error: lastError });
-      });
-    } catch (err) {
-      lastError = err?.message || String(err || 'unknown');
-      listenerAttached = false;
-      listenerUnsub = null;
-      attachInFlight = false;
-      debugLog('listener attach failed', { uid, listenerPath, error: lastError });
-      setState(STATUS.ERROR, 'Sync unavailable. Your local data is safe.');
-      return;
-    }
-    attachInFlight = false;
-    debugLog('sync listener attached', { uid, listenerPath });
   }
 
   function queueUpload(reason = 'local-change') {
@@ -719,25 +730,28 @@ export const LibriqSyncBeta = (() => {
       for (const book of books) {
         const fp = bookFingerprint(book);
         if (userFingerprints[book.id] === fp) continue;
-        writes.push(LibriqFirebase.setDoc(
-          LibriqFirebase.doc(db, ...getSyncBooksCollectionSegments(user.uid), book.id),
-          book,
-        ));
-        nextUserFingerprints[book.id] = fp;
+        writes.push({ id: book.id, data: book, fp });
       }
       for (const tombstone of tombstones) {
         const fp = bookFingerprint(tombstone);
         if (userFingerprints[tombstone.id] === fp) continue;
-        deleteWrites.push(LibriqFirebase.setDoc(
-          LibriqFirebase.doc(db, ...getSyncBooksCollectionSegments(user.uid), tombstone.id),
-          tombstone,
-        ));
-        nextUserFingerprints[tombstone.id] = fp;
+        deleteWrites.push({ id: tombstone.id, data: tombstone, fp });
       }
       if (writes.length || deleteWrites.length) {
-        await Promise.all([...writes, ...deleteWrites]);
-        fingerprints[user.uid] = nextUserFingerprints;
-        writeFingerprints(fingerprints);
+        // One Firestore batch per chunk, committed in order. Fingerprints are
+        // saved after each batch, so a failure only retries what didn't land.
+        await commitInChunks([...writes, ...deleteWrites], {
+          commitChunk: async (items) => {
+            const batch = LibriqFirebase.writeBatch(db);
+            items.forEach(item => batch.set(LibriqFirebase.doc(db, ...getSyncBooksCollectionSegments(user.uid), item.id), item.data));
+            await batch.commit();
+          },
+          onCommitted: (items) => {
+            items.forEach(item => { nextUserFingerprints[item.id] = item.fp; });
+            fingerprints[user.uid] = nextUserFingerprints;
+            writeFingerprints(fingerprints);
+          },
+        });
       } else {
         debugLog('sync write skipped: no changed books or tombstones', { reason });
       }
@@ -765,6 +779,11 @@ export const LibriqSyncBeta = (() => {
     } finally {
       applyingRemoteChanges = false;
       uploadInFlight = false;
+      if (deferredSnapshot) {
+        const { uid: snapshotUid, remoteBooks, snapshotFromCache } = deferredSnapshot;
+        deferredSnapshot = null;
+        if (snapshotUid === currentUid) handleSnapshot(snapshotUid, remoteBooks, snapshotFromCache);
+      }
     }
   }
 
