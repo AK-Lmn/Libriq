@@ -12,6 +12,7 @@ import { submitPollVote } from './services/mobileAppPoll.js';
 import { BookAPI } from './api/index.js';
 import { PENDING_KEYS, claimPendingBook, flushPendingPollVote, queuePollVote } from './services/pendingIntents.js';
 import { RELEASE_NOTES_VERSION, getReleaseNotes, hasSeenRelease } from './services/releaseNotes.js';
+import { watchOtherTabs } from './shared/crossTab.js';
 
 let _booted = false;
 let _whatsNewTimer = null;
@@ -190,6 +191,14 @@ const SESSION_PREF_KEY = 'libriq_session_pref';
 
     checkIncomingPollVote();
     LibriqFirebase.subscribe?.(state => claimPendingIntents(state));
+    // A book added or edited in another LibriQ tab shows up here too.
+    watchOtherTabs({
+      getUid: () => Storage.getActiveAccountUid?.() || null,
+      onChange: () => {
+        Navigation.updateBadges?.();
+        Navigation.renderCurrentPage?.();
+      },
+    });
     registerServiceWorker();
   }
 

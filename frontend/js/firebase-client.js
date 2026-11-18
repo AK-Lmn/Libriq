@@ -70,14 +70,28 @@ let profileSyncHydrating = false;
 let goalsSyncHydrating = false;
 let streakSyncHydrating = false;
 
+// A hung SDK request (captive portal, flaky mobile data) used to leave the
+// app waiting on the boot screen forever. After this long, the load counts
+// as failed: init() shows the "sign-in unavailable" fallback, and the next
+// attempt starts a fresh load.
+export const SDK_LOAD_TIMEOUT_MS = 20_000;
+
+export function withSdkTimeout(promise, ms = SDK_LOAD_TIMEOUT_MS) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Firebase SDK did not load within ${ms}ms`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 async function loadFirebaseSdk() {
   if (firebaseSdkReady) return;
   if (!firebaseSdkPromise) {
-    firebaseSdkPromise = Promise.all([
+    firebaseSdkPromise = withSdkTimeout(Promise.all([
       import('../vendor/firebase-app.js'),
       import('../vendor/firebase-auth.js'),
       import('../vendor/firebase-firestore.js'),
-    ]).then(([appSdk, authSdk, firestoreSdk]) => {
+    ])).then(([appSdk, authSdk, firestoreSdk]) => {
       ({ initializeApp, getApp, getApps } = appSdk);
       ({
         createUserWithEmailAndPassword,
@@ -97,7 +111,10 @@ async function loadFirebaseSdk() {
       firebaseSdkReady = true;
     });
   }
-  return firebaseSdkPromise;
+  return firebaseSdkPromise.catch((err) => {
+    firebaseSdkPromise = null;
+    throw err;
+  });
 }
 
 // Optional Firebase App Check. Only runs when a reCAPTCHA Enterprise site key is
