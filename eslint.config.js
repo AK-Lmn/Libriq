@@ -37,7 +37,7 @@ export default [
     languageOptions: { sourceType: 'script', globals: { ...globals.serviceworker } },
   },
   {
-    files: ['scripts/**/*.{js,mjs}', 'tests/**/*.js', 'tests-emulator/**/*.mjs', 'server/**/*.{js,mjs}', 'emails/**/*.js', 'eslint.config.js'],
+    files: ['scripts/**/*.{js,mjs}', 'tests/**/*.js', 'tests-emulator/**/*.mjs', 'server/**/*.{js,mjs}', 'api/**/*.js', 'emails/**/*.js', 'eslint.config.js'],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',
