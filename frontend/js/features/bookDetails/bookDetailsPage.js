@@ -19,7 +19,6 @@ export function createBookDetailsPage({
   const crypto = { randomUUID: createId || (() => globalThis.crypto.randomUUID()) };
   const confirm = confirmAction || presentConfirmation;
   const _logActivity = (...args) => actions.logActivity?.(...args);
-  const _getMetadataQuality = book => actions.getMetadataQuality?.(book) || { className: 'complete', label: 'Complete' };
   const _parseShelfInput = value => actions.parseShelfInput?.(value) || [];
   const _autoEnrichDescription = bookId => actions.autoEnrichDescription?.(bookId);
   const Navigation = {
@@ -69,7 +68,6 @@ export function createBookDetailsPage({
     const shelfBadges = Array.isArray(book.tags) && book.tags.length
       ? book.tags.map(tag => `<span class="badge badge-accent">${Utils.sanitize(tag)}</span>`).join('')
       : '';
-    const metadataQuality = _getMetadataQuality(book);
     const subjectList = Array.isArray(book?.subjects) && book.subjects.length > 0
       ? book.subjects
       : [];

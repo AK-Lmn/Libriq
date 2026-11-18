@@ -51,9 +51,6 @@ export const GutendexAPI = (() => {
     const authorNames = Array.isArray(item.authors)
       ? item.authors.map(author => author?.name || '').filter(Boolean)
       : [];
-    const authorKeys = Array.isArray(item.authors)
-      ? item.authors.map(author => author?.key).filter(Boolean)
-      : [];
     const coverUrl = item.formats?.['image/jpeg'] || item.formats?.['image/png'] || null;
     const htmlLink = item.formats?.['text/html'] || item.formats?.['text/html; charset=utf-8'] || null;
     const epubLink = item.formats?.['application/epub+zip'] || null;

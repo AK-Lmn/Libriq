@@ -866,6 +866,8 @@ export const Navigation = (() => {
     confirmDeleteAccount,
     setEmailAuthMode,
     shouldRenderSessionScreen,
+    getSessionScreenSuppressionReason,
+    debugSync,
     isConfirmedSignedOut,
     getRouteFromHash,
     syncUrlForRoute,
@@ -930,7 +932,7 @@ function routeAfterAuthReady() {
     return true;
   }
   if (!firebase.signedOutConfirmed && firebase.available) {
-    debugSync('auth ready preserved while session restores', {
+    Navigation.debugSync?.('auth ready preserved while session restores', {
       restoringSession: Boolean(firebase.restoringSession),
       signedOutConfirmed: Boolean(firebase.signedOutConfirmed),
       hasUser: Boolean(firebase.user),
@@ -1013,7 +1015,7 @@ function renderSessionChoicePage() {
   if (!Navigation.shouldRenderSessionScreen?.(firebase)) {
     if (localStorage.getItem('libriq_debug_sync') === '1') {
       console.debug('[LibriQ][SyncDebug][Nav] session screen blocked', {
-        reason: Navigation.isConfirmedSignedOut?.(firebase) ? 'not on session screen' : getSessionScreenSuppressionReason(firebase),
+        reason: Navigation.isConfirmedSignedOut?.(firebase) ? 'not on session screen' : Navigation.getSessionScreenSuppressionReason?.(firebase),
         hasUser: Boolean(firebase.user),
         restoringSession: Boolean(firebase.restoringSession),
         signedOutConfirmed: Boolean(firebase.signedOutConfirmed),
@@ -1969,7 +1971,6 @@ async function restoreFromCloud(preloadedDoc = null) {
     return;
   }
 
-  const currentBooks = Storage.getBooks();
   let docData = preloadedDoc;
   try {
     if (!docData) {
@@ -1999,7 +2000,6 @@ async function restoreFromCloud(preloadedDoc = null) {
     return;
   }
 
-  const data = docData.data;
   let result;
   try {
     result = LibriqCloudBackup.applyRestore(docData);

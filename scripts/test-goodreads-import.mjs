@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { parseCsvRows, parseGoodreadsCsv } from '../frontend/js/services/goodreadsCsvParser.js';
-import { createGoodreadsImportService, mapGoodreadsShelf, buildGoodreadsImportPlan } from '../frontend/js/services/goodreadsImportService.js';
+import { createGoodreadsImportService, mapGoodreadsShelf } from '../frontend/js/services/goodreadsImportService.js';
 import { executeGoodreadsImport } from '../frontend/js/services/goodreadsImportExecution.js';
 
 console.log('Testing CSV parser...');

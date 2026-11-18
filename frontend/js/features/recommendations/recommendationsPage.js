@@ -180,7 +180,6 @@ export function createRecommendationsPage({ storage, library, bookApi, utils, co
     const highRatedBooks = ratedBooks.filter(book => book.rating >= 4);
     const readingBooks = safeBooks.filter(book => book.status === constants.STATUS.READING);
     const wishlistBooks = safeBooks.filter(book => book.status === constants.STATUS.WISHLIST);
-    const finishedBooks = safeBooks.filter(book => book.status === constants.STATUS.FINISHED);
 
     const genreScores = new Map();
     const authorScores = new Map();

@@ -153,7 +153,6 @@ try {
       assert.ok(geometry.scroll <= geometry.width, `${name}: no horizontal overflow`);
       if (geometry.pageOverflow) {
         console.log(name, geometry, await page.evaluate(() => {
-          const root = document.querySelector('#mainContent .page').getBoundingClientRect();
           return [...document.querySelectorAll('#mainContent .page *')].filter(el => el.scrollWidth > el.clientWidth + 1).map(el => ({ tag: el.tagName, class: el.className, width: el.getBoundingClientRect().width, right: el.getBoundingClientRect().right, scroll: el.scrollWidth, client: el.clientWidth }));
         }));
         await page.screenshot({ path: path.join(output, `${name}-overflow.png`), fullPage: true });

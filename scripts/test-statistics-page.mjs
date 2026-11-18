@@ -66,7 +66,7 @@ assert.match(main.innerHTML, /stats-chart-grid/);
 assert.match(main.innerHTML, /monthlyChartStub/);
 assert.match(main.innerHTML, /stats-goal-track/);
 assert.doesNotMatch(main.innerHTML, /undefined|NaN|Infinity/);
-assert.doesNotMatch(main.innerHTML, /class="[^\"]*(?:gold|amber|orange)/);
+assert.doesNotMatch(main.innerHTML, /class="[^"]*(?:gold|amber|orange)/);
 const source = fs.readFileSync('frontend/js/features/statistics/statisticsPage.js', 'utf8');
 assert.match(source, /stats-rating-empty-icon/);
 assert.match(source, /ph-calendar-warning/);

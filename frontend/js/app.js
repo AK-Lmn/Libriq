@@ -1,6 +1,8 @@
 import { Navigation } from './navigation.js';
 import { Library } from './library.js';
 import { Search } from './search.js';
+// Kept: test-data-modules.mjs pins app.js -> data.js in the module graph.
+// eslint-disable-next-line no-unused-vars
 import { LIBRIQ } from './data.js';
 import { Storage } from './storage.js';
 import { Utils } from './utils.js';
@@ -17,7 +19,6 @@ import { watchOtherTabs } from './shared/crossTab.js';
 let _booted = false;
 let _whatsNewTimer = null;
 const RELEASE_KEY = 'libriq_seen_version';
-const SESSION_PREF_KEY = 'libriq_session_pref';
 
 
   function resetShellUI() {

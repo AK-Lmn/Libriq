@@ -52,7 +52,7 @@ async function setup(page, theme) {
 
 async function render(page, window, state = 'ready') {
   await page.evaluate(({ window, state }) => {
-    const { Storage, Utils, Library, Search, BookAPI } = globalThis.dialogFixture;
+    const { Storage, Library, Search, BookAPI } = globalThis.dialogFixture;
     Search.close(); Library.closeAddModal();
     document.getElementById('fixtureTrigger').focus();
     const long = state === 'long';

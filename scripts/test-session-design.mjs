@@ -37,7 +37,7 @@ async function render(page, target, theme) {
     document.documentElement.dataset.theme = theme;
     const { Storage } = await import('./js/storage.js');
     const { BookAPI } = await import('./js/api/index.js');
-    const { Utils } = await import('./js/utils.js');
+    await import('./js/utils.js');
     const { LibriqFirebase } = await import('./js/firebase-client.js');
     const { LibriqCloudBackup } = await import('./js/cloudBackup.js');
     const user = { uid: 'session-design-fixture', displayName: 'A reader with a wonderfully long name 日本語 café '.repeat(3), email: 'reader@example.test', providerData: [{ providerId: 'password' }] };
