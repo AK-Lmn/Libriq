@@ -5684,9 +5684,8 @@ html[data-theme] #settingsPage .btn-secondary { background: var(--glass-fill-2);
 html[data-theme] #settingsPage .btn-primary { background: var(--indigo); color: var(--text-inverse); }
 html[data-theme] #settingsPage .btn.btn-danger { background: var(--glass-fill-1); border: 1px solid var(--color-danger); color: var(--text-strong); }
 html[data-theme] #settingsPage .btn.btn-danger:hover { background: var(--color-danger-dim); color: var(--text-strong); }
-html[data-theme] #settingsPage .settings-danger-zone { border-top: 1px solid var(--glass-border); margin-top: 20px; padding-top: 20px; }
-html[data-theme] #settingsPage .settings-danger-zone h3 { font: 500 13px var(--font-sans); color: var(--text-strong); margin-bottom: 8px; }
-html[data-theme] #settingsPage .settings-danger-zone p { font-size: 12px; line-height: 1.5; }
+html[data-theme] #settingsPage .settings-panel-danger { border-color: color-mix(in srgb, var(--color-danger) 45%, var(--glass-border)); }
+html[data-theme] #settingsPage .settings-danger-icon { color: var(--color-danger); font-size: 18px; }
 html[data-theme] #settingsPage .settings-safety-copy { margin-top: 16px; }
 html[data-theme] #settingsPage :is(.settings-snapshot, .settings-library-count) { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12px; border-top: 1px solid var(--glass-border); padding-top: 12px; margin-top: 16px; }
 html[data-theme] #settingsPage .settings-backup-history { margin-top: 16px; font-size: 12px; line-height: 1.6; }
@@ -5714,6 +5713,7 @@ html[data-theme] #settingsPage .settings-footer span { font: 400 10px var(--font
   html[data-theme] #settingsPage .settings-panel-data { order: 5; }
   html[data-theme] #settingsPage .settings-panel-privacy { order: 6; }
   html[data-theme] #settingsPage .settings-panel-about { order: 7; }
+  html[data-theme] #settingsPage .settings-panel-danger { order: 8; }
   html[data-theme] #settingsPage .btn { min-height: 44px; }
   html[data-theme] #settingsPage :is(.settings-backup-history, .settings-diagnostics) summary { min-height: 44px; }
 }

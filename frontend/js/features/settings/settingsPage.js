@@ -79,12 +79,6 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
                 <button class="btn btn-secondary btn-sm" type="button" data-action="open-goodreads-import">${_icon('file-text')} Import Goodreads CSV</button>
                 <button class="btn btn-secondary btn-sm" type="button" data-action="open-kindle-import">${_icon('file-text')} Import Kindle Clippings</button>
               </div>
-              <div class="settings-danger-zone"><h3>Danger zone</h3><p>These actions are permanent. Export a copy before deleting your data.</p>
-                <div class="settings-danger-actions">
-                  <button class="btn btn-danger btn-sm" type="button" data-action="delete-library">Delete library data</button>
-                  <button class="btn btn-danger btn-sm" type="button" data-action="delete-account">${_icon('user-round')} Delete account</button>
-                </div>
-              </div>
               <details class="settings-backup-history"><summary>Backup history</summary><p>Last exported: ${utils.sanitize(lastExportedText)}</p><p>Last cloud backup: ${utils.sanitize(lastCloudBackupText)}</p></details>
               ${hasBooks && !backupMeta.lastExportedAt ? '<div class="settings-callout">Consider exporting a backup before making larger changes.</div>' : ''}
               <input id="importLibraryInput" type="file" accept="application/json,.json" hidden data-action="import-file" />
@@ -120,6 +114,14 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
               <p class="settings-copy">Book data from <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> and <a href="https://books.google.com" target="_blank" rel="noopener noreferrer">Google Books</a>.</p>
               <p class="settings-copy"><a href="./privacy.html">Privacy Policy</a> · <a href="./terms.html">Terms of Service</a> · <a href="mailto:support@libriq.app">support@libriq.app</a></p>
               <p class="settings-copy">Use your browser’s Install app or Add to Home Screen option when available. Account services and offline access depend on this device’s state.</p>
+            </section>
+            <section class="goal-widget settings-panel settings-panel-danger" aria-labelledby="settingsDangerTitle">
+              <div class="goal-header"><div><h2 class="goal-title" id="settingsDangerTitle"><i class="ph ph-warning settings-danger-icon" aria-hidden="true"></i> Danger zone</h2><p class="settings-panel-subtitle">Permanent. Export a copy first.</p></div></div>
+              <p class="settings-copy">Deleting your library removes your books, notes, progress and cloud backup. Deleting your account also removes your sign-in. Neither can be undone.</p>
+              <div class="settings-danger-actions">
+                <button class="btn btn-danger btn-sm" type="button" data-action="delete-library">Delete library data</button>
+                <button class="btn btn-danger btn-sm" type="button" data-action="delete-account">${_icon('user-round')} Delete account</button>
+              </div>
             </section>
           </div>
         </div>
