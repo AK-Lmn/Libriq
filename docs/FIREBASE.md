@@ -50,6 +50,20 @@ Delete Library Data removes the current signed-in account's library data. Delete
 
 Clear Local Cache remains a diagnostics action and is distinct from deleting account or library data.
 
+### Server-side account deletion
+
+Delete Account first asks `POST /api/delete-account` (a Vercel function, `api/delete-account.js`) to do the work. The browser sends its Firebase ID token; the server checks it (including revocation), requires a sign-in within the last five minutes, deletes everything under `users/{uid}` with `recursiveDelete` plus the poll vote, and then deletes the Firebase Auth user. Data goes first so a failure leaves an account the reader can sign back into and retry.
+
+If the route answers 404, 405 or 503 (local dev, or no credentials configured) or the request can't be sent, the browser falls back to the older client-side wipe.
+
+The route needs one environment variable in the Vercel project:
+
+1. Firebase Console -> Project settings -> Service accounts -> Generate new private key. This downloads a JSON key.
+2. Vercel -> the LibriQ project -> Settings -> Environment Variables. Add `FIREBASE_SERVICE_ACCOUNT` with the whole JSON as the value (base64 of the JSON also works), for Production and Preview, marked Sensitive.
+3. Redeploy, then delete the downloaded JSON file. Never commit it.
+
+The project is on the Spark plan, so there is no Cloud Function on user delete: an account removed by hand in the Firebase Console keeps its Firestore data until it is cleaned up separately.
+
 ## Firestore Rules
 
 [`firestore.rules`](../firestore.rules) at the repo root is the source of truth. `firebase.json` points the Firebase CLI at it. Don't edit rules in the Console; change the file and deploy it.
