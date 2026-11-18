@@ -120,6 +120,92 @@ export function confirmAction(message, options = {}) {
 }
 
 /**
+ * Asks the signed-in reader for their password. Resolves the typed password,
+ * or null on Cancel, Close, Escape, backdrop, abort, missing DOM or an
+ * overlapping request. Presentation only: the caller checks the password.
+ */
+export function requestPassword({ title = 'Confirm it’s you', message, email = '',
+  actionLabel = 'Continue', trigger = globalThis.document?.activeElement, signal } = {}) {
+  if (!globalThis.document?.body || activeConfirmation || signal?.aborted
+    || typeof message !== 'string' || !message.trim()) {
+    return Promise.resolve(null);
+  }
+  const element = (tag, className, text) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
+  const button = (className, text) => {
+    const node = element('button', className, text);
+    node.type = 'button';
+    return node;
+  };
+  const overlay = element('div', 'modal-overlay action-confirmation');
+  overlay.id = 'passwordConfirmationModal';
+  overlay.dataset.tone = 'default';
+  const panel = element('div', 'modal modal--centered');
+  const header = element('div', 'modal-header');
+  const heading = element('h2', 'modal-title', title);
+  heading.id = 'passwordConfirmationTitle';
+  const close = button('modal-close', '');
+  close.setAttribute('aria-label', 'Close');
+  const closeIcon = element('i', 'ph ph-x');
+  closeIcon.setAttribute('aria-hidden', 'true');
+  close.append(closeIcon);
+  header.append(heading, close);
+
+  const form = element('form', 'modal-body');
+  form.noValidate = true;
+  const description = element('p', 'modal-danger-copy', message);
+  description.id = 'passwordConfirmationDescription';
+  // Lets password managers match the saved login for this account.
+  const username = element('input');
+  username.type = 'email';
+  username.autocomplete = 'username';
+  username.value = email;
+  username.hidden = true;
+  username.tabIndex = -1;
+  const field = element('label', 'form-field');
+  const labelText = element('span', '', email ? `Password for ${email}` : 'Password');
+  const input = element('input', 'form-input');
+  input.type = 'password';
+  input.id = 'passwordConfirmationInput';
+  input.autocomplete = 'current-password';
+  input.required = true;
+  field.append(labelText, input);
+  form.append(description, username, field);
+  const footer = element('div', 'modal-footer');
+  const cancel = button('btn btn-secondary', 'Cancel');
+  const accept = button('btn btn-danger', actionLabel);
+  accept.id = 'passwordConfirmationAccept';
+  accept.disabled = true;
+  footer.append(cancel, accept);
+  panel.append(header, form, footer);
+  overlay.append(panel);
+  document.body.append(overlay);
+
+  const onInput = () => { accept.disabled = input.value.length === 0; };
+  // Two fields (hidden username + password) means no implicit form submit, so
+  // handle Enter on the password field directly.
+  const onSubmit = event => { event.preventDefault(); if (!accept.disabled) accept.click(); };
+  const onKeydown = event => { if (event.key === 'Enter') onSubmit(event); };
+  input.addEventListener('input', onInput);
+  input.addEventListener('keydown', onKeydown);
+  form.addEventListener('submit', onSubmit);
+  // Focus the password field rather than Cancel: typing it is the only task here.
+  requestAnimationFrame(() => input.focus());
+  return presentConfirmation({ overlay, panel, heading, description, cancel, close, accept,
+    trigger, signal, remove: true,
+    cleanup: () => {
+      input.removeEventListener('input', onInput);
+      input.removeEventListener('keydown', onKeydown);
+      form.removeEventListener('submit', onSubmit);
+    } })
+    .then(ok => (ok ? input.value : null));
+}
+
+/**
  * Drop-in presentation for navigation's confirmDangerAction(options).
  * Uses the existing dangerConfirm* IDs and exact case-sensitive phrase check
  * (surrounding whitespace trimmed, as before). Missing copy fails closed.
