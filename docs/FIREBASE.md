@@ -17,6 +17,18 @@ With enumeration protection on, a wrong email and a wrong password both come bac
 
 When account services cannot be reached, a no-internet fallback can offer Retry and Continue offline. In-app browser and webview detection can recommend opening LibriQ in Chrome or Safari when Google sign-in is likely to fail. Session restoration waits for Firebase auth rehydration instead of briefly showing the signed-out screen.
 
+### Google sign-in on www.libriq.app
+
+Browsers increasingly block the third-party storage that Google sign-in uses when `authDomain` is `<project>.firebaseapp.com`. `vercel.json` proxies `/__/auth/*` and `/__/firebase/*` to the Firebase auth handler, so `authDomain` can be our own domain. Those paths skip the site CSP and frame blocking (the handler has its own inline script and is framed by the app), and the service worker never answers for `/__/`.
+
+To switch production over:
+
+1. Google Cloud Console -> APIs & Services -> Credentials -> the OAuth 2.0 web client Firebase created. Under Authorized redirect URIs add `https://www.libriq.app/__/auth/handler`. Under Authorized JavaScript origins make sure `https://www.libriq.app` is listed.
+2. Vercel -> the LibriQ project -> Settings -> Environment Variables: set `FIREBASE_AUTH_DOMAIN` to `www.libriq.app` for Production only. Preview deploys have their own hostnames, so they keep `libriq-61ad3.firebaseapp.com`.
+3. Redeploy production and try Google sign-in. The popup address should start with `https://www.libriq.app/__/auth/handler`.
+
+To roll back, set `FIREBASE_AUTH_DOMAIN` back to `libriq-61ad3.firebaseapp.com` and redeploy.
+
 ## Local Data and Account Scope
 
 Books, reading progress, ratings, favorites, notes, quotes, goals, streaks, and activity have a device-local representation. Signed-in storage is scoped by Firebase UID so account libraries remain isolated. Offline mode keeps the current device usable and pauses account sync.

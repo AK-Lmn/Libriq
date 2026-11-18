@@ -10,7 +10,7 @@ const read = file => readFile(join(root, file), 'utf8');
 
 async function siteHeader(key) {
   const vercel = JSON.parse(await read('vercel.json'));
-  const all = vercel.headers.find(entry => entry.source === '/(.*)');
+  const all = vercel.headers.find(entry => entry.headers.some(h => h.key === 'Content-Security-Policy'));
   return all.headers.find(h => h.key === key)?.value;
 }
 
