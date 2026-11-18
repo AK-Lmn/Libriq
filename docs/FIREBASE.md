@@ -58,16 +58,20 @@ Paths the browser reads or writes, and the rule that covers each:
 
 | Path | Who | Rule |
 | --- | --- | --- |
-| `users/{uid}/sync/v1/books/{bookId}` | owner | `users/{uid}/{document=**}` |
-| `users/{uid}/activity/{activityId}` | owner | `users/{uid}/{document=**}` |
-| `users/{uid}/profile/current` | owner | `users/{uid}/{document=**}` |
-| `users/{uid}/goals/current` | owner | `users/{uid}/{document=**}` |
-| `users/{uid}/streak/current` | owner | `users/{uid}/{document=**}` |
-| `users/{uid}/backups/current` | owner | `users/{uid}/{document=**}` |
-| `users/{uid}/polls/mobile_app` | owner | `users/{uid}/{document=**}` |
+| `users/{uid}/sync/v1/books/{bookId}` | owner | whole-doc writes; keys limited to what `normalizeBookForSync()` writes; `id` must match the doc id; strings, lists and maps size-capped |
+| `users/{uid}/activity/{activityId}` | owner | merge writes; `id` must match the doc id; known fields type- and size-checked; at most 40 keys |
+| `users/{uid}/profile/current` | owner | merge writes; known fields checked; at most 30 keys (older docs keep their extra fields) |
+| `users/{uid}/goals/current` | owner | same as profile |
+| `users/{uid}/streak/current` | owner | same as profile |
+| `users/{uid}/backups/current` | owner | whole-doc writes; top-level keys fixed; up to 10,000 books and 20,000 activity entries |
+| `users/{uid}/polls/mobile_app` | owner | same fields as the poll vote below |
 | `polls/mobile_app/votes/{uid}` | owner, create/update only | `polls/{pollId}/votes/{voterUid}`: no client reads or deletes; fields limited to `choice`, `os`, `createdAt` |
 
-Anything outside these paths is denied by default.
+Anything outside these paths is denied, including the `users/{uid}` doc itself and any other subcollection.
+
+Rules can't look inside list items (quotes, highlights) or cap how many book or activity docs a user has. The 1 MiB Firestore document limit is the backstop there.
+
+`tests/firestore-rules.test.js` fails if the app starts writing a book or backup key the rules don't list. `npm run test:rules` runs the rules against the Firestore emulator (needs Java 11+).
 
 ### Deploying
 
