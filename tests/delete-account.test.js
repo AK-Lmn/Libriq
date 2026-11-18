@@ -108,3 +108,14 @@ test('without server credentials the route says so, and the client falls back', 
   assert.equal(res.body.code, 'not-configured');
   assert.deepEqual(calls, []);
 });
+
+test('broken server credentials answer 503 so the browser falls back', async () => {
+  for (const code of ['app/invalid-credential', 'auth/invalid-credential', 'auth/insufficient-permission', 'auth/internal-error']) {
+    const { handler, calls } = setup({ verifyError: Object.assign(new Error('bad creds'), { code }) });
+    const res = fakeRes();
+    await handler(req(), res);
+    assert.equal(res.statusCode, 503, code);
+    assert.equal(res.body.code, 'not-configured');
+    assert.deepEqual(calls.map(c => c[0]), ['verify'], 'nothing deleted');
+  }
+});

@@ -42,7 +42,13 @@ export function createDeleteAccountHandler({ getAdmin, now = Date.now }) {
     let claims;
     try {
       claims = await admin.verifyIdToken(token, true);
-    } catch {
+    } catch (err) {
+      // A bad server key fails here too. Answer as "not configured" so the
+      // browser falls back to the client-side wipe instead of erroring.
+      if (/invalid-credential|insufficient-permission|internal-error/.test(String(err?.code || ''))) {
+        console.error('[delete-account] server credentials rejected', { code: err.code });
+        return send(res, 503, { ok: false, code: 'not-configured' });
+      }
       return send(res, 401, { ok: false, code: 'invalid-token' });
     }
 
