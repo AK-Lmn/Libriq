@@ -43,6 +43,53 @@ export function loadRecipients(envVar, fallbackFile) {
   return [];
 }
 
+// Mail apps show an "Unsubscribe" button for this header. Replies to
+// support@libriq.app land in the Resend inbox; add the address to
+// scripts/.suppressed.json (gitignored) or LIBRIQ_EMAIL_SUPPRESSED.
+export const UNSUBSCRIBE_MAILTO = 'mailto:support@libriq.app?subject=unsubscribe';
+export const BROADCAST_FROM = 'LibriQ <updates@libriq.app>';
+
+/** Resend /emails payload for a broadcast, with the List-Unsubscribe header. */
+export function broadcastPayload({ to, subject, html, text }) {
+  return {
+    from: BROADCAST_FROM,
+    to: [to],
+    subject,
+    html,
+    text,
+    headers: { 'List-Unsubscribe': `<${UNSUBSCRIBE_MAILTO}>` },
+  };
+}
+
+function readAddressList(raw) {
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter(value => typeof value === 'string' && value.trim()) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Addresses that asked not to receive broadcasts: the gitignored file plus
+ * LIBRIQ_EMAIL_SUPPRESSED (JSON array). Missing or unreadable sources count
+ * as empty.
+ */
+export function loadSuppressed(file = 'scripts/.suppressed.json', envVar = 'LIBRIQ_EMAIL_SUPPRESSED') {
+  const fromFile = file && fs.existsSync(file) ? readAddressList(fs.readFileSync(file, 'utf8')) : [];
+  const fromEnv = process.env[envVar] ? readAddressList(process.env[envVar]) : [];
+  return [...fromFile, ...fromEnv];
+}
+
+const normalizeAddress = value => String(value || '').trim().toLowerCase();
+
+/** Drops opted-out addresses (case- and whitespace-insensitive). */
+export function filterSuppressed(recipients, suppressed) {
+  const blocked = new Set(suppressed.map(normalizeAddress));
+  const targets = recipients.filter(email => !blocked.has(normalizeAddress(email)));
+  return { targets, suppressed: recipients.length - targets.length };
+}
+
 /** Read resumable progress file: { sent: [...], failed: [...] } */
 export function readProgress(progressPath) {
   try {

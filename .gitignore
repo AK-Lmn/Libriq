@@ -170,3 +170,4 @@ graphify-out/
 # QA run artifacts (regenerate locally; not part of the app)
 qa-screenshots/
 qa-report.md
+scripts/.suppressed.json

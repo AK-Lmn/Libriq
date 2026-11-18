@@ -11,6 +11,9 @@ import {
   readProgress,
   writeProgress,
   sendSequentially,
+  broadcastPayload,
+  loadSuppressed,
+  filterSuppressed,
 } from './mail-common.mjs';
 
 function loadEnvFile() {
@@ -82,13 +85,7 @@ async function sendEmail(to, htmlContent) {
       Authorization: `Bearer ${RESEND_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      from: 'LibriQ <updates@libriq.app>',
-      to: [to],
-      subject,
-      html: htmlContent,
-      text: bodyText,
-    }),
+    body: JSON.stringify(broadcastPayload({ to, subject, html: htmlContent, text: bodyText })),
   });
 
   const result = await response.json();
@@ -107,6 +104,9 @@ async function main() {
   let targets = recipients;
   if (specificEmail) targets = [specificEmail];
   else if (!isAll) targets = []; // fail closed: no default hardcoded target
+  const optOut = filterSuppressed(targets, loadSuppressed(path.resolve(process.cwd(), 'scripts/.suppressed.json')));
+  targets = optOut.targets;
+  if (optOut.suppressed) console.log(`Skipping ${optOut.suppressed} opted-out address(es).`);
 
   const htmlPath = path.resolve(process.cwd(), 'emails', 'mobile-poll.html');
   let htmlContent = bodyText;
