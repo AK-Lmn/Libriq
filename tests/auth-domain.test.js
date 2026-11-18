@@ -2,19 +2,18 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-// Google sign-in runs on our own domain: /__/auth/* and /__/firebase/* are
-// proxied to the Firebase auth handler, so authDomain can be www.libriq.app
+// Google sign-in runs on our own domain: /__/auth/* is proxied to the
+// Firebase auth handler, so authDomain can be www.libriq.app
 // and the sign-in popup no longer depends on third-party storage.
 
 const read = file => readFile(new URL(`../${file}`, import.meta.url), 'utf8');
 const vercel = async () => JSON.parse(await read('vercel.json'));
 const FIREBASE_HOST = 'https://libriq-61ad3.firebaseapp.com';
 
-test('/__/auth and /__/firebase are proxied to the Firebase auth handler', async () => {
+test('/__/auth is proxied to the Firebase auth handler', async () => {
   const { rewrites = [] } = await vercel();
   const find = source => rewrites.find(r => r.source === source)?.destination;
   assert.equal(find('/__/auth/:path*'), `${FIREBASE_HOST}/__/auth/:path*`);
-  assert.equal(find('/__/firebase/:path*'), `${FIREBASE_HOST}/__/firebase/:path*`);
 });
 
 test('site-wide CSP and frame blocking skip the proxied auth pages', async () => {

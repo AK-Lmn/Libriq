@@ -128,10 +128,6 @@
     {
       "source": "/__/auth/:path*",
       "destination": "https://libriq-61ad3.firebaseapp.com/__/auth/:path*"
-    },
-    {
-      "source": "/__/firebase/:path*",
-      "destination": "https://libriq-61ad3.firebaseapp.com/__/firebase/:path*"
     }
   ]
 }

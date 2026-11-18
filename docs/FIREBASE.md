@@ -19,7 +19,7 @@ When account services cannot be reached, a no-internet fallback can offer Retry 
 
 ### Google sign-in on www.libriq.app
 
-Browsers increasingly block the third-party storage that Google sign-in uses when `authDomain` is `<project>.firebaseapp.com`. `vercel.json` proxies `/__/auth/*` and `/__/firebase/*` to the Firebase auth handler, so `authDomain` can be our own domain. Those paths skip the site CSP and frame blocking (the handler has its own inline script and is framed by the app), and the service worker never answers for `/__/`.
+Browsers increasingly block the third-party storage that Google sign-in uses when `authDomain` is `<project>.firebaseapp.com`. `vercel.json` proxies `/__/auth/*` to the Firebase auth handler, so `authDomain` can be our own domain. Those paths skip the site CSP and frame blocking (the handler has its own inline script and is framed by the app), and the service worker never answers for `/__/`.
 
 To switch production over:
 
