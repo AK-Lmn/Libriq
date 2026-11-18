@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Import Your Goodreads Library · LibriQ</title>
+  <meta name="description" content="Move your Goodreads shelves, ratings and reviews into LibriQ from the CSV export. Preview first, with duplicates skipped." />
+  <link rel="canonical" href="https://www.libriq.app/goodreads-import.html" />
+  <meta property="og:title" content="Import Your Goodreads Library · LibriQ" />
+  <meta property="og:description" content="Move your Goodreads shelves, ratings and reviews into LibriQ from the CSV export. Preview first, with duplicates skipped." />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://www.libriq.app/goodreads-import.html" />
+  <meta property="og:image" content="https://www.libriq.app/assets/social/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/svg+xml" href="./assets/icons/icon.svg" />
+  <link rel="stylesheet" href="./assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="./css/tokens.css" />
+  <link rel="stylesheet" href="./css/reset.css" />
+  <link rel="stylesheet" href="./css/base.css" />
+  <link rel="stylesheet" href="./css/legal.css" />
+  <script type="module" src="./js/legal.js"></script>
+  <script type="module" src="./js/analytics.js"></script>
+</head>
+<body>
+  <main class="legal">
+    <a class="legal-brand" href="./"><img src="./assets/icons/icon.svg" alt="" /> LibriQ</a>
+    <h1>Import your Goodreads library</h1>
+
+    <p>If you have years of reading logged on Goodreads, you don't have to start again. LibriQ reads the CSV file Goodreads lets you export and turns it into your LibriQ library: the books, which shelf each one was on, your star ratings and your reviews.</p>
+
+    <h2>Export your library from Goodreads</h2>
+    <ol>
+      <li>Sign in to Goodreads on a computer and open <strong>My Books</strong>.</li>
+      <li>Choose <strong>Import and export</strong>, then <strong>Export Library</strong>.</li>
+      <li>Wait for the export to finish and download <code>goodreads_library_export.csv</code>.</li>
+    </ol>
+    <p>The file stays on your device. LibriQ reads it in your browser and only saves the books you go on to import.</p>
+
+    <h2>Import it into LibriQ</h2>
+    <ol>
+      <li>Open LibriQ and go to <strong>Settings</strong>, then <strong>Export / Import</strong>.</li>
+      <li>Choose <strong>Import Goodreads CSV</strong> and select the file.</li>
+      <li>Review the preview, then confirm.</li>
+    </ol>
+    <p>The preview shows how many books will be added, how many are finished, in progress or on your to-read list, and how many have ratings or reviews. Nothing is saved until you confirm.</p>
+
+    <h2>What comes across</h2>
+    <ul>
+      <li><strong>Shelves.</strong> Read becomes Finished, currently-reading becomes Reading, and did-not-finish (or dnf) becomes Did Not Finish. Every other shelf, including to-read, becomes Want to Read.</li>
+      <li><strong>Ratings and reviews.</strong> Your stars and the text of your reviews are kept with each book.</li>
+      <li><strong>Duplicates.</strong> If a book is already in your LibriQ library, matched by ISBN or by title and author, it is skipped rather than added twice.</li>
+    </ul>
+
+    <h2>After the import</h2>
+    <p>Imported books behave like any other: update your page, add notes and quotes, or move a book to another shelf. Finished books count towards your yearly goal and show up in your statistics. If you are signed in on more than one device, the library syncs to all of them.</p>
+    <p>Before a large import, export a backup of your current library from Settings. It takes a second and gives you a copy to go back to.</p>
+
+    <h2>Have Kindle highlights too?</h2>
+    <p>You can <a href="./kindle-highlights.html">import your Kindle highlights</a> as well, and they will attach to the same books.</p>
+
+    <p><a href="./">Start your library on LibriQ</a></p>
+
+    <footer class="legal-footer">
+      <a href="./">Open LibriQ</a><a href="./kindle-highlights.html">Kindle highlights</a><a href="./private-reading-tracker.html">No ads, no feed</a><a href="./privacy.html">Privacy</a>
+    </footer>
+  </main>
+</body>
+</html>
