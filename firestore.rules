@@ -2,24 +2,223 @@ rules_version = '2';
 
 // Source of truth for Cloud Firestore security rules.
 // Deploy: firebase deploy --only firestore:rules   (see docs/FIREBASE.md)
+//
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Everything under users/{uid} belongs to that signed-in user and is
+// readable and writable by them alone. Only the paths below exist; any
+// other path is denied.
+//
+// users/{uid}/sync/v1/books/{bookId}
+//   One doc per book, written whole (batch.set, no merge) from
+//   normalizeBookForSync() in frontend/js/sync.js, or a delete tombstone
+//   (id, deletedAt, updatedAt, deviceId, sourceDeviceId, appVersion).
+//   id must equal {bookId}. Keys limited to the list in isValidBook(). Fields
+//   that can grow (title, notes, description, quotes, tags...) are size-capped;
+//   list items can't be inspected by rules, so the 1 MiB Firestore doc limit
+//   is the backstop for their contents and for the short scalar fields.
+//
+// users/{uid}/activity/{eventId}
+//   sanitizeActivityEvent() in firebase-client.js, written with merge.
+//   id must equal {eventId}. Known fields are type/size checked.
+//
+// users/{uid}/profile/current   sanitizeProfile()  (merge)
+// users/{uid}/goals/current     sanitizeGoals()    (merge)
+// users/{uid}/streak/current    sanitizeStreak()   (merge)
+//   Merge writes keep fields from older app versions, so these use a key
+//   count cap instead of an exact key list.
+//
+// users/{uid}/backups/current
+//   buildPayload() in cloudBackup.js, written whole. Top-level keys fixed;
+//   the library lives in data.books / data.activity.
+//
+// users/{uid}/polls/mobile_app and polls/{pollId}/votes/{uid}
+//   { choice, os, createdAt } from services/mobileAppPoll.js.
+//
+// ===============================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isOwner(uid) { return request.auth != null && request.auth.uid == uid; }
 
-    // Everything a signed-in user owns: sync/v1/books, activity, profile, goals,
-    // streak, backups, polls/mobile_app. Owner-only, read and write.
-    match /users/{uid}/{document=**} { allow read, write: if isOwner(uid); }
+    // ---------- Helpers ----------
+
+    function isAuthenticated() { return request.auth != null; }
+    function isOwner(uid) { return isAuthenticated() && request.auth.uid == uid; }
+
+    function data() { return request.resource.data; }
+
+    function isId(id) { return id is string && id.size() > 0 && id.size() <= 200; }
+
+    // null/absent, or a string no longer than max.
+    function optStr(v, max) { return v == null || (v is string && v.size() <= max); }
+
+    // Values the app passes through without normalising (pages, rating,
+    // dates): small scalars only.
+    function scalar(v) {
+      return v == null || v is number || v is bool || v is timestamp
+        || (v is string && v.size() <= 200);
+    }
+
+    function optList(v, max) { return v == null || (v is list && v.size() <= max); }
+    function optMap(v, max) { return v == null || (v is map && v.size() <= max); }
+
+    // Cover fields hold a URL string or an imageLinks map.
+    function cover(v) { return optStr(v, 4096) || (v is map && v.size() <= 20); }
+
+    // ---------- Validators ----------
+
+    function isValidBook(d, bookId) {
+      return d.keys().hasOnly([
+          'id', 'title', 'author', 'cover', 'coverUrl', 'imageLinks', 'isbn', 'isbns',
+          'identifiers', 'source', 'sources', 'sourceBadges', 'sourceIds', 'status',
+          'currentPage', 'pages', 'pageCount', 'description', 'genres', 'subjects',
+          'subjectPeople', 'subjectPlaces', 'subjectTimes', 'language', 'publisher',
+          'publishYear', 'firstPublishYear', 'editionCount', 'coverId', 'rating', 'review',
+          'isFavorite', 'shelves', 'tags', 'notes', 'notesUpdatedAt', 'quotes',
+          'createdAt', 'dateAdded', 'dateStarted', 'dateFinished', 'updatedAt', 'deletedAt',
+          'googleBooksId', 'openLibraryId', 'openLibraryWorkKey', 'openLibraryEditionKey',
+          'openLibraryAuthorKeys', 'gutendexId', 'gutenbergId', 'internetArchiveId',
+          'internetArchiveIds', 'archiveUrl', 'readableSourceLinks', 'downloadLinks',
+          'deviceId', 'sourceDeviceId', 'appVersion'
+        ])
+        && string(d.id) == bookId
+        // Firestore stops after 1000 evaluated expressions per request, so
+        // only fields that can grow large are checked here. Short scalar
+        // fields (ids, dates, numbers) are bounded by the 1 MiB doc limit.
+        && optStr(d.get('title', null), 2000)
+        && optStr(d.get('author', null), 2000)
+        && optStr(d.get('description', null), 50000)
+        && optStr(d.get('notes', null), 200000)
+        && optStr(d.get('review', null), 50000)
+        && cover(d.get('cover', null))
+        && cover(d.get('coverUrl', null))
+        && optList(d.get('quotes', null), 5000)
+        && optList(d.get('tags', null), 500)
+        && optList(d.get('shelves', null), 500)
+        && optList(d.get('subjects', null), 1000)
+        && optList(d.get('genres', null), 1000)
+        && optMap(d.get('downloadLinks', null), 50)
+        && optMap(d.get('sourceIds', null), 50)
+        && (!('isFavorite' in d) || d.isFavorite is bool);
+    }
+
+    function isValidActivity(d, eventId) {
+      return d.keys().size() <= 40
+        && string(d.id) == eventId
+        && optStr(d.get('type', null), 100)
+        && scalar(d.get('timestamp', null))
+        && scalar(d.get('createdAt', null))
+        && scalar(d.get('updatedAt', null))
+        && optStr(d.get('bookId', null), 200)
+        && optStr(d.get('bookTitle', null), 2000)
+        && optStr(d.get('bookAuthor', null), 2000)
+        && optStr(d.get('coverUrl', null), 4096)
+        && optStr(d.get('status', null), 50)
+        && optStr(d.get('message', null), 2000)
+        && optMap(d.get('payload', null), 50)
+        && optStr(d.get('sourceDeviceId', null), 200)
+        && (d.get('pending', null) == null || d.get('pending', null) is bool);
+    }
+
+    function isValidProfile(d) {
+      return d.keys().size() <= 30
+        && optStr(d.get('displayName', null), 200)
+        && optStr(d.get('name', null), 200)
+        && optStr(d.get('bio', null), 5000)
+        && optStr(d.get('avatar', null), 100000)
+        && scalar(d.get('createdAt', null))
+        && scalar(d.get('updatedAt', null));
+    }
+
+    function isValidGoals(d) {
+      return d.keys().size() <= 30
+        && scalar(d.get('year', null))
+        && scalar(d.get('yearly', null))
+        && scalar(d.get('target', null))
+        && scalar(d.get('completed', null))
+        && scalar(d.get('createdAt', null))
+        && scalar(d.get('updatedAt', null));
+    }
+
+    function isValidStreak(d) {
+      return d.keys().size() <= 30
+        && scalar(d.get('currentStreak', null))
+        && scalar(d.get('longestStreak', null))
+        && scalar(d.get('lastReadDate', null))
+        && scalar(d.get('createdAt', null))
+        && scalar(d.get('updatedAt', null));
+    }
+
+    function isValidBackup(d) {
+      return d.keys().hasOnly([
+          'app', 'version', 'backupVersion', 'appVersion', 'schemaVersion', 'deviceId',
+          'createdAt', 'updatedAt', 'bookCount', 'notesCount', 'quotesCount',
+          'activityCount', 'lastLocalUpdatedAt', 'syncReady', 'data'
+        ])
+        && d['data'] is map
+        && d['data'].keys().hasOnly(['books', 'profile', 'goals', 'streak', 'activity'])
+        && optList(d['data'].get('books', null), 10000)
+        && optList(d['data'].get('activity', null), 20000)
+        && optStr(d.get('app', null), 50)
+        && optStr(d.get('deviceId', null), 200)
+        && scalar(d.get('createdAt', null))
+        && scalar(d.get('updatedAt', null));
+    }
+
+    function isValidVote(d) {
+      return d.keys().hasOnly(['choice', 'os', 'createdAt'])
+        && d.choice in ['ios', 'android', 'web_ok']
+        && d.os is string && d.os.size() <= 16
+        && d.createdAt is string && d.createdAt.size() <= 40;
+    }
+
+    // ---------- Per-user data ----------
+
+    match /users/{uid} {
+      match /sync/v1/books/{bookId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isId(bookId) && isValidBook(data(), bookId);
+      }
+
+      match /activity/{eventId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isId(eventId) && isValidActivity(data(), eventId);
+      }
+
+      match /profile/current {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isValidProfile(data());
+      }
+
+      match /goals/current {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isValidGoals(data());
+      }
+
+      match /streak/current {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isValidStreak(data());
+      }
+
+      match /backups/current {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isValidBackup(data());
+      }
+
+      match /polls/mobile_app {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isValidVote(data());
+      }
+    }
 
     // Aggregate poll votes, one doc per account keyed by uid. Write-only from
     // clients; results are read with project IAM credentials (scripts/poll-results.mjs).
     match /polls/{pollId}/votes/{voterUid} {
       allow read: if false;
       allow delete: if isOwner(voterUid);  // account deletion cleanup
-      allow create, update: if isOwner(voterUid)
-        && request.resource.data.keys().hasOnly(['choice', 'os', 'createdAt'])
-        && request.resource.data.choice in ['ios', 'android', 'web_ok']
-        && request.resource.data.os is string && request.resource.data.os.size() <= 16
-        && request.resource.data.createdAt is string && request.resource.data.createdAt.size() <= 40;
+      allow create, update: if isOwner(voterUid) && isValidVote(data());
     }
   }
 }

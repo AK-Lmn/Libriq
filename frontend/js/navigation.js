@@ -37,6 +37,7 @@ import { applyNavigationChrome, initializeNavigationChrome } from './navigationC
 import { savePendingBook } from './services/pendingIntents.js';
 import { coverImgAttrs } from './shared/coverSize.js';
 import { initialAuthMode } from './shared/authMode.js';
+import { MIN_PASSWORD_LENGTH, newPasswordProblem } from './shared/passwordPolicy.js';
 
 export function completeGoodreadsImport({ previewResult, storage, toast, rerender } = {}) {
   const result = executeGoodreadsImport({
@@ -209,6 +210,13 @@ export const Navigation = (() => {
     form?.setAttribute('data-auth-mode', nextMode);
     form?.setAttribute('aria-labelledby', nextMode === 'signup' ? 'sessionSignupTab' : 'sessionSigninTab');
     password?.setAttribute('autocomplete', nextMode === 'signup' ? 'new-password' : 'current-password');
+    if (nextMode === 'signup') {
+      password?.setAttribute('minlength', String(MIN_PASSWORD_LENGTH));
+      password?.setAttribute('aria-describedby', 'sessionPasswordHelp');
+    } else {
+      password?.removeAttribute('minlength');
+      password?.removeAttribute('aria-describedby');
+    }
     if (title) title.textContent = nextMode === 'signup' ? 'Make room for your next chapter.' : nextMode === 'reset' ? 'Find your way back.' : 'Welcome back, reader.';
     if (copy) copy.textContent = nextMode === 'signup' ? 'Create a private space for your books, notes, and reading progress.' : nextMode === 'reset' ? 'We’ll send a reset link to your account email.' : 'Sign in to pick up where you left off.';
     if (passwordHelp) passwordHelp.hidden = nextMode !== 'signup';
@@ -1139,7 +1147,7 @@ function renderSessionChoicePage() {
                 <input class="form-input" id="sessionEmailInput" type="email" placeholder="Email address" autocomplete="email" required />
                 <label class="session-field-label" for="sessionPasswordInput">Password</label>
                 <input class="form-input" id="sessionPasswordInput" type="password" placeholder="Password" autocomplete="current-password" required />
-                <p class="session-field-help" id="sessionPasswordHelp" hidden>Use at least 6 characters.</p>
+                <p class="session-field-help" id="sessionPasswordHelp" hidden>Use at least ${MIN_PASSWORD_LENGTH} characters.</p>
                 <button class="btn btn-primary" id="emailAuthSubmit" type="submit">
                   <i class="ph ph-envelope-simple"></i>
                   <span>Sign in with Email</span>
@@ -1490,6 +1498,8 @@ function renderSessionChoicePage() {
     if (label) label.textContent = mode === 'signup' ? 'Creating your account…' : 'Signing you in…';
     try {
       if (mode === 'signup') {
+        const problem = newPasswordProblem(password);
+        if (problem) throw Object.assign(new Error(problem), { code: 'auth/weak-password' });
         await LibriqFirebase.createAccountWithEmail(email, password);
       } else {
         await LibriqFirebase.signInWithEmail(email, password);
@@ -1657,7 +1667,7 @@ function getFriendlyAuthError(err, mode = 'signin') {
   const code = String(err?.code || err?.message || '').toLowerCase();
   if (code.includes('invalid-email')) return 'Enter a valid email address.';
   if (code.includes('wrong-password') || code.includes('invalid-credential') || code.includes('user-not-found')) return 'The email or password does not look right.';
-  if (code.includes('weak-password')) return 'Choose a stronger password with at least 6 characters.';
+  if (code.includes('weak-password')) return `Choose a stronger password with at least ${MIN_PASSWORD_LENGTH} characters.`;
   if (code.includes('email-already-in-use') || code.includes('account-exists-with-different-credential')) return 'An account already exists for that email. Try signing in instead.';
   if (code.includes('missing-password')) return 'Enter your password to continue.';
   if (code.includes('network-request-failed') || code.includes('unavailable') || code.includes('failed to fetch')) return 'LibriQ cannot reach account services right now.';
