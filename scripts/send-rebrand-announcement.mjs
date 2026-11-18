@@ -13,6 +13,9 @@ import {
   readProgress,
   writeProgress,
   sendSequentially,
+  broadcastPayload,
+  loadSuppressed,
+  filterSuppressed,
 } from './mail-common.mjs';
 
 function loadEnvFile() {
@@ -98,13 +101,7 @@ async function sendEmail(to, htmlContent) {
       Authorization: `Bearer ${RESEND_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      from: 'LibriQ <updates@libriq.app>',
-      to: [to],
-      subject,
-      html: htmlContent,
-      text: bodyText,
-    }),
+    body: JSON.stringify(broadcastPayload({ to, subject, html: htmlContent, text: bodyText })),
   });
 
   const result = await response.json();
@@ -124,10 +121,13 @@ async function main() {
     return;
   }
 
-  const maskedList = recipients.map(maskEmail).join(', ');
-  console.log(`\nDomain verified! Beginning dispatch to ${recipients.length} recipient(s): ${maskedList}`);
+  const optOut = filterSuppressed(recipients, loadSuppressed(path.resolve(process.cwd(), 'scripts/.suppressed.json')));
+  const targets = optOut.targets;
+  if (optOut.suppressed) console.log(`Skipping ${optOut.suppressed} opted-out address(es).`);
+  const maskedList = targets.map(maskEmail).join(', ');
+  console.log(`\nDomain verified! Beginning dispatch to ${targets.length} recipient(s): ${maskedList}`);
 
-  if (recipients.length === 0) {
+  if (targets.length === 0) {
     console.log('No recipients configured. Set LIBRIQ_ANNOUNCE_RECIPIENTS (JSON array) or create scripts/.recipients.json.');
     console.log('Example: LIBRIQ_ANNOUNCE_RECIPIENTS="[\"user@example.com\"]" node scripts/send-rebrand-announcement.mjs\n');
     return;
@@ -144,7 +144,7 @@ async function main() {
   };
 
   const { sent, failed, skipped } = await sendSequentially({
-    recipients,
+    recipients: targets,
     sendOne,
     delayMs: 1000, // 1s pace between sends
     maxRetries: 3,
