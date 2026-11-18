@@ -215,6 +215,7 @@ const SHELL_ASSETS = [
   './js/services/releaseNotes.js',
   './js/services/pendingIntents.js',
   './js/services/syncUpload.js',
+  './js/services/syncMerge.js',
   './js/analytics.js',
   './privacy.html',
   './terms.html',
