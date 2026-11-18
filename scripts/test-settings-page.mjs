@@ -78,6 +78,13 @@ assert.match(main.innerHTML, /data-theme-choice="dark" aria-pressed="true"/);
 assert.match(main.innerHTML, /data-theme-choice="light" aria-pressed="false"/);
 assert.doesNotMatch(main.innerHTML, /optional account|accounts are optional|works without an account|Alex Morgan|2\.4 MB|200 OK/i);
 assert.doesNotMatch(main.innerHTML, /onclick=|onchange=/);
+const panelHtml = name => main.innerHTML.match(new RegExp(`<section[^>]*settings-panel-${name}\\b[\\s\\S]*?</section>`))?.[0] || "";
+assert.doesNotMatch(panelHtml("data"), /data-action="delete-(library|account)"/, "Export / Import must not hold the delete buttons");
+const danger = panelHtml("danger");
+assert.match(danger, /data-action="delete-library"/, "Delete library lives in its own danger card");
+assert.match(danger, /data-action="delete-account"/, "Delete account lives in its own danger card");
+assert.match(danger, /<h2[^>]*>[\s\S]*Danger zone/, "Danger card has its own heading");
+assert.ok(main.innerHTML.lastIndexOf("settings-panel-danger") > main.innerHTML.lastIndexOf("settings-panel-about"), "Danger card comes last");
 
 const click = listeners.get('click');
 click({ target: { closest: () => ({ dataset: { action: 'toggle-theme' } }) } });
