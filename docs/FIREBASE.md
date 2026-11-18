@@ -6,6 +6,15 @@ LibriQ uses the Firebase client SDK for authentication and Cloud Firestore. The 
 
 The normal account flow supports Google sign-in, email/password sign-in, and account creation. Friendly messages cover invalid email, incorrect credentials, weak passwords, duplicate accounts, popup cancellation or blocking, unauthorized domains, disallowed user agents, and network failures.
 
+### Password policy and email enumeration protection
+
+New passwords need at least 8 characters (`frontend/js/shared/passwordPolicy.js`). The sign-up form checks this before calling Firebase, but Firebase is what enforces it, so two Console settings must match:
+
+1. Firebase Console -> Authentication -> Settings -> Password policy: enforce, minimum length 8. Choose "Require enforcement" only for new passwords; existing users with shorter passwords can still sign in.
+2. Firebase Console -> Authentication -> Settings -> User actions -> Email enumeration protection: on.
+
+With enumeration protection on, a wrong email and a wrong password both come back as `auth/invalid-credential`, and password reset reports success for unknown addresses. The app already shows one message for both sign-in cases and "sent if an account exists" for resets. Sign-up still says when an email is taken; Firebase can't hide that without blocking sign-up.
+
 When account services cannot be reached, a no-internet fallback can offer Retry and Continue offline. In-app browser and webview detection can recommend opening LibriQ in Chrome or Safari when Google sign-in is likely to fail. Session restoration waits for Firebase auth rehydration instead of briefly showing the signed-out screen.
 
 ## Local Data and Account Scope
