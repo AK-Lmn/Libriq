@@ -386,7 +386,7 @@
   :is(#libraryPage, #statusPage) .library-search-wrap { grid-column: 1 / -1; }
   :is(#libraryPage, #statusPage) .library-sort-wrap { border-radius: 16px; }
   :is(#libraryPage, #statusPage) .library-filters { gap: 8px; margin-bottom: 20px; }
-  :is(#libraryPage, #statusPage) .chip { min-height: 36px; padding: 0 12px; font-size: 11px; }
+  :is(#libraryPage, #statusPage) .chip { min-height: 44px; padding: 0 12px; font-size: 11px; }
   :is(#libraryPage, #statusPage) .library-grid-summary { margin-bottom: 16px; font-size: 10px; }
   #libraryPage .library-grid-summary > span:last-child { display: none; }
   #libraryPage .books-grid { grid-template-columns: minmax(0,1fr); gap: 16px; }
@@ -783,4 +783,12 @@
 [data-theme="light"] .bookshelf-plank-face {
   background: linear-gradient(180deg, #E2E8F0, #CBD5E1);
   box-shadow: 0 10px 20px -2px rgba(0, 0, 0, 0.12);
+}
+
+/* 44px tap target for the book title button on phones (AGENTS.md).
+   Padding grows the hit area; equal negative margins keep the text and the
+   compact card height exactly where they were. */
+@media (max-width: 768px) {
+  #libraryPage .book-card-title { padding-block: 11px; margin: -11px 0 -7px; }
+  #statusPage .book-card-title { padding-block: 12px; margin: -12px 0 -4px; }
 }

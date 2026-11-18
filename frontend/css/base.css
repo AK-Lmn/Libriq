@@ -393,3 +393,13 @@ html, body {
     width: 100%;
   }
 }
+
+/* AGENTS.md: thumb-friendly 44px targets on phones. These controls are sized
+   for a pointer on desktop and grow below the tablet breakpoint. */
+@media (max-width: 768px) {
+  .skip-link, .section-action, .chip, .help-pill, .view-switch-btn {
+    min-height: 44px;
+  }
+  .section-action, .help-pill { display: inline-flex; align-items: center; }
+  .dashboard-poll-close { min-width: 44px; min-height: 44px; }
+}

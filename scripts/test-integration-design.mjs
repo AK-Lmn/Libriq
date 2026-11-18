@@ -170,6 +170,19 @@ try {
       assert.equal(result.rootOverflow, false, `${name}: document overflow`);
       assert.deepEqual(result.images, [], `${name}: images load`);
       assert.deepEqual(result.contrast, [], `${name}: normal text AA`);
+      // AGENTS.md: thumb-friendly 44px targets on phones. Links inside a
+      // sentence are exempt (WCAG 2.5.8 inline exception).
+      if (width < 768 && !modalWindow) {
+        const small = await page.evaluate(() => [...document.querySelectorAll('button, a[href], select, input:not([type=hidden]), summary, [role=button]')]
+          .filter(el => {
+            const b = el.getBoundingClientRect();
+            if (!b.width || !b.height || el.closest('[hidden],[inert],.sr-only') || getComputedStyle(el).visibility === 'hidden') return false;
+            if (el.matches('a') && getComputedStyle(el).display === 'inline' && el.closest('p, li')) return false;
+            return b.height < 43.5 || b.width < 43.5;
+          })
+          .map(el => `${el.tagName.toLowerCase()}.${String(el.className).trim().split(' ').filter(Boolean).join('.')} ${Math.round(el.getBoundingClientRect().width)}x${Math.round(el.getBoundingClientRect().height)}`));
+        assert.deepEqual(small, [], `${name}: 44px touch targets`);
+      }
       assert.deepEqual(result.hubs, ['Library', 'Insights', 'Discover', 'Account']);
       assert.ok(result.badges.every(Boolean));
       if (routes.includes(window)) {
