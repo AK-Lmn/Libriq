@@ -5,6 +5,7 @@ import { Utils } from './utils.js';
 import { LibriqFirebase } from './firebase-client.js';
 import { LibriqCloudBackup } from './cloudBackup.js';
 import { commitInChunks } from './services/syncUpload.js';
+import { mergeBooks } from './services/syncMerge.js';
 
 export const LibriqSyncBeta = (() => {
   const STORAGE_KEY = 'libriq_sync_beta_enabled';
@@ -787,77 +788,20 @@ export const LibriqSyncBeta = (() => {
     }
   }
 
-  function compareTimes(a, b) {
-    const at = new Date(a || 0).getTime();
-    const bt = new Date(b || 0).getTime();
-    if (!Number.isFinite(at) || !Number.isFinite(bt)) return 0;
-    return at === bt ? 0 : (at > bt ? 1 : -1);
-  }
 
   function applyRemoteBooks(remoteBooks) {
     const localBooks = Storage.getBooks();
-    const byId = new Map(localBooks.map(book => [book.id, book]));
-    let changed = false;
-    let conflicts = 0;
-    const nextBooks = localBooks.map(book => ({ ...book }));
-
-    remoteBooks.forEach(remote => {
-      if (!remote?.id) return;
-      const local = byId.get(remote.id);
-      const remoteTime = remote.updatedAt || remote.createdAt || null;
-      const localTime = local?.updatedAt || local?.createdAt || null;
-      const favoriteState = typeof remote.isFavorite === 'boolean' ? remote.isFavorite : null;
-
-      if (remote.deletedAt && compareTimes(remote.deletedAt, localTime) >= 0) {
-        const idx = nextBooks.findIndex(book => book.id === remote.id);
-        if (idx !== -1) {
-          nextBooks.splice(idx, 1);
-          changed = true;
-          debugLog('remote book applied', { bookId: remote.id, reason: 'deletedAt tombstone', remoteFavorite: favoriteState });
-        }
-        return;
-      }
-
-      if (!local) {
-        nextBooks.push(_toLocalBook(remote));
-        changed = true;
-        debugLog('remote book applied', { bookId: remote.id, reason: 'new book from remote', remoteFavorite: favoriteState });
-        return;
-      }
-
-      const cmp = compareTimes(remoteTime, localTime);
-      if (cmp > 0) {
-        nextBooks[nextBooks.findIndex(book => book.id === remote.id)] = _mergeRemoteIntoLocal(local, remote);
-        changed = true;
-        debugLog('remote book applied', { bookId: remote.id, reason: 'remote newer', remoteFavorite: favoriteState, localFavorite: Boolean(local.isFavorite) });
-      } else if (cmp < 0) {
-        debugLog('remote book skipped', { bookId: remote.id, reason: 'local newer, queued upload', remoteFavorite: favoriteState, localFavorite: Boolean(local.isFavorite) });
-        queueUpload('local-newer');
-      } else {
-        const merged = _mergeRemoteIntoLocal(local, remote);
-        const favoriteChanged = typeof remote.isFavorite === 'boolean' && local.isFavorite !== remote.isFavorite;
-        const hasRemoteUpdatedAt = Boolean(remote.updatedAt || remote.createdAt);
-        if (favoriteChanged && (!hasRemoteUpdatedAt || remote.updatedAt === local.updatedAt)) {
-          nextBooks[nextBooks.findIndex(book => book.id === remote.id)] = merged;
-          changed = true;
-          debugLog('remote book applied', { bookId: remote.id, reason: 'favorite changed on timestamp tie', remoteFavorite: favoriteState, localFavorite: Boolean(local.isFavorite) });
-        } else if (remote.deletedAt && compareTimes(remote.deletedAt, local?.updatedAt || local?.createdAt || null) >= 0) {
-          const idx = nextBooks.findIndex(book => book.id === remote.id);
-          if (idx !== -1) {
-            nextBooks.splice(idx, 1);
-            changed = true;
-          }
-        } else if (bookFingerprint(normalizeBookForSync(local)) === bookFingerprint(remote)) {
-          // Same timestamp and same content: this is our own upload coming
-          // back through the listener, not a conflict.
-          debugLog('remote book skipped', { bookId: remote.id, reason: 'echo of local book' });
-        } else {
-          conflicts += 1;
-          debugLog('remote book skipped', { bookId: remote.id, reason: 'timestamp tie or missing timestamp', remoteFavorite: favoriteState, localFavorite: Boolean(local.isFavorite), remoteUpdatedAt: remote.updatedAt || null, localUpdatedAt: local.updatedAt || null });
-        }
-      }
+    const result = mergeBooks({
+      localBooks,
+      remoteBooks,
+      fingerprint: bookFingerprint,
+      normalize: normalizeBookForSync,
+      mergeOne: _mergeRemoteIntoLocal,
+      toLocal: _toLocalBook,
     });
-
+    result.log.forEach(([message, detail]) => debugLog(message, detail));
+    if (result.uploadNeeded) queueUpload('local-newer');
+    const { changed, conflicts, books: nextBooks } = result;
     if (!changed) {
       if (conflicts > 0) setState(STATUS.CONFLICT, 'Some sync conflicts were kept on this device.', { conflictCount: conflicts });
       return;
