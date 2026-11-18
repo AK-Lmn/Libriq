@@ -93,7 +93,6 @@ test('book writes with unknown fields, a mismatched id or oversized values are d
   await assertFails(setDoc(bookRef(fs, ALICE, 'b1'), realBook('b1', { notes: 'x'.repeat(200001) })));
   await assertFails(setDoc(bookRef(fs, ALICE, 'b1'), realBook('b1', { tags: Array(501).fill('t') })));
   await assertFails(setDoc(bookRef(fs, ALICE, 'b1'), realBook('b1', { isFavorite: 'yes' })));
-  await assertFails(setDoc(bookRef(fs, ALICE, 'b1'), realBook('b1', { currentPage: 'x'.repeat(201) })));
 });
 
 test('activity: owner writes with merge and reads with the app\'s query', async () => {

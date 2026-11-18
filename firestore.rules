@@ -15,9 +15,10 @@ rules_version = '2';
 //   One doc per book, written whole (batch.set, no merge) from
 //   normalizeBookForSync() in frontend/js/sync.js, or a delete tombstone
 //   (id, deletedAt, updatedAt, deviceId, sourceDeviceId, appVersion).
-//   id must equal {bookId}. Keys limited to BOOK_KEYS. Strings, lists and
-//   maps are size-capped; list items can't be inspected by rules, so the
-//   1 MiB Firestore doc limit is the backstop for their contents.
+//   id must equal {bookId}. Keys limited to the list in isValidBook(). Fields
+//   that can grow (title, notes, description, quotes, tags...) are size-capped;
+//   list items can't be inspected by rules, so the 1 MiB Firestore doc limit
+//   is the backstop for their contents and for the short scalar fields.
 //
 // users/{uid}/activity/{eventId}
 //   sanitizeActivityEvent() in firebase-client.js, written with merge.
@@ -83,63 +84,24 @@ service cloud.firestore {
           'deviceId', 'sourceDeviceId', 'appVersion'
         ])
         && string(d.id) == bookId
+        // Firestore stops after 1000 evaluated expressions per request, so
+        // only fields that can grow large are checked here. Short scalar
+        // fields (ids, dates, numbers) are bounded by the 1 MiB doc limit.
         && optStr(d.get('title', null), 2000)
         && optStr(d.get('author', null), 2000)
+        && optStr(d.get('description', null), 50000)
+        && optStr(d.get('notes', null), 200000)
+        && optStr(d.get('review', null), 50000)
         && cover(d.get('cover', null))
         && cover(d.get('coverUrl', null))
-        && optMap(d.get('imageLinks', null), 20)
-        && scalar(d.get('isbn', null))
-        && optList(d.get('isbns', null), 200)
-        && optList(d.get('identifiers', null), 200)
-        && optStr(d.get('source', null), 100)
-        && optList(d.get('sources', null), 50)
-        && optList(d.get('sourceBadges', null), 50)
-        && optMap(d.get('sourceIds', null), 50)
-        && optStr(d.get('status', null), 50)
-        && scalar(d.get('currentPage', null))
-        && scalar(d.get('pages', null))
-        && scalar(d.get('pageCount', null))
-        && optStr(d.get('description', null), 50000)
-        && optList(d.get('genres', null), 1000)
-        && optList(d.get('subjects', null), 1000)
-        && optList(d.get('subjectPeople', null), 1000)
-        && optList(d.get('subjectPlaces', null), 1000)
-        && optList(d.get('subjectTimes', null), 1000)
-        && optStr(d.get('language', null), 100)
-        && optStr(d.get('publisher', null), 1000)
-        && scalar(d.get('publishYear', null))
-        && scalar(d.get('firstPublishYear', null))
-        && scalar(d.get('editionCount', null))
-        && optStr(d.get('coverId', null), 200)
-        && scalar(d.get('rating', null))
-        && optStr(d.get('review', null), 50000)
-        && (d.get('isFavorite', null) == null || d.get('isFavorite', null) is bool)
-        && optList(d.get('shelves', null), 500)
-        && optList(d.get('tags', null), 500)
-        && optStr(d.get('notes', null), 200000)
-        && scalar(d.get('notesUpdatedAt', null))
         && optList(d.get('quotes', null), 5000)
-        && scalar(d.get('createdAt', null))
-        && scalar(d.get('dateAdded', null))
-        && scalar(d.get('dateStarted', null))
-        && scalar(d.get('dateFinished', null))
-        && scalar(d.get('updatedAt', null))
-        && scalar(d.get('deletedAt', null))
-        && optStr(d.get('googleBooksId', null), 200)
-        && optStr(d.get('openLibraryId', null), 200)
-        && optStr(d.get('openLibraryWorkKey', null), 200)
-        && optStr(d.get('openLibraryEditionKey', null), 200)
-        && optList(d.get('openLibraryAuthorKeys', null), 200)
-        && optStr(d.get('gutendexId', null), 200)
-        && optStr(d.get('gutenbergId', null), 200)
-        && optStr(d.get('internetArchiveId', null), 200)
-        && optList(d.get('internetArchiveIds', null), 200)
-        && optStr(d.get('archiveUrl', null), 4096)
-        && optList(d.get('readableSourceLinks', null), 100)
+        && optList(d.get('tags', null), 500)
+        && optList(d.get('shelves', null), 500)
+        && optList(d.get('subjects', null), 1000)
+        && optList(d.get('genres', null), 1000)
         && optMap(d.get('downloadLinks', null), 50)
-        && optStr(d.get('deviceId', null), 200)
-        && optStr(d.get('sourceDeviceId', null), 200)
-        && optStr(d.get('appVersion', null), 50);
+        && optMap(d.get('sourceIds', null), 50)
+        && (!('isFavorite' in d) || d.isFavorite is bool);
     }
 
     function isValidActivity(d, eventId) {
