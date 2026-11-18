@@ -8875,7 +8875,9 @@ html[data-theme] :is(#dangerConfirmModal, .action-confirmation) .modal-warning-n
   white-space: pre-line;
 }
 
-html[data-theme] #dangerConfirmModal .form-field {
+html[data-theme] #passwordConfirmationModal .modal-danger-copy { margin-bottom: var(--space-4); }
+
+html[data-theme] :is(#dangerConfirmModal, #passwordConfirmationModal) .form-field {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -8883,7 +8885,7 @@ html[data-theme] #dangerConfirmModal .form-field {
   font: 500 13px/1.6 var(--font-ui);
 }
 
-html[data-theme] #dangerConfirmModal .form-input {
+html[data-theme] :is(#dangerConfirmModal, #passwordConfirmationModal) .form-input {
   width: 100%;
   min-width: 0;
   min-height: 48px;

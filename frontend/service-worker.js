@@ -214,6 +214,7 @@ const SHELL_ASSETS = [
   './js/services/importExportService.js',
   './js/services/importMerge.js',
   './js/services/serverAccountDelete.js',
+  './js/services/accountDeletion.js',
   './js/services/releaseNotes.js',
   './js/services/pendingIntents.js',
   './js/services/syncUpload.js',

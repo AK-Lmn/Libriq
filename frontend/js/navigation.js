@@ -2,7 +2,8 @@ import { BookAPI } from './api/index.js';
 import { LIBRIQ, createBook } from './data.js';
 import { Storage } from './storage.js';
 import { Utils } from './utils.js';
-import { confirmAction, confirmTypedAction } from './components/ui/confirmation.js';
+import { confirmAction, confirmTypedAction, requestPassword } from './components/ui/confirmation.js';
+import { deleteAccountWithReauth, reauthMethodFor } from './services/accountDeletion.js';
 import { Library } from './library.js';
 import { Search } from './search.js';
 import { Dashboard } from './dashboard.js';
@@ -2218,7 +2219,14 @@ async function confirmDeleteAccount() {
   if (!confirmed) return;
   try {
     window.LibriqSyncBeta?.detachForAccountSwitch?.('delete-account');
-    await LibriqFirebase.deleteCurrentUserAccount();
+    const result = await deleteAccountWithReauth({
+      deleteAccount: () => LibriqFirebase.deleteCurrentUserAccount(),
+      confirmIdentity: () => confirmIdentityForDelete(),
+    });
+    if (result === 'cancelled') {
+      window.LibriqSyncBeta?.refresh?.();
+      return;
+    }
     Storage.clearAccountScopedData?.(firebase.user.uid, { keys: ['BOOKS', 'ACTIVITY', 'PROFILE', 'STREAK', 'GOALS', 'BACKUP', 'CLOUD_BACKUP', 'SYNC_META', 'SYNC_TOMBSTONES'] });
     Storage.clearActiveAccountScope?.();
     Navigation.goTo('session');
@@ -2227,13 +2235,46 @@ async function confirmDeleteAccount() {
     // Deletion stopped; reconnect sync so this device keeps syncing.
     window.LibriqSyncBeta?.refresh?.();
     const code = String(err?.code || '');
-    if (code.includes('requires-recent-login')) {
-      Utils.toast('For security, sign out and sign in again, then delete your account within a few minutes.', 'warning');
+    if (code.includes('wrong-password') || code.includes('invalid-credential')) {
+      Utils.toast('That password didn’t match. Your account was not deleted.', 'error');
+    } else if (code.includes('popup-closed-by-user') || code.includes('cancelled-popup-request')) {
+      Utils.toast('Google sign-in was closed. Your account was not deleted.', 'info');
+    } else if (code.includes('popup-blocked')) {
+      Utils.toast('Your browser blocked the Google sign-in popup. Allow popups for LibriQ and try again.', 'warning');
+    } else if (code.includes('too-many-requests')) {
+      Utils.toast('Too many attempts. Wait a few minutes and try again.', 'warning');
     } else {
       console.warn('[Libriq] Delete account failed:', err);
       Utils.toast('Could not delete your account right now.', 'error');
     }
   }
+}
+
+// Deleting an account needs a recent sign-in. Ask for it in place: the
+// password for email accounts, the Google popup for Google accounts.
+async function confirmIdentityForDelete() {
+  const user = LibriqFirebase.getCurrentAuthUser ? await LibriqFirebase.getCurrentAuthUser() : null;
+  const info = LibriqFirebase.getUserEmailAuthInfo(user) || {};
+  const method = reauthMethodFor(info);
+  if (method === 'password') {
+    const password = await requestPassword({
+      message: 'For your security, enter your password to delete your account.',
+      email: info.email,
+      actionLabel: 'Delete account',
+    });
+    if (password == null) return false;
+    return LibriqFirebase.reauthenticateCurrentUser({ password });
+  }
+  if (method === 'google') {
+    const ok = await confirmAction('For your security, confirm with Google to delete your account.', {
+      title: 'Confirm it’s you',
+      confirmLabel: 'Continue with Google',
+      tone: 'default',
+    });
+    if (!ok) return false;
+    return LibriqFirebase.reauthenticateCurrentUser();
+  }
+  return false;
 }
 
 function clearAllData() {

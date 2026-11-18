@@ -13,6 +13,9 @@ let reload;
 let signInWithEmailAndPassword;
 let signInWithPopup;
 let deleteUser;
+let EmailAuthProvider;
+let reauthenticateWithCredential;
+let reauthenticateWithPopup;
 let signOut;
 let sendEmailVerification;
 let sendPasswordResetEmail;
@@ -103,6 +106,9 @@ async function loadFirebaseSdk() {
         signInWithEmailAndPassword,
         signInWithPopup,
         deleteUser,
+        EmailAuthProvider,
+        reauthenticateWithCredential,
+        reauthenticateWithPopup,
         signOut,
         sendEmailVerification,
         sendPasswordResetEmail,
@@ -589,6 +595,7 @@ function getUserEmailAuthInfo(user = null) {
     email: String(user?.email || '').trim(),
     emailVerified: Boolean(user?.emailVerified),
     hasPasswordProvider,
+    providers: providers.map(provider => provider?.providerId).filter(Boolean),
     hasEmail: Boolean(String(user?.email || '').trim()),
   };
 }
@@ -1538,6 +1545,21 @@ async function assertRecentSignIn() {
   if (!hasRecentSignIn(authTime)) throw recentLoginRequiredError();
 }
 
+// Confirms the signed-in reader is who they say they are, refreshing the
+// sign-in time Firebase checks before deleting an account. Email accounts pass
+// their password; Google accounts get the Google popup.
+async function reauthenticateCurrentUser({ password = null } = {}) {
+  if (TEST_MODE) return true;
+  const current = auth?.currentUser;
+  if (!current) throw new Error('Firebase is unavailable.');
+  if (password != null) {
+    await reauthenticateWithCredential(current, EmailAuthProvider.credential(current.email, password));
+  } else {
+    await reauthenticateWithPopup(current, new GoogleAuthProvider());
+  }
+  return true;
+}
+
 async function deleteCurrentUserAccount() {
   const user = getCurrentUser();
   if (!user?.uid) throw new Error('Firebase is unavailable.');
@@ -1623,6 +1645,7 @@ export const LibriqFirebase = {
   readBackupDoc,
   deleteCurrentUserLibraryData,
   deleteCurrentUserAccount,
+  reauthenticateCurrentUser,
   doc: (...args) => TEST_MODE ? testFirestore.doc(...args) : doc(...args),
   setDoc: (...args) => TEST_MODE ? testFirestore.setDoc(...args) : setDoc(...args),
   // Real mode: an atomic Firestore batch. Test mode: same interface, replayed
