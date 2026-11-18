@@ -170,6 +170,19 @@ try {
       assert.equal(result.rootOverflow, false, `${name}: document overflow`);
       assert.deepEqual(result.images, [], `${name}: images load`);
       assert.deepEqual(result.contrast, [], `${name}: normal text AA`);
+      // WCAG 2.1.1: a region that scrolls must be reachable by keyboard, either
+      // focusable itself or containing something focusable.
+      const unreachable = await page.evaluate(() => [...document.querySelectorAll('body *')].filter(el => {
+        if (el.closest('[hidden],[inert]') || !el.getClientRects().length) return false;
+        const style = getComputedStyle(el);
+        const scrollsX = /(auto|scroll)/.test(style.overflowX) && el.scrollWidth > el.clientWidth + 1;
+        const scrollsY = /(auto|scroll)/.test(style.overflowY) && el.scrollHeight > el.clientHeight + 1;
+        if (!scrollsX && !scrollsY) return false;
+        if (el === document.documentElement || el === document.body || el.id === 'mainContent') return false;
+        if (el.tabIndex >= 0) return false;
+        return !el.querySelector('a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])');
+      }).map(el => (el.id ? '#' + el.id : el.tagName.toLowerCase() + '.' + String(el.className).trim().split(' ').filter(Boolean).join('.'))));
+      assert.deepEqual(unreachable, [], `${name}: scrollable regions reachable by keyboard`);
       // AGENTS.md: thumb-friendly 44px targets on phones. Links inside a
       // sentence are exempt (WCAG 2.5.8 inline exception).
       if (width < 768 && !modalWindow) {

@@ -25,7 +25,7 @@ export function createHelpPage({ storage, actions, documentRoot }) {
         <div class="help-shortcuts-guide">
           <h3>Essential keyboard shortcuts</h3>
           <p>Navigate and control LibriQ rapidly without reaching for the mouse.</p>
-          <div class="help-shortcuts-table-wrapper">
+          <div class="help-shortcuts-table-wrapper" tabindex="0" role="region" aria-label="Keyboard shortcuts">
             <table class="help-shortcuts-table">
               <thead>
                 <tr>

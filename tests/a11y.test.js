@@ -70,3 +70,20 @@ test('mobile bottom nav stays readable over scrolling content', async () => {
   const item = rules('\\.mobile-bottom-item').find(body => body.includes('flex: 1')) || '';
   assert.match(item, /color: var\(--text-body\)/, 'inactive labels use body text, not the muted grey');
 });
+
+test('read-only star ratings are announced as text', async () => {
+  const { Utils } = await import('../frontend/js/utils.js');
+  const four = Utils.buildStars(4);
+  assert.match(four, /^<div class="star-rating readonly" role="img" aria-label="Rated 4 out of 5">/);
+  assert.equal((four.match(/aria-hidden="true"/g) || []).length, 5, 'individual star icons stay hidden');
+  assert.match(Utils.buildStars(null), /aria-label="Not rated"/);
+  assert.match(Utils.buildStars(1), /aria-label="Rated 1 out of 5"/);
+});
+
+test('scrollable regions are keyboard reachable', async () => {
+  const html = await read('frontend/index.html');
+  for (const [id, label] of [['searchResults', 'Search results'], ['whatsNewBody', 'Release notes'], ['backupImportBody', 'Backup details']]) {
+    assert.match(html, new RegExp(`id="${id}" tabindex="0" role="region" aria-label="${label}"`));
+  }
+  assert.match(await read('frontend/js/features/help/helpPage.js'), /help-shortcuts-table-wrapper" tabindex="0" role="region" aria-label="Keyboard shortcuts"/);
+});
