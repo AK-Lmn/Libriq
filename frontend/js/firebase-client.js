@@ -27,6 +27,7 @@ let setDoc;
 let getDoc;
 let deleteDoc;
 let getDocs;
+let writeBatch;
 let firebaseSdkPromise = null;
 let firebaseSdkReady = false;
 
@@ -92,7 +93,7 @@ async function loadFirebaseSdk() {
         sendPasswordResetEmail,
         verifyBeforeUpdateEmail,
       } = authSdk);
-      ({ getFirestore, doc, collection, query, orderBy, limit, onSnapshot, setDoc, getDoc, deleteDoc, getDocs } = firestoreSdk);
+      ({ getFirestore, doc, collection, query, orderBy, limit, onSnapshot, setDoc, getDoc, deleteDoc, getDocs, writeBatch } = firestoreSdk);
       firebaseSdkReady = true;
     });
   }
@@ -1362,6 +1363,14 @@ function createTestQuerySnapshot(items) {
   };
 }
 
+function testWriteBatch() {
+  const ops = [];
+  return {
+    set(ref, value) { ops.push([ref, value]); return this; },
+    async commit() { for (const [ref, value] of ops) await testFirestore.setDoc(ref, value); },
+  };
+}
+
 function createTestFirestore() {
   function normalizeSegments(args) {
     const parts = Array.from(args);
@@ -1588,6 +1597,9 @@ export const LibriqFirebase = {
   deleteCurrentUserAccount,
   doc: (...args) => TEST_MODE ? testFirestore.doc(...args) : doc(...args),
   setDoc: (...args) => TEST_MODE ? testFirestore.setDoc(...args) : setDoc(...args),
+  // Real mode: an atomic Firestore batch. Test mode: same interface, replayed
+  // through the local test API in order on commit().
+  writeBatch: (...args) => TEST_MODE ? testWriteBatch() : writeBatch(...args),
   collection: (...args) => TEST_MODE ? testFirestore.collection(...args) : collection(...args),
   query: (...args) => TEST_MODE ? testFirestore.query(...args) : query(...args),
   orderBy: (...args) => TEST_MODE ? testFirestore.orderBy(...args) : orderBy(...args),
