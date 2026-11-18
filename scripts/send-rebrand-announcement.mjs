@@ -10,8 +10,6 @@ import path from 'node:path';
 import {
   loadRecipients,
   maskEmail,
-  readProgress,
-  writeProgress,
   sendSequentially,
   broadcastPayload,
   loadSuppressed,
@@ -129,7 +127,7 @@ async function main() {
 
   if (targets.length === 0) {
     console.log('No recipients configured. Set LIBRIQ_ANNOUNCE_RECIPIENTS (JSON array) or create scripts/.recipients.json.');
-    console.log('Example: LIBRIQ_ANNOUNCE_RECIPIENTS="[\"user@example.com\"]" node scripts/send-rebrand-announcement.mjs\n');
+    console.log('Example: LIBRIQ_ANNOUNCE_RECIPIENTS="[\\"user@example.com\\"]" node scripts/send-rebrand-announcement.mjs\n');
     return;
   }
 

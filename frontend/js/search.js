@@ -66,7 +66,7 @@ export const Search = (() => {
   }
 
   function close() {
-    const { modal, input, resultsArea } = getEls();
+    const { modal, input } = getEls();
     Utils.hide(modal);
     input.value = '';
     currentQuery = '';

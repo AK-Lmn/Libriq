@@ -13,7 +13,7 @@ assert.deepEqual(payload, {
 });
 
 const serialized = serializeBackup(payload);
-assert.match(serialized, /\n  "app": "LibriQ"/);
+assert.match(serialized, /\n {2}"app": "LibriQ"/);
 assert.deepEqual(parseBackupText(serialized), payload);
 assert.equal(validateBackup(payload), true);
 assert.equal(validateBackup({ ...payload, app: 'Other' }), false);

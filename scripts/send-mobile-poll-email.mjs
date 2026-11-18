@@ -8,8 +8,6 @@ import path from 'node:path';
 import {
   loadRecipients,
   maskEmail,
-  readProgress,
-  writeProgress,
   sendSequentially,
   broadcastPayload,
   loadSuppressed,
@@ -124,7 +122,7 @@ async function main() {
 
   if (targets.length === 0) {
     console.log('No recipients configured. Set LIBRIQ_POLL_RECIPIENTS (JSON array) or create scripts/.recipients.json.');
-    console.log('Example: LIBRIQ_POLL_RECIPIENTS="[\"user@example.com\"]" node scripts/send-mobile-poll-email.mjs --dry-run\n');
+    console.log('Example: LIBRIQ_POLL_RECIPIENTS="[\\"user@example.com\\"]" node scripts/send-mobile-poll-email.mjs --dry-run\n');
     return;
   }
 

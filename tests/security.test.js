@@ -54,7 +54,7 @@ test('CI workflows use a read-only token and actions pinned to commits', async (
   assert.ok(files.length > 0);
   for (const file of files) {
     const workflow = await read(file);
-    assert.match(workflow, /^permissions:\r?\n  contents: read\r?$/m, `${file} sets read-only permissions`);
+    assert.match(workflow, /^permissions:\r?\n {2}contents: read\r?$/m, `${file} sets read-only permissions`);
     for (const [, ref] of workflow.matchAll(/uses:\s*[\w.-]+\/[\w.-]+@(\S+)/g)) {
       assert.match(ref, /^[0-9a-f]{40}$/, `${file} pins ${ref} to a commit SHA`);
     }

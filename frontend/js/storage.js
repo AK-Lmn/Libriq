@@ -2,6 +2,8 @@ import {
   LIBRIQ,
   createBook,
   createProfile,
+  // Kept: test-storage-modules.mjs pins this import as part of the module contract.
+  // eslint-disable-next-line no-unused-vars
   SEED_BOOKS,
 } from './data.js';
 

@@ -4,7 +4,6 @@
 // paces sends with retries, and tracks resumable progress in gitignored files.
 
 import fs from 'node:fs';
-import path from 'node:path';
 
 /** Mask an email address for safe logging: j***@example.com */
 export function maskEmail(email) {
