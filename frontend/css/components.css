@@ -8957,5 +8957,10 @@ html[data-theme] .action-confirmation .ph-info { --support-icon: url('../assets/
   html[data-theme] :is(#whatsNewModal, #backupImportModal, #dangerConfirmModal, .action-confirmation) > .modal { background: var(--glass-solid-2); box-shadow: none; }
 }
 
-/* 44px tap target for the book title button on phones (AGENTS.md). */
-@media (max-width: 768px) { :is(#libraryPage, #statusPage) .book-card-title { min-height: 44px; } }
+/* 44px tap target for the book title button on phones (AGENTS.md).
+   Padding grows the hit area; equal negative margins keep the text and the
+   compact card height exactly where they were. */
+@media (max-width: 768px) {
+  #libraryPage .book-card-title { padding-block: 11px; margin: -11px 0 -7px; }
+  #statusPage .book-card-title { padding-block: 12px; margin: -12px 0 -4px; }
+}
