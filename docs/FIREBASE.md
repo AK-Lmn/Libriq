@@ -77,7 +77,9 @@ Delete Account first asks `POST /api/delete-account` (a Vercel function, `api/de
 
 If the route answers 404, 405 or 503 (local dev, or no credentials configured) or the request can't be sent, the browser falls back to the older client-side wipe.
 
-The route needs one environment variable in the Vercel project:
+The route needs Firebase Admin credentials in the Vercel project. It uses the existing `FIREBASE_ADMIN_PROJECT_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL` and `FIREBASE_ADMIN_PRIVATE_KEY` variables (the key may be stored with literal `\n`). If the key is revoked or wrong, the route answers 503 and the browser falls back to the client-side wipe.
+
+To use a fresh key instead, set `FIREBASE_SERVICE_ACCOUNT`, which takes priority:
 
 1. Firebase Console -> Project settings -> Service accounts -> Generate new private key. This downloads a JSON key.
 2. Vercel -> the LibriQ project -> Settings -> Environment Variables. Add `FIREBASE_SERVICE_ACCOUNT` with the whole JSON as the value (base64 of the JSON also works), for Production and Preview, marked Sensitive.

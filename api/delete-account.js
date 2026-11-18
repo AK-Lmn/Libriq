@@ -1,20 +1,15 @@
 // Vercel serverless function: POST /api/delete-account
-// Needs FIREBASE_SERVICE_ACCOUNT (the service-account JSON, raw or base64) in
-// the Vercel project's environment. Without it the route answers 503 and the
+// Needs Firebase Admin credentials in the Vercel environment: either
+// FIREBASE_SERVICE_ACCOUNT or the FIREBASE_ADMIN_* trio (see
+// _lib/adminCredentials.js). Without them the route answers 503 and the
 // browser falls back to deleting from the client.
 import { createDeleteAccountHandler } from './_lib/deleteAccount.js';
+import { readAdminCredentials } from './_lib/adminCredentials.js';
 
 let adminPromise = null;
 
-function readServiceAccount() {
-  const raw = String(process.env.FIREBASE_SERVICE_ACCOUNT || '').trim();
-  if (!raw) return null;
-  const json = raw.startsWith('{') ? raw : Buffer.from(raw, 'base64').toString('utf8');
-  return JSON.parse(json);
-}
-
 async function loadAdmin() {
-  const serviceAccount = readServiceAccount();
+  const serviceAccount = readAdminCredentials();
   if (!serviceAccount) return null;
   const { initializeApp, getApps, cert } = await import('firebase-admin/app');
   const { getAuth } = await import('firebase-admin/auth');
