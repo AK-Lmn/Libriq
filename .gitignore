@@ -171,3 +171,7 @@ graphify-out/
 qa-screenshots/
 qa-report.md
 scripts/.suppressed.json
+
+# Screenshots written by the browser test scripts (regenerated on every run)
+artifacts/
+docs/screenshots/insights/
