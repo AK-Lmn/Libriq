@@ -4,6 +4,7 @@ import { Utils } from './utils.js';
 import { LibriqFirebase } from './firebase-client.js';
 import { resolveAccountDisplayName } from './accountDisplayName.js';
 import { isPollDismissedOrVoted, detectUserOS } from './services/mobileAppPoll.js';
+import { chartDataTable } from './shared/chartTable.js';
 
 export const Dashboard = {
 
@@ -385,7 +386,7 @@ export function buildMonthlyChart(monthlyData) {
   const currentMonth = new Date().getMonth();
 
   return `
-    <div class="monthly-chart">
+    <div class="monthly-chart" aria-hidden="true">
       ${LIBRIQ.MONTHS.map((m, i) => {
         const val = monthlyData[i];
         const pct = Math.round((val / max) * 100);
@@ -397,38 +398,8 @@ export function buildMonthlyChart(monthlyData) {
             <div class="chart-bar-label">${m}</div>
           </div>`;
       }).join('')}
-    </div>`;
-}
-
-function buildPagesChart(monthlyPages) {
-  const data = Array.isArray(monthlyPages) ? monthlyPages : [];
-  const max = Math.max(...data, 1);
-  const currentMonth = new Date().getMonth();
-  const hasData = data.some(val => val > 0);
-
-  if (!hasData) {
-    return `
-      <div class="stats-empty-state">
-        <div class="empty-state-icon"><i class="ph ph-chart-line-up"></i></div>
-        <div class="empty-state-title">Not enough data yet</div>
-        <div class="empty-state-body">Pages per month will appear after a few finished books with page counts.</div>
-      </div>`;
-  }
-
-  return `
-    <div class="monthly-chart monthly-chart-pages">
-      ${LIBRIQ.MONTHS.map((m, i) => {
-        const val = data[i] || 0;
-        const pct = Math.round((val / max) * 100);
-        const isCurrent = i === currentMonth;
-        return `
-          <div class="chart-bar-wrap" data-tooltip="${Utils.formatNumber(val)} pages in ${m}">
-            <div class="chart-bar ${isCurrent ? 'current' : ''} chart-bar-pages"
-                 style="height: ${Math.max(pct, 0)}%"></div>
-            <div class="chart-bar-label">${m}</div>
-          </div>`;
-      }).join('')}
-    </div>`;
+    </div>
+    ${chartDataTable({ caption: `Books finished per month, ${new Date().getFullYear()}`, valueHeader: 'Books', months: LIBRIQ.MONTHS, values: monthlyData })}`;
 }
 
 function buildRecentActivity() {

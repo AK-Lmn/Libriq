@@ -1,4 +1,5 @@
 import { buildYearlyRecap, getRecapYears, rankRatedBooks } from './statisticsCalculations.js';
+import { chartDataTable } from '../../shared/chartTable.js';
 
 const icon = name => `<img class="insights-icon" src="assets/revamp/insights/stats-${name}.svg" alt="" />`;
 
@@ -175,13 +176,13 @@ export function createStatisticsPage({ storage, utils, constants, actions, docum
     if (!data.some(val => val > 0)) {
       return '<div class="stats-empty-state"><h3 class="empty-state-title">Not enough data yet</h3><p class="empty-state-body">Pages per month will appear after a few finished books with page counts.</p></div>';
     }
-    return `<div class="monthly-chart monthly-chart-pages" role="img" aria-label="Pages read by month">
+    return `<div class="monthly-chart monthly-chart-pages" aria-hidden="true">
       ${constants.MONTHS.map((m, i) => {
         const val = data[i] || 0;
         const pct = Math.round((val / max) * 100);
         return `<div class="chart-bar-wrap" data-tooltip="${utils.formatNumber(val)} pages in ${m}">
           <div class="chart-bar ${i === new Date().getMonth() ? 'current' : ''} chart-bar-pages" style="height: ${Math.max(pct, 0)}%"></div><div class="chart-bar-label">${m}</div></div>`;
-      }).join('')}</div>`;
+      }).join('')}</div>${chartDataTable({ caption: `Pages read per month, ${new Date().getFullYear()}`, valueHeader: 'Pages', months: constants.MONTHS, values: data, format: utils.formatNumber })}`;
   }
 
   return renderStatsPage;

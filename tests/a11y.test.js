@@ -25,3 +25,39 @@ test('change-email input has an accessible name', async () => {
   const source = await read('frontend/js/features/settings/settingsPage.js');
   assert.match(source, /id="changeEmailInput"[^>]*aria-label="New email address"/);
 });
+
+test('bar chart values are available as a screen-reader table', async () => {
+  const { chartDataTable } = await import('../frontend/js/shared/chartTable.js');
+  const months = ['Jan', 'Feb', 'Mar'];
+  const html = chartDataTable({ caption: 'Books finished per month, 2026', valueHeader: 'Books', months, values: [2, 0, 5] });
+  assert.match(html, /^<table class="sr-only">/);
+  assert.match(html, /<caption>Books finished per month, 2026<\/caption>/);
+  assert.match(html, /<th scope="col">Month<\/th><th scope="col">Books<\/th>/);
+  assert.equal((html.match(/<th scope="row">/g) || []).length, 3);
+  assert.match(html, /<th scope="row">Mar<\/th><td>5<\/td>/);
+  const formatted = chartDataTable({ caption: 'c', valueHeader: 'Pages', months: ['Jan'], values: [1234], format: n => n.toLocaleString('en-US') });
+  assert.match(formatted, /<td>1,234<\/td>/);
+  const hostile = chartDataTable({ caption: '<b>x</b>', valueHeader: 'v', months: ['<i>'], values: [1] });
+  assert.doesNotMatch(hostile, /<b>|<i>/, 'caption and labels are escaped');
+});
+
+test('both Stats charts hide the bars from screen readers and include the table', async () => {
+  const dashboard = await read('frontend/js/dashboard.js');
+  const monthly = dashboard.slice(dashboard.indexOf('export function buildMonthlyChart'), dashboard.indexOf('function buildRecentActivity'));
+  assert.ok(monthly.includes('<div class="monthly-chart" aria-hidden="true">'));
+  assert.ok(monthly.includes('chartDataTable({'));
+  assert.ok(!dashboard.includes('function buildPagesChart'), 'unused duplicate removed');
+  const stats = await read('frontend/js/features/statistics/statisticsPage.js');
+  const pages = stats.slice(stats.indexOf('function buildPagesChart'));
+  assert.ok(pages.includes('<div class="monthly-chart monthly-chart-pages" aria-hidden="true">'));
+  assert.ok(pages.includes('chartDataTable({'));
+  assert.ok(!pages.includes('role="img"'), 'no unlabelled image role replacing the data');
+});
+
+test('goal stepper buttons are 44px touch targets', async () => {
+  const css = await read('frontend/css/features/goals.css');
+  const rule = css.match(/\.goal-stepper button \{([^}]*)\}/)?.[1] || '';
+  assert.match(rule, /width: 44px/);
+  assert.match(rule, /height: 44px/);
+  assert.match(css, /\.goal-stepper \{[^}]*flex-direction: row/);
+});
