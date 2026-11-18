@@ -36,6 +36,7 @@ import { resolveAccountDisplayName } from './accountDisplayName.js';
 import { applyNavigationChrome, initializeNavigationChrome } from './navigationChrome.js';
 import { savePendingBook } from './services/pendingIntents.js';
 import { coverImgAttrs } from './shared/coverSize.js';
+import { initialAuthMode } from './shared/authMode.js';
 
 export function completeGoodreadsImport({ previewResult, storage, toast, rerender } = {}) {
   const result = executeGoodreadsImport({
@@ -1176,7 +1177,7 @@ function renderSessionChoicePage() {
           <p class="session-fineprint">
             <i class="ph ph-lock-key" aria-hidden="true"></i> Your library is private. Sign in to save and sync across devices.
           </p>
-          <p class="session-legal">By continuing, you agree to the <a href="./terms.html">Terms</a> and <a href="./privacy.html">Privacy Policy</a>.</p>
+          <p class="session-legal">By continuing, you agree to the <a href="./terms.html">Terms</a> and <span class="session-legal-tail"><a href="./privacy.html">Privacy Policy</a>.</span></p>
         </div>
         <div class="session-copy">
           <span class="session-eyebrow"><i class="ph ph-book-open-text"></i> A calmer way to track what you read</span>
@@ -1533,7 +1534,7 @@ function renderSessionChoicePage() {
     }
   });
 
-  if (document.getElementById('emailAuthForm')) Navigation.setEmailAuthMode?.(inAppBrowser ? 'signup' : 'signin');
+  if (document.getElementById('emailAuthForm')) Navigation.setEmailAuthMode?.(initialAuthMode({ inAppBrowser, storage: localStorage }));
 
   // Interactive Live Book Search Preview handlers
   const demoInput = document.getElementById('sessionDemoInput');
