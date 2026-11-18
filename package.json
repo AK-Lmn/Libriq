@@ -75,13 +75,15 @@
     "test:modal": "node scripts/test-modal.mjs",
     "test:sync": "node scripts/test-sync.mjs",
     "test:sync:headed": "node scripts/test-sync.mjs --headed",
-    "test:e2e": "npm run test:sync"
+    "test:e2e": "npm run test:sync",
+    "test:rules": "npx -y firebase-tools@14 emulators:exec --only firestore --project demo-libriq \"node --test --test-force-exit tests-emulator/*.test.mjs\""
   },
   "engines": {
     "node": ">=22"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@firebase/rules-unit-testing": "^6.0.0",
     "@react-email/components": "^1.0.12",
     "eslint": "^9.39.5",
     "globals": "^17.14.0",
@@ -89,6 +91,7 @@
     "react": "^19.3.1"
   },
   "dependencies": {
-    "firebase": "^13.3.0"
+    "firebase": "^13.3.0",
+    "firebase-admin": "^13.10.0"
   }
 }

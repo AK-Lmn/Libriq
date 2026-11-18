@@ -1,5 +1,6 @@
 import { runWhenIdleAfterLoad } from './shared/afterLoad.js';
 import { Storage } from './storage.js';
+import { deleteAccountOnServer } from './services/serverAccountDelete.js';
 
 let initializeApp;
 let getApp;
@@ -1544,6 +1545,16 @@ async function deleteCurrentUserAccount() {
   // exists, so a deleteUser refusal after the wipe used to leave an empty
   // account behind.
   if (!TEST_MODE) await assertRecentSignIn();
+  if (!TEST_MODE) {
+    // Server-side wipe first (api/delete-account.js): it can't be cut short by
+    // a closed tab. Falls back to the client wipe below when the route isn't
+    // configured.
+    const outcome = await deleteAccountOnServer({ getIdToken: () => getCurrentUserIdToken() });
+    if (outcome === 'deleted') {
+      await signOutUser().catch(() => {});
+      return true;
+    }
+  }
   await deleteCurrentUserLibraryData();
   await deleteFirestoreDocPath(['users', user.uid, 'profile', 'current']);
   await deleteFirestoreDocPath(['users', user.uid, 'polls', 'mobile_app']);

@@ -20,7 +20,9 @@ function extract(startToken, endToken) {
 assert.equal(/gemini/i.test(source), false);
 assert.equal(/geminiClient\.js/i.test(html), false);
 assert.equal(/\/api\/gemini/i.test(source + html), false);
-assert.equal(packageJson.dependencies?.['firebase-admin'], undefined);
+// firebase-admin is allowed for api/delete-account.js only, never here.
+assert.equal(/firebase-admin/.test(source), false);
+assert.equal(Object.hasOwn(packageJson.dependencies || {}, 'firebase'), true);
 assert.equal(fs.existsSync(path.join(root, 'frontend/js/api/geminiClient.js')), false);
 assert.equal(fs.existsSync(path.join(root, 'api/gemini/recommendations.js')), false);
 assert.match(source, /bookApi\.searchBySubject/);
