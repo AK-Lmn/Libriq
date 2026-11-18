@@ -12,7 +12,7 @@ const baseUrl = `http://127.0.0.1:${port}`;
 const server = startE2EServer({ port, testName });
 
 const vercel = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
-const csp = vercel.headers.find(entry => entry.source === '/(.*)').headers
+const csp = vercel.headers.find(entry => entry.headers.some(h => h.key === 'Content-Security-Policy')).headers
   .find(h => h.key === 'Content-Security-Policy').value
   // No report endpoint locally; violations are collected in the page instead.
   .replace(/;\s*report-uri [^;]+/, '').replace(/;\s*report-to [^;]+/, '');

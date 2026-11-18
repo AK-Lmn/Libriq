@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 const read = file => readFile(new URL(`../${file}`, import.meta.url), 'utf8');
 const siteHeaders = async () => {
   const vercel = JSON.parse(await read('vercel.json'));
-  const all = vercel.headers.find(entry => entry.source === '/(.*)');
+  const all = vercel.headers.find(entry => entry.headers.some(h => h.key === 'Content-Security-Policy'));
   return { vercel, get: key => all.headers.find(h => h.key === key)?.value };
 };
 

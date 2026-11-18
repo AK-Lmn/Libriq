@@ -293,6 +293,10 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
 
+  // Firebase auth handler and config (proxied to firebaseapp.com by
+  // vercel.json): always straight from the network, never cached.
+  if (url.pathname.startsWith('/__/')) return;
+
   if (url.origin !== self.location.origin) {
     if (isApiRequest(url)) {
       event.respondWith(fetch(request));
