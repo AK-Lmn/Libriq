@@ -28,8 +28,8 @@ export function createGoalsPage({ storage, utils, actions, documentRoot }) {
                 <input type="number" id="yearlyGoalInput" name="yearly"
                   class="form-input" value="${yearly}" min="1" max="365" required step="1" />
                 <div class="goal-stepper">
-                  <button type="button" data-action="step-goal" data-step="1" aria-label="Increase goal"><img src="assets/revamp/insights/goal-chevron-up.svg" alt="" /></button>
                   <button type="button" data-action="step-goal" data-step="-1" aria-label="Decrease goal"><img src="assets/revamp/insights/goal-chevron-down.svg" alt="" /></button>
+                  <button type="button" data-action="step-goal" data-step="1" aria-label="Increase goal"><img src="assets/revamp/insights/goal-chevron-up.svg" alt="" /></button>
                 </div>
               </div>
             </div>
