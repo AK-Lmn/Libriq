@@ -40,7 +40,7 @@ const publicMethods = [
   'formatPages', 'formatDate', 'timeAgo', 'readingProgress', 'truncate', 'capitalize', 'debounce', 'sanitize',
   'formatDisplayName', 'formatEmailPrefixName',
   'statusLabel', 'statusBadgeClass', 'statusIcon',
-  'buildCover', 'buildCoverPlaceholder', 'buildStars',
+  'buildCover', 'installDelegatedHandlers', 'buildCoverPlaceholder', 'buildStars',
   'toast', 'genreColor', 'formatNumber',
 ];
 assert.deepEqual(Object.keys(Utils), publicMethods);
@@ -91,11 +91,13 @@ const cover = Utils.buildCover({
   coverUrl: 'https://example.com/cover.jpg?x="quoted"',
 });
 assert.match(cover, /src="https:\/\/example\.com\/cover\.jpg\?x=&quot;quoted&quot;"/);
-assert.doesNotMatch(cover, /buildCoverPlaceholder\('/);
-assert.match(cover, /buildCoverPlaceholder\(&quot;/);
+// No inline handler: the title travels as an escaped data attribute.
+assert.doesNotMatch(cover, /\sonerror=/);
+assert.match(cover, /data-cover-title="&#39;\);window\.__utilsXss=1;\/\/"/);
 const stars = Utils.buildStars(3, true, `book');window.__utilsXss=1;//`);
 assert.equal((stars.match(/class="star filled"/g) || []).length, 3);
-assert.doesNotMatch(stars, /setRating\('/);
+assert.doesNotMatch(stars, /\sonclick=|setRating\(/);
+assert.match(stars, /data-book-id="book&#39;\);window\.__utilsXss=1;\/\/"/);
 
 class FakeNode {}
 globalThis.Node = FakeNode;

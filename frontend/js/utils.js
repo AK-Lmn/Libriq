@@ -26,13 +26,32 @@ function _safeCoverUrl(value) {
   return null;
 }
 
-function _inlineString(value) {
-  return JSON.stringify(String(value ?? ''))
-    .replace(/</g, '\\u003c')
-    .replace(/>/g, '\\u003e')
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;');
+// Image fallbacks and interactive stars use delegated listeners instead of
+// inline onerror/onclick attributes, which the CSP blocks.
+// error events don't bubble, so listen in the capture phase.
+function _handleImageError(event) {
+  const img = event.target;
+  if (img?.tagName !== 'IMG' || img.dataset.fallbackTriggered === '1') return;
+  const cover = img.closest?.('[data-cover-fallback]');
+  if (cover) {
+    img.dataset.fallbackTriggered = '1';
+    cover.innerHTML = Utils.buildCoverPlaceholder(cover.dataset.coverTitle || '');
+    return;
+  }
+  if (img.dataset.fallbackSrc) {
+    img.dataset.fallbackTriggered = '1';
+    img.removeAttribute('srcset');
+    img.src = img.dataset.fallbackSrc;
+  }
 }
+
+function _handleStarClick(event) {
+  const star = event.target?.closest?.('[data-action="set-star-rating"]');
+  if (!star) return;
+  globalThis.Library?.setRating?.(star.dataset.bookId, Number(star.dataset.rating));
+}
+
+let _delegatedHandlersInstalled = false;
 
 export const Utils = {
 
@@ -196,20 +215,30 @@ export const Utils = {
   buildCover(book, sizeClass = 'cover-md') {
     const coverUrl = _safeCoverUrl(book.coverUrl);
     if (coverUrl) {
+      // Whoever renders a cover gets the fallback listener, even without the app boot.
+      if (typeof document !== 'undefined') Utils.installDelegatedHandlers(document);
       return `
-        <div class="book-cover ${sizeClass}" data-cover-fallback="true">
+        <div class="book-cover ${sizeClass}" data-cover-fallback="true" data-cover-title="${Utils.sanitize(book.title)}">
           <img ${coverImgAttrs(coverUrl, sizeClass, Utils.sanitize)}
                alt="Cover of ${Utils.sanitize(book.title)}"
                loading="lazy"
                referrerpolicy="no-referrer"
-               decoding="async"
-               onerror="if(this.dataset.fallbackTriggered==='1') return; this.dataset.fallbackTriggered='1'; this.removeAttribute('srcset'); this.removeAttribute('src'); this.parentElement.innerHTML=Utils.buildCoverPlaceholder(${_inlineString(book.title)})">
+               decoding="async">
         </div>`;
     }
     return `
       <div class="book-cover ${sizeClass}">
         ${Utils.buildCoverPlaceholder(book.title)}
       </div>`;
+  },
+
+  // Called once at boot (appModules.js). Not run on import so the module
+  // stays side-effect free.
+  installDelegatedHandlers(doc = document) {
+    if (_delegatedHandlersInstalled || typeof doc?.addEventListener !== 'function') return;
+    _delegatedHandlersInstalled = true;
+    doc.addEventListener('error', _handleImageError, true);
+    doc.addEventListener('click', _handleStarClick);
   },
 
   buildCoverPlaceholder(title) {
@@ -224,12 +253,15 @@ export const Utils = {
     const stars = [1,2,3,4,5].map(n => {
       const filled = rating !== null && n <= rating ? 'filled' : '';
       const attrs = interactive
-        ? `data-rating="${n}" data-book-id="${Utils.sanitize(bookId)}" onclick="Library.setRating(${_inlineString(bookId)}, ${n})"`
+        ? `data-action="set-star-rating" data-rating="${n}" data-book-id="${Utils.sanitize(bookId)}"`
         : '';
       return `<span class="star ${filled}" ${attrs}><i class="ph${filled ? '-fill' : ''} ph-star" aria-hidden="true"></i></span>`;
     }).join('');
 
-    if (interactive) return `<div class="star-rating">${stars}</div>`;
+    if (interactive) {
+      if (typeof document !== 'undefined') Utils.installDelegatedHandlers(document);
+      return `<div class="star-rating">${stars}</div>`;
+    }
     // Read-only: one image with a text equivalent instead of five silent icons.
     const label = rating ? `Rated ${rating} out of 5` : 'Not rated';
     return `<div class="star-rating readonly" role="img" aria-label="${label}">${stars}</div>`;

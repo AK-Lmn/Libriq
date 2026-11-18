@@ -65,11 +65,14 @@ test('every cover <img> goes through coverImgAttrs, and error fallbacks clear sr
   const has = (source, text) => assert.ok(source.includes(text), text);
   const utils = await read('frontend/js/utils.js');
   has(utils, '<img ${coverImgAttrs(coverUrl, sizeClass, Utils.sanitize)}');
-  has(utils, "this.removeAttribute('srcset'); this.removeAttribute('src');");
+  // Fallbacks run in a delegated capture-phase error listener (no inline
+  // onerror under the CSP); the image fallback drops srcset before swapping src.
+  has(utils, "doc.addEventListener('error', _handleImageError, true);");
+  has(utils, "img.removeAttribute('srcset');\n    img.src = img.dataset.fallbackSrc;");
   has(await read('frontend/js/features/library/libraryDesign.js'), "<img ${coverImgAttrs(book.coverUrl, 'cover-sm', sanitize)}");
   const nav = await read('frontend/js/navigation.js');
   has(nav, "<img ${coverImgAttrs(b.coverUrl, 'cover-sm', Utils.sanitize)} loading=\"lazy\"");
-  has(nav, "this.removeAttribute('srcset');this.src='./assets/icons/icon-192.png'");
+  has(nav, 'data-fallback-src="./assets/icons/icon-192.png"');
 });
 
 test('runWhenIdleAfterLoad waits for load, then for idle time', async () => {

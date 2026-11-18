@@ -10,6 +10,7 @@ import { Storage } from './storage.js';
 import { Utils } from './utils.js';
 
 window.Utils = Utils;
+Utils.installDelegatedHandlers(document);
 
 const [
   { BookAPI },
