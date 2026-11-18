@@ -61,3 +61,12 @@ test('goal stepper buttons are 44px touch targets', async () => {
   assert.match(rule, /height: 44px/);
   assert.match(css, /\.goal-stepper \{[^}]*flex-direction: row/);
 });
+
+test('mobile bottom nav stays readable over scrolling content', async () => {
+  const css = await read('frontend/css/sidebar.css');
+  const rules = selector => [...css.matchAll(new RegExp(`${selector} \\{([^}]*)\\}`, 'g'))].map(m => m[1]);
+  const nav = rules('\\.mobile-bottom-nav').find(body => body.includes('position: fixed')) || '';
+  assert.match(nav, /background: color-mix\(in srgb, var\(--bg\) 97%, transparent\)/);
+  const item = rules('\\.mobile-bottom-item').find(body => body.includes('flex: 1')) || '';
+  assert.match(item, /color: var\(--text-body\)/, 'inactive labels use body text, not the muted grey');
+});

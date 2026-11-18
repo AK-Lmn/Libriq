@@ -69,6 +69,7 @@
 .dashboard-page .section-title, .dashboard-page .goal-title { margin: 0; color: var(--text-strong); font: 600 14px/1.4 var(--font-sans); }
 .dashboard-page .section-action { display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; min-height: 32px; padding: 0; color: var(--indigo); font-size: 11px; white-space: nowrap; }
 .dashboard-page .section-action:hover { text-decoration: underline; }
+@media (max-width: 768px) { .dashboard-page .section-action { min-height: 44px; } }
 .dashboard-hero-card { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(0, 2fr); gap: 24px; align-items: center; min-height: 300px; }
 .dashboard-hero-cover { display: flex; justify-content: center; align-items: center; min-height: 280px; border-radius: 16px; background: var(--glass-fill-1); position: relative; padding: 16px; }
 .dashboard-hero-cover::after { content: ''; position: absolute; inset: auto 8px 8px; height: 44px; background: url('../../assets/dashboard/desktop-book-pedestal-shadow.svg') center/contain no-repeat; pointer-events: none; }

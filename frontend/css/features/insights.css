@@ -81,7 +81,7 @@
 #statsPage .stats-recap > .goal-header { margin: 0; }
 #statsPage .goal-title { font: 400 28px/1.3 var(--font-display); color: var(--text-strong); }
 #statsPage .stats-section-meta { font-size: 12px; color: var(--text-body); margin-top: var(--space-1); }
-#statsPage #recapYearSelect { min-height: 40px; border-top: 1px solid var(--glass-highlight); border-radius: var(--r-md); padding: 0 36px 0 16px; font-size: 12px; background: var(--glass-fill-3) url('../../assets/revamp/insights/stats-chevron-down.svg') right 12px center / 14px no-repeat; appearance: none; }
+#statsPage #recapYearSelect { min-height: 44px; border-top: 1px solid var(--glass-highlight); border-radius: var(--r-md); padding: 0 36px 0 16px; font-size: 12px; background: var(--glass-fill-3) url('../../assets/revamp/insights/stats-chevron-down.svg') right 12px center / 14px no-repeat; appearance: none; }
 :is(#statsPage, #activityPage) option { background: var(--glass-solid-3); color: var(--text-strong); }
 :is(#statsPage, #activityPage) :is(select, button, summary):focus-visible { outline: 2px solid var(--indigo); outline-offset: 3px; }
 #statsPage .recap-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
