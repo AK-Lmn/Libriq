@@ -847,6 +847,10 @@ export const LibriqSyncBeta = (() => {
             nextBooks.splice(idx, 1);
             changed = true;
           }
+        } else if (bookFingerprint(normalizeBookForSync(local)) === bookFingerprint(remote)) {
+          // Same timestamp and same content: this is our own upload coming
+          // back through the listener, not a conflict.
+          debugLog('remote book skipped', { bookId: remote.id, reason: 'echo of local book' });
         } else {
           conflicts += 1;
           debugLog('remote book skipped', { bookId: remote.id, reason: 'timestamp tie or missing timestamp', remoteFavorite: favoriteState, localFavorite: Boolean(local.isFavorite), remoteUpdatedAt: remote.updatedAt || null, localUpdatedAt: local.updatedAt || null });

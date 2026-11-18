@@ -149,6 +149,10 @@ async function main() {
 
     await delay(6000);
     assert.equal(await pageB.evaluate((id) => window.LibriqE2E.getBooks().some((book) => book.id === id), bookId), true);
+    // The snapshot echoing our own upload is identical to the local book;
+    // it must not be reported as a sync conflict on the uploading device.
+    const uploaderStatus = await pageA.evaluate(() => window.LibriqSyncBeta.getState());
+    assert.notEqual(uploaderStatus.status, 'conflict', `own upload echoed back as a conflict (count ${uploaderStatus.conflictCount})`);
     phase(testName, 'first remote mutation observed');
 
     const richBookId = await pageA.evaluate(() => {
