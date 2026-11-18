@@ -229,7 +229,10 @@ export const Utils = {
       return `<span class="star ${filled}" ${attrs}><i class="ph${filled ? '-fill' : ''} ph-star" aria-hidden="true"></i></span>`;
     }).join('');
 
-    return `<div class="star-rating ${interactive ? '' : 'readonly'}">${stars}</div>`;
+    if (interactive) return `<div class="star-rating">${stars}</div>`;
+    // Read-only: one image with a text equivalent instead of five silent icons.
+    const label = rating ? `Rated ${rating} out of 5` : 'Not rated';
+    return `<div class="star-rating readonly" role="img" aria-label="${label}">${stars}</div>`;
   },
 
   toast(message, type = 'success', { persistent = false, action = null } = {}) {
