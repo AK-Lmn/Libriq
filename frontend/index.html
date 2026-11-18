@@ -233,7 +233,7 @@
           </a>
           <div class="session-boot-art" aria-hidden="true"><i class="ph ph-book-open-text" aria-hidden="true"></i></div>
           <span class="session-eyebrow">Your reading space</span>
-          <h1 id="sessionBootTitle">A moment between chapters.</h1>
+          <h2 id="sessionBootTitle">A moment between chapters.</h2>
           <p>Checking your account before loading your private library.</p>
           <div class="session-loading-card" role="status" aria-live="polite">
             <div class="session-loading-spinner" aria-hidden="true"></div>
@@ -245,6 +245,24 @@
           <p class="session-fineprint"><i class="ph ph-lock-key" aria-hidden="true"></i> Your books. Your space.</p>
         </section>
       </div>
+      <!-- Static copy for readers and crawlers without JavaScript. The app
+           replaces everything in <main> once it loads. -->
+      <section class="seo-intro" aria-labelledby="seoIntroTitle">
+        <h1 id="seoIntroTitle">A private reading tracker with Goodreads and Kindle import</h1>
+        <p>LibriQ keeps a record of what you read. Find books through Open Library and Google Books, mark each one as Reading, Want to Read, Finished or Did Not Finish, and update your page as you go. Rate books, write notes, and save the quotes you want to come back to.</p>
+        <h2>Bring your reading history with you</h2>
+        <p>Export your library from Goodreads as a CSV file and import it into LibriQ. Your shelves, ratings and reviews come across, and books you already have are skipped instead of duplicated. You see a preview before anything is saved. Kindle readers can import the My Clippings.txt file from their device, and each highlight or note becomes a quote on the right book, with its page number.</p>
+        <h2>Goals, streaks and statistics</h2>
+        <p>Set a yearly reading goal and see whether you are on track or behind. A streak counts the days in a row you read, and the statistics page shows pages read per month, your top genres and the authors you return to. Recommendations come from the books already in your library, not from what other people liked.</p>
+        <h2>Private by default</h2>
+        <p>There are no ads and no social feed. Your library is not public and is not sold. LibriQ asks for an account so it can sync your books between your phone and computer, and it keeps working offline once installed as an app. You can export everything as a JSON file, or delete your library or your whole account, from Settings.</p>
+        <ul>
+          <li><a href="./goodreads-import.html">How the Goodreads import works</a></li>
+          <li><a href="./kindle-highlights.html">Importing Kindle highlights</a></li>
+          <li><a href="./private-reading-tracker.html">Why LibriQ has no ads or social feed</a></li>
+          <li><a href="./privacy.html">Privacy Policy</a></li>
+        </ul>
+      </section>
     </main>
 
     <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Mobile navigation">

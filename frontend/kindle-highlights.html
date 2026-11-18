@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Import Kindle Highlights from My Clippings · LibriQ</title>
+  <meta name="description" content="Turn the highlights and notes in your Kindle's My Clippings.txt into quotes on your LibriQ books, with page numbers. Preview first." />
+  <link rel="canonical" href="https://www.libriq.app/kindle-highlights.html" />
+  <meta property="og:title" content="Import Kindle Highlights from My Clippings · LibriQ" />
+  <meta property="og:description" content="Turn the highlights and notes in your Kindle's My Clippings.txt into quotes on your LibriQ books, with page numbers. Preview first." />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://www.libriq.app/kindle-highlights.html" />
+  <meta property="og:image" content="https://www.libriq.app/assets/social/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/svg+xml" href="./assets/icons/icon.svg" />
+  <link rel="stylesheet" href="./assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="./css/tokens.css" />
+  <link rel="stylesheet" href="./css/reset.css" />
+  <link rel="stylesheet" href="./css/base.css" />
+  <link rel="stylesheet" href="./css/legal.css" />
+  <script type="module" src="./js/legal.js"></script>
+  <script type="module" src="./js/analytics.js"></script>
+</head>
+<body>
+  <main class="legal">
+    <a class="legal-brand" href="./"><img src="./assets/icons/icon.svg" alt="" /> LibriQ</a>
+    <h1>Import your Kindle highlights</h1>
+
+    <p>Every time you highlight a passage or add a note on a Kindle, it is written to a plain text file on the device called <code>My Clippings.txt</code>. LibriQ can read that file and save each highlight and note as a quote on the book it came from, so the lines you marked live next to your progress and your own notes.</p>
+
+    <h2>Find My Clippings.txt</h2>
+    <ol>
+      <li>Connect your Kindle to a computer with a USB cable.</li>
+      <li>Open the Kindle drive and the <strong>documents</strong> folder.</li>
+      <li>Copy <code>My Clippings.txt</code> somewhere easy to find.</li>
+    </ol>
+    <p>The file covers every book you have highlighted on that Kindle, so one import can bring in years of reading at once.</p>
+
+    <h2>Import it into LibriQ</h2>
+    <ol>
+      <li>Open LibriQ and go to <strong>Settings</strong>, then <strong>Export / Import</strong>.</li>
+      <li>Choose <strong>Import Kindle Clippings</strong> and select the file.</li>
+      <li>Check the preview, then confirm.</li>
+    </ol>
+    <p>The preview is read-only. It lists the books and clippings LibriQ found before anything changes in your library.</p>
+
+    <h2>What gets imported</h2>
+    <ul>
+      <li><strong>Highlights</strong> become quotes on the matching book.</li>
+      <li><strong>Notes</strong> you typed on the Kindle come across too.</li>
+      <li><strong>Page numbers</strong> are taken from the location Kindle records, so you can find the passage again.</li>
+    </ul>
+    <p>Bookmarks are skipped, since they don't contain any text. The file is read in your browser and only the clippings you import are saved to your account.</p>
+
+    <h2>Reading in the Kindle app instead?</h2>
+    <p><code>My Clippings.txt</code> only exists on Kindle e-readers. The Kindle apps for phones, tablets and computers keep highlights in your Amazon account instead and don't create this file, so this import works with highlights made on an e-reader.</p>
+
+    <h2>Using your quotes</h2>
+    <p>Quotes show on each book's details page alongside your notes and rating. They sync with the rest of your library between your devices, and they are included when you export a backup from Settings.</p>
+
+    <h2>Coming from Goodreads?</h2>
+    <p>Import your <a href="./goodreads-import.html">Goodreads library</a> first, then your clippings. The highlights will land on the books you already brought across.</p>
+
+    <p><a href="./">Start your library on LibriQ</a></p>
+
+    <footer class="legal-footer">
+      <a href="./">Open LibriQ</a><a href="./goodreads-import.html">Goodreads import</a><a href="./private-reading-tracker.html">No ads, no feed</a><a href="./privacy.html">Privacy</a>
+    </footer>
+  </main>
+</body>
+</html>

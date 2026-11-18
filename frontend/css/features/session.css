@@ -192,7 +192,15 @@ button.session-card:hover:not(:disabled) { border-color: var(--indigo); }
 .session-loading-spinner { flex: 0 0 20px; width: 20px; height: 20px; border: 2px solid var(--glass-border); border-top-color: var(--indigo); border-radius: var(--r-pill); animation: sessionSpin 1s linear infinite; }
 .session-boot-card { display: grid; justify-items: center; gap: var(--space-5); width: min(480px, 100%); padding: clamp(var(--space-5), 5vw, var(--space-10)); border: 1px solid var(--glass-border); border-radius: var(--r-2xl); background: var(--glass-fill-2); backdrop-filter: blur(var(--glass-blur-card)); -webkit-backdrop-filter: blur(var(--glass-blur-card)); box-shadow: var(--shadow-glass); text-align: center; }
 .session-boot-art { display: grid; place-items: center; width: 80px; height: 80px; border-radius: var(--r-2xl); border: 1px solid var(--indigo-22); background: var(--indigo-12); color: var(--indigo); font-size: 2rem; }
-.session-boot-card h1 { margin: 0; color: var(--text-strong); font: 2rem/1.2 var(--font-serif); letter-spacing: -.03em; }
+.session-boot-card :is(h1, h2) { margin: 0; color: var(--text-strong); font: 2rem/1.2 var(--font-serif); letter-spacing: -.03em; }
+/* Static landing copy in index.html, shown under the boot card until the app replaces <main>. */
+.seo-intro { max-width: 680px; margin: var(--space-8) auto var(--space-10); padding: 0 var(--space-5); color: var(--text-body); font: 400 15px/1.7 var(--font-ui); }
+.seo-intro h1 { margin: 0 0 var(--space-4); color: var(--text-strong); font: 1.75rem/1.25 var(--font-serif); letter-spacing: -.02em; }
+.seo-intro h2 { margin: var(--space-6) 0 var(--space-2); color: var(--text-strong); font: 600 1rem/1.4 var(--font-ui); }
+.seo-intro p { margin: 0 0 var(--space-3); }
+.seo-intro ul { margin: var(--space-5) 0 0; padding-left: var(--space-5); list-style: disc; }
+.seo-intro li + li { margin-top: var(--space-2); }
+.seo-intro a { color: var(--text-accent); text-underline-offset: 3px; }
 .session-boot-card > p { margin: 0; color: var(--text-body); font-size: var(--t-body); line-height: var(--leading-normal); }
 .session-boot-card .session-loading-card { width: 100%; text-align: left; }
 

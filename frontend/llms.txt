@@ -13,6 +13,9 @@
 ## Pages
 
 - [Home and sign-in](https://www.libriq.app/): the app itself
+- [Goodreads import](https://www.libriq.app/goodreads-import.html): how to move a Goodreads library in from the CSV export
+- [Kindle highlights](https://www.libriq.app/kindle-highlights.html): importing highlights and notes from My Clippings.txt
+- [Private reading tracker](https://www.libriq.app/private-reading-tracker.html): no ads, no social feed, what is stored
 - [Privacy Policy](https://www.libriq.app/privacy.html): what is stored and who processes it
 - [Terms of Service](https://www.libriq.app/terms.html)
 
