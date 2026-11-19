@@ -128,6 +128,51 @@ export const Search = (() => {
       if (node !== emptyState) resultsArea.removeChild(node);
     });
     Utils.show(emptyState);
+    _setListExpanded(false);
+  }
+
+  // The input is an ARIA combobox (APG list-autocomplete pattern). It
+  // controls the results listbox while one is shown; arrow keys move
+  // aria-activedescendant and DOM focus stays in the input.
+  const LIST_ID = 'searchResultsList';
+  let optionCounter = 0;
+
+  function _setListExpanded(expanded) {
+    const { input } = getEls();
+    if (!input) return;
+    input.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    if (expanded) input.setAttribute('aria-controls', LIST_ID);
+    else input.removeAttribute('aria-controls');
+    input.removeAttribute('aria-activedescendant');
+  }
+
+  function _createResultsList() {
+    const list = document.createElement('div');
+    list.className = 'search-results-list';
+    list.id = LIST_ID;
+    list.setAttribute('role', 'listbox');
+    list.setAttribute('aria-label', 'Search results');
+    return list;
+  }
+
+  function _appendGroup(list, key, labelHtml, items) {
+    const group = document.createElement('div');
+    group.setAttribute('role', 'group');
+    group.setAttribute('aria-labelledby', `searchGroup-${key}`);
+    group.insertAdjacentHTML('beforeend', `<div class="search-section-label" id="searchGroup-${key}">${labelHtml}</div>`);
+    items.forEach(item => group.appendChild(item));
+    list.appendChild(group);
+  }
+
+  function _asOption(el, label) {
+    el.id = `searchOption-${++optionCounter}`;
+    el.setAttribute('role', 'option');
+    el.setAttribute('aria-selected', 'false');
+    el.setAttribute('aria-label', label);
+    // Options are activated with Enter from the input; their inner buttons
+    // stay clickable but out of the tab order.
+    el.querySelectorAll('button, a').forEach(control => control.setAttribute('tabindex', '-1'));
+    return el;
   }
 
   async function executeSearch(query) {
@@ -145,6 +190,8 @@ export const Search = (() => {
     Array.from(resultsArea.childNodes).forEach(node => {
       if (node !== emptyState) resultsArea.removeChild(node);
     });
+    focusedIndex = -1;
+    _setListExpanded(false);
     resultsArea.insertAdjacentHTML('afterbegin', `
       <div class="search-loading" id="searchSpinner">
         <div class="spinner"></div>
@@ -205,12 +252,12 @@ export const Search = (() => {
     Utils.hide(emptyState);
     _setDefaultEmptyState();
 
+    const list = _createResultsList();
+    resultsArea.appendChild(list);
+
     if (localResults.length > 0) {
-      resultsArea.insertAdjacentHTML('beforeend',
-        `<div class="search-section-label">In Your Library <span>${localResults.length}</span></div>`);
-      localResults.forEach(book => {
-        resultsArea.appendChild(buildLocalResultItem(book));
-      });
+      _appendGroup(list, 'library', `In Your Library <span>${localResults.length}</span>`,
+        localResults.map(book => buildLocalResultItem(book)));
     }
 
     const filteredApiResults = _applyAdvancedFilters(apiResults);
@@ -222,11 +269,16 @@ export const Search = (() => {
     }
 
     if (filteredApiResults.length > 0) {
-      resultsArea.insertAdjacentHTML('beforeend',
-        `<div class="search-section-label">From the web${searchMeta.fromCache && searchMeta.offline ? ' <span class="search-section-filtered">cached, offline</span>' : _filtersActive() ? ' <span class="search-section-filtered">filtered</span>' : ''}</div>`);
-      filteredApiResults.forEach(book => {
-        resultsArea.appendChild(buildApiResultItem(book));
-      });
+      _appendGroup(list, 'web',
+        `From the web${searchMeta.fromCache && searchMeta.offline ? ' <span class="search-section-filtered">cached, offline</span>' : _filtersActive() ? ' <span class="search-section-filtered">filtered</span>' : ''}`,
+        filteredApiResults.map(book => buildApiResultItem(book)));
+    }
+
+    if (list.children.length) {
+      _setListExpanded(true);
+    } else {
+      list.remove();
+      _setListExpanded(false);
     }
 
     _updateFilterCount();
@@ -266,7 +318,7 @@ export const Search = (() => {
       });
     }
     el.addEventListener('click', close);
-    return el;
+    return _asOption(el, `${book.title} by ${book.author}, in your library, ${Utils.statusLabel(book.status)}`);
   }
 
   function buildApiResultItem(book) {
@@ -313,14 +365,15 @@ export const Search = (() => {
       });
     }
 
-    return el;
+    const year = book.publishYear ? `, ${book.publishYear}` : '';
+    return _asOption(el, `${book.title} by ${book.author}${year}, ${existingBook ? 'already in your library' : 'press Enter to add'}`);
   }
 
   function handleKeydown(e) {
     const { modal } = getEls();
     if (modal.hasAttribute('hidden')) return;
 
-    const items = Utils.$$('.search-result-item');
+    const items = Utils.$$(`#${LIST_ID} [role="option"]`);
 
     if (e.key === 'Escape') {
       close();
@@ -347,8 +400,15 @@ export const Search = (() => {
   }
 
   function updateFocus(items) {
-    items.forEach((el, i) => el.classList.toggle('focused', i === focusedIndex));
-    items[focusedIndex]?.scrollIntoView({ block: 'nearest' });
+    items.forEach((el, i) => {
+      el.classList.toggle('focused', i === focusedIndex);
+      el.setAttribute('aria-selected', i === focusedIndex ? 'true' : 'false');
+    });
+    const active = items[focusedIndex];
+    const { input } = getEls();
+    if (active) input?.setAttribute('aria-activedescendant', active.id);
+    else input?.removeAttribute('aria-activedescendant');
+    active?.scrollIntoView({ block: 'nearest' });
   }
 
   function openAddModal(bookData) {
