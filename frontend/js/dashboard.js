@@ -80,16 +80,6 @@ export const Dashboard = {
             <h1 class="greeting-title">Welcome back, <span>${Utils.sanitize(accountName)}</span>.</h1>
             <p class="greeting-subtitle">A quiet moment. A few more pages.</p>
           </div>
-          <div class="dashboard-micro-stats">
-            <div class="dashboard-mini-card">
-              <span class="dashboard-mini-label">${dashboardIcon('flame')} Day streak</span>
-              <div class="dashboard-mini-value">${streak.current} <small>${streak.current === 1 ? 'Day' : 'Days'}</small></div>
-            </div>
-            <div class="dashboard-mini-card">
-              <span class="dashboard-mini-label">${dashboardIcon('target')} ${new Date().getFullYear()} goal</span>
-              <div class="dashboard-mini-value">${goals.yearly > 0 ? `${stats.finishedThisYear}/${goals.yearly}` : `${stats.finishedThisYear}`} <small>books</small></div>
-            </div>
-          </div>
         </div>
 
         ${buildOnboardingChecklist(books, goals)}
@@ -136,7 +126,7 @@ export const Dashboard = {
                   ${dashboardIcon('circle-check')}
                   <span class="dashboard-compact-label">Finished this year</span>
                   <strong>${stats.finishedThisYear}</strong>
-                  <span>${booksLeft} left to goal</span>
+                  <span>Since January 1</span>
                 </div>
                 <div class="dashboard-compact-card">
                   ${dashboardIcon('flame')}
@@ -150,21 +140,6 @@ export const Dashboard = {
           </div>
 
           <aside class="dashboard-aside">
-            <section class="dashboard-panel dashboard-quick-panel">
-              <div class="section-header dashboard-section-header">
-                <h2 class="section-title">Quick Workspace</h2>
-                <button class="section-action" type="button" data-action="navigate" data-route="activity">View Activity ${dashboardIcon('arrow-up-right')}</button>
-              </div>
-              <div class="dashboard-quick-note">
-                <div class="dashboard-quote-label">${dashboardIcon('notebook-pen')} Latest capture</div>
-                <p>${Utils.sanitize(getQuickNoteText(profile, recentActivity, featuredBook))}</p>
-              </div>
-              <div class="dashboard-quick-meta">
-                <span>${dashboardIcon('timer')} ${recentActivity.length ? `Last update: ${Utils.timeAgo(recentActivity[0].date)}` : 'Your next session awaits'}</span>
-                <span>${stats.avgRating ? `Average rating ${stats.avgRating}` : 'No ratings yet'}</span>
-              </div>
-            </section>
-
             <section class="dashboard-panel dashboard-activity-panel">
               <div class="section-header dashboard-section-header">
                 <h2 class="section-title">Recent Activity</h2>
@@ -210,16 +185,8 @@ export const Dashboard = {
                     <div class="goal-stat-label">Complete</div>
                   </div>
                   <div class="goal-stat">
-                    <div class="goal-stat-value">${booksLeft}</div>
-                    <div class="goal-stat-label">Books left</div>
-                  </div>
-                  <div class="goal-stat">
                     <div class="goal-stat-value">${weeksLeft}</div>
                     <div class="goal-stat-label">Weeks left</div>
-                  </div>
-                  <div class="goal-stat">
-                    <div class="goal-stat-value">${stats.avgRating || 'None'}</div>
-                    <div class="goal-stat-label">Avg rating</div>
                   </div>
                 </div>
               </div>
@@ -371,15 +338,6 @@ function buildRecentBooks(books) {
     });
 }
 
-function getQuickNoteText(profile, recentActivity, featuredBook) {
-  const name = String(profile?.name || '').trim();
-  if (recentActivity?.length) {
-    const item = recentActivity[0];
-    return `Last update: ${item.label || item.type} for ${item.title}.`;
-  }
-  if (featuredBook) return `${featuredBook.title} is ready when you are, ${name || 'reader'}.`;
-  return 'Add a book to start building your reading workspace.';
-}
 
 export function buildMonthlyChart(monthlyData) {
   const max = Math.max(...monthlyData, 1);
