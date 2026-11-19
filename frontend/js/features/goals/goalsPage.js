@@ -58,7 +58,7 @@ export function createGoalsPage({ storage, utils, actions, documentRoot }) {
               ['Goal', yearly + ' books'],
               ['Completed', completed + ' books'],
               ['Remaining', Math.max(0, yearly - completed) + ' books'],
-              ['On track', yearly === 0 ? 'Set a goal' : completed >= Math.round(yearly * (now.getMonth() + 1) / 12) ? 'Yes' : 'Behind'],
+              ['Pace', yearly === 0 ? 'Set a goal' : completed >= Math.round(yearly * (now.getMonth() + 1) / 12) ? 'On track' : 'Behind'],
             ].map(([label, val]) => `
               <div class="activity-item activity-item--noninteractive">
                 <div class="activity-text"><div class="activity-subtitle">${label}</div></div>
