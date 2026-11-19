@@ -39,6 +39,7 @@ import { savePendingBook } from './services/pendingIntents.js';
 import { coverImgAttrs } from './shared/coverSize.js';
 import { initialAuthMode } from './shared/authMode.js';
 import { MIN_PASSWORD_LENGTH, newPasswordProblem } from './shared/passwordPolicy.js';
+import { showFieldErrors, clearFieldErrors } from './shared/fieldErrors.js';
 
 export function completeGoodreadsImport({ previewResult, storage, toast, rerender } = {}) {
   const result = executeGoodreadsImport({
@@ -1344,7 +1345,20 @@ function renderSessionChoicePage() {
     errorEl.textContent = message;
     errorEl.hidden = false;
   };
+  // Point the flagged fields at the form-level error so it is read with them.
+  const AUTH_FIELDS = ['sessionEmailInput', 'sessionPasswordInput', 'sessionResetEmailInput'];
+  const flagAuthFields = (err, { reset = false } = {}) => {
+    const code = String(err?.code || '').toLowerCase();
+    const email = document.getElementById(reset ? 'sessionResetEmailInput' : 'sessionEmailInput');
+    const password = reset ? null : document.getElementById('sessionPasswordInput');
+    const fields = [];
+    if (/invalid-email|missing-email|email-already-in-use/.test(code)) fields.push(email);
+    else if (/weak-password|missing-password/.test(code)) fields.push(password);
+    else if (/wrong-password|invalid-credential|user-not-found|invalid-login/.test(code)) fields.push(email, password);
+    showFieldErrors(fields.filter(Boolean).map(input => [input, { describedById: 'sessionAuthError' }]));
+  };
   const clearAuthError = () => {
+    clearFieldErrors(AUTH_FIELDS.map(id => document.getElementById(id)).filter(Boolean));
     const errorEl = document.getElementById('sessionAuthError');
     if (!errorEl) return;
     errorEl.textContent = '';
@@ -1477,6 +1491,7 @@ function renderSessionChoicePage() {
             ? 'Check your connection and try again.'
             : 'Something went wrong. Please try again.';
       showAuthError(message);
+      flagAuthFields(err, { reset: true });
     } finally {
       submit?.removeAttribute('disabled');
       submit?.removeAttribute('aria-busy');
@@ -1518,6 +1533,7 @@ function renderSessionChoicePage() {
         showFallback();
       }
       showAuthError(message);
+      if (!isAuthNetworkError(err)) flagAuthFields(err);
     } finally {
       submit?.removeAttribute('disabled');
       form?.removeAttribute('aria-busy');
