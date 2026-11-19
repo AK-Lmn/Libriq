@@ -302,7 +302,7 @@ export const Search = (() => {
       </div>
       <div class="search-result-add">
         <button class="btn btn-ghost btn-sm" aria-label="View in your library" data-nav="library">
-          <i class="ph ph-arrow-right"></i>
+          <i class="ph ph-arrow-right" aria-hidden="true"></i>
         </button>
       </div>`;
     const navBtn = el.querySelector('[data-nav="library"]');
@@ -347,7 +347,7 @@ export const Search = (() => {
         ${existingBook
           ? `<span class="badge badge-accent">Added</span>`
           : `<button class="btn btn-primary btn-sm" data-add-book>
-               <i class="ph ph-plus"></i> Add
+               <i class="ph ph-plus" aria-hidden="true"></i> Add
              </button>`
         }
       </div>`;

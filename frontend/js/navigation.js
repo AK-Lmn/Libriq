@@ -897,7 +897,7 @@ function renderBootPage() {
         <a class="session-brand" href="./" aria-label="LibriQ home">
           <span class="session-brand-mark">Q</span><strong>LibriQ</strong>
         </a>
-        <div class="session-boot-art" aria-hidden="true"><i class="ph ph-book-open-text"></i></div>
+        <div class="session-boot-art" aria-hidden="true"><i class="ph ph-book-open-text" aria-hidden="true"></i></div>
         <span class="session-eyebrow">Your reading space</span>
         <h1 id="sessionBootTitle">A moment between chapters.</h1>
         <p>Checking your account before loading your private library.</p>
@@ -987,7 +987,7 @@ async function maybeShowNewDeviceCloudPrompt() {
     card.id = 'newDeviceCloudPrompt';
     card.innerHTML = `
       <div class="session-backup-heading">
-        <span class="session-card-icon" aria-hidden="true"><i class="ph ph-cloud-check"></i></span>
+        <span class="session-card-icon" aria-hidden="true"><i class="ph ph-cloud-check" aria-hidden="true"></i></span>
         <div>
           <span class="session-eyebrow">A familiar reading space</span>
           <h2>Cloud backup found</h2>
@@ -1087,12 +1087,12 @@ function renderSessionChoicePage() {
           </div>
           ${inAppBrowser ? `
             <div class="session-inapp-notice" role="alert">
-              <div class="session-inapp-icon"><i class="ph ph-warning-circle"></i></div>
+              <div class="session-inapp-icon"><i class="ph ph-warning-circle" aria-hidden="true"></i></div>
               <div class="session-inapp-body">
                 <strong>You’re in a social-app browser</strong>
                 <p>Google sign-in is blocked in some social apps. Use email below, or continue in your system browser.</p>
                 <a class="session-inapp-link" href="${openInBrowserHref}" target="_blank" rel="noopener noreferrer">
-                  <i class="ph ph-arrow-square-out"></i> Open in Safari / Chrome
+                  <i class="ph ph-arrow-square-out" aria-hidden="true"></i> Open in Safari / Chrome
                 </a>
               </div>
             </div>
@@ -1109,16 +1109,16 @@ function renderSessionChoicePage() {
 
           ${loading ? '' : hasUser ? `
             <button class="session-card session-card-primary" id="googleContinueBtn" type="button">
-              <div class="session-card-icon"><i class="ph ph-user-circle"></i></div>
+              <div class="session-card-icon"><i class="ph ph-user-circle" aria-hidden="true"></i></div>
               <div class="session-card-content">
                 <div class="session-card-title">Continue as ${Utils.sanitize(accountName)}</div>
                 <div class="session-card-body">Your signed-in account is ready. Continue to your private library with existing backup and sync settings.</div>
               </div>
-              <div class="session-card-action"><i class="ph ph-arrow-right"></i></div>
+              <div class="session-card-action"><i class="ph ph-arrow-right" aria-hidden="true"></i></div>
             </button>
           ` : !firebase.available ? `
             <div class="session-card session-card-unavailable">
-              <div class="session-card-icon"><i class="ph ph-warning-circle"></i></div>
+              <div class="session-card-icon"><i class="ph ph-warning-circle" aria-hidden="true"></i></div>
               <div class="session-card-content">
                 <div class="session-card-title">Account sign-in unavailable</div>
                 <div class="session-card-body">LibriQ cannot reach account services right now.</div>
@@ -1137,7 +1137,7 @@ function renderSessionChoicePage() {
                 <label class="session-field-label" for="sessionResetEmailInput">Account email</label>
                 <input class="form-input" id="sessionResetEmailInput" type="email" placeholder="Email address" autocomplete="email" />
                 <button class="btn btn-primary" id="sessionResetSubmit" type="button">
-                  <i class="ph ph-envelope-simple"></i>
+                  <i class="ph ph-envelope-simple" aria-hidden="true"></i>
                   <span>Send reset email</span>
                 </button>
                 <button class="btn btn-secondary" id="sessionResetBackBtn" type="button">
@@ -1151,7 +1151,7 @@ function renderSessionChoicePage() {
                 <input class="form-input" id="sessionPasswordInput" type="password" placeholder="Password" autocomplete="current-password" required />
                 <p class="session-field-help" id="sessionPasswordHelp" hidden>Use at least ${MIN_PASSWORD_LENGTH} characters.</p>
                 <button class="btn btn-primary" id="emailAuthSubmit" type="submit">
-                  <i class="ph ph-envelope-simple"></i>
+                  <i class="ph ph-envelope-simple" aria-hidden="true"></i>
                   <span>Sign in with Email</span>
                 </button>
                 <button class="session-link-btn" id="forgotPasswordLink" type="button">Forgot password?</button>
@@ -1164,12 +1164,12 @@ function renderSessionChoicePage() {
           ${!loading && !hasUser && firebase.initialized && firebase.available ? `
             <div class="session-provider-divider"><span>or continue with</span></div>
             <button class="session-card session-google-card ${inAppBrowser ? 'session-card-disabled' : ''}" id="googleSignInBtn" type="button" ${inAppBrowser ? 'disabled aria-describedby="googleSignInHelp"' : ''}>
-              <div class="session-card-icon"><i class="ph ph-google-logo"></i></div>
+              <div class="session-card-icon"><i class="ph ph-google-logo" aria-hidden="true"></i></div>
               <div class="session-card-content">
                 <div class="session-card-title">${signInButtonLabel}</div>
                 <div class="session-card-body" id="googleSignInHelp">${Utils.sanitize(signInButtonHelp)}</div>
               </div>
-              <div class="session-card-action"><i class="ph ph-arrow-right"></i></div>
+              <div class="session-card-action"><i class="ph ph-arrow-right" aria-hidden="true"></i></div>
             </button>
           ` : ''}
 
@@ -1192,7 +1192,7 @@ function renderSessionChoicePage() {
           <p class="session-legal">By continuing, you agree to the <a href="./terms.html">Terms</a> and <span class="session-legal-tail"><a href="./privacy.html">Privacy Policy</a>.</span></p>
         </div>
         <div class="session-copy">
-          <span class="session-eyebrow"><i class="ph ph-book-open-text"></i> A calmer way to track what you read</span>
+          <span class="session-eyebrow"><i class="ph ph-book-open-text" aria-hidden="true"></i> A calmer way to track what you read</span>
           <h1 class="session-title">Build a reading life worth remembering.</h1>
           <p class="session-subtitle">
             Keep your library, progress, notes, quotes, and reading patterns together in a private space designed around books.
@@ -1200,16 +1200,16 @@ function renderSessionChoicePage() {
 
           <div class="session-points">
             <div class="session-point">
-              <i class="ph ph-lock-key"></i>
+              <i class="ph ph-lock-key" aria-hidden="true"></i>
               <span>Your library stays private and under your control.</span>
             </div>
             ${inAppBrowser ? `
             <div class="session-point session-point-warning">
-              <i class="ph ph-warning-circle"></i>
+              <i class="ph ph-warning-circle" aria-hidden="true"></i>
               <span>Google sign-in may not work inside this app browser.</span>
             </div>` : ''}
             <div class="session-point">
-              <i class="ph ph-cloud-check"></i>
+              <i class="ph ph-cloud-check" aria-hidden="true"></i>
               <span>Account Sync keeps your reading space available across signed-in devices.</span>
             </div>
           </div>
@@ -1222,7 +1222,7 @@ function renderSessionChoicePage() {
             <div class="session-preview-heading">Your reading rhythm</div>
             <div class="session-preview-grid">
               <div class="session-preview-book">
-                <span class="session-preview-cover"><i class="ph ph-book-open"></i></span>
+                <span class="session-preview-cover"><i class="ph ph-book-open" aria-hidden="true"></i></span>
                 <span><small>Reading now</small><strong>Continue your current book</strong></span>
               </div>
               <div class="session-preview-stat"><strong>12</strong><span>books this year</span></div>
@@ -1233,11 +1233,11 @@ function renderSessionChoicePage() {
 
           <div class="session-demo-showcase" id="sessionDemoShowcase" aria-label="Interactive preview: Search any book">
             <div class="session-demo-header">
-              <span class="session-demo-badge"><i class="ph ph-sparkle"></i> Live Book Search</span>
+              <span class="session-demo-badge"><i class="ph ph-sparkle" aria-hidden="true"></i> Live Book Search</span>
               <span class="session-demo-subtitle">Try finding your current read</span>
             </div>
             <div class="session-demo-searchbar">
-              <i class="ph ph-magnifying-glass session-demo-search-icon"></i>
+              <i class="ph ph-magnifying-glass session-demo-search-icon" aria-hidden="true"></i>
               <input type="text" id="sessionDemoInput" class="session-demo-input" aria-label="Search books by title or author" placeholder="Search a title or author…" autocomplete="off" />
               <span class="session-demo-spinner" id="sessionDemoSpinner" hidden></span>
             </div>
@@ -1255,15 +1255,15 @@ function renderSessionChoicePage() {
       <div class="session-fallback-modal" id="sessionFallbackModal" role="dialog" aria-modal="true" aria-labelledby="sessionFallbackTitle" aria-describedby="sessionFallbackCopy" hidden>
         <div class="session-fallback-card">
           <button class="session-fallback-close" id="sessionFallbackClose" type="button" aria-label="Back to sign in" data-dialog-initial-focus><i class="ph ph-x" aria-hidden="true"></i></button>
-          <div class="session-card-icon"><i class="ph ph-wifi-slash"></i></div>
+          <div class="session-card-icon"><i class="ph ph-wifi-slash" aria-hidden="true"></i></div>
           <div>
             <span class="session-eyebrow">Your reading space can wait</span>
             <h2 class="session-fallback-title" id="sessionFallbackTitle">No internet connection</h2>
             <p class="session-fallback-copy" id="sessionFallbackCopy">LibriQ needs internet to sign in and sync your library. An existing offline session can continue on this device; changes stay local until you reconnect.</p>
           </div>
           <div class="session-fallback-actions">
-            <button class="btn btn-primary" id="authRetryBtn" type="button"><i class="ph ph-arrow-clockwise"></i> Retry</button>
-            <button class="btn btn-secondary" id="fallbackOfflineBtn" type="button"><i class="ph ph-house-simple"></i> Continue offline</button>
+            <button class="btn btn-primary" id="authRetryBtn" type="button"><i class="ph ph-arrow-clockwise" aria-hidden="true"></i> Retry</button>
+            <button class="btn btn-secondary" id="fallbackOfflineBtn" type="button"><i class="ph ph-house-simple" aria-hidden="true"></i> Continue offline</button>
           </div>
         </div>
       </div>
@@ -1606,7 +1606,7 @@ function renderSessionChoicePage() {
       demoResults.innerHTML = topBooks.map((b, index) => {
         const cover = b.coverUrl
           ? `<img ${coverImgAttrs(b.coverUrl, 'cover-sm', Utils.sanitize)} loading="lazy" class="session-demo-book-cover" alt="" data-fallback-src="./assets/icons/icon-192.png" />`
-          : `<div class="session-demo-book-cover-placeholder"><i class="ph ph-book"></i></div>`;
+          : `<div class="session-demo-book-cover-placeholder"><i class="ph ph-book" aria-hidden="true"></i></div>`;
         return `
           <div class="session-demo-book-card" data-title="${Utils.sanitize(b.title)}" data-index="${index}">
             ${cover}
@@ -1616,7 +1616,7 @@ function renderSessionChoicePage() {
               <div class="session-demo-book-meta">${b.year ? Utils.sanitize(b.year) : ''}${b.pageCount ? ` • ${Utils.sanitize(b.pageCount)} pages` : ''}</div>
             </div>
             <button type="button" class="btn btn-sm btn-primary session-demo-save-btn" data-title="${Utils.sanitize(b.title)}" data-index="${index}">
-              <i class="ph ph-plus"></i> Save
+              <i class="ph ph-plus" aria-hidden="true"></i> Save
             </button>
           </div>
         `;

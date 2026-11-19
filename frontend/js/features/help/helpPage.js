@@ -135,10 +135,10 @@ export function createHelpPage({ storage, actions, documentRoot }) {
     main.innerHTML = `
       <div class="page help-page" id="helpPage">
         <aside class="help-contents">
-          <nav aria-label="In this guide"><h2>IN THIS GUIDE</h2>
+          <nav aria-label="In this guide"><p class="help-contents-title" aria-hidden="true">IN THIS GUIDE</p>
             ${sections.map(([title], i) => `<a href="#help-section-${i + 1}" data-action="open-guide-section" data-section-id="help-section-${i + 1}"><span>${String(i + 1).padStart(2, '0')}</span>${title}</a>`).join('')}
           </nav>
-          <div class="help-personal-note">${icon('book-heart')}<h3>Just you and your books.</h3><p>LibriQ is your personal reading space. No public profile, no shared shelves, no pressure to keep pace.</p></div>
+          <div class="help-personal-note">${icon('book-heart')}<p class="help-personal-note-title">Just you and your books.</p><p>LibriQ is your personal reading space. No public profile, no shared shelves, no pressure to keep pace.</p></div>
           <p>Read at your own pace. Each section can be opened on its own.</p>
         </aside>
         <div class="help-reading-column">

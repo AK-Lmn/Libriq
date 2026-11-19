@@ -83,17 +83,17 @@ export const Library = (() => {
           <div class="status-select-group">
             <label class="status-option selected">
               <input type="radio" name="status" value="wishlist" checked>
-              <i class="ph ph-bookmark"></i>
+              <i class="ph ph-bookmark" aria-hidden="true"></i>
               <span>Want to Read</span>
             </label>
             <label class="status-option">
               <input type="radio" name="status" value="reading">
-              <i class="ph ph-book-open"></i>
+              <i class="ph ph-book-open" aria-hidden="true"></i>
               <span>Reading</span>
             </label>
             <label class="status-option">
               <input type="radio" name="status" value="finished">
-              <i class="ph ph-check-circle"></i>
+              <i class="ph ph-check-circle" aria-hidden="true"></i>
               <span>Finished</span>
             </label>
           </div>
@@ -138,7 +138,7 @@ export const Library = (() => {
         <div class="modal-footer modal-footer--embedded">
           <button type="button" class="btn btn-ghost" data-action="close-add-dialog">Cancel</button>
           <button type="submit" class="btn btn-primary">
-            <i class="ph ph-plus"></i>
+            <i class="ph ph-plus" aria-hidden="true"></i>
             Add to Library
           </button>
         </div>
@@ -467,7 +467,7 @@ export const Library = (() => {
         <div class="modal-footer modal-footer--embedded">
           <button type="button" class="btn btn-ghost" data-action="close-add-dialog">Cancel</button>
           <button type="submit" class="btn btn-primary">
-            <i class="ph ph-plus"></i>
+            <i class="ph ph-plus" aria-hidden="true"></i>
             Save Manual Book
           </button>
         </div>
@@ -897,7 +897,7 @@ export const Library = (() => {
         <div class="modal-footer modal-footer--embedded">
           <button type="button" class="btn btn-ghost" data-action="close-add-dialog">Cancel</button>
           <button type="submit" class="btn btn-primary">
-            <i class="ph ph-floppy-disk"></i> Save
+            <i class="ph ph-floppy-disk" aria-hidden="true"></i> Save
           </button>
         </div>
       </form>`;
