@@ -176,6 +176,8 @@
   --color-warning-dim: rgba(232,123,75,0.18);
   --color-danger: var(--danger);
   --color-danger-dim: rgba(212,87,78,0.18);
+  /* Small error text; --danger is under 4.5:1 on dark surfaces. */
+  --text-danger: #F2918A;
   --color-info: var(--blue);
   --color-info-dim: var(--indigo-18);
   --color-neutral-dim: var(--glass-fill-2);
@@ -282,6 +284,7 @@
   --color-warning-dim: rgba(201,114,48,0.12);
   --color-danger: var(--danger);
   --color-danger-dim: rgba(201,64,64,0.12);
+  --text-danger: #B42318;
   --color-info: var(--blue);
   --color-info-dim: var(--indigo-12);
 

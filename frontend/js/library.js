@@ -5,6 +5,7 @@ import { Utils } from './utils.js';
 import { LibriqFirebase } from './firebase-client.js';
 import { createBookDetailsPage } from './features/bookDetails/bookDetailsPage.js';
 import { confirmAction } from './components/ui/confirmation.js';
+import { showFieldErrors } from './shared/fieldErrors.js';
 
 export const Library = (() => {
   const Identity = {
@@ -495,25 +496,27 @@ export const Library = (() => {
     const formData = new FormData(form);
     const title = (formData.get('title') || '').trim();
     const author = (formData.get('author') || '').trim();
-    if (!title || !author) {
-      Utils.toast('Title and author are required', 'error');
-      return;
-    }
+    // Problems are shown on the field itself (aria-invalid + described-by),
+    // and focus moves to the first one.
+    const field = id => form.querySelector(`#${id}`);
+    const problems = [];
+    if (!title) problems.push([field('manualTitleInput'), { message: 'Enter the book’s title.' }]);
+    if (!author) problems.push([field('manualAuthorInput'), { message: 'Enter the author.' }]);
 
     const rawPageCount = (formData.get('pageCount') || '').toString().trim();
     const rawCurrentPage = (formData.get('currentPage') || '').toString().trim();
     const pageCount = rawPageCount ? parseInt(rawPageCount, 10) : 0;
     const currentPage = rawCurrentPage ? parseInt(rawCurrentPage, 10) : 0;
     if (rawPageCount && (!Number.isInteger(pageCount) || pageCount < 1)) {
-      Utils.toast('Page count must be a positive number', 'error');
-      return;
+      problems.push([field('manualPageCountInput'), { message: 'Page count must be a positive number.' }]);
     }
     if (rawCurrentPage && (!Number.isInteger(currentPage) || currentPage < 0)) {
-      Utils.toast('Current page must be zero or greater', 'error');
-      return;
+      problems.push([field('manualCurrentPageInput'), { message: 'Current page must be zero or greater.' }]);
+    } else if (pageCount && currentPage > pageCount) {
+      problems.push([field('manualCurrentPageInput'), { message: `Current page cannot exceed page count (${pageCount}).` }]);
     }
-    if (pageCount && currentPage > pageCount) {
-      Utils.toast('Current page cannot exceed page count', 'error');
+    if (problems.length) {
+      showFieldErrors(problems);
       return;
     }
 

@@ -240,6 +240,7 @@ const SHELL_ASSETS = [
   './js/shared/afterLoad.js',
   './js/shared/authMode.js',
   './js/shared/passwordPolicy.js',
+  './js/shared/fieldErrors.js',
   './js/shared/chartTable.js',
   './js/shared/crossTab.js',
   './vendor/firebase-app.js',
