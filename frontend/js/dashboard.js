@@ -4,7 +4,7 @@ import { Utils } from './utils.js';
 import { LibriqFirebase } from './firebase-client.js';
 import { resolveAccountDisplayName } from './accountDisplayName.js';
 import { isPollDismissedOrVoted, detectUserOS } from './services/mobileAppPoll.js';
-import { chartDataTable } from './shared/chartTable.js';
+import { chartDataTable, chartGroupAttrs, chartBarAttrs } from './shared/chartTable.js';
 
 export const Dashboard = {
 
@@ -386,13 +386,14 @@ export function buildMonthlyChart(monthlyData) {
   const currentMonth = new Date().getMonth();
 
   return `
-    <div class="monthly-chart" aria-hidden="true">
+    <div class="monthly-chart" ${chartGroupAttrs(`Books finished per month, ${new Date().getFullYear()}`)}>
       ${LIBRIQ.MONTHS.map((m, i) => {
         const val = monthlyData[i];
         const pct = Math.round((val / max) * 100);
         const isCurrent = i === currentMonth;
+        const tip = `${val} book${val !== 1 ? 's' : ''} in ${m}`;
         return `
-          <div class="chart-bar-wrap" data-tooltip="${val} book${val !== 1 ? 's' : ''} in ${m}">
+          <div class="chart-bar-wrap" data-tooltip="${tip}" ${chartBarAttrs(tip, isCurrent)}>
             <div class="chart-bar ${isCurrent ? 'current' : ''}"
                  style="height: ${Math.max(pct, 0)}%"></div>
             <div class="chart-bar-label">${m}</div>
