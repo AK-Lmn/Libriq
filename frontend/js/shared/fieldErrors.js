@@ -60,7 +60,12 @@ export function clearFieldError(input) {
 export function showFieldErrors(entries) {
   const flagged = entries.filter(([input]) => input);
   flagged.forEach(([input, options]) => setFieldError(input, options));
-  flagged[0]?.[0].focus();
+  const first = flagged[0]?.[0];
+  if (!first) return;
+  first.focus();
+  // Focus scrolls the input into view; make sure its message is visible too.
+  const errorId = first.dataset.fieldErrorId;
+  first.ownerDocument.getElementById(errorId)?.scrollIntoView?.({ block: 'center' });
 }
 
 export function clearFieldErrors(inputs) {

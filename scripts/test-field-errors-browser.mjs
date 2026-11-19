@@ -81,7 +81,6 @@ try {
   await page.locator('#manualCurrentPageInput').fill('150');
   await page.locator('#addBookForm button[type="submit"]').click();
   const current = await fieldState(page, 'manualCurrentPageInput');
-  await page.locator('#manualCurrentPageInput').scrollIntoViewIfNeeded();
   await page.screenshot({ path: 'artifacts/field-errors/manual-current-page.png' });
   assert.equal(current.invalid, 'true');
   assert.ok(current.descriptions.some(d => /cannot exceed page count/i.test(d)), JSON.stringify(current));

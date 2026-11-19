@@ -8199,6 +8199,7 @@ html[data-theme] #addBookModal :is(.text-tertiary, .form-hint, .manual-entry-cop
 html[data-theme] #addBookModal .form-hint { font-size: 12px; line-height: 1.6; }
 /* Inline field errors (shared/fieldErrors.js). */
 html[data-theme] .form-error { margin: var(--space-2) 0 0; color: var(--text-danger); font: 500 12px/1.5 var(--font-ui); }
+html[data-theme] .form-input[aria-invalid="true"] { border-color: var(--danger); }
 html[data-theme] #addBookModal .status-select-group { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
 html[data-theme] #addBookModal .status-option {
   position: relative;
