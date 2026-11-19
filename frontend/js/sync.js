@@ -5,7 +5,7 @@ import { Utils } from './utils.js';
 import { LibriqFirebase } from './firebase-client.js';
 import { LibriqCloudBackup } from './cloudBackup.js';
 import { commitInChunks } from './services/syncUpload.js';
-import { mergeBooks } from './services/syncMerge.js';
+import { mergeBooks, supersededTombstoneIds } from './services/syncMerge.js';
 
 export const LibriqSyncBeta = (() => {
   const STORAGE_KEY = 'libriq_sync_beta_enabled';
@@ -715,7 +715,17 @@ export const LibriqSyncBeta = (() => {
     }
     const localBooks = Storage.getBooks();
     const books = localBooks.map(normalizeBookForSync).filter(Boolean);
-    const tombstones = Object.values(readTombstones()).filter(Boolean);
+    let tombstones = Object.values(readTombstones()).filter(Boolean);
+    // A book restored after a delete (undo, or added back) outranks its
+    // tombstone; drop it so this upload doesn't delete the book again.
+    const superseded = supersededTombstoneIds(books, tombstones);
+    if (superseded.length) {
+      const kept = readTombstones();
+      superseded.forEach(id => { delete kept[id]; });
+      writeTombstones(kept);
+      tombstones = tombstones.filter(tombstone => !superseded.includes(tombstone.id));
+      debugLog('superseded tombstones dropped', { ids: superseded });
+    }
     setState(STATUS.SYNCING, 'Syncing...');
     try {
       uploadInFlight = true;

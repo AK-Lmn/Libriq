@@ -87,3 +87,19 @@ export function mergeBooks({ localBooks, remoteBooks, fingerprint, normalize, me
 
   return { books, changed, conflicts, uploadNeeded, log };
 }
+
+/**
+ * Ids of local delete tombstones that no longer apply: the same book is in
+ * the local library again with an edit newer than the delete (undo, or the
+ * book was added back). Uploading such a tombstone would delete the book in
+ * the cloud right after it was restored.
+ */
+export function supersededTombstoneIds(books, tombstones) {
+  const byId = new Map(books.map(book => [book.id, book]));
+  return tombstones
+    .filter(tombstone => {
+      const book = byId.get(tombstone?.id);
+      return book && compareTimes(book.updatedAt || book.createdAt, tombstone.deletedAt) > 0;
+    })
+    .map(tombstone => tombstone.id);
+}
