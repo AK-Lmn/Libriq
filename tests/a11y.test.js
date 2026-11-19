@@ -41,17 +41,27 @@ test('bar chart values are available as a screen-reader table', async () => {
   assert.doesNotMatch(hostile, /<b>|<i>/, 'caption and labels are escaped');
 });
 
-test('both Stats charts hide the bars from screen readers and include the table', async () => {
+test('chart bars are one keyboard stop, each bar named with its value', async () => {
+  const { chartGroupAttrs, chartBarAttrs } = await import('../frontend/js/shared/chartTable.js');
+  assert.equal(chartGroupAttrs('Books finished per month, 2026'),
+    'role="group" aria-label="Books finished per month, 2026. Use the arrow keys to read each month."');
+  assert.equal(chartBarAttrs('3 books in Mar', true), 'role="img" aria-label="3 books in Mar" tabindex="0"');
+  assert.equal(chartBarAttrs('0 books in Jan', false), 'role="img" aria-label="0 books in Jan" tabindex="-1"');
+  assert.doesNotMatch(chartBarAttrs('<b>1</b> in "Jan"', false), /<b>|"Jan"/, 'label is escaped');
+});
+
+test('both Stats charts are keyboard-readable and keep the screen-reader table', async () => {
   const dashboard = await read('frontend/js/dashboard.js');
   const monthly = dashboard.slice(dashboard.indexOf('export function buildMonthlyChart'), dashboard.indexOf('function buildRecentActivity'));
-  assert.ok(monthly.includes('<div class="monthly-chart" aria-hidden="true">'));
-  assert.ok(monthly.includes('chartDataTable({'));
-  assert.ok(!dashboard.includes('function buildPagesChart'), 'unused duplicate removed');
   const stats = await read('frontend/js/features/statistics/statisticsPage.js');
   const pages = stats.slice(stats.indexOf('function buildPagesChart'));
-  assert.ok(pages.includes('<div class="monthly-chart monthly-chart-pages" aria-hidden="true">'));
-  assert.ok(pages.includes('chartDataTable({'));
-  assert.ok(!pages.includes('role="img"'), 'no unlabelled image role replacing the data');
+  for (const [name, chart] of [['monthly', monthly], ['pages', pages]]) {
+    assert.ok(!chart.includes('aria-hidden="true"'), `${name}: bars are no longer hidden (they are focusable)`);
+    assert.ok(chart.includes('chartGroupAttrs('), `${name}: chart is a labelled group`);
+    assert.ok(chart.includes('chartBarAttrs('), `${name}: bars are named`);
+    assert.ok(chart.includes('chartDataTable({'), `${name}: table kept`);
+  }
+  assert.ok(!dashboard.includes('function buildPagesChart'), 'unused duplicate removed');
 });
 
 test('goal stepper buttons are 44px touch targets', async () => {

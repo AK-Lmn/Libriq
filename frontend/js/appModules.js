@@ -8,9 +8,11 @@ import {
 } from './data.js';
 import { Storage } from './storage.js';
 import { Utils } from './utils.js';
+import { installChartKeyboard } from './shared/chartKeyboard.js';
 
 window.Utils = Utils;
 Utils.installDelegatedHandlers(document);
+installChartKeyboard(document);
 
 const [
   { BookAPI },
