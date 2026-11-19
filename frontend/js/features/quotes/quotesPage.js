@@ -1,3 +1,4 @@
+import { pageHeader } from '../../shared/pageHeader.js';
 export function aggregateLibraryQuotes(books) {
   const aggregated = [];
   for (const book of Array.isArray(books) ? books : []) {
@@ -57,14 +58,13 @@ export function createQuotesPage({ storage, utils, actions = {}, clipboard, down
     const quotes = getQuotes();
     main.innerHTML = `
       <div class="page" id="quotesPage">
-        <div class="page-header quotes-header">
-          <div class="quotes-heading">
-            <span class="quotes-eyebrow"><i class="ph ph-lock-simple" aria-hidden="true"></i> Your private collection</span>
-            <h1 class="page-title">Quotes</h1>
-            <p class="page-subtitle">The passages that stay with you, all in one place.</p>
-          </div>
-          <div class="quotes-total"><i class="ph ph-quotes" aria-hidden="true"></i><span><strong>${quotes.length}</strong><span>saved quote${quotes.length !== 1 ? 's' : ''}</span></span></div>
-        </div>
+        ${pageHeader({
+          title: 'Quotes',
+          subtitle: 'Passages you have saved from your books. Only you can see them.',
+          aside: `<div class="quotes-total"><i class="ph ph-quotes" aria-hidden="true"></i><span><strong>${quotes.length}</strong><span>saved quote${quotes.length !== 1 ? 's' : ''}</span></span></div>`,
+          className: 'quotes-header',
+          headingClass: 'quotes-heading',
+        })}
         <div class="quotes-tools">
           <label class="quotes-search-label" for="quotesSearchInput">Find a saved passage</label>
           <div class="quotes-search-wrap">

@@ -1,3 +1,4 @@
+import { pageHeader } from '../../shared/pageHeader.js';
 import { customShelves, libraryIcon, libraryTools, sortLibraryBooks, renderBookshelfView } from './libraryDesign.js';
 import { escapeHtml as escapeText } from '../../shared/escapeHtml.js';
 
@@ -129,10 +130,14 @@ export function createLibraryShelvesPage({ storage, library, utils, actions = {}
 
     main.innerHTML = `<div class="page status-page" id="statusPage" data-shelf="${pageUtils.sanitize(state.status)}">
       <div class="library-breadcrumb"><button type="button" class="btn btn-ghost" data-action="browse-library">My Library</button><span aria-hidden="true">›</span><span>${title}</span><button type="button" class="btn btn-primary library-add-book" data-action="open-search">${libraryIcon('plus')} Add book</button></div>
-      <div class="page-header status-header">
-        <div class="status-heading"><span class="library-eyebrow">Your private library</span><h1 class="page-title">${title}</h1>${state.status === 'dnf' ? `<span class="shelf-status-note">${libraryIcon('status-dnf')} Did Not Finish</span>` : ''}<p class="page-subtitle">${subtitle}</p></div>
-        <div class="shelf-summary"><span>${pages}</span><small>pages read across this shelf</small></div>
-      </div>
+      ${pageHeader({
+        title,
+        subtitle,
+        afterTitle: state.status === 'dnf' ? `<span class="shelf-status-note">${libraryIcon('status-dnf')} Did Not Finish</span>` : '',
+        aside: `<div class="shelf-summary"><span>${pages}</span><small>pages read across this shelf</small></div>`,
+        className: 'status-header',
+        headingClass: 'status-heading',
+      })}
       ${libraryTools(pageUtils, state, customShelves(storage.getBooks()), 'shelf')}
       <div class="library-filters shelf-filters" aria-label="Bookshelves">
         ${Object.entries(shelfCopy).map(([status, [label]]) => {

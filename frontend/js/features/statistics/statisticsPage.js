@@ -1,5 +1,6 @@
 import { buildYearlyRecap, getRecapYears, rankRatedBooks } from './statisticsCalculations.js';
 import { chartDataTable, chartGroupAttrs, chartBarAttrs } from '../../shared/chartTable.js';
+import { pageHeader } from '../../shared/pageHeader.js';
 
 const icon = name => `<img class="insights-icon" src="assets/revamp/insights/stats-${name}.svg" alt="" />`;
 
@@ -31,14 +32,13 @@ export function createStatisticsPage({ storage, utils, constants, actions, docum
 
     main.innerHTML = `
       <div class="page stats-page" id="statsPage">
-        <header class="page-header stats-header">
-          <div class="stats-heading">
-            <span class="library-eyebrow">Reading analytics</span>
-            <h1 class="page-title">Statistics</h1>
-            <p class="page-subtitle">Your reading at a glance</p>
-          </div>
-          <span class="stats-date">${icon('calendar-days')}${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
-        </header>
+        ${pageHeader({
+          title: 'Statistics',
+          subtitle: 'Your reading at a glance',
+          aside: `<span class="stats-date">${icon('calendar-days')}${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>`,
+          className: 'stats-header',
+          headingClass: 'stats-heading',
+        })}
         <div class="stats-row">
           ${[
             ['library1', 'Total books', stats.total, 'Your personal library'],

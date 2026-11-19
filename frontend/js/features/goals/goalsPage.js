@@ -1,3 +1,4 @@
+import { pageHeader } from '../../shared/pageHeader.js';
 export function createGoalsPage({ storage, utils, actions, documentRoot }) {
   if (!storage || !utils) throw new TypeError('createGoalsPage requires storage and utils.');
   const pageDocument = documentRoot || globalThis.document;
@@ -15,10 +16,7 @@ export function createGoalsPage({ storage, utils, actions, documentRoot }) {
 
     main.innerHTML = `
       <div class="page goals-page page--narrow" id="goalsPage">
-        <div class="page-header page-header--spaced">
-          <h1 class="page-title">Reading Goals</h1>
-          <p class="page-subtitle">Set your target for ${currentYear}</p>
-        </div>
+        ${pageHeader({ title: 'Reading Goals', subtitle: `Set your target for ${currentYear}` })}
 
         <div class="goal-widget goal-widget--section-sm">
           <form id="goalsForm" class="add-book-form">
