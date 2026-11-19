@@ -124,7 +124,7 @@ try {
         minContrast:Math.min(...contrast.map(item => item.ratio)), badContrast:contrast.filter(item => item.ratio < 4.5),
         blur:getComputedStyle(panel).backdropFilter, modalBlur:getComputedStyle(modal).backdropFilter,
         alpha:parse(getComputedStyle(panel).backgroundColor)[3],
-        backTop:panel.querySelector('.book-details-back').getBoundingClientRect().top,
+        backTop:panel.querySelector('#bookDetailsModal .modal-close').getBoundingClientRect().top,
         smallTargets:innerWidth < 768 ? [...panel.querySelectorAll('button,input,a')].filter(el => el.getBoundingClientRect().width < 44 || el.getBoundingClientRect().height < 44).map(el => el.id || el.textContent.trim()) : [],
         icons:[...panel.querySelectorAll('.book-details-icon')].map(img => ({src:img.getAttribute('src'), loaded:img.complete && img.naturalWidth > 0, proportion:img.clientWidth / img.clientHeight}))};
     });
@@ -174,11 +174,11 @@ try {
   await render(book,'dark',{width:1440,height:1000});
   assert.equal(await page.locator('a[href^="javascript:"]').count(),0);
   assert.equal(await page.locator('#app').evaluate(el => el.inert),true);
-  assert.equal(await page.locator('.book-details-back').evaluate(el => el === document.activeElement),true);
+  assert.equal(await page.locator('#bookDetailsModal .modal-close').evaluate(el => el === document.activeElement),true);
   await page.keyboard.press('Shift+Tab');
   assert.equal(await page.getByRole('button',{name:'Remove book',exact:true}).evaluate(el => el === document.activeElement),true);
   await page.keyboard.press('Tab');
-  assert.equal(await page.locator('.book-details-back').evaluate(el => el === document.activeElement),true);
+  assert.equal(await page.locator('#bookDetailsModal .modal-close').evaluate(el => el === document.activeElement),true);
   await page.getByRole('button',{name:'Rate 5 out of 5'}).click();
   assert.equal(await page.locator('.book-details-rating-text').textContent(),'5/5');
   assert.equal(await page.getByRole('button',{name:'Rate 5 out of 5'}).getAttribute('aria-pressed'),'true');
@@ -249,7 +249,7 @@ try {
   await page.getByRole('button',{name:'Update Progress',exact:true}).click();
   assert.ok(await page.evaluate(() => window.calls.includes('progress')));
   await render(book,'dark',{width:390,height:844});
-  await page.locator('.book-details-back').click();
+  await page.locator('#bookDetailsModal .modal-close').click();
   assert.equal(await page.locator('#bookDetailsModal').getAttribute('hidden'),'');
   assert.deepEqual(errors,[]);
   assert.deepEqual(failed,[]);
