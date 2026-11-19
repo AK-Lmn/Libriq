@@ -273,7 +273,7 @@ function buildFeaturedReadingHero(book) {
           <span>${timeLeft !== null ? `${timeLeft} pages left` : 'Progress'}</span>
           <strong>${pct}%</strong>
         </div>
-        <div class="progress-bar dashboard-progress-bar">
+        <div class="progress-bar dashboard-progress-bar" role="progressbar" aria-label="Reading progress for ${Utils.sanitize(book.title)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-valuetext="${pct}%, page ${Number(book.currentPage) || 0} of ${Number(book.pageCount) || 0}">
           <div class="progress-fill ${pct >= 100 ? 'complete' : ''}" style="width:${pct}%"></div>
         </div>
         <p class="dashboard-page-count">Page ${Number(book.currentPage) || 0} / ${Number(book.pageCount) || 0}</p>
@@ -304,11 +304,11 @@ function buildFeaturedEmptyHero() {
         <p class="dashboard-hero-author">Add a book to surface a featured reading card with progress and quick actions.</p>
         <div class="dashboard-hero-actions">
           <button class="btn btn-primary" type="button" data-action="open-search">
-            <i class="ph ph-plus"></i>
+            <i class="ph ph-plus" aria-hidden="true"></i>
             Add Book
           </button>
           <button class="btn btn-secondary" type="button" data-action="open-manual-entry">
-            <i class="ph ph-pencil"></i>
+            <i class="ph ph-pencil" aria-hidden="true"></i>
             Add Manually
           </button>
           <button class="btn btn-secondary" type="button" data-action="navigate" data-route="library">
@@ -345,7 +345,7 @@ function buildRecentBooksRow(books) {
 function buildRecentEmptyState() {
   return `
     <div class="dashboard-empty-state">
-      <div class="empty-state-icon"><i class="ph ph-books"></i></div>
+      <div class="empty-state-icon"><i class="ph ph-books" aria-hidden="true"></i></div>
       <div class="empty-state-title">No recent updates yet</div>
       <div class="empty-state-body">Add a few books or update reading progress and they will appear here.</div>
     </div>`;
@@ -354,7 +354,7 @@ function buildRecentEmptyState() {
 function buildActivityEmptyState() {
   return `
     <div class="dashboard-empty-state dashboard-empty-state-compact">
-      <div class="empty-state-icon"><i class="ph ph-clock-counter-clockwise"></i></div>
+      <div class="empty-state-icon"><i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i></div>
       <div class="empty-state-title">No activity yet</div>
       <div class="empty-state-body">Progress updates and book changes will show up here once you start reading.</div>
     </div>`;
@@ -481,7 +481,7 @@ export function buildGenreRow(genre, count, total) {
         <span class="genre-name">${Utils.sanitize(genre)}</span>
         <span class="genre-count">${count}</span>
       </div>
-      <div class="progress-bar">
+      <div class="progress-bar" aria-hidden="true">
         <div class="progress-fill" style="width:${pct}%; background: ${color}"></div>
       </div>
     </div>`;
@@ -500,19 +500,19 @@ function buildOnboardingChecklist(books, goals) {
     <section class="onboarding-checklist" aria-label="Getting started with LibriQ">
       <div class="onboarding-header">
         <div class="onboarding-header-copy">
-          <span class="onboarding-pill"><i class="ph ph-sparkle"></i> Quick Setup</span>
+          <span class="onboarding-pill"><i class="ph ph-sparkle" aria-hidden="true"></i> Quick Setup</span>
           <h2 class="onboarding-title">Getting started with your reading space</h2>
           <p class="onboarding-subtitle">Complete these 3 quick steps to personalize your reading life.</p>
         </div>
         <button class="onboarding-dismiss" type="button" data-action="dismiss-onboarding" aria-label="Dismiss checklist">
-          <i class="ph ph-x"></i>
+          <i class="ph ph-x" aria-hidden="true"></i>
         </button>
       </div>
 
       <div class="onboarding-steps">
         <div class="onboarding-step ${hasBook ? 'completed' : ''}">
           <div class="onboarding-step-icon">
-            <i class="ph ${hasBook ? 'ph-check-circle' : 'ph-book-plus'}"></i>
+            <i class="ph ${hasBook ? 'ph-check-circle' : 'ph-book-plus'}" aria-hidden="true"></i>
           </div>
           <div class="onboarding-step-content">
             <strong>1. Add what you&apos;re reading right now</strong>
@@ -525,7 +525,7 @@ function buildOnboardingChecklist(books, goals) {
 
         <div class="onboarding-step ${hasGoal ? 'completed' : ''}">
           <div class="onboarding-step-icon">
-            <i class="ph ${hasGoal ? 'ph-check-circle' : 'ph-target'}"></i>
+            <i class="ph ${hasGoal ? 'ph-check-circle' : 'ph-target'}" aria-hidden="true"></i>
           </div>
           <div class="onboarding-step-content">
             <strong>2. Set your yearly reading goal</strong>
@@ -538,7 +538,7 @@ function buildOnboardingChecklist(books, goals) {
 
         <div class="onboarding-step ${hasImport ? 'completed' : ''}">
           <div class="onboarding-step-icon">
-            <i class="ph ${hasImport ? 'ph-check-circle' : 'ph-download-simple'}"></i>
+            <i class="ph ${hasImport ? 'ph-check-circle' : 'ph-download-simple'}" aria-hidden="true"></i>
           </div>
           <div class="onboarding-step-content">
             <strong>3. Import Kindle clippings or Goodreads</strong>

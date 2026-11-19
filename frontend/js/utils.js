@@ -244,7 +244,7 @@ export const Utils = {
   buildCoverPlaceholder(title) {
     return `
       <div class="book-cover-placeholder">
-        <i class="ph ph-book"></i>
+        <i class="ph ph-book" aria-hidden="true"></i>
         <span class="cover-title">${Utils.sanitize(title)}</span>
       </div>`;
   },
@@ -281,7 +281,7 @@ export const Utils = {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.innerHTML = `
-      <i class="ph ${icons[type] || icons.info}"></i>
+      <i class="ph ${icons[type] || icons.info}" aria-hidden="true"></i>
       <span>${Utils.sanitize(message)}</span>
     `;
 

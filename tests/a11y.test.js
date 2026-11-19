@@ -87,3 +87,49 @@ test('scrollable regions are keyboard reachable', async () => {
   }
   assert.match(await read('frontend/js/features/help/helpPage.js'), /help-shortcuts-table-wrapper" tabindex="0" role="region" aria-label="Keyboard shortcuts"/);
 });
+
+async function* jsFiles(dir) {
+  const { readdir } = await import('node:fs/promises');
+  for (const entry of await readdir(new URL(`../${dir}/`, import.meta.url), { withFileTypes: true })) {
+    const rel = `${dir}/${entry.name}`;
+    if (entry.isDirectory()) yield* jsFiles(rel);
+    else if (entry.name.endsWith('.js')) yield rel;
+  }
+}
+
+test('icons rendered from JS are hidden from screen readers', async () => {
+  const offenders = [];
+  for await (const file of jsFiles('frontend/js')) {
+    const source = await read(file);
+    for (const m of source.matchAll(/<i class="ph[^"]*"[^>]*>/g)) {
+      if (!/aria-hidden="true"/.test(m[0])) offenders.push(`${file}: ${m[0]}`);
+    }
+  }
+  assert.deepEqual(offenders, []);
+});
+
+test('icon-only buttons rendered from JS have an accessible name', async () => {
+  const offenders = [];
+  for await (const file of jsFiles('frontend/js')) {
+    const source = await read(file);
+    for (const m of source.matchAll(/<button\b([^>]*)>\s*(?:<i [^>]*><\/i>|<img [^>]*>|\$\{[^}]*[Ii]con\([^}]*\)\})\s*<\/button>/g)) {
+      if (!/aria-label=|aria-labelledby=|title=/.test(m[1])) offenders.push(`${file}: ${m[0].slice(0, 120)}`);
+    }
+  }
+  assert.deepEqual(offenders, []);
+});
+
+test('every progress bar rendered from JS exposes progressbar semantics', async () => {
+  const offenders = [];
+  for await (const file of jsFiles('frontend/js')) {
+    const source = await read(file);
+    for (const m of source.matchAll(/<div class="(?:progress-bar|goal-completion|stats-goal-track)[^"]*"[^>]*>/g)) {
+      const tag = m[0];
+      // Either a real progressbar, or explicitly decorative next to visible numbers.
+      const ok = (/role="progressbar"/.test(tag) && /aria-valuenow=/.test(tag) && /aria-label(ledby)?=/.test(tag))
+        || /aria-hidden="true"/.test(tag);
+      if (!ok) offenders.push(`${file}: ${tag.slice(0, 140)}`);
+    }
+  }
+  assert.deepEqual(offenders, []);
+});

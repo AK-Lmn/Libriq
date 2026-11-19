@@ -2,13 +2,13 @@
 #helpPage :is(h1, h2, h3, p) { margin: 0; }
 #helpPage .help-contents { display: grid; align-content: start; gap: 32px; position: sticky; top: 32px; max-height: calc(100vh - 64px); overflow-y: auto; scrollbar-width: thin; }
 #helpPage .help-contents nav { display: grid; gap: 8px; }
-#helpPage .help-contents nav h2 { font: 600 11px var(--font-sans); letter-spacing: 1.1px; margin-bottom: 8px; }
+#helpPage .help-contents nav .help-contents-title { font: 600 11px var(--font-sans); letter-spacing: 1.1px; margin-bottom: 8px; }
 #helpPage .help-contents a { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 12px; font-size: 13px; color: var(--text-body); border-radius: 12px; text-decoration: none; transition: background 0.15s ease, color 0.15s ease, border-left-color 0.15s ease; border-left: 3px solid transparent; }
 #helpPage .help-contents a span { font: 400 12px var(--font-mono); }
 #helpPage .help-contents a:is(:hover, :focus-visible) { background: var(--glass-fill-2); color: var(--text-strong); }
 #helpPage .help-contents a.is-active { background: var(--glass-fill-3); color: var(--text-strong); border-left-color: var(--indigo, #6366F1); font-weight: 500; }
 #helpPage .help-personal-note { display: grid; gap: 12px; padding: 20px; background: var(--glass-fill-2); border-radius: 16px; }
-#helpPage .help-personal-note h3 { color: var(--text-strong); font: 400 20px var(--font-serif); }
+#helpPage .help-personal-note .help-personal-note-title { color: var(--text-strong); font: 400 20px var(--font-serif); }
 #helpPage .help-personal-note p { font-size: 14px; line-height: 1.65; }
 #helpPage .help-contents > p { font-size: 12px; line-height: 1.6; }
 #helpPage .help-reading-column { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; min-width: 0; }
