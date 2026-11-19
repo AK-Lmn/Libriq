@@ -7,6 +7,7 @@ import { InternetArchiveAPI } from './internetArchive.js';
 import { WikipediaAPI } from './wikipedia.js';
 import { MergeBooks } from './mergeBooks.js';
 import { BookCache } from './cache.js';
+import { MIN_SEARCH_LENGTH } from '../shared/searchQuery.js';
 
 export const BookAPI = (() => {
   if (typeof window !== 'undefined') window.LibriqApiMeta = window.LibriqApiMeta || Object.freeze({
@@ -25,7 +26,7 @@ export const BookAPI = (() => {
 
   async function searchBooks(query) {
     const q = (query || '').trim();
-    if (q.length < 3) return [];
+    if (q.length < MIN_SEARCH_LENGTH) return [];
 
     _lastSearchMeta = {
       query: q,

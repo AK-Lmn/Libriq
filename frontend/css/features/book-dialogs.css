@@ -101,7 +101,14 @@ html[data-theme] #searchModal .search-input-wrap {
   border-radius: var(--r-lg);
   gap: var(--space-2);
 }
-html[data-theme] #searchModal .search-input-wrap:focus-within { border-color: var(--indigo); }
+/* One focus ring for the search field: the wrapper draws it; the input
+   inside it shows none (it used to stack outline + glow + border). */
+html[data-theme] #searchModal .search-input-wrap:focus-within { border-color: var(--indigo); box-shadow: 0 0 0 3px color-mix(in srgb, var(--indigo) 30%, transparent); }
+html[data-theme] #searchModal .search-input:is(:focus, :focus-visible) { outline: none; box-shadow: none; }
+/* Keyboard shortcut hints mean nothing on touch screens. */
+@media (hover: none) and (pointer: coarse) {
+  html[data-theme] #searchModal .search-footer > span:has(kbd) { display: none; }
+}
 html[data-theme] #searchModal .search-input-icon { color: var(--indigo); font-size: 24px; }
 html[data-theme] #searchModal .search-input {
   width: 0;
