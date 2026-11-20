@@ -75,7 +75,7 @@ assert.equal(typeof importSafeStorage.bootstrap, 'function');
 const publicMethods = [
   'bootstrap', 'resetAll',
   'getActiveAccountUid', 'setActiveAccountUid', 'clearActiveAccountScope', 'clearAccountScopedData',
-  'getBooks', 'saveBooks', 'addBook', 'updateBook', 'removeBook',
+  'getBooks', 'saveBooks', 'addBook', 'restoreBook', 'updateBook', 'removeBook',
   'getBookById', 'getBooksByStatus', 'toggleFavorite',
   'getProfile', 'saveProfile',
   'getBackupMeta', 'saveBackupMeta',

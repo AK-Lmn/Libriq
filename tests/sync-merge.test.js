@@ -77,3 +77,24 @@ test('sync.js delegates its merge decisions to mergeBooks', async () => {
   assert.ok(apply.includes('mergeBooks({'), 'applyRemoteBooks uses mergeBooks');
   assert.ok(!apply.includes('remoteBooks.forEach'), 'the inline merge loop is gone');
 });
+
+test('a tombstone is superseded when the same book exists locally with a newer edit', async () => {
+  const { supersededTombstoneIds } = await import('../frontend/js/services/syncMerge.js');
+  const books = [
+    { id: 'restored', updatedAt: '2026-11-19T10:05:00.000Z' },
+    { id: 'old-copy', updatedAt: '2026-11-19T09:00:00.000Z' },
+  ];
+  const tombstones = [
+    { id: 'restored', deletedAt: '2026-11-19T10:00:00.000Z' },
+    { id: 'old-copy', deletedAt: '2026-11-19T10:00:00.000Z' },
+    { id: 'gone', deletedAt: '2026-11-19T10:00:00.000Z' },
+  ];
+  assert.deepEqual(supersededTombstoneIds(books, tombstones), ['restored']);
+  assert.deepEqual(supersededTombstoneIds([], tombstones), []);
+});
+
+test('uploads drop superseded tombstones instead of deleting a restored book', async () => {
+  const sync = await readFile(new URL('../frontend/js/sync.js', import.meta.url), 'utf8');
+  const upload = sync.slice(sync.indexOf('async function uploadLocalBooks'), sync.indexOf('async function uploadLocalBooks') + 4000);
+  assert.ok(upload.includes('supersededTombstoneIds('), 'uploadLocalBooks checks for superseded tombstones');
+});

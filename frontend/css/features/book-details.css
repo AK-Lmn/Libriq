@@ -328,6 +328,17 @@ html[data-theme] #bookDetailsModal .book-details-primary-row,
 html[data-theme] #bookDetailsModal .book-details-secondary-row,
 html[data-theme] #bookDetailsModal .book-details-utility-row { display: contents; }
 html[data-theme] #bookDetailsModal .book-details-privacy { display: flex; align-items: center; gap: var(--space-2); flex-basis: 100%; }
+/* Actions stay in reach while the details scroll. */
+html[data-theme] #bookDetailsModal .book-details-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-top: var(--space-2);
+  padding: var(--space-4) 0 var(--space-3);
+  background: var(--glass-solid-2, var(--bg-elevated));
+}
+html[data-theme] #bookDetailsModal .btn.btn-danger { border-color: var(--danger); color: var(--text-danger, var(--danger)); background: var(--glass-fill-1); }
+html[data-theme] #bookDetailsModal .btn.btn-danger:hover { background: var(--color-danger-dim); color: var(--text-strong); }
 html[data-theme] #bookDetailsModal .book-details-icon { flex: none; max-width: none; }
 
 html[data-theme="light"] #bookDetailsModal { background: var(--bg) linear-gradient(180deg, rgba(238,241,246,.8), var(--bg)); }
@@ -360,8 +371,10 @@ html[data-theme="light"] #bookDetailsModal .book-details-modal { color-scheme: l
   html[data-theme] #bookDetailsModal .book-details-progress { order: 1; }
   html[data-theme] #bookDetailsModal .book-details-information { order: 2; }
   html[data-theme] #bookDetailsModal .book-details-workspace { order: 3; grid-template-columns: minmax(0, 1fr); }
-  html[data-theme] #bookDetailsModal .book-details-footer { order: 4; display: grid; grid-template-columns: minmax(0, 1fr); }
-  html[data-theme] #bookDetailsModal .book-details-footer > .btn { width: 100%; }
+  html[data-theme] #bookDetailsModal .book-details-footer { order: 4; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); padding-bottom: var(--space-2); }
+  html[data-theme] #bookDetailsModal .book-details-footer .btn { width: 100%; min-height: 44px; padding-inline: var(--space-2); white-space: normal; line-height: 1.2; }
+  html[data-theme] #bookDetailsModal .book-details-footer .btn-danger { grid-column: 1 / -1; }
+  html[data-theme] #bookDetailsModal .book-details-privacy { grid-column: 1 / -1; font-size: 12px; }
   html[data-theme] #bookDetailsModal .book-detail-form-grid { grid-template-columns: minmax(0, 1fr); }
   html[data-theme] #bookDetailsModal .book-details-rating .star { min-width: 44px; }
   html[data-theme] #bookDetailsModal .book-details-rating { gap: var(--space-2); flex-direction: row; align-items: center; }

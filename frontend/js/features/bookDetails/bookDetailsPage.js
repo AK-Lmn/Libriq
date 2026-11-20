@@ -228,7 +228,7 @@ export function createBookDetailsPage({
       </div>
 
       <div class="book-details-notes" data-book-id="${Utils.sanitize(book.id)}" id="bookQuotesSection">
-        <div class="book-details-quotes-heading"><h3 class="book-details-section-title">Private Quotes</h3><span id="bookQuotesCount" class="book-details-hint">${String(book.quotes?.length || 0).padStart(2, '0')}</span></div>
+        <div class="book-details-quotes-heading"><h3 class="book-details-section-title">Private Quotes</h3><span id="bookQuotesCount" class="book-details-hint">${quoteCountLabel(book.quotes?.length || 0)}</span></div>
         <p class="book-details-hint">Keep the words you want to return to.</p>
         <label for="bookQuoteTextInput" class="book-details-notes-label">Quote</label>
         <textarea
@@ -252,16 +252,11 @@ export function createBookDetailsPage({
       </div>
       `;
 
-    const header = modal.querySelector('.modal-header');
     const closeButton = modal.querySelector('.modal-close');
-    if (header && !header.querySelector('.book-details-back')) {
-      const back = document.createElement('button');
-      back.type = 'button';
-      back.className = 'btn btn-secondary book-details-back';
-      back.innerHTML = `${icon('arrow-left')}Back to library`;
-      back.addEventListener('click', closeDetailsModal);
-      header.prepend(back);
-      if (closeButton) closeButton.innerHTML = `${icon('close')}<span>Close</span>`;
+    // One way out: the Close button (the old 'Back to library' did the same thing).
+    if (closeButton && !closeButton.dataset.labelled) {
+      closeButton.dataset.labelled = 'true';
+      closeButton.innerHTML = `${icon('close')}<span>Close</span>`;
     }
 
     Utils.show(modal);
@@ -348,7 +343,7 @@ export function createBookDetailsPage({
       if (!quotesList) return;
       const safeQuotes = normalizeQuotes(Storage.getBookById(book.id)?.quotes || book.quotes || []);
       const count = body.querySelector('#bookQuotesCount');
-      if (count) count.textContent = String(safeQuotes.length).padStart(2, '0');
+      if (count) count.textContent = quoteCountLabel(safeQuotes.length);
       if (!safeQuotes.length) {
       quotesList.innerHTML = `<div class="empty-state quote-empty-state"><div class="empty-state-body">No private quotes yet.</div></div>`;
         return;
@@ -619,14 +614,25 @@ export function createBookDetailsPage({
     utilityActions.appendChild(favBtn);
 
     const removeBtn = document.createElement('button');
-    removeBtn.className = 'btn btn-ghost';
+    removeBtn.className = 'btn btn-danger';
     removeBtn.dataset.detailsAction = 'destructive';
     removeBtn.innerHTML = `${icon('delete')}Remove book`;
     removeBtn.addEventListener('click', async () => {
       if (!await confirm(`Remove "${book.title}" from your library?`, { title: 'Remove book?', confirmLabel: 'Remove book', trigger: removeBtn })) return;
+      const snapshot = Storage.getBookById(book.id);
       closeDetailsModal();
       if (!Storage.removeBook(book.id)) return;
-      Utils.toast(`"${book.title}" removed`, 'info');
+      Utils.toast(`"${book.title}" removed`, 'info', {
+        action: {
+          label: 'Undo',
+          onClick: () => {
+            if (!snapshot || !Storage.restoreBook(snapshot)) return;
+            Utils.toast(`"${book.title}" restored`, 'success');
+            Navigation.updateBadges();
+            Navigation.renderCurrentPage();
+          },
+        },
+      });
       Navigation.updateBadges();
       Navigation.renderCurrentPage();
     });
@@ -655,6 +661,10 @@ export function createBookDetailsPage({
     Utils.hide(modal);
   }
 
+
+  function quoteCountLabel(n) {
+    return `${n} ${n === 1 ? 'quote' : 'quotes'}`;
+  }
 
   return { render: showDetailsModal, close: closeDetailsModal };
 }

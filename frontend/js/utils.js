@@ -290,17 +290,21 @@ export const Utils = {
       toast.addEventListener('animationend', () => toast.remove());
     };
 
+    // An action (Undo, Reload) works on any toast; the toast stays up longer
+    // so there is time to reach it.
+    const hasAction = Boolean(action?.label && typeof action.onClick === 'function');
+    if (hasAction) {
+      const actionBtn = document.createElement('button');
+      actionBtn.type = 'button';
+      actionBtn.className = 'toast-dismiss toast-action';
+      actionBtn.textContent = action.label;
+      actionBtn.addEventListener('click', () => { action.onClick(); dismiss(); }, { once: true });
+      toast.appendChild(actionBtn);
+    }
+
     if (persistent) {
       // Stays until the reader closes it (a failed save, an update to load).
       toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
-      if (action?.label && typeof action.onClick === 'function') {
-        const actionBtn = document.createElement('button');
-        actionBtn.type = 'button';
-        actionBtn.className = 'toast-dismiss toast-action';
-        actionBtn.textContent = action.label;
-        actionBtn.addEventListener('click', () => { action.onClick(); dismiss(); }, { once: true });
-        toast.appendChild(actionBtn);
-      }
       const close = document.createElement('button');
       close.type = 'button';
       close.className = 'toast-dismiss';
@@ -310,7 +314,7 @@ export const Utils = {
     }
 
     container.appendChild(toast);
-    if (!persistent) setTimeout(dismiss, 3500);
+    if (!persistent) setTimeout(dismiss, hasAction ? 8000 : 3500);
     return toast;
   },
 

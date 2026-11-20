@@ -293,6 +293,18 @@ export const Storage = (() => {
     return book;
   }
 
+  // Puts back a book that was just removed (Undo). Same id and data; the
+  // fresh updatedAt makes it outrank the delete tombstone during sync.
+  function restoreBook(book) {
+    if (!book?.id) return null;
+    const books = getBooks().filter(b => b.id !== book.id);
+    const restored = { ...book, deletedAt: null, updatedAt: new Date().toISOString() };
+    books.unshift(restored);
+    if (!saveBooks(books)) return null;
+    _dispatchChange('book:added', restored);
+    return restored;
+  }
+
   function updateBook(id, updates) {
     const books = getBooks();
     const idx   = books.findIndex(b => b.id === id);
@@ -652,7 +664,7 @@ export const Storage = (() => {
     bootstrap,
     resetAll,
     getActiveAccountUid, setActiveAccountUid, clearActiveAccountScope, clearAccountScopedData,
-    getBooks, saveBooks, addBook, updateBook, removeBook,
+    getBooks, saveBooks, addBook, restoreBook, updateBook, removeBook,
     getBookById, getBooksByStatus, toggleFavorite,
     getProfile, saveProfile,
     getBackupMeta, saveBackupMeta,
