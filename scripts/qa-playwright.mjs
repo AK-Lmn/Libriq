@@ -163,11 +163,11 @@ async function safe(fn, label) {
   await page.fill('#searchInput', '').catch(() => {});
   await page.waitForTimeout(500);
   const searchStatus = await safe(() => page.locator('#searchStatus').innerText(), 'get search status');
-  if (searchStatus && !searchStatus.includes('3 characters')) {
+  if (searchStatus && !searchStatus.includes('2 characters')) {
     logIssue({
       title: 'Empty search does not show guidance',
       steps: ['Open search modal, clear search input'],
-      expected: 'Message about entering at least 3 characters',
+      expected: 'Message about entering at least 2 characters',
       actual: `Got: "${searchStatus}"`,
       severity: 'Low',
       page,

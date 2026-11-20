@@ -83,7 +83,7 @@ async function render(page, window, state = 'ready') {
     await page.locator('#searchInput').fill('Attention');
     await page.waitForFunction(loading => {
       const status = document.getElementById('searchStatus').textContent;
-      return status !== 'Enter at least 3 characters to search.' &&
+      return status !== 'Enter at least 2 characters to search.' &&
         document.getElementById('searchResults').getAttribute('aria-busy') === String(loading);
     }, state === 'loading');
     if (state === 'filtered') {
@@ -264,7 +264,7 @@ try {
     await page.keyboard.press('Escape');
     await page.evaluate(async () => { resolvePendingSearch([fixtureBook]); await new Promise(resolve => setTimeout(resolve, 0)); });
     await page.waitForFunction(() => document.activeElement?.id === 'fixtureTrigger');
-    assert.equal(await page.locator('#searchStatus').textContent(), 'Enter at least 3 characters to search.');
+    assert.equal(await page.locator('#searchStatus').textContent(), 'Enter at least 2 characters to search.');
     assert.equal(await page.locator('#searchResults .search-result-item').count(), 0);
     await page.evaluate(() => {
       dialogFixture.Storage.saveBooks([fixtureBook]);

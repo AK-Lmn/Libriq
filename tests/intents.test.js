@@ -97,7 +97,11 @@ test('the app wires both intents to sign-in, and demo search matches the API min
   assert.match(app, /claimPendingBook\(/);
   const nav = await read('frontend/js/navigation.js');
   assert.match(nav, /savePendingBook\(/);
-  assert.match(nav, /q\.length < 3/);
+  // Demo search and the API share one minimum, so a short query can't be
+  // sent to an API that would ignore it.
+  assert.match(nav, /q\.length < MIN_SEARCH_LENGTH/);
+  const api = await read('frontend/js/api/index.js');
+  assert.match(api, /q\.length < MIN_SEARCH_LENGTH/);
 });
 
 function read(file) {

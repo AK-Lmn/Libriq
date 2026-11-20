@@ -3,6 +3,7 @@ import { Utils } from './utils.js';
 
 import { BookAPI } from './api/index.js';
 import { Library } from './library.js';
+import { MIN_SEARCH_LENGTH } from './shared/searchQuery.js';
 
 export const Search = (() => {
   const Identity = {
@@ -96,7 +97,7 @@ export const Search = (() => {
       <i class="ph ph-books" aria-hidden="true"></i>
       <h3>A whole world of stories</h3>
       <p>Search by title, author, or ISBN to find your next read.</p>`;
-    _setStatus('Enter at least 3 characters to search.');
+    _setStatus(`Enter at least ${MIN_SEARCH_LENGTH} characters to search.`);
   }
 
   function _showRecovery(icon, title, message, reset = false) {
@@ -179,7 +180,7 @@ export const Search = (() => {
     const revision = ++searchRevision;
     const { resultsArea, emptyState } = getEls();
 
-    if (!query || query.length < 3) {
+    if (!query || query.length < MIN_SEARCH_LENGTH) {
       _setDefaultEmptyState();
       _clearResults();
       return;

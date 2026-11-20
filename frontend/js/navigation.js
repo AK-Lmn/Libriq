@@ -40,6 +40,7 @@ import { coverImgAttrs } from './shared/coverSize.js';
 import { initialAuthMode } from './shared/authMode.js';
 import { MIN_PASSWORD_LENGTH, newPasswordProblem } from './shared/passwordPolicy.js';
 import { showFieldErrors, clearFieldErrors } from './shared/fieldErrors.js';
+import { MIN_SEARCH_LENGTH } from './shared/searchQuery.js';
 
 export function completeGoodreadsImport({ previewResult, storage, toast, rerender } = {}) {
   const result = executeGoodreadsImport({
@@ -1584,7 +1585,7 @@ function renderSessionChoicePage() {
 
   const executeDemoSearch = async (query) => {
     const q = (query || '').trim();
-    if (!q || q.length < 3) {
+    if (!q || q.length < MIN_SEARCH_LENGTH) {
       if (demoResults) {
         demoResults.innerHTML = '';
         demoResults.hidden = true;

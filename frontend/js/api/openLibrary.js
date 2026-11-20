@@ -1,5 +1,6 @@
 import { NormalizeBook } from './normalizeBook.js';
 import { fetchJson } from '../shared/fetchClient.js';
+import { MIN_SEARCH_LENGTH } from '../shared/searchQuery.js';
 
 export const OpenLibraryAPI = (() => {
 
@@ -19,7 +20,7 @@ export const OpenLibraryAPI = (() => {
   ].join(',');
 
   async function search(query) {
-    if (!query || query.trim().length < 3) return [];
+    if (!query || query.trim().length < MIN_SEARCH_LENGTH) return [];
     _lastFetchFailed = false;
 
     const params = new URLSearchParams({

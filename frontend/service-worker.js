@@ -241,6 +241,7 @@ const SHELL_ASSETS = [
   './js/shared/authMode.js',
   './js/shared/passwordPolicy.js',
   './js/shared/fieldErrors.js',
+  './js/shared/searchQuery.js',
   './js/shared/chartTable.js',
   './js/shared/chartKeyboard.js',
   './js/shared/crossTab.js',
