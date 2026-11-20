@@ -38,3 +38,18 @@ test('CSS source files are saved without a byte-order mark', async () => {
   }
   assert.deepEqual(withBom, []);
 });
+
+// `npm run build` rewrites components.css from the list in
+// generate-config.mjs, so a stylesheet missing from that list silently
+// disappears in CI and on deploy even when it works locally.
+test('every component and feature stylesheet is bundled or linked directly', async () => {
+  const [script, html] = await Promise.all([
+    readFile(path.join(process.cwd(), 'scripts', 'generate-config.mjs'), 'utf8'),
+    readFile(path.join(process.cwd(), 'frontend', 'index.html'), 'utf8'),
+  ]);
+  const files = (await listCss(cssDir))
+    .map(file => path.relative(cssDir, file).split(path.sep).join('/'))
+    .filter(file => /^(components|features)\//.test(file));
+  const missing = files.filter(file => !script.includes(`'${file}'`) && !html.includes(`css/${file}`));
+  assert.deepEqual(missing, []);
+});

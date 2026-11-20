@@ -6521,6 +6521,14 @@ html[data-theme] #settingsPage .settings-footer span { font: 400 10px var(--font
   box-shadow: 0 10px 20px -2px rgba(0, 0, 0, 0.12);
 }
 
+/* 44px tap target for the book title button on phones (AGENTS.md).
+   Padding grows the hit area; equal negative margins keep the text and the
+   compact card height exactly where they were. */
+@media (max-width: 768px) {
+  #libraryPage .book-card-title { padding-block: 11px; margin: -11px 0 -7px; }
+  #statusPage .book-card-title { padding-block: 12px; margin: -12px 0 -4px; }
+}
+
 
 #quotesPage .activity-subtitle, #quotesPage .btn-ghost { color: var(--text-body); }
 #quotesPage .chip.active { color: var(--text-strong); }
@@ -9002,13 +9010,6 @@ html[data-theme] .action-confirmation .ph-info { --support-icon: url('../assets/
   html[data-theme] :is(#whatsNewModal, #backupImportModal, #dangerConfirmModal, .action-confirmation) > .modal { background: var(--glass-solid-2); box-shadow: none; }
 }
 
-/* 44px tap target for the book title button on phones (AGENTS.md).
-   Padding grows the hit area; equal negative margins keep the text and the
-   compact card height exactly where they were. */
-@media (max-width: 768px) {
-  #libraryPage .book-card-title { padding-block: 11px; margin: -11px 0 -7px; }
-  #statusPage .book-card-title { padding-block: 12px; margin: -12px 0 -4px; }
-}
 
 /* Shared page header: every app page opens with the same title, subtitle
    and spacing, and nothing above the title. Comes last in the bundle so it

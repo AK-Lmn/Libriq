@@ -161,6 +161,8 @@ async function bundleCss() {
     'features/kindle-import.css',
     'features/goodreads-import.css',
     'features/support-dialogs.css',
+    // Last, so the shared header wins over older per-page header rules.
+    'components/page-header.css',
   ];
   // Strip a leading byte-order mark: mid-bundle it would glue onto the next selector and void that rule.
   // Rebase relative url()s: they are written relative to each source file, but the bundle lives in css/.
