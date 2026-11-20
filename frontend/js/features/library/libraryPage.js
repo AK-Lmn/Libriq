@@ -1,3 +1,4 @@
+import { pageHeader } from '../../shared/pageHeader.js';
 import { buildLibraryShelfEmpty } from './libraryShelvesPage.js';
 import { customShelves, libraryIcon, libraryTools, sortLibraryBooks, renderBookshelfView } from './libraryDesign.js';
 
@@ -109,14 +110,13 @@ export function createLibraryPage({ storage, library, utils, constants, actions 
 
     main.innerHTML = `
       <div class="page" id="libraryPage">
-        <div class="page-header library-header">
-          <div class="library-heading">
-            <span class="library-eyebrow">Personal collection</span>
-            <h1 class="page-title">My Library</h1>
-            <p class="page-subtitle">${books.length} book${books.length !== 1 ? 's' : ''} total</p>
-          </div>
-          <button class="btn btn-primary library-add-book" type="button" data-action="open-search">${libraryIcon('plus')} Add Book</button>
-        </div>
+        ${pageHeader({
+          title: 'My Library',
+          subtitle: `${books.length} book${books.length !== 1 ? 's' : ''} total`,
+          aside: `<button class="btn btn-primary library-add-book" type="button" data-action="open-search">${libraryIcon('plus')} Add Book</button>`,
+          className: 'library-header',
+          headingClass: 'library-heading',
+        })}
         ${libraryTools(utils, state, shelves).replace('id="librarySearchClear"', 'id="clearLibrarySearch"')}
         <div class="chip-group library-filters" id="libraryFilters">
           <button class="chip${state.filter === 'all' ? ' active' : ''}" data-action="filter-library" data-filter="all">All <span>${counts.all}</span></button>

@@ -143,9 +143,8 @@ export function createHelpPage({ storage, actions, documentRoot }) {
         </aside>
         <div class="help-reading-column">
           <header class="help-introduction">
-            <span class="help-eyebrow">${icon('compass')} A LITTLE GUIDANCE</span>
             <h1 class="page-title">Help &amp; Guide Center</h1>
-            <p>A quieter way to keep track of your reading. Find your next book, tend your library, and keep your progress close.</p>
+            <p class="page-subtitle">Guides for every part of LibriQ. Search them or open a section below.</p>
             <div class="help-search-container">
               <div class="help-search-input-wrapper">
                 <i class="ph ph-magnifying-glass help-search-icon" aria-hidden="true"></i>

@@ -1,3 +1,4 @@
+import { pageHeader } from '../../shared/pageHeader.js';
 export function createSettingsPage({ storage, utils, constants, actions, documentRoot }) {
   if (!storage || !utils || !constants || !actions) {
     throw new TypeError('createSettingsPage requires storage, utils, constants, and actions.');
@@ -33,14 +34,12 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
 
     main.innerHTML = `
       <div class="page settings-page" id="settingsPage">
-        <header class="settings-header">
-          <div class="settings-heading">
-            <span class="settings-eyebrow">A SPACE OF YOUR OWN</span>
-            <h1 class="page-title">Settings</h1>
-            <p class="page-subtitle">Make LibriQ feel like you. Keep your library safe, private and close at hand.</p>
-          </div>
-          <span class="settings-device-label">THIS DEVICE · PREFERENCES</span>
-        </header>
+        ${pageHeader({
+          title: 'Settings',
+          subtitle: 'Appearance, backups, sync and your account.',
+          className: 'settings-header',
+          headingClass: 'settings-heading',
+        })}
         <div class="settings-grid">
           <div class="settings-column">
             <section class="goal-widget settings-panel settings-panel-theme">

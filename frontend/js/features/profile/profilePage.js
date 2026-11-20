@@ -1,3 +1,4 @@
+import { pageHeader } from '../../shared/pageHeader.js';
 import { resolveAccountDisplayName } from '../../accountDisplayName.js';
 
 export function createProfilePage({ storage, utils, constants, actions = {}, documentRoot } = {}) {
@@ -62,11 +63,7 @@ export function createProfilePage({ storage, utils, constants, actions = {}, doc
 
     main.innerHTML = `
       <div class="page profile-page" id="profilePage">
-        <header class="profile-header">
-          <span class="profile-eyebrow">Your private workspace</span>
-          <h1 class="page-title">Profile</h1>
-          <p class="profile-subtitle">A little space for a lifetime of reading.</p>
-        </header>
+        ${pageHeader({ title: 'Profile', subtitle: 'Your account and your reading totals.', className: 'profile-header' })}
 
         <section class="profile-identity" aria-label="Account identity">
           <div class="profile-identity-row">

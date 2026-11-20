@@ -1,0 +1,38 @@
+/* Shared page header: every app page opens with the same title, subtitle
+   and spacing, and nothing above the title. Comes last in the bundle so it
+   wins over the older per-page header rules. */
+html[data-theme] :is(#libraryPage, #statusPage, #statsPage, #activityPage, #goalsPage, #quotesPage, #settingsPage, #profilePage) > .page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4) var(--space-6);
+  margin: 0 0 var(--space-8);
+  padding: 0;
+  text-align: left;
+}
+html[data-theme] :is(#libraryPage, #statusPage, #statsPage, #activityPage, #goalsPage, #quotesPage, #settingsPage, #profilePage) > .page-header > .page-heading {
+  display: block;
+  flex: 1 1 320px;
+  min-width: 0;
+}
+html[data-theme] :is(#libraryPage, #statusPage, #statsPage, #activityPage, #goalsPage, #quotesPage, #settingsPage, #profilePage) > .page-header .page-title,
+html[data-theme] #helpPage .help-introduction .page-title {
+  margin: 0;
+  color: var(--text-strong);
+  font: 400 40px/1.15 var(--font-serif);
+  letter-spacing: -0.8px;
+}
+html[data-theme] :is(#libraryPage, #statusPage, #statsPage, #activityPage, #goalsPage, #quotesPage, #settingsPage, #profilePage) > .page-header .page-subtitle,
+html[data-theme] #helpPage .help-introduction .page-subtitle {
+  max-width: 60ch;
+  margin: var(--space-2) 0 0;
+  color: var(--text-body);
+  font: 400 14px/1.6 var(--font-sans);
+  letter-spacing: 0;
+}
+@media (max-width: 767px) {
+  html[data-theme] :is(#libraryPage, #statusPage, #statsPage, #activityPage, #goalsPage, #quotesPage, #settingsPage, #profilePage) > .page-header { margin-bottom: var(--space-6); }
+  html[data-theme] :is(#libraryPage, #statusPage, #statsPage, #activityPage, #goalsPage, #quotesPage, #settingsPage, #profilePage) > .page-header .page-title,
+  html[data-theme] #helpPage .help-introduction .page-title { font-size: 32px; letter-spacing: -0.5px; }
+}

@@ -68,7 +68,7 @@ function createPageHarness(libraryBooks) {
 
 const page = createPageHarness(books);
 assert.match(page.main.innerHTML, /id="quotesPage"/);
-assert.match(page.main.innerHTML, /Your private collection/);
+assert.match(page.main.innerHTML, /Only you can see them./);
 assert.match(page.main.innerHTML, /for="quotesSearchInput"/);
 assert.match(page.main.innerHTML, /aria-pressed="true"/);
 assert.equal(page.status.textContent, '4 of 4 saved quotes');

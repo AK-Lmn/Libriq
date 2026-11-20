@@ -1,3 +1,4 @@
+import { pageHeader } from '../../shared/pageHeader.js';
 const FILTER_TYPES = Object.freeze({
   books: ['book_added', 'manual_book_added', 'status_changed', 'progress_updated', 'book_finished', 'rating_updated', 'favorite_added', 'favorite_removed'],
   progress: ['status_changed', 'progress_updated', 'book_finished'],
@@ -79,12 +80,12 @@ export function createActivityPage({ storage, utils, actions, session, documentR
 
     main.innerHTML = `
       <div class="page" id="activityPage">
-        <div class="page-header library-header activity-header">
-          <div class="library-heading">
-            <h1 class="page-title">Activity Log</h1>
-            <p class="page-subtitle">The quiet record of your reading life.</p>
-          </div>
-        </div>
+        ${pageHeader({
+          title: 'Activity Log',
+          subtitle: 'Every book, progress update and note you have logged.',
+          className: 'library-header activity-header',
+          headingClass: 'library-heading',
+        })}
         <div class="activity-toolbar">
         <div id="activityFilters">
           <details class="activity-filter-menu"><summary><img src="assets/revamp/insights/activity-layers.svg" alt="" width="16" height="16" />${filter === 'all' ? 'All activity' : filter.charAt(0).toUpperCase() + filter.slice(1)}</summary>

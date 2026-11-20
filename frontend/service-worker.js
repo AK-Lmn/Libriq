@@ -243,6 +243,7 @@ const SHELL_ASSETS = [
   './js/shared/fieldErrors.js',
   './js/shared/searchQuery.js',
   './js/shared/chartTable.js',
+  './js/shared/pageHeader.js',
   './js/shared/chartKeyboard.js',
   './js/shared/crossTab.js',
   './vendor/firebase-app.js',
