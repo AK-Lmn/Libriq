@@ -1,4 +1,4 @@
-import { buildYearlyRecap, getRecapYears, rankRatedBooks } from './statisticsCalculations.js';
+import { buildYearlyRecap, getRecapYears } from './statisticsCalculations.js';
 import { chartDataTable, chartGroupAttrs, chartBarAttrs } from '../../shared/chartTable.js';
 import { pageHeader } from '../../shared/pageHeader.js';
 
@@ -26,9 +26,7 @@ export function createStatisticsPage({ storage, utils, constants, actions, docum
     const storedYear = Number.parseInt(globalThis.sessionStorage?.getItem('libriq_stats_recap_year') || '', 10);
     const selectedYear = years.includes(storedYear) ? storedYear : currentYear;
     const recap = buildYearlyRecap(books, selectedYear, { finishedStatus: constants.STATUS.FINISHED, monthLabels: constants.MONTHS });
-    const ratedBooks = rankRatedBooks(books);
     const goal = Math.max(0, Number(goals.yearly) || 0);
-    const goalPercent = goal ? Math.min(100, Math.round(stats.finishedThisYear / goal * 100)) : 0;
 
     main.innerHTML = `
       <div class="page stats-page" id="statsPage">
@@ -119,23 +117,11 @@ export function createStatisticsPage({ storage, utils, constants, actions, docum
               <div class="goal-header"><h2 class="goal-title">All-Time Summary</h2></div>
               <div class="activity-list">
                 ${[
-                  ['Total books', stats.total], ['Reading', stats.reading], ['Finished', stats.finished],
-                  ['Want to read', stats.wishlist], ['Did not finish', books.filter(book => book.status === constants.STATUS.DNF).length], ['Favorites', stats.favorites],
-                  ['Avg rating', stats.avgRating ? `${stats.avgRating} / 5` : 'None'],
-                  ['Pages read', utils.formatNumber(stats.totalPages)], ['Current streak', `${streak.current} days`],
-                  ['Longest streak', `${streak.longest} days`],
+                  ['Reading', stats.reading], ['Want to read', stats.wishlist],
+                  ['Did not finish', books.filter(book => book.status === constants.STATUS.DNF).length], ['Favorites', stats.favorites],
+                  ['Current streak', `${streak.current} days`],
                 ].map(([label, val]) => `<div class="activity-item"><span class="activity-subtitle">${label}</span><span class="activity-time">${val}</span></div>`).join('')}
               </div>
-              <div class="stats-year-goal">
-                <div class="activity-item"><span class="activity-subtitle">This year's goal</span><span class="activity-time">${stats.finishedThisYear} / ${goal}</span></div>
-                <div class="stats-goal-track" role="progressbar" aria-label="This year's reading goal" aria-valuenow="${goalPercent}" aria-valuemin="0" aria-valuemax="100"><span style="width:${goalPercent}%"></span></div>
-                <p class="stats-section-meta">${goal ? `${goalPercent}% complete · ${Math.max(0, goal - stats.finishedThisYear)} books to go` : 'Set a goal to track your progress'}</p>
-              </div>
-            </section>
-            <section class="goal-widget">
-              <div class="goal-header"><h2 class="goal-title">Highest Rated</h2>${icon('star')}</div>
-              <p class="stats-section-meta">All time · ${stats.ratedCount || 0} rated books</p>
-              ${ratedBooks.length ? buildRatedBookList(ratedBooks) : ratingEmpty()}
             </section>
           </div>
         </div>

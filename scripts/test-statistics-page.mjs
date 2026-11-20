@@ -64,7 +64,11 @@ assert.match(main.innerHTML, /Yearly Recap/);
 assert.match(main.innerHTML, /Finished Book/);
 assert.match(main.innerHTML, /stats-chart-grid/);
 assert.match(main.innerHTML, /monthlyChartStub/);
-assert.match(main.innerHTML, /stats-goal-track/);
+// Each number has one home: the goal lives on the dashboard, and the
+// all-time summary does not repeat the stat cards above it.
+assert.doesNotMatch(main.innerHTML, /stats-goal-track/);
+assert.equal((main.innerHTML.match(/Highest Rated/g) || []).length, 1);
+assert.equal((main.innerHTML.match(/Longest streak/g) || []).length, 1);
 assert.doesNotMatch(main.innerHTML, /undefined|NaN|Infinity/);
 assert.doesNotMatch(main.innerHTML, /class="[^"]*(?:gold|amber|orange)/);
 const source = fs.readFileSync('frontend/js/features/statistics/statisticsPage.js', 'utf8');

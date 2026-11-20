@@ -7,8 +7,8 @@
 
 .main-content:has(.dashboard-page) { padding-top: 0; }
 .dashboard-topbar, .dashboard-page-context, .dashboard-actions,
-.dashboard-sync, .dashboard-hero-shell, .dashboard-micro-stats,
-.dashboard-mini-label, .dashboard-section-header, .dashboard-hero-actions {
+.dashboard-sync, .dashboard-hero-shell,
+.dashboard-section-header, .dashboard-hero-actions {
   display: flex;
   align-items: center;
 }
@@ -45,11 +45,6 @@
 .greeting-title { margin: 0; font: 400 36px/1.25 var(--font-serif); letter-spacing: -0.7px; color: var(--text-strong); overflow-wrap: anywhere; }
 .greeting-title span { color: inherit; }
 .greeting-subtitle { margin: 10px 0 0; color: var(--text-muted); font-size: 13px; }
-.dashboard-micro-stats { gap: 12px; flex-shrink: 0; }
-.dashboard-mini-card { min-width: 152px; padding: 16px; border-radius: 20px; background: var(--glass-fill-3); border-top: 1px solid var(--glass-highlight); }
-.dashboard-mini-label { gap: 8px; color: var(--text-body); font-size: 11px; }
-.dashboard-mini-value { margin-top: 6px; font: 20px var(--font-mono); color: var(--text-strong); }
-.dashboard-mini-value small { font: 10px var(--font-sans); color: var(--text-body); }
 .dashboard-layout { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(300px, 1fr); gap: 24px; align-items: start; }
 .dashboard-main, .dashboard-aside { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
 .dashboard-aside { gap: 20px; }
@@ -104,17 +99,15 @@
 .dashboard-recent-status::before { content: '• '; }
 .dashboard-recent-status[data-status="reading"] { color: var(--indigo); }
 .dashboard-recent-status[data-status="finished"] { color: var(--teal); }
-.dashboard-compact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.dashboard-compact-card { display: flex; flex-direction: column; min-width: 0; position: relative; gap: 4px; border-radius: 16px; padding: 16px; background: var(--glass-fill-3); border-top: 1px solid var(--glass-highlight); }
-.dashboard-compact-card .dashboard-icon { position: absolute; top: 24px; right: 16px; }
+.dashboard-compact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px 0; }
+/* Stats sit flat in the panel, split by hairlines, not as cards inside a card. */
+.dashboard-compact-card { display: flex; flex-direction: column; min-width: 0; position: relative; gap: 4px; padding: 4px 16px; }
+.dashboard-compact-card + .dashboard-compact-card { border-left: 1px solid var(--glass-border); }
+.dashboard-compact-card .dashboard-icon { position: absolute; top: 10px; right: 16px; }
 .dashboard-compact-card strong { order: -1; padding-right: 18px; margin-bottom: 12px; font: 24px var(--font-mono); color: var(--text-strong); }
 .dashboard-compact-label { font-size: 11px; }
-.dashboard-compact-card > span:last-child { font-size: 9px; color: var(--text-body); }
-.dashboard-quick-note { padding: 12px; background: var(--glass-fill-1); border-radius: 12px; }
+.dashboard-compact-card > span:last-child { font-size: 11px; color: var(--text-body); }
 .dashboard-quote-label { display: flex; align-items: center; gap: 8px; color: var(--text-body); font: 9px var(--font-mono); text-transform: uppercase; letter-spacing: 1px; }
-.dashboard-quick-note p { margin: 8px 0 0; font: 13px/1.5 var(--font-serif); overflow-wrap: anywhere; }
-.dashboard-quick-meta { display: flex; flex-direction: column; gap: 4px; margin-top: 16px; font-size: 10px; color: var(--text-body); }
-.dashboard-quick-meta span { display: flex; align-items: center; gap: 12px; }
 .dashboard-activity-list { display: flex; flex-direction: column; gap: 16px; }
 .dashboard-page .activity-item { display: flex; gap: 12px; padding: 0; border: 0; align-items: flex-start; }
 .dashboard-page .activity-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--indigo-12); color: var(--indigo); }
@@ -138,7 +131,7 @@
 .dashboard-goal-copy h3 { margin: 10px 0; font: 400 21px/1.2 var(--font-serif); color: var(--text-strong); }
 .dashboard-goal-copy p { margin: 0; font-size: 11px; color: var(--text-body); }
 .dashboard-page .goal-stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-#dashboardPage .goal-stat { padding: 12px; min-height: 0; background: var(--glass-fill-1); border-radius: 12px; }
+#dashboardPage .goal-stat { padding: 0; min-height: 0; background: none; border-radius: 0; }
 .dashboard-page .goal-stat-value { font: 15px var(--font-mono); color: var(--text-strong); }
 .dashboard-page .goal-stat-label { margin-top: 4px; font-size: 10px; color: var(--text-body); }
 #dashboardPage .genre-list { display: flex; flex-direction: column; gap: 12px; }
@@ -318,6 +311,7 @@
   .dashboard-hero-shell { align-items: flex-start; flex-direction: column; }
   .dashboard-hero-card { grid-template-columns: 1fr; }
   .dashboard-recent-row, .dashboard-compact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-compact-card:nth-child(odd) { border-left: 0; }
   .dashboard-goal-ring { grid-template-columns: 100px minmax(0, 1fr); gap: 12px; }
   .dashboard-page .goal-ring-wrap { width: 100px; height: 100px; }
 }
@@ -333,8 +327,6 @@
   .greeting-label { font-size: 9px; margin-bottom: 8px; }
   .greeting-title { font-size: 28px; letter-spacing: -0.5px; }
   .greeting-subtitle { font-size: 11px; margin-top: 8px; }
-  .dashboard-micro-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .dashboard-mini-card { min-width: 0; padding: 16px; border-radius: 16px; }
   .dashboard-layout { grid-template-columns: minmax(0, 1fr); gap: 28px; }
   .dashboard-main, .dashboard-aside { gap: 28px; }
   .dashboard-panel { padding: 20px; -webkit-backdrop-filter: none; backdrop-filter: none; }
@@ -350,7 +342,8 @@
   .dashboard-page .dashboard-hero-actions .btn { font-size: 11px; padding: 10px; }
   .dashboard-recent-row, .dashboard-compact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dashboard-recent-card .book-cover { height: 168px; }
-  .dashboard-compact-card { padding: 16px; min-height: 100px; }
+  .dashboard-compact-card { padding: 4px 16px; min-height: 0; }
+  .dashboard-compact-card:nth-child(odd) { border-left: 0; }
   .dashboard-goal-ring { grid-template-columns: 128px minmax(0, 1fr); gap: 16px; }
   .dashboard-privacy { justify-content: center; font-size: 9px; }
   .dashboard-privacy-main { display: none; }

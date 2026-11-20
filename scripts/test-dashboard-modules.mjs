@@ -92,7 +92,9 @@ Dashboard.render();
 assert.match(main.innerHTML, /Reading Book/);
 assert.match(main.innerHTML, /Finished this year/);
 assert.match(main.innerHTML, /Finished Book/);
-assert.match(main.innerHTML, /3 <small>Days<\/small>/);
+// The streak has one home, in Reading Momentum.
+assert.match(main.innerHTML, /Day streak<\/span>\s*<strong>3<\/strong>/);
+assert.doesNotMatch(main.innerHTML, /dashboard-mini-card|Quick Workspace/);
 assert.match(main.innerHTML, /data-action="update-progress" data-book-id="reading-1"/);
 assert.match(main.innerHTML, /data-action="show-book-details" data-book-id="reading-1"/);
 assert.doesNotMatch(main.innerHTML, /onclick=/);
