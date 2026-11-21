@@ -892,6 +892,17 @@ function renderBootPage() {
   const main = document.getElementById('mainContent');
   if (!main) return;
   main.hidden = false;
+  const restoring = LibriqFirebase.getState().restoringSession;
+  // index.html already paints this boot screen. Keep that node instead of
+  // rebuilding it: a fresh copy counts as a new paint (a late LCP) and
+  // shifts the layout while the page looks unchanged.
+  const staticBoot = main.querySelector(':scope > .session-page--boot');
+  if (staticBoot) {
+    [...main.children].forEach(child => { if (child !== staticBoot) child.remove(); });
+    const status = staticBoot.querySelector('.session-card-title');
+    if (status && restoring) status.textContent = 'Restoring your session';
+    return;
+  }
   main.innerHTML = `
     <div class="session-page session-page--boot">
       <section class="session-boot-card" aria-labelledby="sessionBootTitle" aria-busy="true">
