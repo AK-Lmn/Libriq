@@ -124,7 +124,8 @@ try {
   });
   for (const route of ['dashboard', 'library', 'reading', 'wishlist', 'finished', 'favorites', 'activity', 'stats', 'goals', 'help', 'profile', 'settings']) {
     await page.evaluate(pageName => Navigation.goTo(pageName), route);
-    await page.waitForFunction(pageName => Navigation.currentPage === pageName && Boolean(document.querySelector('#mainContent .page')), route);
+    await page.waitForFunction(pageName => Navigation.currentPage === pageName && Boolean(document.querySelector('#mainContent .page')), route)
+      .catch(error => { throw new Error(`${route}: page did not render (currentPage ${error.message.includes('Timeout') ? 'stuck' : ''})`, { cause: error }); });
   }
   const initialTheme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
   await page.evaluate(() => Navigation.toggleTheme());
