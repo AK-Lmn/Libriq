@@ -157,6 +157,7 @@ const SHELL_ASSETS = [
   './assets/icons/apple-touch-icon.png',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
+  './assets/icons/maskable-icon-192.png',
   './assets/icons/maskable-icon-512.png',
   './css/tokens.css',
   './css/components.css',
