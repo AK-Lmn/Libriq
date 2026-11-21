@@ -9,10 +9,9 @@ import {
 } from './e2e-test-utils.mjs';
 
 const testName = 'storage-browser';
-const port = 4176;
-const baseUrl = `http://127.0.0.1:${port}`;
+let baseUrl;
 const { version } = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
-const server = startE2EServer({ port, testName });
+const server = startE2EServer({ testName });
 let browser;
 const contexts = [];
 
@@ -38,7 +37,7 @@ async function openPage(context, init) {
 }
 
 try {
-  await waitForServer(baseUrl, { testName });
+  baseUrl = await waitForServer(server, { testName });
   browser = await chromium.launch({ headless: true });
 
   const freshContext = await browser.newContext();

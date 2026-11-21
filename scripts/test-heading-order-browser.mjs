@@ -5,9 +5,8 @@ import { chromium } from 'playwright';
 import { startE2EServer, waitForServer, waitForAppReady, stopE2EServer, closePlaywright } from './e2e-test-utils.mjs';
 
 const testName = 'heading-order-browser';
-const port = 4175;
-const baseUrl = `http://127.0.0.1:${port}`;
-const server = startE2EServer({ port, testName });
+let baseUrl;
+const server = startE2EServer({ testName });
 
 const ROUTES = ['dashboard', 'library', 'reading', 'wishlist', 'finished', 'favorites', 'stats', 'goals',
   'activity', 'recommendations', 'help', 'profile', 'settings'];
@@ -45,7 +44,7 @@ function audit() {
 
 let browser;
 try {
-  await waitForServer(baseUrl, { testName });
+  baseUrl = await waitForServer(server, { testName });
   browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await page.goto(`${baseUrl}/?libriq_e2e_test_mode=1`, { waitUntil: 'domcontentloaded' });

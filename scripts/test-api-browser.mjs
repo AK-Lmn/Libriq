@@ -4,15 +4,14 @@ import { chromium } from 'playwright';
 import { startE2EServer, waitForServer, stopE2EServer, closePlaywright } from './e2e-test-utils.mjs';
 
 const testName = 'api-browser-smoke';
-const port = 4174;
-const baseUrl = `http://127.0.0.1:${port}`;
+let baseUrl;
 const { version: appVersion } = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
-const server = startE2EServer({ port, testName });
+const server = startE2EServer({ testName });
 let browser;
 let context;
 
 try {
-  await waitForServer(baseUrl, { testName });
+  baseUrl = await waitForServer(server, { testName });
   browser = await chromium.launch({ headless: true });
   context = await browser.newContext();
   await context.addInitScript((version) => {

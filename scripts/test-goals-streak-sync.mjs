@@ -1,15 +1,11 @@
-import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { startE2EServer, waitForServer } from './e2e-test-utils.mjs';
 
-const port = Number(process.env.LIBRIQ_E2E_PORT || 4173);
-const baseUrl = `http://127.0.0.1:${port}/?libriq_e2e_test_mode=1`;
-
-function startServer() {
-  const child = spawn(process.execPath, ['scripts/e2e-server.mjs'], { stdio: 'inherit', env: { ...process.env, LIBRIQ_E2E_PORT: String(port), LIBRIQ_ENABLE_TEST_API: '1' } });
-  return child;
-}
+// Set once the server is up: it listens on a free port (see e2e-test-utils.mjs).
+let port;
+let baseUrl;
 
 async function setupPage(context, uid, email) {
   const page = await context.newPage();
@@ -25,9 +21,11 @@ async function setupPage(context, uid, email) {
 }
 
 async function main() {
-  const server = startServer();
+  const server = startE2EServer({ testName: 'goals-streak-sync' });
   try {
-    await delay(1500);
+    const origin = await waitForServer(server, { testName: 'goals-streak-sync' });
+    port = new URL(origin).port;
+    baseUrl = `${origin}/?libriq_e2e_test_mode=1`;
     await fetch(`http://127.0.0.1:${port}/__libriq_test_api/reset`, { method: 'POST' });
     const browser = await chromium.launch({ headless: true });
     const uid = 'goals-user';

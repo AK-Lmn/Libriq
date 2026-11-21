@@ -6,13 +6,12 @@ import { chromium } from 'playwright';
 import { startE2EServer, waitForServer, waitForAppReady, stopE2EServer, closePlaywright } from './e2e-test-utils.mjs';
 
 const testName = 'search-combobox-browser';
-const port = 4175;
-const baseUrl = `http://127.0.0.1:${port}`;
-const server = startE2EServer({ port, testName });
+let baseUrl;
+const server = startE2EServer({ testName });
 
 let browser;
 try {
-  await waitForServer(baseUrl, { testName });
+  baseUrl = await waitForServer(server, { testName });
   browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
   const errors = [];

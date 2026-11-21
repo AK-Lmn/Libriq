@@ -97,6 +97,10 @@ async function render(page, window, theme, state) {
 }
 
 async function inspect(page) {
+  // Let images finish loading first. Under load (tests run in parallel) an SVG
+  // can still be in flight right after render. A broken image still fails
+  // below: it ends up complete with naturalWidth 0.
+  await page.waitForFunction(() => [...document.images].every(img => img.complete), null, { timeout: 10000 }).catch(() => {});
   return page.evaluate(() => {
     const shown = el => el && el.getClientRects().length && el.getBoundingClientRect().right > 0 && el.getBoundingClientRect().left < innerWidth && getComputedStyle(el).visibility !== 'hidden' && !el.closest('[hidden], [inert]');
     const rgba = value => {

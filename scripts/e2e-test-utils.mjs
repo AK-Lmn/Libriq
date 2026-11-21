@@ -4,24 +4,46 @@ export function phase(testName, message) {
   console.log(`[${testName}] ${message}`);
 }
 
-export function startE2EServer({ port, testName }) {
+// Starts scripts/e2e-server.mjs. By default it listens on port 0, so the OS
+// picks a free port and browser tests can run in parallel. The server prints
+// its real address; `child.origin` resolves to it ("http://127.0.0.1:PORT").
+export function startE2EServer({ port = 0, testName } = {}) {
   const child = spawn(process.execPath, ['scripts/e2e-server.mjs'], {
-    stdio: 'inherit',
+    stdio: ['ignore', 'pipe', 'inherit'],
     env: { ...process.env, LIBRIQ_E2E_PORT: String(port), LIBRIQ_ENABLE_TEST_API: '1' },
   });
+  child.origin = new Promise((resolve, reject) => {
+    let buffered = '';
+    child.stdout.on('data', chunk => {
+      process.stdout.write(chunk);
+      buffered += chunk;
+      const match = buffered.match(/running at (http:\/\/[\d.]+:\d+)/);
+      if (match) resolve(match[1]);
+    });
+    child.once('exit', code => reject(new Error(`[${testName}] local server exited (${code}) before it was ready`)));
+  });
+  child.origin.catch(() => {});
   child.once('error', error => {
     console.error(`[${testName}] local server process error:`, error.message);
   });
   return child;
 }
 
-export async function waitForServer(baseUrl, { testName, timeoutMs = 10000 } = {}) {
+// Waits until the server answers its health check and returns its origin.
+// Pass the child from startE2EServer, or an origin string.
+export async function waitForServer(serverOrOrigin, { testName, timeoutMs = 10000 } = {}) {
   const deadline = Date.now() + timeoutMs;
+  const baseUrl = typeof serverOrOrigin === 'string'
+    ? serverOrOrigin
+    : await Promise.race([
+      serverOrOrigin.origin,
+      new Promise((_, reject) => setTimeout(() => reject(new Error(`[${testName}] local server did not print its address within ${timeoutMs}ms`)), timeoutMs)),
+    ]);
   let lastError = '';
   while (Date.now() < deadline) {
     try {
       const response = await fetch(`${baseUrl}/__libriq_test_api/health`);
-      if (response.ok) return;
+      if (response.ok) return baseUrl;
       lastError = `HTTP ${response.status}`;
     } catch (error) {
       lastError = error.message;

@@ -8,9 +8,8 @@ import { chromium } from 'playwright';
 import { startE2EServer, waitForServer, stopE2EServer, closePlaywright } from './e2e-test-utils.mjs';
 
 const testName = 'dashboard-cls-browser';
-const port = 4175;
-const baseUrl = `http://127.0.0.1:${port}`;
-const server = startE2EServer({ port, testName });
+let baseUrl;
+const server = startE2EServer({ testName });
 
 async function throttle(context, page) {
   const cdp = await context.newCDPSession(page);
@@ -28,7 +27,7 @@ const recordShifts = () => {
 
 let browser;
 try {
-  await waitForServer(baseUrl, { testName });
+  baseUrl = await waitForServer(server, { testName });
   browser = await chromium.launch({ headless: true });
   for (const [width, height] of [[412, 823], [1280, 800]]) {
     const context = await browser.newContext({ viewport: { width, height }, isMobile: width < 500 });

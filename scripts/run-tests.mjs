@@ -1,10 +1,12 @@
 // Runs every scripts/test-*.mjs, split into two tiers:
 //   unit    — plain Node, no browser
 //   browser — imports Playwright (needs `npx playwright install chromium`)
-// Usage: node scripts/run-tests.mjs --tier unit|browser|all [--retries N]
-// Scripts run one at a time: several browser tests bind fixed ports.
+// Usage: node scripts/run-tests.mjs --tier unit|browser|all [--retries N] [--jobs N]
+// Scripts run in parallel, --jobs at a time (default: half the CPU cores, at
+// most 4). Browser tests start their server on a free port, so they don't clash.
 import { spawn } from 'node:child_process';
 import { readdir, readFile } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -54,6 +56,8 @@ async function main(argv) {
   const arg = (flag, fallback) => { const i = argv.indexOf(flag); return i >= 0 ? argv[i + 1] : fallback; };
   const tier = arg('--tier', 'all');
   const retries = Number(arg('--retries', '0'));
+  const defaultJobs = Math.min(4, Math.max(1, Math.floor(os.availableParallelism() / 2)));
+  const jobs = Math.max(1, Number(arg('--jobs', String(defaultJobs))) || 1);
   if (!['unit', 'browser', 'all'].includes(tier)) throw new Error(`Unknown tier: ${tier}`);
 
   const dir = path.dirname(fileURLToPath(import.meta.url));
@@ -62,7 +66,7 @@ async function main(argv) {
   const flaky = [];
   const started = Date.now();
 
-  for (const script of scripts) {
+  async function runScript(script) {
     const file = path.join(dir, script.name);
     let result = await runOnce(file);
     let attempts = 1;
@@ -71,15 +75,21 @@ async function main(argv) {
       result = await runOnce(file);
     }
     if (result.ok && attempts > 1) flaky.push(script.name);
-    console.log(`${result.ok ? (attempts > 1 ? 'FLAKY' : 'PASS ') : 'FAIL '} ${script.name}`);
+    // Print each script's lines together, when it finishes.
+    let report = `${result.ok ? (attempts > 1 ? 'FLAKY' : 'PASS ') : 'FAIL '} ${script.name}`;
     if (!result.ok) {
       failed.push(script.name);
-      console.log(result.output.trim().split('\n').slice(-25).map(line => `    ${line}`).join('\n'));
+      report += '\n' + result.output.trim().split('\n').slice(-25).map(line => `    ${line}`).join('\n');
     }
+    console.log(report);
   }
 
+  const queue = [...scripts];
+  const worker = async () => { while (queue.length) await runScript(queue.shift()); };
+  await Promise.all(Array.from({ length: Math.min(jobs, scripts.length) }, worker));
+
   const seconds = Math.round((Date.now() - started) / 1000);
-  console.log(`\n${scripts.length - failed.length}/${scripts.length} ${tier} scripts passed in ${seconds}s` +
+  console.log(`\n${scripts.length - failed.length}/${scripts.length} ${tier} scripts passed in ${seconds}s (${jobs} at a time)` +
     (flaky.length ? `; passed on retry: ${flaky.join(', ')}` : ''));
   return failed.length ? 1 : 0;
 }

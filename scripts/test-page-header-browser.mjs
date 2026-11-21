@@ -5,14 +5,13 @@ import { chromium } from 'playwright';
 import { startE2EServer, waitForServer, waitForAppReady, stopE2EServer, closePlaywright } from './e2e-test-utils.mjs';
 
 const testName = 'page-header-browser';
-const port = 4175;
-const baseUrl = `http://127.0.0.1:${port}`;
-const server = startE2EServer({ port, testName });
+let baseUrl;
+const server = startE2EServer({ testName });
 const ROUTES = ['library', 'reading', 'stats', 'activity', 'goals', 'quotes', 'settings', 'profile', 'help'];
 
 let browser;
 try {
-  await waitForServer(baseUrl, { testName });
+  baseUrl = await waitForServer(server, { testName });
   browser = await chromium.launch({ headless: true });
   for (const [theme, width, height] of [['dark', 1280, 800], ['light', 390, 844]]) {
     const page = await browser.newPage({ viewport: { width, height } });
