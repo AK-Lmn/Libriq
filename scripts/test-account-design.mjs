@@ -9,7 +9,7 @@ const root = path.resolve('frontend');
 const output = path.resolve(process.env.LIBRIQ_ACCOUNT_ARTIFACTS || path.join(os.tmpdir(), 'libriq-account-design'));
 const html = (await fs.readFile(path.join(root, 'index.html'), 'utf8'))
   .replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, '')
-  .replace('class="auth-booting"', 'class="account-design-fixture"')
+  .replace('class="auth-booting session-choice-active"', 'class="account-design-fixture"')
   .replace('</head>', '<link rel="stylesheet" href="css/features/profile.css"><link rel="stylesheet" href="css/features/help.css"></head>');
 // Isolated render fixture: production authentication and shell files remain unchanged.
 const server = http.createServer(async (req, res) => {

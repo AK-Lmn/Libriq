@@ -41,7 +41,7 @@ const clippings = [
 async function fixture(page, theme, state) {
   await page.evaluate(async ({ theme, state }) => {
     document.documentElement.dataset.theme = theme;
-    document.body.classList.remove('auth-booting', 'auth-signed-out');
+    document.body.classList.remove('auth-booting', 'auth-signed-out', 'session-choice-active');
     const { createQuotesPage } = await import('./js/features/quotes/quotesPage.js');
     const { createKindleImportPage } = await import('./js/features/kindleImport/kindleImportPage.js');
     const { parseKindleClippings } = await import('./js/services/kindleClippingsParser.js');
