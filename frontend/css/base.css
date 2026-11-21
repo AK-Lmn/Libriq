@@ -30,16 +30,16 @@ body.auth-signed-out {
   overflow: hidden;
 }
 
-body.auth-booting .app-shell,
+body.auth-booting:not(.app-booting) .app-shell,
 body.auth-signed-out .app-shell {
   display: block;
   min-height: 100dvh;
 }
 
-body.auth-booting .sidebar,
-body.auth-booting .mobile-topbar,
-body.auth-booting #sidebar,
-body.auth-booting #sidebarOverlay,
+body.auth-booting:not(.app-booting) .sidebar,
+body.auth-booting:not(.app-booting) .mobile-topbar,
+body.auth-booting:not(.app-booting) #sidebar,
+body.auth-booting:not(.app-booting) #sidebarOverlay,
 body.auth-signed-out .sidebar,
 body.auth-signed-out .mobile-topbar,
 body.auth-signed-out #sidebar,
@@ -47,7 +47,7 @@ body.auth-signed-out #sidebarOverlay {
   display: none !important;
 }
 
-body.auth-booting #mainContent,
+body.auth-booting:not(.app-booting) #mainContent,
 body.auth-signed-out #mainContent {
   min-height: 100dvh;
   width: 100%;

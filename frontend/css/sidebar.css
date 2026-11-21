@@ -432,9 +432,9 @@
   }
 
   body.in-session .mobile-bottom-nav,
-  body.auth-booting .mobile-bottom-nav,
+  body.auth-booting:not(.app-booting) .mobile-bottom-nav,
   body.auth-signed-out .mobile-bottom-nav,
-  body.session-choice-active .mobile-bottom-nav {
+  body.session-choice-active:not(.app-booting) .mobile-bottom-nav {
     display: none !important;
   }
 

@@ -565,6 +565,8 @@ export const Navigation = (() => {
       body.classList.add('auth-signed-in');
     }
     body.classList.toggle('session-choice-active', page === 'session' || page === 'boot');
+    // js/shell-hint.js may have booted inside the app chrome; boot is over.
+    if (page !== 'boot') body.classList.remove('app-booting');
   }
 
   function getSessionPreference() {

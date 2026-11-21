@@ -29,7 +29,7 @@ try {
   const out = track(page);
   await page.goto(`${baseUrl}/?libriq_bundle=1`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.LibriqNavigation && !document.querySelector('.session-page--boot'), null, { timeout: 30000 });
-  const appScripts = out.scripts.filter(p => p.startsWith('/js/') && !/^\/js\/(config|config\.local|localConfigLoader)\.js$/.test(p));
+  const appScripts = out.scripts.filter(p => p.startsWith('/js/') && !/^\/js\/(config|config\.local|localConfigLoader|shell-hint)\.js$/.test(p));
   assert.deepEqual(appScripts, ['/js/boot.js', '/js/app.bundle.js'], 'only the loader and the bundle load');
   assert.deepEqual(out.errors, []);
   await page.close();

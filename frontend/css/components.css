@@ -7030,10 +7030,15 @@ button.session-card:hover:not(:disabled) { border-color: var(--indigo); }
 .install-prompt .ph-download-simple { --session-icon: url('../assets/revamp/account/23-5548-download.svg'); }
 
 body.session-choice-active { overflow-x: hidden; overflow-y: auto; }
-body.session-choice-active .app-shell { display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr; min-height: 100dvh; }
-body.session-choice-active :is(.sidebar, .mobile-topbar, .mobile-bottom-nav, #sidebar, #sidebarOverlay) { display: none !important; }
-body.session-choice-active #app { min-height: 100dvh; }
-body.session-choice-active #mainContent { grid-column: 1; min-height: 100dvh; display: block; width: 100%; overflow: visible; padding: 0; }
+body.session-choice-active:not(.app-booting) .app-shell { display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr; min-height: 100dvh; }
+body.session-choice-active:not(.app-booting) :is(.sidebar, .mobile-topbar, .mobile-bottom-nav, #sidebar, #sidebarOverlay) { display: none !important; }
+/* Returning visitors boot inside the app chrome (js/shell-hint.js), so the
+   dashboard does not push the page when it arrives. The chrome stays inert
+   until the app knows who is signed in. */
+body.app-booting #sidebarOverlay { display: none !important; }
+body.app-booting :is(.sidebar, .mobile-topbar, .mobile-bottom-nav) { pointer-events: none; }
+body.session-choice-active:not(.app-booting) #app { min-height: 100dvh; }
+body.session-choice-active:not(.app-booting) #mainContent { grid-column: 1; min-height: 100dvh; display: block; width: 100%; overflow: visible; padding: 0; }
 body.session-choice-active .toast-container { position: fixed; }
 
 @keyframes sessionSpin { to { transform: rotate(360deg); } }
