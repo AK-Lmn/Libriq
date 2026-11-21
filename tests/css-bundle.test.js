@@ -53,3 +53,28 @@ test('every component and feature stylesheet is bundled or linked directly', asy
   const missing = files.filter(file => !script.includes(`'${file}'`) && !html.includes(`css/${file}`));
   assert.deepEqual(missing, []);
 });
+
+// css/icons.css is generated (scripts/icon-subset.mjs) and committed, so it
+// must match what the build would write today.
+test('css/icons.css is up to date with the build', async () => {
+  const { buildIconCss } = await import('../scripts/icon-subset.mjs');
+  const { transform } = await import('esbuild');
+  const { css } = await buildIconCss(process.cwd());
+  const { code } = await transform(css, { loader: 'css', minify: true });
+  const committed = await readFile(path.join(cssDir, 'icons.css'), 'utf8');
+  assert.equal(committed.slice(committed.indexOf('\n') + 1), code, 'run npm run build and commit css/icons.css');
+});
+
+test('every icon the app names is in css/icons.css', async () => {
+  const icons = await readFile(path.join(cssDir, 'icons.css'), 'utf8');
+  const sources = [
+    await readFile(path.join(process.cwd(), 'frontend', 'index.html'), 'utf8'),
+    await readFile(path.join(process.cwd(), 'frontend', 'js', 'search.js'), 'utf8'),
+  ].join('\n');
+  const used = new Set([...sources.matchAll(/\bph-([a-z0-9-]+)/g)].map(m => m[1]).filter(name => !['fill', '$'].includes(name)));
+  // Search passes these names into `ph-${icon}`.
+  ['wifi-slash', 'magnifying-glass', 'funnel'].forEach(name => used.add(name));
+  const missing = [...used].filter(name => !icons.includes(`.ph-${name}:before`));
+  assert.deepEqual(missing, []);
+  assert.ok(icons.length < 20000, `icons.css is ${icons.length} bytes`);
+});

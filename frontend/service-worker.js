@@ -125,7 +125,7 @@ const SHELL_ASSETS = [
   './assets/fonts/lora-latin.woff2',
   './assets/fonts/lora-italic-latin.woff2',
   './assets/fonts/ibm-plex-mono-latin.woff2',
-  './vendor/phosphor/style.css',
+  './css/icons.css',
   './vendor/phosphor/Phosphor.woff2',
   './vendor/phosphor/Phosphor-Fill.woff2',
   './assets/dashboard/desktop-arrow-up-right.svg',
