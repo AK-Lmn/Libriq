@@ -182,6 +182,7 @@ const SHELL_ASSETS = [
   './js/localConfigLoader.js',
   './js/appModules.js',
   './js/boot.js',
+  './js/shell-hint.js',
   './js/app.bundle.js',
   './js/data.js',
   './js/storage.js',
