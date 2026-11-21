@@ -7,9 +7,8 @@ import { chromium } from 'playwright';
 import { startE2EServer, waitForServer, waitForAppReady, stopE2EServer, closePlaywright } from './e2e-test-utils.mjs';
 
 const testName = 'csp-browser';
-const port = 4175;
-const baseUrl = `http://127.0.0.1:${port}`;
-const server = startE2EServer({ port, testName });
+let baseUrl;
+const server = startE2EServer({ testName });
 
 const vercel = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
 const csp = vercel.headers.find(entry => entry.headers.some(h => h.key === 'Content-Security-Policy')).headers
@@ -19,7 +18,7 @@ const csp = vercel.headers.find(entry => entry.headers.some(h => h.key === 'Cont
 
 let browser;
 try {
-  await waitForServer(baseUrl, { testName });
+  baseUrl = await waitForServer(server, { testName });
   browser = await chromium.launch({ headless: true });
   const context = await browser.newContext();
   await context.route('**/*', async route => {

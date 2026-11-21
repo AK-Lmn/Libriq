@@ -3,14 +3,13 @@ import { chromium } from 'playwright';
 import { startE2EServer, waitForServer, stopE2EServer, closePlaywright } from './e2e-test-utils.mjs';
 
 const testName = 'dialog-accessibility-browser';
-const port = 4182;
-const baseUrl = `http://127.0.0.1:${port}`;
-const server = startE2EServer({ port, testName });
+let baseUrl;
+const server = startE2EServer({ testName });
 let browser;
 let context;
 
 try {
-  await waitForServer(baseUrl, { testName });
+  baseUrl = await waitForServer(server, { testName });
   browser = await chromium.launch({ headless: true });
   context = await browser.newContext();
   await context.addInitScript(() => {

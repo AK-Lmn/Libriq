@@ -5,7 +5,9 @@ import url from 'node:url';
 import { handleApiRequest } from '../server/app.js';
 
 const root = path.resolve(process.cwd(), 'frontend');
-const port = Number(process.env.LIBRIQ_E2E_PORT || 4173);
+// 0 lets the OS pick a free port, so tests can run side by side. The ready
+// line below prints the real address; e2e-test-utils.mjs reads it.
+const port = Number(process.env.LIBRIQ_E2E_PORT ?? 4173);
 const store = new Map();
 const subscribers = new Map();
 const sockets = new Set();
@@ -223,7 +225,7 @@ server.keepAliveTimeout = 5000;
 server.maxRequestsPerSocket = 100;
 
 server.listen(port, '127.0.0.1', () => {
-  console.log(`LibriQ E2E server running at http://127.0.0.1:${port}`);
+  console.log(`LibriQ E2E server running at http://127.0.0.1:${server.address().port}`);
 });
 
 server.on('connection', socket => {

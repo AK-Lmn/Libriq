@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { closePlaywright, phase, pollUntil, startE2EServer, stopE2EServer, waitForAppReady, waitForServer } from './e2e-test-utils.mjs';
 
-const port = Number(process.env.LIBRIQ_E2E_PORT || 4173);
-const baseUrl = `http://127.0.0.1:${port}/?libriq_e2e_test_mode=1`;
+// Set once the server is up: it listens on a free port (see e2e-test-utils.mjs).
+let port;
+let baseUrl;
 
 const testName = 'profile-sync';
 
@@ -27,11 +28,13 @@ async function setupPage(context, uid, email) {
 
 async function main() {
   phase(testName, 'test setup begins');
-  const server = startE2EServer({ port, testName });
+  const server = startE2EServer({ testName });
   let browser = null;
   const contexts = [];
   try {
-    await waitForServer(`http://127.0.0.1:${port}`, { testName });
+    const origin = await waitForServer(server, { testName });
+    port = new URL(origin).port;
+    baseUrl = `${origin}/?libriq_e2e_test_mode=1`;
     phase(testName, 'local server ready');
     await fetch(`http://127.0.0.1:${port}/__libriq_test_api/reset`, { method: 'POST' });
     phase(testName, 'launching browser');
