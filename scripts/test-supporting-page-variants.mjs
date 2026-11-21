@@ -10,7 +10,7 @@ const output = path.resolve(process.env.LIBRIQ_SUPPORTING_ARTIFACTS || path.join
 // Render only: the production bootstrap, auth and provider requests never run.
 const html = (await fs.readFile(path.join(root, 'index.html'), 'utf8'))
   .replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, '')
-  .replace('class="auth-booting"', 'class="supporting-render-fixture"')
+  .replace('class="auth-booting session-choice-active"', 'class="supporting-render-fixture"')
   .replace('</head>', '<link rel="stylesheet" href="css/features/profile.css"><link rel="stylesheet" href="css/features/library.css"><link rel="stylesheet" href="css/components/toast.css"></head>');
 const server = http.createServer(async (req, res) => {
   const pathname = new URL(req.url, 'http://localhost').pathname;
