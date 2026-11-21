@@ -181,6 +181,8 @@ const SHELL_ASSETS = [
   './js/config.js',
   './js/localConfigLoader.js',
   './js/appModules.js',
+  './js/boot.js',
+  './js/app.bundle.js',
   './js/data.js',
   './js/storage.js',
   './js/utils.js',

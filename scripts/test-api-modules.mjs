@@ -51,7 +51,7 @@ assert.equal(BookCache.has('key-5'), true);
 assert.equal(BookCache.has('key-104'), true);
 
 const html = fs.readFileSync('frontend/index.html', 'utf8');
-const moduleEntries = html.match(/<script\s+type="module"\s+src="js\/appModules\.js"><\/script>/g) || [];
+const moduleEntries = html.match(/<script\s+type="module"\s+src="js\/boot\.js"><\/script>/g) || [];
 assert.equal(moduleEntries.length, 1);
 assert.doesNotMatch(html, /<script[^>]+src="js\/(?:search|library)\.js"/);
 assert.doesNotMatch(html, /<script[^>]+src="js\/(?:dashboard|navigation)\.js"/);

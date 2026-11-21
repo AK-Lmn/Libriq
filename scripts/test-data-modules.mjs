@@ -185,7 +185,7 @@ assert.doesNotMatch(appModulesSource, /loadClassicScript\(['"]\.\/utils\.js['"]\
 assert.doesNotMatch(indexSource, /<script(?:\s+type=["']text\/javascript["'])?\s+src=["']js\/data\.js["']/);
 assert.doesNotMatch(indexSource, /<script(?:\s+type=["']text\/javascript["'])?\s+src=["']js\/(?:storage|utils)\.js["']/);
 assert.equal((indexSource.match(/<script\s+type=["']module["']/g) || []).length, 1);
-assert.match(indexSource, /<script\s+type=["']module["']\s+src=["']js\/appModules\.js["']/);
+assert.match(indexSource, /<script\s+type=["']module["']\s+src=["']js\/boot\.js["']/);
 assert.match(serviceWorkerSource, /importScripts\(['"]\.\/js\/version-classic\.js['"]\)/);
 assert.doesNotMatch(serviceWorkerSource, /libriq-v4\.\d+\.\d+/);
 
