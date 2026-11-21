@@ -2,6 +2,7 @@ import { mkdir, readFile, readdir, writeFile, copyFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { validateConfig } from '../server/config.js';
+import { build as esbuild } from 'esbuild';
 
 const rootDir = process.cwd();
 const configPath = path.join(rootDir, 'frontend', 'js', 'config.js');
@@ -91,6 +92,7 @@ await mkdir(vendorDir, { recursive: true });
 await vendorFirebaseSdk();
 
 await bundleCss();
+await bundleJs();
 
 if (isVercelBuild) {
   await writeFile(configPath, contents, 'utf8');
@@ -135,6 +137,23 @@ async function vendorFirebaseSdk() {
     }
     await writeFile(path.join(vendorDir, file), rewritten, 'utf8');
   }
+}
+
+// One minified file for the whole app, loaded by js/boot.js on deployed
+// builds. The Firebase SDK stays in vendor/ and still loads on demand.
+async function bundleJs() {
+  await esbuild({
+    entryPoints: [path.join(rootDir, 'frontend', 'js', 'appModules.js')],
+    outfile: path.join(rootDir, 'frontend', 'js', 'app.bundle.js'),
+    bundle: true,
+    format: 'esm',
+    target: 'es2022',
+    minify: true,
+    sourcemap: true,
+    external: ['../vendor/*'],
+    legalComments: 'none',
+    logLevel: 'warning',
+  });
 }
 
 async function bundleCss() {

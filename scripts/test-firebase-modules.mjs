@@ -129,6 +129,6 @@ assert.ok(bootstrap.indexOf('LibriqSyncBeta.init()') < bootstrap.indexOf('bootAp
 
 const html = fs.readFileSync('frontend/index.html', 'utf8');
 assert.doesNotMatch(html, /<script[^>]+src="js\/firebase-client\.js"/);
-assert.equal((html.match(/type="module"[^>]+src="js\/appModules\.js"/g) || []).length, 1);
+assert.equal((html.match(/type="module"[^>]+src="js\/boot\.js"/g) || []).length, 1);
 
 console.log('Firebase module and bootstrap tests passed');

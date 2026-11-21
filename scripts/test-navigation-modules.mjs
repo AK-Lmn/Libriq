@@ -102,6 +102,6 @@ assert.equal(bootstrapSource.includes(['libriq', 'app-modules-ready'].join(':'))
 
 const html = fs.readFileSync('frontend/index.html', 'utf8');
 assert.doesNotMatch(html, /<script[^>]+src="js\/navigation\.js"/);
-assert.equal((html.match(/src="js\/appModules\.js"/g) || []).length, 1);
+assert.equal((html.match(/src="js\/boot\.js"/g) || []).length, 1);
 
 console.log('Navigation module tests passed');

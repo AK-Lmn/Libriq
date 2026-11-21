@@ -142,6 +142,6 @@ assert.doesNotMatch(source, /onclick=/);
 
 const html = fs.readFileSync('frontend/index.html', 'utf8');
 assert.doesNotMatch(html, /<script[^>]+src="js\/dashboard\.js"/);
-assert.equal((html.match(/src="js\/appModules\.js"/g) || []).length, 1);
+assert.equal((html.match(/src="js\/boot\.js"/g) || []).length, 1);
 
 console.log('Dashboard module tests passed');

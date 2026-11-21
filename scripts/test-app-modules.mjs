@@ -223,6 +223,12 @@ assert.match(source, /navigator\.serviceWorker\.register/);
 
 const html = fs.readFileSync('frontend/index.html', 'utf8');
 assert.doesNotMatch(html, /<script[^>]+src="js\/app\.js"/);
-assert.equal((html.match(/src="js\/appModules\.js"/g) || []).length, 1);
+assert.equal((html.match(/src="js\/boot\.js"/g) || []).length, 1);
+
+// boot.js loads the built bundle on deployed hosts and the sources locally.
+const boot = fs.readFileSync('frontend/js/boot.js', 'utf8');
+assert.ok(boot.includes("'./app.bundle.js'"));
+assert.ok(boot.includes("'./appModules.js'"));
+assert.ok(boot.includes("'localhost', '127.0.0.1'"));
 
 console.log('App module tests passed');

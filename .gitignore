@@ -175,3 +175,7 @@ scripts/.suppressed.json
 # Screenshots written by the browser test scripts (regenerated on every run)
 artifacts/
 docs/screenshots/insights/
+
+# Built by npm run build (scripts/generate-config.mjs)
+frontend/js/app.bundle.js
+frontend/js/app.bundle.js.map

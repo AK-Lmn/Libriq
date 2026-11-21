@@ -8,6 +8,7 @@ export default [
     ignores: [
       'frontend/vendor/**',
       'frontend/js/config.local.js',
+      'frontend/js/app.bundle.js',
       'node_modules/**',
       'artifacts/**',
       'docs/**',
