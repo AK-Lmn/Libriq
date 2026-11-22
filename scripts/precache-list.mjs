@@ -1,35 +1,29 @@
-// Builds the service worker's precache list (SHELL_ASSETS) from the files on
-// disk, so a new script, stylesheet or icon is cached for offline use
-// without anyone remembering to add it by hand.
+// Builds the service worker's precache list (SHELL_ASSETS): the files the
+// live site loads, so the app keeps working offline after one visit.
 //
-// What goes in:
-// - the app pages: index.html, privacy.html, terms.html and manifest.json
-// - every .js and .css under frontend/js and frontend/css (the build has
-//   already written js/app.bundle.js and css/icons.css)
-// - every image under assets/revamp, assets/dashboard and assets/icons
-// - the web fonts and their fonts.css
-// - the Firebase SDK files and the Phosphor icon fonts in vendor/
+// The list follows what the cached pages reference, starting from
+// index.html, privacy.html, terms.html and manifest.json:
+// - each page's stylesheets, scripts, icons and manifest
+// - every module a cached script imports with a fixed path. For the app
+//   that is js/app.bundle.js, which pulls in the Firebase SDK from vendor/.
+//   boot.js picks the bundle at run time, so the bundle is added on its own.
+// - every url() and @import inside a cached stylesheet (fonts, icons, art)
+// - the scripts the service worker itself loads with importScripts()
+// - every image under assets/revamp, assets/dashboard and assets/icons. JS
+//   builds some of these paths at run time, so they are kept by folder.
 //
-// What stays out: config.local.js (local only), source maps, licence texts,
-// the manifest screenshots and social images (never shown in the app),
-// vendor/phosphor/style.css (replaced by css/icons.css) and the unused
-// Phosphor Bold font.
-import { readdir } from 'node:fs/promises';
+// The ~90 source modules and stylesheets that the bundle and components.css
+// are built from stay out. Only localhost loads them, and there the service
+// worker caches nothing.
+import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 const PAGES = ['index.html', 'privacy.html', 'terms.html', 'manifest.json'];
-const INCLUDE = [
-  /^js\/.+\.js$/,
-  /^css\/.+\.css$/,
-  /^assets\/(revamp|dashboard|icons)\/.+\.(svg|png|jpg|webp)$/,
-  /^assets\/fonts\/(fonts\.css|.+\.woff2)$/,
-  /^vendor\/firebase-[\w-]+\.js$/,
-  /^vendor\/phosphor\/Phosphor(-Fill)?\.woff2$/,
-];
-// js/app.bundle.js is listed on its own: it is gitignored and only exists
-// after a build, and the list must come out the same either way.
 const BUILT = ['js/app.bundle.js'];
-const EXCLUDE = [/^js\/config\.local\.js$/, /^js\/app\.bundle\.js$/];
+const IMAGE_FOLDERS = /^assets\/(revamp|dashboard|icons)\/.+\.(svg|png|jpg|webp)$/;
+
+const clean = ref => ref.split(/[?#]/)[0];
+const isLocal = ref => ref && !/^(?:[a-z]+:|\/\/|#|data:|var\()/i.test(ref);
 
 async function walk(dir, base = dir) {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -40,18 +34,52 @@ async function walk(dir, base = dir) {
   return nested.flat();
 }
 
+// Paths a file refers to, relative to the frontend folder.
+function references(file, source) {
+  const found = [];
+  const add = ref => { if (isLocal(ref)) found.push(path.posix.normalize(path.posix.join(path.posix.dirname(file), clean(ref)))); };
+  if (file.endsWith('.html')) {
+    for (const [, ref] of source.matchAll(/<script\b[^>]*\bsrc="([^"]+)"/g)) add(ref);
+    for (const [tag] of source.matchAll(/<link\b[^>]*>/g)) {
+      if (/\brel="(?:stylesheet|icon|shortcut icon|apple-touch-icon|manifest)"/.test(tag)) add(tag.match(/\bhref="([^"]+)"/)?.[1]);
+    }
+  } else if (file.endsWith('.js')) {
+    for (const [, ref] of source.matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*)['"](\.{1,2}\/[^'"]+)['"]/g)) add(ref);
+    for (const [, list] of source.matchAll(/importScripts\(([^)]*)\)/g)) {
+      for (const [, ref] of list.matchAll(/['"]([^'"]+)['"]/g)) add(ref);
+    }
+  } else if (file.endsWith('.css')) {
+    for (const [, a, b] of source.matchAll(/url\(\s*["']?([^"'()\s]+)["']?\s*\)|@import\s+["']([^"']+)["']/g)) add(a || b);
+  } else if (file.endsWith('.json')) {
+    for (const icon of JSON.parse(source).icons || []) add(icon.src);
+  }
+  return found;
+}
+
 export async function buildPrecacheList(frontendDir) {
-  const files = await walk(frontendDir);
-  const assets = files
-    .filter(file => INCLUDE.some(rule => rule.test(file)) && !EXCLUDE.some(rule => rule.test(file)))
-    .concat(BUILT)
-    .sort();
-  return [...PAGES, ...assets].map(file => `./${file}`);
+  const exists = async file => (await stat(path.join(frontendDir, file)).catch(() => null))?.isFile();
+  const seen = new Set();
+  const queue = [...PAGES, ...BUILT, 'service-worker.js'];
+  while (queue.length) {
+    const file = queue.shift();
+    if (seen.has(file)) continue;
+    seen.add(file);
+    // The bundle only exists after a build; it is listed either way.
+    if (!(await exists(file))) continue;
+    if (!/\.(html|js|css|json)$/.test(file)) continue;
+    const source = await readFile(path.join(frontendDir, file), 'utf8');
+    queue.push(...references(file, source));
+  }
+  seen.delete('service-worker.js');
+  const images = (await walk(frontendDir)).filter(file => IMAGE_FOLDERS.test(file));
+  const listed = new Set([...seen, ...images]);
+  const others = [...listed].filter(file => !PAGES.includes(file)).sort();
+  return [...PAGES, ...others].map(file => `./${file}`);
 }
 
 // Rewrites the SHELL_ASSETS array in service-worker.js. Returns the new source.
 export function writePrecacheList(swSource, list) {
-  const pattern = /const SHELL_ASSETS = \[[\s\S]*?\];/;
+  const pattern = /(?:\/\/ Generated by npm run build[^\n]*\n)?const SHELL_ASSETS = \[[\s\S]*?\];/;
   if (!pattern.test(swSource)) throw new Error('service-worker.js: SHELL_ASSETS array not found');
   const body = list.map(entry => `  '${entry}',`).join('\n');
   return swSource.replace(pattern, `// Generated by npm run build (scripts/precache-list.mjs). Do not edit by hand.\nconst SHELL_ASSETS = [\n${body}\n];`);
