@@ -11,7 +11,8 @@ const assets = vm.runInNewContext(worker.match(/const SHELL_ASSETS = (\[[\s\S]*?
 assert.equal(new Set(assets).size, assets.length, 'precache paths must be unique');
 for (const asset of assets) assert.ok((await fs.stat(path.resolve(root, asset))).size > 0, `${asset} exists and is nonempty`);
 assert.ok(assets.includes('./css/components.css'));
-assert.ok(assets.includes('./js/navigationChrome.js'));
+assert.ok(assets.includes('./js/app.bundle.js'), 'the live site loads the bundle');
+assert.ok(!assets.includes('./js/navigationChrome.js'), 'source modules are not precached');
 assert.match(worker, /shell-v5-complete-glass/);
 // readdir returns OS separators; precache entries use URL-style forward slashes.
 const toPosix = value => value.split(path.sep).join('/');
@@ -32,7 +33,7 @@ for (const file of files.filter(file => /\.(?:css|js|svg)$/.test(file))) {
 // The local-dev worker intentionally unregisters. Exercise the unchanged production
 // caching branches through a fixture-only response; no authentication bootstrap runs.
 const index = (await fs.readFile(path.join(root, 'index.html'), 'utf8')).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, '');
-const UPDATED_ASSET = '/js/shared/fetchClient.js';
+const UPDATED_ASSET = '/js/boot.js';
 const DEPLOY_B_MARKER = 'deploy-b-marker';
 assert.ok(assets.includes(`.${UPDATED_ASSET}`), 'update fixture asset is precached');
 const deploy = { build: 'build-a' };
