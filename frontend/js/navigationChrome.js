@@ -1,15 +1,9 @@
-const TOP_ROUTES = new Set();
-
+// Per-route chrome around the page: body[data-route] for route-specific
+// styles, the sidebar's nav hubs kept open, and on phones the sidebar hidden
+// from focus and screen readers unless the menu is open.
 export function applyNavigationChrome(route, root = document) {
   root.body?.setAttribute?.('data-route', route);
-  const top = TOP_ROUTES.has(route) && (globalThis.matchMedia?.('(min-width: 769px)').matches ?? false);
-  root.body?.setAttribute?.('data-navigation', top ? 'top' : 'side');
-  root.querySelectorAll('.nav-hub').forEach(hub => {
-    if (top) hub.setAttribute('name', 'navigation-hub');
-    else hub.removeAttribute('name');
-    hub.open = !top;
-    hub.classList.toggle('current-hub', Boolean(hub.querySelector(`[data-page="${route}"]`)));
-  });
+  root.querySelectorAll('.nav-hub').forEach(hub => { hub.open = true; });
   const sidebar = root.getElementById?.('sidebar');
   if (sidebar) {
     const mobile = globalThis.matchMedia?.('(max-width: 768px)').matches ?? false;
@@ -27,24 +21,7 @@ export function applyNavigationChrome(route, root = document) {
 }
 
 export function initializeNavigationChrome(getRoute, root = document) {
-  const hubs = [...root.querySelectorAll('.nav-hub')];
-  const isTop = () => root.body?.getAttribute?.('data-navigation') === 'top';
-  const close = () => { if (isTop()) hubs.forEach(hub => { hub.open = false; }); };
-  hubs.forEach(hub => hub.addEventListener('toggle', () => {
-    if (isTop() && hub.open) hubs.filter(other => other !== hub).forEach(other => { other.open = false; });
-  }));
-  root.addEventListener('click', event => {
-    if (!event.target.closest('.nav-hub')) close();
-  });
-  root.addEventListener('keydown', event => {
-    if (event.key !== 'Escape' || !isTop()) return;
-    const active = hubs.find(hub => hub.open);
-    if (active) {
-      close();
-      active.querySelector('summary')?.focus();
-      event.preventDefault();
-    }
-  });
+  // Crossing the phone/desktop width changes how the sidebar behaves.
   globalThis.matchMedia?.('(min-width: 769px)').addEventListener?.('change', () => applyNavigationChrome(getRoute(), root));
   applyNavigationChrome(getRoute(), root);
 }

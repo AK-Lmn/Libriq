@@ -126,7 +126,7 @@ async function inspect(page) {
     const navs = ['.sidebar', '.mobile-topbar', '.mobile-bottom-nav'].filter(selector => shown(document.querySelector(selector)));
     const visibleDialog = [...document.querySelectorAll('[role="dialog"]')].find(el => shown(el));
     const content = document.getElementById('mainContent').getBoundingClientRect();
-    return { navigation: document.body.dataset.navigation, route: document.body.dataset.route,
+    return { route: document.body.dataset.route,
       rootOverflow: document.documentElement.scrollWidth > innerWidth,
       content: { x: content.x, y: content.y, width: content.width }, navs,
       dialog: visibleDialog?.id || null, contrast,
@@ -203,23 +203,9 @@ try {
       assert.deepEqual(result.hubs, ['Library', 'Insights', 'Discover', 'Account']);
       assert.ok(result.badges.every(Boolean));
       if (routes.includes(window)) {
-        assert.equal(result.navigation, 'side', name);
         assert.deepEqual(result.navs, width > 768 ? ['.sidebar'] : ['.mobile-topbar', '.mobile-bottom-nav'], `${name}: no duplicate chrome`);
         assert.equal(result.content.x, width > 768 ? 240 : 0, `${name}: source gutter`);
         if (width <= 768) assert.equal(result.bottom, 'fixed');
-      }
-      // Hub dropdown behaviour (Escape, one-open-at-a-time) only exists in top navigation, which no route uses since 978b557.
-      if (window === 'library' && variant === 'desktop-dark' && result.navigation === 'top') {
-        const summary = page.locator('.nav-hub > summary').first();
-        await summary.focus(); await page.keyboard.press('Enter');
-        assert.equal(await page.locator('.nav-hub').first().getAttribute('open'), '');
-        await page.keyboard.press('Escape');
-        assert.equal(await page.locator('.nav-hub').first().getAttribute('open'), null);
-        assert.ok(await summary.evaluate(el => el === document.activeElement));
-        await summary.click(); await page.locator('.nav-hub > summary').nth(1).click();
-        assert.equal(await page.locator('.nav-hub[open]').count(), 1);
-        await page.locator('.page-title').click();
-        assert.equal(await page.locator('.nav-hub[open]').count(), 0);
       }
       if (window === 'library' && variant === 'mobile-dark') {
         assert.ok(await page.locator('#sidebar').evaluate(el => el.inert));

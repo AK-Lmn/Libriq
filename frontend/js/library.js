@@ -186,7 +186,7 @@ export const Library = (() => {
               Navigation?.renderCurrentPage?.();
             }
           })
-          .catch(() => {});
+          .catch(error => console.warn('[Libriq] Metadata refresh failed:', error));
       });
     } catch {
       // non-fatal
@@ -288,7 +288,7 @@ export const Library = (() => {
     if (!book.description || !book.coverUrl || !book.pageCount) {
       refreshMetadata(book.id).then(res => {
         if (res?.status === 'updated') Navigation.renderCurrentPage();
-      }).catch(() => {});
+      }).catch(error => console.warn('[Libriq] Metadata refresh failed:', error));
     }
   }
 
@@ -564,7 +564,7 @@ export const Library = (() => {
     if (!book.description || !book.coverUrl || !book.pageCount) {
       refreshMetadata(book.id).then(res => {
         if (res?.status === 'updated') Navigation.renderCurrentPage();
-      }).catch(() => {});
+      }).catch(error => console.warn('[Libriq] Metadata refresh failed:', error));
     }
   }
 

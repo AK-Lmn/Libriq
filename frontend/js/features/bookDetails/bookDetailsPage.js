@@ -274,7 +274,7 @@ export function createBookDetailsPage({
             }
           }
         }
-      }).catch(() => {});
+      }).catch(error => console.warn('[Libriq] Description lookup failed:', error));
     }
 
     let actions = modal.querySelector('#bookDetailsFooter');
