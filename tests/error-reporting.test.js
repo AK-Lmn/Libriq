@@ -94,3 +94,42 @@ test('client-error handler rejects other methods, junk and oversized bodies', as
   }
   assert.equal(logged.length, 0);
 });
+
+// Vercel Hobby keeps runtime logs for about an hour, so reports are also
+// stored: one Firestore document per distinct error per day, with a count.
+test('client-error handler stores reports from the live site in production', async () => {
+  const stored = [];
+  const handler = createClientErrorHandler({
+    log: () => {},
+    store: async (entry, day) => stored.push([entry.message, entry.fingerprint, day]),
+    env: { VERCEL_ENV: 'production' },
+    now: () => Date.parse('2026-11-23T12:00:00Z'),
+  });
+  const body = JSON.stringify({ kind: 'error', message: 'boom', page: '/', source: 'https://www.libriq.app/js/app.bundle.js', line: 4 });
+  await handler({ method: 'POST', headers: { origin: 'https://www.libriq.app' }, body }, fakeRes());
+  await handler({ method: 'POST', headers: { origin: 'https://www.libriq.app' }, body }, fakeRes());
+  assert.equal(stored.length, 2);
+  assert.equal(stored[0][0], 'boom');
+  assert.equal(stored[0][2], '2026-11-23');
+  assert.match(stored[0][1], /^[a-f0-9]{16}$/);
+  assert.equal(stored[0][1], stored[1][1], 'the same error gets the same fingerprint');
+});
+
+test('client-error handler logs but does not store from previews or other origins', async () => {
+  const stored = [];
+  const logged = [];
+  const body = JSON.stringify({ kind: 'error', message: 'boom' });
+  const preview = createClientErrorHandler({ log: e => logged.push(e), store: async e => stored.push(e), env: { VERCEL_ENV: 'preview' } });
+  await preview({ method: 'POST', headers: { origin: 'https://www.libriq.app' }, body }, fakeRes());
+  const prod = createClientErrorHandler({ log: e => logged.push(e), store: async e => stored.push(e), env: { VERCEL_ENV: 'production' } });
+  await prod({ method: 'POST', headers: { origin: 'https://evil.example' }, body }, fakeRes());
+  assert.equal(stored.length, 0);
+  assert.equal(logged.length, 2, 'still logged');
+});
+
+test('a failed store still answers 204', async () => {
+  const handler = createClientErrorHandler({ log: () => {}, store: async () => { throw new Error('firestore down'); }, env: { VERCEL_ENV: 'production' } });
+  const res = fakeRes();
+  await handler({ method: 'POST', headers: { origin: 'https://www.libriq.app' }, body: JSON.stringify({ kind: 'error', message: 'x' }) }, res);
+  assert.equal(res.statusCode, 204);
+});
