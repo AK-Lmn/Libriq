@@ -260,7 +260,7 @@ button.session-card:hover:not(:disabled) { border-color: var(--indigo); }
 .session-page .ph-arrow-clockwise { --session-icon: url('../../assets/revamp/account/23-5548-refresh-cw.svg'); }
 .session-page .ph-house-simple { --session-icon: url('../../assets/dashboard/mobile-house.svg'); }
 .session-page .ph-x, .install-prompt .ph-x { --session-icon: url('../../assets/revamp/book-details/close.svg'); }
-.install-prompt .ph-download-simple { --session-icon: url('../../assets/revamp/account/23-5548-download.svg'); }
+.session-page .ph-download-simple, .install-prompt .ph-download-simple { --session-icon: url('../../assets/revamp/account/23-5548-download.svg'); }
 
 body.session-choice-active { overflow-x: hidden; overflow-y: auto; }
 body.session-choice-active:not(.app-booting) .app-shell { display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr; min-height: 100dvh; }

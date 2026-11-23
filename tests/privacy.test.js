@@ -55,3 +55,12 @@ test('no personal Gmail address ships in the app or scripts', () => {
   }
   assert.equal(hits, '', 'files still containing a Gmail address (counts only)');
 });
+
+// The signed-out landing page lists importing from Goodreads and Kindle next
+// to privacy and sync, since it's a main reason to switch from another app.
+test('the landing page mentions the Goodreads and Kindle import', async () => {
+  const nav = await read('frontend/js/navigation.js');
+  const points = nav.slice(nav.indexOf('<div class="session-points">'), nav.indexOf('<div class="session-product-preview"'));
+  assert.match(points, /Goodreads library and Kindle highlights/);
+  assert.match(points, /ph-download-simple/);
+});
