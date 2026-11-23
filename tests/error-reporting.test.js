@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { scrub, buildReport, installErrorReporting } from '../frontend/js/shared/errorReporting.js';
-import { createClientErrorHandler } from '../api/_lib/clientError.js';
+import { createClientErrorHandler, createExpiredPruner } from '../api/_lib/clientError.js';
 
 const PAGE = { origin: 'https://www.libriq.app', pathname: '/', hostname: 'www.libriq.app', search: '' };
 
@@ -132,4 +132,37 @@ test('a failed store still answers 204', async () => {
   const res = fakeRes();
   await handler({ method: 'POST', headers: { origin: 'https://www.libriq.app' }, body: JSON.stringify({ kind: 'error', message: 'x' }) }, res);
   assert.equal(res.statusCode, 204);
+});
+
+// Firestore TTL needs the Blaze plan, so expired reports are deleted by the
+// handler itself: a few at a time, and at most every few hours per instance.
+test('expired client errors are deleted in small batches, not on every report', async () => {
+  const docs = [1, 2, 3].map(id => ({ id, deleted: false }));
+  const queries = [];
+  const collection = {
+    where(field, op, value) {
+      return {
+        limit(n) {
+          return {
+            async get() {
+              queries.push([field, op, value, n]);
+              const hits = docs.filter(d => !d.deleted).slice(0, n);
+              return { size: hits.length, docs: hits.map(d => ({ ref: { delete: async () => { d.deleted = true; } } })) };
+            },
+          };
+        },
+      };
+    },
+  };
+  let clock = 1_000_000;
+  const prune = createExpiredPruner({ collection: () => collection, now: () => clock, limit: 2, everyMs: 60_000 });
+
+  assert.equal(await prune(), 2);
+  assert.deepEqual(queries[0].slice(0, 2), ['expireAt', '<']);
+  assert.equal(queries[0][3], 2);
+  assert.equal(await prune(), 0, 'skipped until the interval passes');
+  assert.equal(queries.length, 1);
+  clock += 60_000;
+  assert.equal(await prune(), 1);
+  assert.equal(docs.filter(d => d.deleted).length, 3);
 });
