@@ -1,3 +1,4 @@
+import './shared/startErrorReporting.js';
 import './analytics.js';
 import {
   LIBRIQ,

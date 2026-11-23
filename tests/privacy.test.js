@@ -10,7 +10,7 @@ const SUPPORT = 'support@libriq.app';
 test('Google Analytics is gone from the page and the CSP', async () => {
   const html = await read('frontend/index.html');
   assert.doesNotMatch(html, /googletagmanager|gtag\(/);
-  assert.match(await read('frontend/js/appModules.js'), /^import '\.\/analytics\.js';/);
+  assert.match(await read('frontend/js/appModules.js'), /^import '\.\/analytics\.js';/m);
   const vercel = await read('vercel.json');
   assert.doesNotMatch(vercel, /googletagmanager|google-analytics/);
 });
