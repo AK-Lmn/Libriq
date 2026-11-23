@@ -1217,6 +1217,10 @@ function renderSessionChoicePage() {
               <i class="ph ph-lock-key" aria-hidden="true"></i>
               <span>Your library stays private and under your control.</span>
             </div>
+            <div class="session-point">
+              <i class="ph ph-download-simple" aria-hidden="true"></i>
+              <span>Bring in your Goodreads library and Kindle highlights, with a preview before anything is saved.</span>
+            </div>
             ${inAppBrowser ? `
             <div class="session-point session-point-warning">
               <i class="ph ph-warning-circle" aria-hidden="true"></i>
