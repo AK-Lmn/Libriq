@@ -19,3 +19,14 @@ test('scripts and stylesheets revalidate on every load', async () => {
     assert.doesNotMatch(value, /stale-while-revalidate|immutable/, `${source}: ${value}`);
   }
 });
+
+// /assets file names don't change either (icons, fonts, art referenced from
+// CSS without ?v=). A year as "immutable" could keep an edited icon stale for
+// a year; a day, plus a day served stale while it refreshes, caps that at
+// about two days without revalidating ~100 icons on every visit.
+test('assets are cached for a day, not a year', async () => {
+  const vercel = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8'));
+  const value = cacheRule(vercel, '/assets/(.*)');
+  assert.match(value, /max-age=86400/, value);
+  assert.doesNotMatch(value, /immutable|31536000/, value);
+});
