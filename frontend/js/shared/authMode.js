@@ -2,8 +2,10 @@
 // device before gets "Sign in"; a first-time visitor gets "Create account".
 // Signed-out visitors also get libriq:local:* defaults at boot, so only
 // account-scoped data (libriq:users:<uid>:*) counts as a past sign-in.
+import { STORAGE_KEYS } from './storageKeys.js';
+
 export const RETURNING_READER_KEY = 'libriq_returning_reader';
-const ACTIVE_UID_KEY = 'libriq_active_account_uid';
+const ACTIVE_UID_KEY = STORAGE_KEYS.ACTIVE_ACCOUNT_UID;
 const ACCOUNT_DATA_PREFIX = 'libriq:users:';
 
 export function isReturningReader(storage) {

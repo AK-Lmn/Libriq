@@ -9,6 +9,7 @@ import {
 import { Storage } from './storage.js';
 import { Utils } from './utils.js';
 import { installChartKeyboard } from './shared/chartKeyboard.js';
+import { STORAGE_KEYS } from './shared/storageKeys.js';
 
 window.Utils = Utils;
 Utils.installDelegatedHandlers(document);
@@ -45,10 +46,10 @@ window.LibriqCloudBackup = LibriqCloudBackup;
 // An explicit offline session must not download the Firebase SDK; sign-in
 // paths lazy-load it through ensureInitialized(). Fresh sessions (no stored
 // preference) still init eagerly so auth restore can't stall on first load.
-const firebaseTestMode = new URLSearchParams(globalThis.location?.search || '').get('libriq_e2e_test_mode') === '1'
-  || localStorage.getItem('libriq_e2e_test_mode') === '1';
-const storedSessionMode = localStorage.getItem('libriq_session_pref')
-  || localStorage.getItem('libriq_preferred_session_mode');
+const firebaseTestMode = new URLSearchParams(globalThis.location?.search || '').get(STORAGE_KEYS.E2E_TEST_MODE) === '1'
+  || localStorage.getItem(STORAGE_KEYS.E2E_TEST_MODE) === '1';
+const storedSessionMode = localStorage.getItem(STORAGE_KEYS.SESSION_PREF)
+  || localStorage.getItem(STORAGE_KEYS.PREFERRED_SESSION_MODE);
 const offlineSession = storedSessionMode === 'offline'
   && !firebaseTestMode
   && !Storage.getActiveAccountUid?.();
