@@ -98,6 +98,7 @@ export function createGoalsPage({ storage, utils, actions, documentRoot }) {
       if (!Number.isInteger(yearly) || yearly < 1 || yearly > 365) return;
       storage.saveGoals({ yearly, year: new Date().getFullYear() });
       ProductEvents.track('goal_set');
+      storage.updateOnboarding?.({ goalSet: true });
       utils.toast(`Goal set: ${yearly} books in ${new Date().getFullYear()}`, 'success');
       if (actions?.refreshGoals) actions.refreshGoals();
       else renderGoalsPage();

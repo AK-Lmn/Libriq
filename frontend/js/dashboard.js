@@ -5,7 +5,6 @@ import { LibriqFirebase } from './firebase-client.js';
 import { resolveAccountDisplayName } from './accountDisplayName.js';
 import { isPollDismissedOrVoted, detectUserOS } from './services/mobileAppPoll.js';
 import { chartDataTable, chartGroupAttrs, chartBarAttrs } from './shared/chartTable.js';
-import { STORAGE_KEYS } from './shared/storageKeys.js';
 
 export const Dashboard = {
 
@@ -449,12 +448,13 @@ export function buildGenreRow(genre, count, total) {
 
 function buildOnboardingChecklist(books, goals) {
   if (typeof localStorage === 'undefined') return '';
-  if (localStorage.getItem(STORAGE_KEYS.ONBOARDING_DISMISSED) === '1') return '';
+  const onboarding = Storage.getOnboarding();
+  if (onboarding.dismissed) return '';
   if (books && books.length >= 3) return '';
 
   const hasBook = Array.isArray(books) && books.length > 0;
-  const hasGoal = localStorage.getItem('libriq_goal_customized') === '1' || (goals && goals.yearly !== 12);
-  const hasImport = localStorage.getItem('libriq_import_completed') === '1';
+  const hasGoal = onboarding.goalSet || Boolean(goals && goals.yearly !== 12);
+  const hasImport = onboarding.imported;
 
   return `
     <section class="onboarding-checklist" aria-label="Getting started with LibriQ">

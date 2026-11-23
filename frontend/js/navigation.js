@@ -52,6 +52,7 @@ export function completeGoodreadsImport({ previewResult, storage, toast, rerende
   });
   toast?.(`Goodreads import complete: ${result.booksCreated} books added, ${result.booksMatched} books updated.`, 'success');
   ProductEvents.track('import_goodreads');
+  storage?.updateOnboarding?.({ imported: true });
   rerender?.();
   return result;
 }
@@ -101,6 +102,7 @@ export function completeKindleImport({ previewResult, storage, toast, rerender }
   const result = executeKindleImport({ previewResult, storage });
   toast?.(`Kindle import complete: ${result.booksCreated} books created, ${result.booksMatched} books matched, ${result.quotesImported} quotes imported, ${result.duplicatesSkipped} duplicates skipped.`, 'success');
   ProductEvents.track('import_kindle');
+  storage?.updateOnboarding?.({ imported: true });
   rerender?.();
   return result;
 }
@@ -248,6 +250,7 @@ export const Navigation = (() => {
     openSearch: () => Search.open(),
     openManualEntry: () => Search.openManualEntry(),
     importBackup: () => promptImportData(),
+    dismissOnboarding: () => Storage.updateOnboarding({ dismissed: true }),
     clearSearch: () => libraryFeature.clearSearch(),
     showBookDetails: (bookId) => Library.showDetailsModal(bookId),
     updateProgress: (bookId) => Library.showProgressModal(bookId),
@@ -2183,6 +2186,7 @@ function _applyImportedBackup(parsed, replaceMode) {
   Storage.replaceActivityLog?.(mergedActivity);
   Storage.addActivityEvent?.(Storage.buildActivityEvent?.('backup_imported', null, { itemCount: mergedBooks.length, activityCount: mergedActivity.length, mode: replaceMode ? 'replace' : 'merge' }, 'import'));
 
+  Storage.updateOnboarding({ imported: true });
   Utils.toast(replaceMode ? 'Library replaced from backup' : 'Library merged from backup', 'success');
   try {
     Navigation.updateBadges?.();
