@@ -77,6 +77,38 @@ try {
   }));
   assert.ok(styled, 'the privacy page has its styles offline');
   assert.deepEqual(failed, [], 'the privacy page loaded everything from the cache');
+  // Covers: an Open Library cover seen online still shows offline. The cover
+  // host is mocked: a 1x1 JPEG with the CORS header Open Library sends.
+  const JPEG = Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=', 'base64');
+  let coverRequests = 0;
+  await context.route('https://covers.openlibrary.org/**', route => {
+    coverRequests += 1;
+    return route.fulfill({ status: 200, contentType: 'image/jpeg', headers: { 'Access-Control-Allow-Origin': '*' }, body: JPEG });
+  });
+  await context.route('https://books.google.com/**', route => route.fulfill({ status: 200, contentType: 'image/jpeg', body: JPEG }));
+  await context.setOffline(false);
+  await page.goto(`${origin}/`);
+  await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller), null, { timeout: 30000 });
+  const loadImage = src => page.evaluate(url => new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => resolve(img.naturalWidth > 0);
+    img.onerror = () => resolve(false);
+    img.src = url;
+  }), src);
+  const OL = 'https://covers.openlibrary.org/b/id/8352507-M.jpg';
+  const GB = 'https://books.google.com/books/content?id=x&printsec=frontcover&img=1&zoom=1';
+  assert.equal(await loadImage(OL), true, 'cover loads online');
+  assert.equal(await loadImage(GB), true, 'Google cover loads online');
+  const coverCache = await page.evaluate(async () => {
+    if (!(await caches.keys()).includes('libriq-covers-v1')) return [];
+    return (await (await caches.open('libriq-covers-v1')).keys()).map(request => request.url);
+  });
+  assert.deepEqual(coverCache, [OL], 'only the Open Library cover is kept');
+  await context.setOffline(true);
+  await context.unrouteAll();
+  const before = coverRequests;
+  assert.equal(await loadImage(OL), true, 'cover still shows offline');
+  assert.equal(coverRequests, before, 'served from the covers cache');
   console.log('Offline bundle browser test passed');
 } finally {
   await browser.close();
