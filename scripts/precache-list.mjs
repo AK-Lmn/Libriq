@@ -19,7 +19,17 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 const PAGES = ['index.html', 'privacy.html', 'terms.html', 'manifest.json'];
-const BUILT = ['js/app.bundle.js'];
+// The bundle only exists after a build. Its imports are listed here as well,
+// so the list comes out the same with or without one: the Firebase SDK is the
+// bundle's only import that stays outside it (see bundleJs in
+// generate-config.mjs).
+const BUILT = [
+  'js/app.bundle.js',
+  'vendor/firebase-app.js',
+  'vendor/firebase-app-check.js',
+  'vendor/firebase-auth.js',
+  'vendor/firebase-firestore.js',
+];
 const IMAGE_FOLDERS = /^assets\/(revamp|dashboard|icons)\/.+\.(svg|png|jpg|webp)$/;
 
 const clean = ref => ref.split(/[?#]/)[0];
