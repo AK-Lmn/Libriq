@@ -1,5 +1,4 @@
 import { dismissPoll, submitPollVote } from '../../services/mobileAppPoll.js';
-import { STORAGE_KEYS } from '../../shared/storageKeys.js';
 
 export function createDashboardPage({ dashboard, actions }) {
   if (!dashboard?.render) throw new TypeError('createDashboardPage requires a dashboard renderer.');
@@ -29,7 +28,7 @@ export function initDashboardEvents(container, actions = {}) {
       'update-progress': () => actions.updateProgress?.(bookId),
       'toggle-favorite': () => actions.toggleFavorite?.(bookId),
       'dismiss-onboarding': () => {
-        localStorage.setItem(STORAGE_KEYS.ONBOARDING_DISMISSED, '1');
+        actions.dismissOnboarding?.();
         const container = document.querySelector('.onboarding-checklist');
         if (container) container.remove();
       },

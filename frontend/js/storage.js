@@ -24,9 +24,10 @@ export const Storage = (() => {
     CLOUD_BACKUP: 'libriq_cloud_backup_meta',
     SYNC_META: 'libriq_sync_meta',
     SYNC_TOMBSTONES: STORAGE_KEYS.SYNC_DELETE_TOMBSTONES,
+    ONBOARDING: 'libriq_onboarding',
   };
   const ACTIVE_UID_KEY = STORAGE_KEYS.ACTIVE_ACCOUNT_UID;
-  const SCOPED_DATA_KEYS = new Set(['BOOKS', 'PROFILE', 'STREAK', 'GOALS', 'ACTIVITY', 'BACKUP', 'CLOUD_BACKUP', 'SYNC_META', 'SYNC_TOMBSTONES']);
+  const SCOPED_DATA_KEYS = new Set(['BOOKS', 'PROFILE', 'STREAK', 'GOALS', 'ACTIVITY', 'BACKUP', 'CLOUD_BACKUP', 'SYNC_META', 'SYNC_TOMBSTONES', 'ONBOARDING']);
   let activeUid = null;
   let scopeInitialized = false;
   let bootstrapped = false;
@@ -446,6 +447,36 @@ export const Storage = (() => {
     return { ...DEFAULTS.profile(), ...data, name: displayName, displayName, createdAt, joinDate };
   }
 
+  // The dashboard's getting-started checklist, per account: whether it was
+  // dismissed, and which steps the reader has done that the library itself
+  // doesn't show (an import, a goal they chose).
+  const ONBOARDING_FLAGS = ['dismissed', 'imported', 'goalSet'];
+
+  function _cleanOnboarding(value) {
+    const source = value && typeof value === 'object' ? value : {};
+    return Object.fromEntries(ONBOARDING_FLAGS.map(flag => [flag, source[flag] === true]));
+  }
+
+  function getOnboarding() {
+    const stored = _read(_key('ONBOARDING'));
+    if (stored && typeof stored === 'object') return _cleanOnboarding(stored);
+    // Before this was per account, one device-wide flag hid the checklist.
+    // The first account to look after the update keeps that choice.
+    const legacyDismissed = localStorage.getItem(STORAGE_KEYS.ONBOARDING_DISMISSED) === '1';
+    const fresh = _cleanOnboarding({ dismissed: legacyDismissed });
+    if (legacyDismissed) {
+      _write(_key('ONBOARDING'), fresh);
+      localStorage.removeItem(STORAGE_KEYS.ONBOARDING_DISMISSED);
+    }
+    return fresh;
+  }
+
+  function updateOnboarding(patch = {}) {
+    const next = _cleanOnboarding({ ...getOnboarding(), ...patch });
+    _write(_key('ONBOARDING'), next);
+    return next;
+  }
+
   function getBackupMeta() {
     const data = _read(_key('BACKUP'));
     if (!data || typeof data !== 'object') {
@@ -678,5 +709,6 @@ export const Storage = (() => {
     getStreak, updateStreak, saveStreak,
     getActivityLog, addActivityEvent, clearActivityLog, buildActivityEvent, setActivityLog, replaceActivityLog,
     getStats,
+    getOnboarding, updateOnboarding,
   };
 })();

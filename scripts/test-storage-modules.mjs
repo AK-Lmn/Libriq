@@ -87,6 +87,7 @@ const publicMethods = [
   'getStreak', 'updateStreak', 'saveStreak',
   'getActivityLog', 'addActivityEvent', 'clearActivityLog', 'buildActivityEvent', 'setActivityLog', 'replaceActivityLog',
   'getStats',
+  'getOnboarding', 'updateOnboarding',
 ];
 assert.deepEqual(Object.keys(importSafeStorage), publicMethods);
 
@@ -321,5 +322,24 @@ assert.equal(failure.detail.quota, true);
 const librarySource = await readFile(new URL('../frontend/js/library.js', import.meta.url), 'utf8');
 assert.match(appSource, /libriq:storage:write-failed/);
 assert.match(librarySource, /const book = Storage\.addBook\([\s\S]*?\);\s*if \(!book\)/);
+
+// The getting-started checklist belongs to the account, not the device: one
+// reader dismissing it, or importing, doesn't change it for another account.
+const onboardingStore = new MemoryStorage([['libriq_onboarding_dismissed', '1']]);
+installBrowserFixture(onboardingStore);
+const { Storage: onboardingStorage } = await importFresh();
+onboardingStorage.bootstrap();
+onboardingStorage.setActiveAccountUid('reader-a');
+assert.deepEqual(onboardingStorage.getOnboarding(), { dismissed: true, imported: false, goalSet: false }, 'the old device-wide dismissal carries over once');
+assert.equal(onboardingStore.getItem('libriq_onboarding_dismissed'), null, 'and the device-wide flag is gone');
+onboardingStorage.setActiveAccountUid('reader-b');
+assert.deepEqual(onboardingStorage.getOnboarding(), { dismissed: false, imported: false, goalSet: false }, 'a second account starts fresh');
+assert.deepEqual(onboardingStorage.updateOnboarding({ imported: true, junk: 1 }), { dismissed: false, imported: true, goalSet: false });
+onboardingStorage.setActiveAccountUid('reader-a');
+assert.equal(onboardingStorage.getOnboarding().imported, false, 'reader A did not import');
+assert.equal(onboardingStorage.getOnboarding().dismissed, true);
+onboardingStorage.clearAccountScopedData('reader-b');
+onboardingStorage.setActiveAccountUid('reader-b');
+assert.equal(onboardingStorage.getOnboarding().imported, false, "removing an account's data clears its checklist too");
 
 console.log('Storage module tests passed.');
