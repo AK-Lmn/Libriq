@@ -29,6 +29,21 @@ export const errorFingerprint = entry => createHash('sha256')
   .digest('hex')
   .slice(0, 16);
 
+// Firestore TTL policies need the Blaze plan, so the handler deletes expired
+// reports itself: up to `limit` per run, at most once per `everyMs` per warm
+// instance. An empty check costs one document read.
+export function createExpiredPruner({ collection, now = Date.now, limit = 20, everyMs = 6 * 60 * 60 * 1000 }) {
+  let lastRun = -Infinity;
+  return async function prune() {
+    const at = now();
+    if (at - lastRun < everyMs) return 0;
+    lastRun = at;
+    const snapshot = await collection().where('expireAt', '<', new Date(at)).limit(limit).get();
+    await Promise.all(snapshot.docs.map(doc => doc.ref.delete()));
+    return snapshot.size;
+  };
+}
+
 export function createClientErrorHandler({
   log = entry => console.warn('[client-error]', JSON.stringify(entry)),
   store = null,

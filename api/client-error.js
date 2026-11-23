@@ -1,10 +1,12 @@
 // Vercel serverless function: POST /api/client-error (see api/_lib/clientError.js).
 // Stores reports with the same Firebase Admin credentials as /api/delete-account.
-import { createClientErrorHandler } from './_lib/clientError.js';
+import { createClientErrorHandler, createExpiredPruner } from './_lib/clientError.js';
 import { readAdminCredentials } from './_lib/adminCredentials.js';
 
 const RETAIN_DAYS = 30;
 let adminPromise = null;
+let db = null;
+const pruneExpired = createExpiredPruner({ collection: () => db.collection('clientErrors') });
 
 async function loadAdmin() {
   const serviceAccount = readAdminCredentials();
@@ -25,9 +27,15 @@ async function store(entry, day) {
     day,
     count: admin.FieldValue.increment(1),
     lastSeen: admin.FieldValue.serverTimestamp(),
-    // A Firestore TTL policy on expireAt deletes old reports automatically.
+    // Deleted by pruneExpired below (Firestore TTL would need the Blaze plan).
     expireAt: admin.Timestamp.fromMillis(Date.now() + RETAIN_DAYS * 86400000),
   }, { merge: true });
+  db = admin.db;
+  try {
+    await pruneExpired();
+  } catch (error) {
+    console.error('[client-error] prune failed', error?.message || String(error));
+  }
 }
 
 export default createClientErrorHandler({ store });
