@@ -191,7 +191,7 @@ const RELEASE_KEY = 'libriq_seen_version';
     });
 
     checkIncomingPollVote();
-    LibriqFirebase.subscribe?.(state => claimPendingIntents(state));
+    LibriqFirebase.onChange(state => claimPendingIntents(state));
     // A book added or edited in another LibriQ tab shows up here too.
     watchOtherTabs({
       getUid: () => Storage.getActiveAccountUid?.() || null,

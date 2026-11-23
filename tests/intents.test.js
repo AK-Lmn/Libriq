@@ -92,7 +92,7 @@ test('invalid votes are never queued', () => {
 test('the app wires both intents to sign-in, and demo search matches the API minimum', async () => {
   const app = await read('frontend/js/app.js');
   assert.match(app, /queuePollVote\(/);
-  assert.match(app, /LibriqFirebase\.subscribe\?\.\(/);
+  assert.match(app, /LibriqFirebase\.onChange\(state => claimPendingIntents\(state\)\)/);
   assert.match(app, /flushPendingPollVote\(/);
   assert.match(app, /claimPendingBook\(/);
   const nav = await read('frontend/js/navigation.js');

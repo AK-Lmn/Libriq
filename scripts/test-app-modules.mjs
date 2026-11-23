@@ -199,7 +199,8 @@ globalThis.location = { protocol: 'file:', hostname: '' };
 Object.assign(LibriqFirebase, {
   getState: () => ({ ready: false, user: null }),
   onChange: callback => {
-    authCallback = callback;
+    // The first listener is the boot-time auth router; later ones (pending intents) are not under test here.
+    authCallback ||= callback;
     return () => { unsubscribeCalls += 1; };
   },
 });
