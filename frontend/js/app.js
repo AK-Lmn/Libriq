@@ -10,6 +10,7 @@ import { LibriqSyncBeta } from './sync.js';
 import { LibriqFirebase } from './firebase-client.js';
 import { LibriqCloudBackup } from './cloudBackup.js';
 import { initInstallPrompt } from './installPrompt.js';
+import { ProductEvents } from './shared/productEvents.js';
 import { submitPollVote } from './services/mobileAppPoll.js';
 import { BookAPI } from './api/index.js';
 import { PENDING_KEYS, claimPendingBook, flushPendingPollVote, queuePollVote } from './services/pendingIntents.js';
@@ -125,6 +126,7 @@ const RELEASE_KEY = 'libriq_seen_version';
 
   function wireGlobalEvents() {
     window.addEventListener('libriq:book:added',   () => Navigation.updateBadges());
+    window.addEventListener('libriq:book:added',   () => ProductEvents.trackFirstBook(Storage.getBooks().length));
     window.addEventListener('libriq:book:updated', () => Navigation.updateBadges());
     window.addEventListener('libriq:book:removed', () => Navigation.updateBadges());
     window.addEventListener('libriq:book:added',   () => LibriqCloudBackup.scheduleIfAllowed('book-added'));
@@ -192,6 +194,7 @@ const RELEASE_KEY = 'libriq_seen_version';
 
     checkIncomingPollVote();
     LibriqFirebase.onChange(state => claimPendingIntents(state));
+    LibriqFirebase.onChange(state => ProductEvents.trackSignUp(state?.user));
     // A book added or edited in another LibriQ tab shows up here too.
     watchOtherTabs({
       getUid: () => Storage.getActiveAccountUid?.() || null,
