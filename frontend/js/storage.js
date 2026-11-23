@@ -8,9 +8,10 @@ import {
 } from './data.js';
 
 import { markReturningReader } from './shared/authMode.js';
+import { STORAGE_KEYS } from './shared/storageKeys.js';
 
 export const Storage = (() => {
-  const INSTALL_KEY = 'libriq_installed';
+  const INSTALL_KEY = STORAGE_KEYS.INSTALLED;
 
   const DATA_KEYS = {
     BOOKS:   'libriq_books',
@@ -18,13 +19,13 @@ export const Storage = (() => {
     STREAK:  'libriq_streak',
     GOALS:   'libriq_goals',
     ACTIVITY:'libriq_activity',
-    DEVICE_ID: 'libriq_device_id',
+    DEVICE_ID: STORAGE_KEYS.DEVICE_ID,
     BACKUP:  'libriq_backup_meta',
     CLOUD_BACKUP: 'libriq_cloud_backup_meta',
     SYNC_META: 'libriq_sync_meta',
-    SYNC_TOMBSTONES: 'libriq_sync_delete_tombstones',
+    SYNC_TOMBSTONES: STORAGE_KEYS.SYNC_DELETE_TOMBSTONES,
   };
-  const ACTIVE_UID_KEY = 'libriq_active_account_uid';
+  const ACTIVE_UID_KEY = STORAGE_KEYS.ACTIVE_ACCOUNT_UID;
   const SCOPED_DATA_KEYS = new Set(['BOOKS', 'PROFILE', 'STREAK', 'GOALS', 'ACTIVITY', 'BACKUP', 'CLOUD_BACKUP', 'SYNC_META', 'SYNC_TOMBSTONES']);
   let activeUid = null;
   let scopeInitialized = false;

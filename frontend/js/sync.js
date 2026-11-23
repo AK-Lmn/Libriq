@@ -6,11 +6,12 @@ import { LibriqFirebase } from './firebase-client.js';
 import { LibriqCloudBackup } from './cloudBackup.js';
 import { commitInChunks } from './services/syncUpload.js';
 import { mergeBooks, supersededTombstoneIds } from './services/syncMerge.js';
+import { STORAGE_KEYS } from './shared/storageKeys.js';
 
 export const LibriqSyncBeta = (() => {
-  const STORAGE_KEY = 'libriq_sync_beta_enabled';
+  const STORAGE_KEY = STORAGE_KEYS.SYNC_BETA_ENABLED;
   const USER_DISABLED_KEY = 'libriq_account_sync_user_disabled';
-  const DEBUG_KEY = 'libriq_debug_sync';
+  const DEBUG_KEY = STORAGE_KEYS.DEBUG_SYNC;
   const TOMBSTONE_MIN_AGE_MS = 30 * 24 * 60 * 60 * 1000;
   const LOCAL_SAVE_FAILED_MESSAGE = 'This device is out of storage. Your books are safe in the cloud.';
   const STATUS = {
@@ -80,14 +81,14 @@ export const LibriqSyncBeta = (() => {
   }
 
   function getDeviceId() {
-    return Storage.getDeviceId?.() || localStorage.getItem('libriq_device_id') || 'unknown-device';
+    return Storage.getDeviceId?.() || localStorage.getItem(STORAGE_KEYS.DEVICE_ID) || 'unknown-device';
   }
 
   function readTombstones() {
     try {
       const scoped = Storage.getSyncTombstones?.() || {};
       if (Object.keys(scoped).length > 0) return scoped;
-      const parsed = JSON.parse(localStorage.getItem('libriq_sync_delete_tombstones') || '{}');
+      const parsed = JSON.parse(localStorage.getItem(STORAGE_KEYS.SYNC_DELETE_TOMBSTONES) || '{}');
       return parsed && typeof parsed === 'object' ? parsed : {};
     } catch (err) {
       debugLog('delete tombstone read failed', { error: err?.message || String(err) });

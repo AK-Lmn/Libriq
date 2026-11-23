@@ -41,6 +41,7 @@ import { initialAuthMode } from './shared/authMode.js';
 import { MIN_PASSWORD_LENGTH, newPasswordProblem } from './shared/passwordPolicy.js';
 import { showFieldErrors, clearFieldErrors } from './shared/fieldErrors.js';
 import { MIN_SEARCH_LENGTH } from './shared/searchQuery.js';
+import { STORAGE_KEYS } from './shared/storageKeys.js';
 
 export function completeGoodreadsImport({ previewResult, storage, toast, rerender } = {}) {
   const result = executeGoodreadsImport({
@@ -148,10 +149,10 @@ const importExportService = createImportExportService({
 let profileFeature;
 export const Navigation = (() => {
   let _currentPage = 'dashboard';
-  const SESSION_PREF_KEY = 'libriq_session_pref';
-  const SESSION_MODE_KEY = 'libriq_session_mode';
-  const PREFERRED_SESSION_MODE_KEY = 'libriq_preferred_session_mode';
-  const DEBUG_SYNC = () => localStorage.getItem('libriq_debug_sync') === '1';
+  const SESSION_PREF_KEY = STORAGE_KEYS.SESSION_PREF;
+  const SESSION_MODE_KEY = STORAGE_KEYS.SESSION_MODE;
+  const PREFERRED_SESSION_MODE_KEY = STORAGE_KEYS.PREFERRED_SESSION_MODE;
+  const DEBUG_SYNC = () => localStorage.getItem(STORAGE_KEYS.DEBUG_SYNC) === '1';
   let _lastAuthUid = null;
   let initialized = false;
 
@@ -1037,7 +1038,7 @@ function renderSessionChoicePage() {
   main.hidden = false;
   const firebase = LibriqFirebase.getState();
   if (!Navigation.shouldRenderSessionScreen?.(firebase)) {
-    if (localStorage.getItem('libriq_debug_sync') === '1') {
+    if (localStorage.getItem(STORAGE_KEYS.DEBUG_SYNC) === '1') {
       console.debug('[LibriQ][SyncDebug][Nav] session screen blocked', {
         reason: Navigation.isConfirmedSignedOut?.(firebase) ? 'not on session screen' : Navigation.getSessionScreenSuppressionReason?.(firebase),
         hasUser: Boolean(firebase.user),

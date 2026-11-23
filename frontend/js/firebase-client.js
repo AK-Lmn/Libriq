@@ -1,6 +1,7 @@
 import { runWhenIdleAfterLoad } from './shared/afterLoad.js';
 import { Storage } from './storage.js';
 import { deleteAccountOnServer } from './services/serverAccountDelete.js';
+import { STORAGE_KEYS } from './shared/storageKeys.js';
 
 let initializeApp;
 let getApp;
@@ -155,7 +156,7 @@ function prepareRuntime() {
     .every(key => String(config[key] || '').trim());
   TEST_MODE = Boolean(
     (runtimeLocation.hostname === 'localhost' || runtimeLocation.hostname === '127.0.0.1') &&
-    (new URLSearchParams(runtimeLocation.search).get('libriq_e2e_test_mode') === '1' || globalThis.localStorage?.getItem('libriq_e2e_test_mode') === '1')
+    (new URLSearchParams(runtimeLocation.search).get(STORAGE_KEYS.E2E_TEST_MODE) === '1' || globalThis.localStorage?.getItem(STORAGE_KEYS.E2E_TEST_MODE) === '1')
   );
   runtimePrepared = true;
 }
@@ -1675,18 +1676,18 @@ function installTestHooks() {
       return testUser;
     },
     enableAccountMode() {
-      sessionStorage.setItem('libriq_session_mode', 'account');
-      localStorage.setItem('libriq_preferred_session_mode', 'account');
-      localStorage.setItem('libriq_session_pref', 'account');
+      sessionStorage.setItem(STORAGE_KEYS.SESSION_MODE, 'account');
+      localStorage.setItem(STORAGE_KEYS.PREFERRED_SESSION_MODE, 'account');
+      localStorage.setItem(STORAGE_KEYS.SESSION_PREF, 'account');
     },
     enableSyncBeta() {
-      localStorage.setItem('libriq_sync_beta_enabled', '1');
+      localStorage.setItem(STORAGE_KEYS.SYNC_BETA_ENABLED, '1');
       window.LibriqSyncBeta?.setEnabled?.(true);
     },
     disableAccountMode() {
-      sessionStorage.setItem('libriq_session_mode', 'offline');
-      localStorage.setItem('libriq_preferred_session_mode', 'offline');
-      localStorage.setItem('libriq_session_pref', 'offline');
+      sessionStorage.setItem(STORAGE_KEYS.SESSION_MODE, 'offline');
+      localStorage.setItem(STORAGE_KEYS.PREFERRED_SESSION_MODE, 'offline');
+      localStorage.setItem(STORAGE_KEYS.SESSION_PREF, 'offline');
       window.LibriqSyncBeta?.pauseForOffline?.();
     },
     addBook(book) {

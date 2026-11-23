@@ -1,5 +1,6 @@
 import { pageHeader } from '../../shared/pageHeader.js';
 import { resolveAccountDisplayName } from '../../accountDisplayName.js';
+import { STORAGE_KEYS } from '../../shared/storageKeys.js';
 
 export function createProfilePage({ storage, utils, constants, actions = {}, documentRoot } = {}) {
   let boundMain = null;
@@ -37,7 +38,7 @@ export function createProfilePage({ storage, utils, constants, actions = {}, doc
       return null;
     }
 
-    const installedTime = typeof localStorage !== 'undefined' ? localStorage.getItem('libriq_installed') : null;
+    const installedTime = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.INSTALLED) : null;
     const rawCreationTime = user?.metadata?.creationTime
       || user?.metadata?.createdAt
       || profile?.createdAt
