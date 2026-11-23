@@ -1,4 +1,6 @@
 import { pageHeader } from '../../shared/pageHeader.js';
+import { ProductEvents } from '../../shared/productEvents.js';
+
 export function createGoalsPage({ storage, utils, actions, documentRoot }) {
   if (!storage || !utils) throw new TypeError('createGoalsPage requires storage and utils.');
   const pageDocument = documentRoot || globalThis.document;
@@ -95,6 +97,7 @@ export function createGoalsPage({ storage, utils, actions, documentRoot }) {
       const yearly = Number(new FormData(event.target).get('yearly'));
       if (!Number.isInteger(yearly) || yearly < 1 || yearly > 365) return;
       storage.saveGoals({ yearly, year: new Date().getFullYear() });
+      ProductEvents.track('goal_set');
       utils.toast(`Goal set: ${yearly} books in ${new Date().getFullYear()}`, 'success');
       if (actions?.refreshGoals) actions.refreshGoals();
       else renderGoalsPage();

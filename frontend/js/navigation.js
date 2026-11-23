@@ -42,6 +42,7 @@ import { MIN_PASSWORD_LENGTH, newPasswordProblem } from './shared/passwordPolicy
 import { showFieldErrors, clearFieldErrors } from './shared/fieldErrors.js';
 import { MIN_SEARCH_LENGTH } from './shared/searchQuery.js';
 import { STORAGE_KEYS } from './shared/storageKeys.js';
+import { ProductEvents } from './shared/productEvents.js';
 
 export function completeGoodreadsImport({ previewResult, storage, toast, rerender } = {}) {
   const result = executeGoodreadsImport({
@@ -50,6 +51,7 @@ export function completeGoodreadsImport({ previewResult, storage, toast, rerende
     mergeMatched: true,
   });
   toast?.(`Goodreads import complete: ${result.booksCreated} books added, ${result.booksMatched} books updated.`, 'success');
+  ProductEvents.track('import_goodreads');
   rerender?.();
   return result;
 }
@@ -98,6 +100,7 @@ function executeKindleImport({ previewResult, storage } = {}) {
 export function completeKindleImport({ previewResult, storage, toast, rerender } = {}) {
   const result = executeKindleImport({ previewResult, storage });
   toast?.(`Kindle import complete: ${result.booksCreated} books created, ${result.booksMatched} books matched, ${result.quotesImported} quotes imported, ${result.duplicatesSkipped} duplicates skipped.`, 'success');
+  ProductEvents.track('import_kindle');
   rerender?.();
   return result;
 }
