@@ -296,6 +296,7 @@ export const Navigation = (() => {
     confirmDeleteLibraryData: () => confirmDeleteLibraryData(),
     confirmDeleteAccount: () => confirmDeleteAccount(),
     clearLocalCache: () => clearLocalCache(),
+    signOutAndRemoveDeviceData: () => signOutAndRemoveDeviceData(),
     backupToCloud: () => backupToCloud(),
     openCloudRestorePreview: () => openCloudRestorePreview(),
     openCloudMergePreview: () => openCloudMergePreview(),
@@ -2216,6 +2217,48 @@ async function clearLocalCache() {
   Utils.toast('Local cache cleared.', 'info');
   Navigation.renderCurrentPage?.();
   Navigation.updateBadges?.();
+}
+
+// Saved book covers are shared by every account on the device, so they go too.
+const COVER_CACHE = 'libriq-covers-v1';
+
+async function signOutAndRemoveDeviceData() {
+  const uid = LibriqFirebase.getState().user?.uid;
+  if (!uid) return;
+  const sync = window.LibriqSyncBeta?.getState?.() || {};
+  const unsynced = (sync.pendingBookIds?.length || 0) + (sync.pendingDeleteIds?.length || 0);
+  const confirmed = await confirmAction(
+    'This signs you out and deletes this account’s books, notes, goals and saved covers from this device. Your library in the cloud and your account stay as they are.',
+    {
+      title: 'Sign out and remove from this device?',
+      confirmLabel: 'Sign out and remove',
+      detail: unsynced
+        ? `${unsynced} ${unsynced === 1 ? 'change hasn’t' : 'changes haven’t'} synced yet and will be lost.`
+        : '',
+    },
+  );
+  if (!confirmed) return;
+  try {
+    window.LibriqSyncBeta?.detachForAccountSwitch?.('remove-device-data');
+    await LibriqFirebase.signOut();
+  } catch (err) {
+    console.warn('[Libriq] Sign out before removing device data failed:', err);
+    window.LibriqSyncBeta?.refresh?.();
+    Utils.toast('Could not sign out right now, so nothing was removed.', 'error');
+    return;
+  }
+  // Leave the account's scope first, so nothing that runs while the auth
+  // listener catches up writes defaults back under the removed account.
+  Storage.clearActiveAccountScope?.();
+  Storage.clearAccountScopedData?.(uid);
+  try {
+    await globalThis.caches?.delete(COVER_CACHE);
+  } catch (err) {
+    console.warn('[Libriq] Cover cache cleanup failed:', err);
+  }
+  Navigation.setSessionPreference?.('prompt');
+  Navigation.clearAccountResume?.();
+  Utils.toast('Signed out. Your data was removed from this device.', 'success');
 }
 
 async function confirmDeleteLibraryData() {

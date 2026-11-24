@@ -23,6 +23,10 @@ class MemoryStorage {
     this.removes += 1;
     this.values.delete(key);
   }
+
+  get length() { return this.values.size; }
+
+  key(index) { return Array.from(this.values.keys())[index] ?? null; }
 }
 
 let importSequence = 0;
@@ -341,5 +345,24 @@ assert.equal(onboardingStorage.getOnboarding().dismissed, true);
 onboardingStorage.clearAccountScopedData('reader-b');
 onboardingStorage.setActiveAccountUid('reader-b');
 assert.equal(onboardingStorage.getOnboarding().imported, false, "removing an account's data clears its checklist too");
+
+// Removing an account from the device with no key list sweeps every key under
+// that account's prefix, including ones Storage doesn't list, and leaves other
+// accounts and device-level keys alone.
+const sweepStore = new MemoryStorage();
+installBrowserFixture(sweepStore);
+const { Storage: sweepStorage } = await importFresh();
+sweepStorage.bootstrap();
+sweepStorage.setActiveAccountUid('reader-a');
+sweepStorage.addBook({ title: 'Kept for A', author: 'X', status: 'reading' });
+sweepStore.setItem('libriq:users:reader-a:something_new', '1');
+sweepStorage.setActiveAccountUid('reader-b');
+sweepStorage.addBook({ title: 'Kept for B', author: 'Y', status: 'reading' });
+const deviceId = sweepStorage.getDeviceId();
+assert.equal(sweepStorage.clearAccountScopedData('reader-a'), true);
+const leftForA = [...sweepStore.values.keys()].filter(key => key.startsWith('libriq:users:reader-a:'));
+assert.deepEqual(leftForA, [], 'nothing under reader A is left');
+assert.equal(sweepStorage.getBooks().length, 1, "reader B's books stay");
+assert.equal(sweepStorage.getDeviceId(), deviceId, 'device id stays');
 
 console.log('Storage module tests passed.');
