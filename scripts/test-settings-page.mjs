@@ -54,6 +54,7 @@ const render = createSettingsPage({
     openCloudMergePreview: () => calls.push('merge-preview'),
     toggleSync: enabled => calls.push(`sync:${enabled}`),
     accountAction: mode => calls.push(`account:${mode}`),
+    signOutAndRemoveDeviceData: () => calls.push('remove-device-data'),
     importDataFromFile: file => calls.push(file),
   },
   documentRoot: {
@@ -86,6 +87,9 @@ assert.match(danger, /data-action="delete-account"/, "Delete account lives in it
 assert.match(danger, /<h2[^>]*>[\s\S]*Danger zone/, "Danger card has its own heading");
 assert.ok(main.innerHTML.lastIndexOf("settings-panel-danger") > main.innerHTML.lastIndexOf("settings-panel-about"), "Danger card comes last");
 
+assert.match(main.innerHTML, /data-action="remove-device-data"[^>]*>\s*Sign out and remove/, "signed-in readers can sign out and remove this device's copy");
+assert.doesNotMatch(danger, /remove-device-data/, 'removing the device copy is not in the danger zone: the cloud copy stays');
+
 const click = listeners.get('click');
 click({ target: { closest: () => ({ dataset: { action: 'toggle-theme' } }) } });
 click({ target: { closest: () => ({ dataset: { action: 'refresh-sync' } }) } });
@@ -100,9 +104,10 @@ action('choose-theme', { themeChoice: 'light' });
 for (const name of ['export-data', 'prompt-import', 'delete-library', 'delete-account', 'backup-cloud', 'restore-cloud', 'merge-cloud']) action(name);
 action('toggle-sync', { syncEnabled: '1' });
 action('account-action', { accountAction: 'signout' });
-assert.deepEqual(calls, ['theme', 'export', 'import', 'confirm-library', 'confirm-account', 'backup', 'restore-preview', 'merge-preview', 'sync:true', 'account:signout']);
+action('remove-device-data');
+assert.deepEqual(calls, ['theme', 'export', 'import', 'confirm-library', 'confirm-account', 'backup', 'restore-preview', 'merge-preview', 'sync:true', 'account:signout', 'remove-device-data']);
 action('backup-cloud', {}, true);
-assert.equal(calls.length, 10, 'Disabled controls must not execute');
+assert.equal(calls.length, 11, 'Disabled controls must not execute');
 const file = { name: 'backup.json' };
 listeners.get('change')({ target: { matches: () => true, files: [file] } });
 assert.equal(calls.at(-1), file);

@@ -163,13 +163,22 @@ export const Storage = (() => {
     const targetUid = uid === undefined ? activeUid : uid;
     const nextUid = targetUid ? String(targetUid) : null;
     if (!nextUid) return false;
-    const keys = Array.isArray(options.keys) && options.keys.length
-      ? new Set(options.keys)
-      : SCOPED_DATA_KEYS;
-    Object.entries(DATA_KEYS).forEach(([name, key]) => {
-      if (!keys.has(name)) return;
-      localStorage.removeItem(_userKey(nextUid, key));
-    });
+    if (Array.isArray(options.keys) && options.keys.length) {
+      const keys = new Set(options.keys);
+      Object.entries(DATA_KEYS).forEach(([name, key]) => {
+        if (keys.has(name)) localStorage.removeItem(_userKey(nextUid, key));
+      });
+      return true;
+    }
+    // No list: remove everything under this account's prefix, including keys
+    // written by older or newer versions that DATA_KEYS doesn't name.
+    const prefix = `libriq:users:${nextUid}:`;
+    const owned = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(prefix)) owned.push(key);
+    }
+    owned.forEach(key => localStorage.removeItem(key));
     return true;
   }
 

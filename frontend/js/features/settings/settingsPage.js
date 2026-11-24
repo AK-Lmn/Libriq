@@ -256,6 +256,15 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
             Sign out
           </button>
         </div>
+        <div class="settings-account-row settings-account-remove-device-row">
+          <div class="activity-text">
+            <div class="activity-title">Sign out and remove from this device</div>
+            <div class="activity-subtitle">For a shared or borrowed device. Deletes this account’s books, notes and saved covers here. Your cloud library stays.</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" type="button" data-action="remove-device-data">
+            Sign out and remove
+          </button>
+        </div>
       </div>`;
   }
 
@@ -455,6 +464,7 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
         'delete-account': () => actions.confirmDeleteAccount?.(),
         'clear-local-cache': () => actions.clearLocalCache?.(),
         'account-action': () => actions.accountAction?.(trigger.dataset.accountAction),
+        'remove-device-data': () => actions.signOutAndRemoveDeviceData?.(),
         'send-verification': () => actions.sendVerification?.(),
         'refresh-email-status': () => actions.refreshEmailStatus?.(),
         'reset-password': () => actions.resetPassword?.(),
