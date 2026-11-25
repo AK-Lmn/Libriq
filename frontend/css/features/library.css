@@ -186,6 +186,8 @@
 :is(#libraryPage, #statusPage) .library-grid-summary { margin-bottom: 16px; }
 :is(#libraryPage, #statusPage) .library-footer { border-top: 1px solid var(--library-border); margin-top: 28px; padding-top: 20px; }
 :is(#libraryPage, #statusPage) .library-footer > span { display: flex; align-items: center; gap: 8px; }
+#libraryPage .library-more { display: flex; justify-content: center; margin-top: 24px; }
+#libraryPage .library-more[hidden] { display: none; }
 :is(#libraryPage, #statusPage) .books-grid { display: grid; gap: 24px; grid-template-columns: repeat(3, minmax(0,1fr)); }
 #statusPage .books-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 20px; }
 #statusPage .book-card { padding: 16px; }

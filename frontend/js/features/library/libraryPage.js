@@ -2,8 +2,17 @@ import { pageHeader } from '../../shared/pageHeader.js';
 import { buildLibraryShelfEmpty } from './libraryShelvesPage.js';
 import { customShelves, libraryIcon, libraryTools, sortLibraryBooks, renderBookshelfView } from './libraryDesign.js';
 
+// A long library is rendered one batch at a time: 1,000 cards are ~35k DOM
+// nodes, which is what made the page slow. The next batch is added when the
+// "more" row scrolls into view (or when the reader presses its button).
+export const LIBRARY_BATCH_SIZE = 60;
+
 export function createLibraryPage({ storage, library, utils, constants, actions = {}, documentRoot } = {}) {
   let boundMain = null;
+  let visibleList = [];
+  let shownCount = 0;
+  let viewSignature = '';
+  let moreObserver = null;
   const memoryState = new Map();
   const stateKeys = {
     filter: 'libriq_library_filter',
@@ -73,20 +82,62 @@ export function createLibraryPage({ storage, library, utils, constants, actions 
     if (total) total.textContent = `${filtered.length} / ${books.length}`;
     const order = getDocument()?.getElementById?.('librarySortSummary');
     if (order) order.textContent = state.sort === 'recently-added' ? 'Your latest additions first' : 'Your collection, your order';
+    visibleList = filtered;
     if (filtered.length === 0) {
+      shownCount = 0;
       grid.classList?.remove?.('books-shelf-mode');
       grid.innerHTML = buildEmpty(state.filter, state.query);
+      updateMore();
       return;
     }
+    // Same filters as the last render (a favourite toggled, a page updated):
+    // keep the batches already shown. Any change to them starts at one batch.
+    const signature = [state.filter, state.query, state.sort, state.shelf, state.viewMode].join('|');
+    const keep = signature === viewSignature ? Math.max(shownCount, LIBRARY_BATCH_SIZE) : LIBRARY_BATCH_SIZE;
+    viewSignature = signature;
+    const count = Math.min(filtered.length, keep);
     if (state.viewMode === 'shelf') {
       grid.classList?.add?.('books-shelf-mode');
-      renderBookshelfView(filtered, grid, utils, {
+      renderBookshelfView(filtered.slice(0, count), grid, utils, {
         showBookDetails: id => actions.showBookDetails?.(id),
       });
     } else {
       grid.classList?.remove?.('books-shelf-mode');
       grid.innerHTML = '';
-      filtered.forEach(book => grid.appendChild(library.renderBookCard(book)));
+      filtered.slice(0, count).forEach(book => grid.appendChild(library.renderBookCard(book)));
+    }
+    shownCount = count;
+    updateMore();
+  }
+
+  function showMore() {
+    const grid = getDocument()?.getElementById?.('libraryGrid');
+    if (!grid || shownCount >= visibleList.length) return;
+    const next = visibleList.slice(shownCount, shownCount + LIBRARY_BATCH_SIZE);
+    if (getState().viewMode === 'shelf') {
+      renderBookshelfView(next, grid, utils, { showBookDetails: id => actions.showBookDetails?.(id) }, { append: true });
+    } else {
+      next.forEach(book => grid.appendChild(library.renderBookCard(book)));
+    }
+    shownCount += next.length;
+    updateMore();
+  }
+
+  // Shows or hides the "more" row and keeps one observer watching it.
+  function updateMore() {
+    const row = getDocument()?.getElementById?.('libraryMore');
+    moreObserver?.disconnect?.();
+    moreObserver = null;
+    if (!row) return;
+    const left = visibleList.length - shownCount;
+    row.hidden = left <= 0;
+    const button = getDocument()?.getElementById?.('libraryMoreBtn');
+    if (button) button.textContent = left > 0 ? `Show more books (${left} left)` : '';
+    if (left > 0 && typeof globalThis.IntersectionObserver === 'function') {
+      moreObserver = new globalThis.IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting)) showMore();
+      }, { rootMargin: '600px 0px' });
+      moreObserver.observe(row);
     }
   }
 
@@ -127,6 +178,7 @@ export function createLibraryPage({ storage, library, utils, constants, actions 
         </div>
         <div class="library-grid-summary"><span id="libraryResultCount" role="status"></span><span id="librarySortSummary"></span></div>
         <div class="books-grid" id="libraryGrid">${books.length === 0 ? buildEmpty() : ''}</div>
+        <div class="library-more" id="libraryMore" hidden><button class="btn btn-secondary" type="button" id="libraryMoreBtn" data-action="show-more-library">Show more books</button></div>
         <footer class="library-footer"><span>${libraryIcon('shield')} Your books. Your space.</span><span id="libraryVisibleTotal"></span></footer>
       </div>`;
 
@@ -152,6 +204,7 @@ export function createLibraryPage({ storage, library, utils, constants, actions 
           setState({ filter: 'all', shelf: 'all', query: '' });
           renderLibraryPage();
         },
+        'show-more-library': () => showMore(),
         'show-book-details': () => actions.showBookDetails?.(bookId),
         'update-progress': () => actions.updateProgress?.(bookId),
         'toggle-favorite': () => actions.toggleFavorite?.(bookId),

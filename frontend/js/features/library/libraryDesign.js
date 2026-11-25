@@ -154,11 +154,12 @@ export function buildBookSpine(book, utils, actions = {}) {
   return spine;
 }
 
-export function renderBookshelfView(books, container, utils, actions = {}) {
-  container.innerHTML = '';
+export function renderBookshelfView(books, container, utils, actions = {}, { append = false } = {}) {
+  const existing = append ? container.querySelector?.('.bookshelf-showcase') : null;
+  if (!append) container.innerHTML = '';
   if (!books || !books.length) return;
 
-  const showcase = document.createElement('div');
+  const showcase = existing || document.createElement('div');
   showcase.className = 'bookshelf-showcase';
 
   const BOOKS_PER_SHELF = 10;
@@ -183,5 +184,5 @@ export function renderBookshelfView(books, container, utils, actions = {}) {
     showcase.appendChild(tier);
   }
 
-  container.appendChild(showcase);
+  if (!existing) container.appendChild(showcase);
 }
