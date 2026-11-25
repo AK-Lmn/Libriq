@@ -1692,8 +1692,8 @@ function isVersionServiceProvider(provider) {
     const component = provider.getComponent();
     return component?.type === "VERSION" /* ComponentType.VERSION */;
 }
-const name$r = "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
-const version$1 = "0.16.6";
+const name$r = "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+const version$1 = "0.16.7";
 /**
  * @license
  * Copyright 2019 Google LLC
@@ -1710,7 +1710,7 @@ const version$1 = "0.16.6";
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const logger = new Logger('https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js');
+const logger = new Logger('https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js');
 const name$q = "@firebase/app-compat";
 const name$p = "@firebase/analytics-compat";
 const name$o = "@firebase/analytics";
@@ -1738,7 +1738,7 @@ const name$3 = "@firebase/firestore";
 const name$2 = "@firebase/ai";
 const name$1 = "@firebase/firestore-compat";
 const name$s = "firebase";
-const version$2 = "13.3.0";
+const version$2 = "13.4.0";
 /**
  * @license
  * Copyright 2019 Google LLC
@@ -2842,6 +2842,134 @@ function registerCoreComponents(variant) {
     registerVersion('fire-js', '');
 }
 /**
+ * @license
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
+ * Name of the Trusted Types policy that Firebase SDKs use to load external
+ * scripts. Apps that restrict policy names with the `trusted-types` CSP
+ * directive must allow this name.
+ *
+ * @internal
+ */
+const _TRUSTED_TYPES_POLICY_NAME = 'firebase-js-sdk-policy';
+/**
+ * External scripts that Firebase SDKs are allowed to load. A script URL is
+ * allowed if it is one of these URLs, optionally followed by a query string.
+ *
+ * - Analytics: Google tag (gtag.js)
+ * - Auth: Google API loader (gapi), reCAPTCHA v2 and reCAPTCHA Enterprise
+ * - App Check: reCAPTCHA v3 and reCAPTCHA Enterprise
+ */
+const ALLOWED_SCRIPT_URLS = [
+    'https://www.googletagmanager.com/gtag/js',
+    'https://apis.google.com/js/api.js',
+    'https://www.google.com/recaptcha/api.js',
+    'https://www.google.com/recaptcha/enterprise.js'
+];
+// `undefined` means the policy has not been created yet. `null` means Trusted
+// Types are unavailable or the policy could not be created.
+let trustedTypesPolicy;
+// True if the browser supports Trusted Types but the policy could not be
+// created, usually because the page's CSP does not allow the policy name.
+let trustedTypesPolicyBlocked = false;
+/**
+ * Returns `url` if it is one of the allowed external scripts, and throws
+ * otherwise. Used as the `createScriptURL` implementation of the Trusted Types
+ * policy.
+ *
+ * @internal
+ */
+function _createTrustedScriptURL(url) {
+    const allowed = ALLOWED_SCRIPT_URLS.some(allowedUrl => url.startsWith(allowedUrl) &&
+        // Only allow a query string after the allowed URL, so that e.g.
+        // "https://apis.google.com/js/api.js.evil.com" is rejected.
+        (url.length === allowedUrl.length ||
+            url.charAt(allowedUrl.length) === '?'));
+    if (!allowed) {
+        throw new TypeError(`Firebase: Refusing to load untrusted script URL: ${url}`);
+    }
+    return url;
+}
+/**
+ * Lazily creates the Trusted Types policy. The policy is only created the first
+ * time a script is loaded, so that pages that load more than one copy of
+ * `@firebase/app` (for example the compat and modular CDN builds) only run
+ * into a policy name collision if more than one copy loads a script.
+ */
+function getTrustedTypesPolicy() {
+    if (trustedTypesPolicy === undefined) {
+        trustedTypesPolicy = null;
+        const trustedTypes = typeof window !== 'undefined' ? window.trustedTypes : undefined;
+        if (trustedTypes?.createPolicy) {
+            try {
+                trustedTypesPolicy = trustedTypes.createPolicy(_TRUSTED_TYPES_POLICY_NAME, { createScriptURL: _createTrustedScriptURL });
+            }
+            catch {
+                // The page's CSP does not allow this policy name, or a policy with
+                // this name already exists. Fall back to assigning a plain string,
+                // which still works unless the page also requires Trusted Types for
+                // scripts. If it does, _setTrustedScriptSrc logs an error explaining
+                // how to allow the policy.
+                trustedTypesPolicyBlocked = true;
+            }
+        }
+    }
+    return trustedTypesPolicy;
+}
+/**
+ * Sets the `src` of a script element through the Firebase Trusted Types policy
+ * when Trusted Types are supported, so that Firebase SDKs can load external
+ * scripts on pages that enforce Trusted Types.
+ *
+ * Throws if `url` is not an allowed Firebase script URL, or if the browser
+ * rejects the assignment.
+ *
+ * @param script - The script element to update.
+ * @param url - The script URL. Must be an allowed Firebase script URL.
+ *
+ * @internal
+ */
+function _setTrustedScriptSrc(script, url) {
+    // Validate the URL even when Trusted Types are unavailable, so that the
+    // allowlist is enforced the same way in every browser.
+    _createTrustedScriptURL(url);
+    const policy = getTrustedTypesPolicy();
+    if (policy) {
+        // HTMLScriptElement.src is typed as a string, but accepts a
+        // TrustedScriptURL.
+        script.src = policy.createScriptURL(url);
+        return;
+    }
+    try {
+        script.src = url;
+    }
+    catch (e) {
+        if (trustedTypesPolicyBlocked) {
+            // The browser rejected the plain string because the page requires
+            // Trusted Types, and the page's CSP did not allow our policy.
+            logger.error(`Unable to load ${url} because this page requires Trusted Types ` +
+                `for scripts but does not allow the "${_TRUSTED_TYPES_POLICY_NAME}" ` +
+                `Trusted Types policy. To fix this, add ` +
+                `"${_TRUSTED_TYPES_POLICY_NAME}" to the trusted-types directive ` +
+                `of the page's Content-Security-Policy.`);
+        }
+        throw e;
+    }
+}
+/**
  * Firebase App
  *
  * @remarks This package coordinates the communication between the different Firebase components
@@ -2866,7 +2994,7 @@ function registerCoreComponents(variant) {
 registerCoreComponents('');
 
 var name = "firebase";
-var version = "13.3.0";
+var version = "13.4.0";
 
 /**
  * @license
@@ -2886,6 +3014,6 @@ var version = "13.3.0";
  */
 registerVersion(name, version, 'cdn');
 
-export { FirebaseError, SDK_VERSION, DEFAULT_ENTRY_NAME as _DEFAULT_ENTRY_NAME, _addComponent, _addOrOverwriteComponent, _apps, _clearComponents, _components, _getProvider, _isFirebaseApp, _isFirebaseServerApp, _isFirebaseServerAppSettings, _registerComponent, _removeServiceInstance, _serverApps, deleteApp, getApp, getApps, initializeApp, initializeServerApp, onLog, registerVersion, setLogLevel };
+export { FirebaseError, SDK_VERSION, DEFAULT_ENTRY_NAME as _DEFAULT_ENTRY_NAME, _addComponent, _addOrOverwriteComponent, _apps, _clearComponents, _components, _getProvider, _isFirebaseApp, _isFirebaseServerApp, _isFirebaseServerAppSettings, _registerComponent, _removeServiceInstance, _serverApps, _setTrustedScriptSrc, deleteApp, getApp, getApps, initializeApp, initializeServerApp, onLog, registerVersion, setLogLevel };
 
 //# sourceMappingURL=firebase-app.js.map
