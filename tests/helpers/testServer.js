@@ -52,7 +52,7 @@ export async function apiRequest(baseUrl, path, options = {}) {
   });
 
   const text = await response.text();
-  let data = null;
+  let data;
   try {
     data = JSON.parse(text);
   } catch {

@@ -23,7 +23,7 @@ function write(storage, key, value) {
 // Reads and removes an entry; returns its value only while it is fresh.
 function take(storage, key, now) {
   if (!storage) return null;
-  let entry = null;
+  let entry;
   try { entry = JSON.parse(storage.getItem(key) || 'null'); } catch { entry = null; }
   try { storage.removeItem(key); } catch { /* ignore */ }
   if (!entry || typeof entry.savedAt !== 'number' || now - entry.savedAt > MAX_AGE_MS) return null;
