@@ -95,4 +95,48 @@ assert.match(emptyGrid.innerHTML, /data-action="import-backup"/);
 assert.match(buildLibraryShelfEmpty('all', '<img src=x onerror=alert(1)>'), /&lt;img/);
 assert.doesNotMatch(buildLibraryShelfEmpty('all', '<img src=x onerror=alert(1)>'), /<img/);
 
+// A long library renders in batches: the first 60 cards up front, the rest
+// when the reader asks for them (or scrolls the "more" row into view).
+const manyBooks = Array.from({ length: 150 }, (_, i) => ({
+  id: `m${String(i).padStart(3, '0')}`, title: `Book ${String(i).padStart(3, '0')}`, author: 'Author', status: 'wishlist',
+  dateAdded: `2026-01-${String((i % 28) + 1).padStart(2, '0')}`,
+}));
+const manyState = new Map([['libriq_library_sort', 'title-az']]);
+const manyListeners = new Map();
+const manyGrid = createGrid();
+const more = { id: 'libraryMore', hidden: true, textContent: '' };
+const moreButton = { id: 'libraryMoreBtn', textContent: '' };
+const manyMain = { innerHTML: '', addEventListener(type, handler) { manyListeners.set(type, handler); }, querySelectorAll() { return []; } };
+const manyPage = createLibraryPage({
+  storage: { getBooks: () => manyBooks },
+  library: { renderBookCard: book => ({ bookId: book.id }) },
+  utils: { sanitize: String, debounce: callback => callback, readingProgress: () => 0 },
+  constants: { STATUS: { READING: 'reading', WISHLIST: 'wishlist', FINISHED: 'finished' } },
+  actions: { stateStorage: { getItem: key => manyState.get(key) || null, setItem: (key, value) => manyState.set(key, String(value)) } },
+  documentRoot: { getElementById: id => ({ mainContent: manyMain, libraryGrid: manyGrid, libraryMore: more, libraryMoreBtn: moreButton })[id] || null },
+});
+const clickMore = () => manyListeners.get('click')({
+  target: { closest: () => ({ dataset: { action: 'show-more-library' } }) }, preventDefault() {}, stopPropagation() {},
+});
+manyPage();
+assert.match(manyMain.innerHTML, /id="libraryMore"/);
+assert.equal(manyGrid.nodes.length, 60, 'only the first batch is rendered');
+assert.equal(more.hidden, false, 'the "more" row is visible while cards remain');
+assert.match(moreButton.textContent, /90 left/);
+clickMore();
+assert.equal(manyGrid.nodes.length, 120);
+assert.equal(manyGrid.nodes[60].bookId, 'm060', 'the next batch continues in order');
+clickMore();
+assert.equal(manyGrid.nodes.length, 150);
+assert.equal(more.hidden, true, 'the row hides once everything is shown');
+assert.deepEqual(new Set(manyGrid.nodes.map(node => node.bookId)).size, 150, 'no card is rendered twice');
+
+// Re-rendering with the same filters keeps the batches already shown (so
+// favouriting a book far down the list doesn't throw the reader back to 60).
+manyPage();
+assert.equal(manyGrid.nodes.length, 150, 'same view keeps what was shown');
+// Changing the filters starts over.
+manyListeners.get('input')({ target: { id: 'librarySearchInput', value: 'Book 0' } });
+assert.equal(manyGrid.nodes.length, 60, 'a new search (100 matches) starts at one batch');
+
 console.log('Library page tests passed');
