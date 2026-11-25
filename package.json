@@ -93,6 +93,6 @@
   },
   "dependencies": {
     "firebase": "^13.3.0",
-    "firebase-admin": "^13.10.0"
+    "firebase-admin": "^14.5.1"
   }
 }
