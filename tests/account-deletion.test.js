@@ -62,6 +62,7 @@ test('email accounts confirm with their password, Google-only accounts with Goog
 
 test('settings no longer tells readers to sign out and back in', async () => {
   const nav = await readFile(new URL('../frontend/js/navigation.js', import.meta.url), 'utf8');
-  assert.doesNotMatch(nav, /sign out and sign in again, then delete your account/);
-  assert.match(nav, /deleteAccountWithReauth\(/);
+  const accountData = await readFile(new URL('../frontend/js/features/settings/accountData.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(nav + accountData, /sign out and sign in again, then delete your account/);
+  assert.match(accountData, /deleteAccountWithReauth\(/);
 });
