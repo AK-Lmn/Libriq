@@ -82,11 +82,11 @@
     "node": ">=22"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.5",
+    "@eslint/js": "^10.0.1",
     "@firebase/rules-unit-testing": "^6.0.0",
     "@react-email/components": "^1.0.12",
     "esbuild": "0.28.2",
-    "eslint": "^9.39.5",
+    "eslint": "^10.15.0",
     "globals": "^17.14.0",
     "playwright": "^1.65.1",
     "react": "^19.3.1"

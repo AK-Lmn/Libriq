@@ -31,7 +31,7 @@ async function openPage(context, init) {
       { timeout: 10000 },
     );
   } catch (error) {
-    throw new Error(`${error.message}\nBrowser errors: ${errors.join('\n')}`);
+    throw new Error(`${error.message}\nBrowser errors: ${errors.join('\n')}`, { cause: error });
   }
   return { page, errors };
 }

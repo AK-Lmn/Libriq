@@ -158,7 +158,7 @@ export function validateConfig(rawEnv = process.env) {
 
   for (const [key, schema] of Object.entries(CONFIG_SCHEMA)) {
     const rawVal = rawEnv[key];
-    let parsedVal = rawVal;
+    let parsedVal;
 
     if (rawVal === undefined || rawVal === '') {
       if (schema.required) {
