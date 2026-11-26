@@ -32,6 +32,9 @@ try {
     window.LibriqNavigation.goTo('library');
   });
   const cards = () => page.locator('#libraryGrid .book-card').count();
+  // A plain evaluate: the page can re-render between Playwright's "stable" check and the scroll,
+  // which makes scrollIntoViewIfNeeded throw "Element is not attached" under load.
+  const scrollMoreIntoView = () => page.evaluate(() => document.getElementById('libraryMore')?.scrollIntoView());
   await page.waitForSelector('#libraryGrid .book-card');
   assert.equal(await cards(), 60, 'first paint is one batch');
   assert.match(await page.locator('#libraryResultCount').innerText(), /1000 books/, 'the count is the whole library');
@@ -39,14 +42,14 @@ try {
   assert.ok(nodes < 6000, `page stays small (${nodes} nodes)`);
 
   // Scrolling the "more" row into view loads the next batch.
-  await page.locator('#libraryMore').scrollIntoViewIfNeeded();
+  await scrollMoreIntoView();
   await page.waitForFunction(() => document.querySelectorAll('#libraryGrid .book-card').length >= 120);
 
   // Keep going to the end; every book appears once, in order.
-  for (let i = 0; i < 30 && await cards() < 1000; i += 1) {
-    await page.locator('#libraryMore').scrollIntoViewIfNeeded();
-    await page.waitForTimeout(150);
-  }
+  await page.waitForFunction(() => {
+    document.getElementById('libraryMore')?.scrollIntoView();
+    return document.querySelectorAll('#libraryGrid .book-card').length >= 1000;
+  }, null, { timeout: 60000, polling: 100 });
   assert.equal(await cards(), 1000);
   const titles = await page.locator('#libraryGrid .book-card-title').allInnerTexts();
   assert.deepEqual(titles, [...titles].sort(), 'sorted order holds across batches');
@@ -75,7 +78,7 @@ try {
   await page.waitForTimeout(500);
   const loaded = await spines();
   assert.ok(loaded >= 60 && loaded < 1000 && loaded % 60 === 0, `shelf view batches (${loaded} loaded)`);
-  await page.locator('#libraryMore').scrollIntoViewIfNeeded();
+  await scrollMoreIntoView();
   await page.waitForFunction(count => document.querySelectorAll('#libraryGrid .bookshelf-spines > *').length > count, loaded);
   assert.equal(await page.locator('#libraryGrid .bookshelf-showcase').count(), 1, 'one showcase, tiers appended');
 
