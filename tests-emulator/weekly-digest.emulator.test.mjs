@@ -24,8 +24,9 @@ before(() => {
 });
 after(() => deleteApp(app));
 
-async function reader(uid, { email, verified = true, digest, books = [], streak, goals } = {}) {
+async function reader(uid, { email, verified = true, digest, books = [], streak, goals, profile } = {}) {
   await auth.createUser({ uid, email, emailVerified: verified, displayName: uid });
+  if (profile) await db.doc(`users/${uid}/profile/current`).set(profile);
   if (digest !== undefined) await db.doc(`users/${uid}/prefs/email`).set({ weeklyDigest: digest, updatedAt: daysAgo(1) });
   for (const [i, book] of books.entries()) {
     await db.doc(`users/${uid}/sync/v1/books/b${i}`).set({ id: `b${i}`, description: 'x'.repeat(500), notes: 'private', ...book });
@@ -45,8 +46,12 @@ const res = () => {
 };
 
 test('the route reads real Auth users and Firestore docs and mails only the right readers', async () => {
-  await reader('busy', { email: 'busy@example.test', digest: true,
-    books: [{ title: 'Done', author: 'A', status: 'finished', dateFinished: daysAgo(1) }, { title: 'Now', status: 'reading', currentPage: 10, pageCount: 40 }],
+  await reader('busy', { email: 'busy@example.test', digest: true, profile: { displayName: 'Bea Busy', bio: 'x' },
+    books: [
+      { title: 'Done', author: 'A', status: 'finished', dateFinished: daysAgo(1), pageCount: 300,
+        quotes: [{ id: 'q1', text: 'A line worth keeping.', page: 9, createdAt: daysAgo(2) }], notes: 'private', notesUpdatedAt: daysAgo(2) },
+      { title: 'Now', status: 'reading', currentPage: 10, pageCount: 40, dateAdded: daysAgo(3) },
+    ],
     streak: { currentStreak: 4, longestStreak: 9, lastReadDate: daysAgo(0) }, goals: { year: 2026, yearly: 24 } });
   await reader('off', { email: 'off@example.test', digest: false, books: [{ title: 'Done', status: 'finished', dateFinished: daysAgo(1) }] });
   await reader('never-asked', { email: 'never@example.test', books: [{ title: 'Done', status: 'finished', dateFinished: daysAgo(1) }] });
@@ -70,6 +75,11 @@ test('the route reads real Auth users and Firestore docs and mails only the righ
   assert.match(message.text, /Now, 25% read/);
   assert.match(message.text, /4-day streak/);
   assert.match(message.text, /2026 goal/);
+  assert.match(message.text, /^Hi Bea,/, 'the name set in LibriQ, not the sign-in name');
+  assert.match(message.text, /300 pages/);
+  assert.match(message.text, /A line worth keeping\./);
+  assert.match(message.text, /Done, p\. 9/);
+  assert.match(message.text, /Updated on 1 book/);
   assert.doesNotMatch(message.html + message.text, /private/, 'private notes never reach the email');
 });
 

@@ -14,6 +14,7 @@ const FROM = 'LibriQ <updates@libriq.app>';
 const BATCH_SIZE = 50; // Resend's batch endpoint takes up to 100
 const READ_CONCURRENCY = 5;
 const MAX_READERS_PER_RUN = 500; // a Hobby function has about a minute
+const QUOTE_MAX = 220; // characters of the featured quote shown in the email
 
 // ---------- what the week looked like ----------
 
@@ -24,10 +25,34 @@ const time = value => {
 
 export function summarizeWeek({ books = [], streak = null, goals = null, now = Date.now() } = {}) {
   const weekAgo = now - 7 * DAY_MS;
+  const inWeek = ms => ms != null && ms >= weekAgo && ms <= now;
   const finished = books
     .filter(b => b.status === 'finished' && time(b.dateFinished) != null)
-    .map(b => ({ title: String(b.title || 'Untitled'), author: String(b.author || ''), at: time(b.dateFinished) }));
-  const finishedThisWeek = finished.filter(b => b.at >= weekAgo && b.at <= now).sort((a, b) => b.at - a.at);
+    .map(b => ({ title: String(b.title || 'Untitled'), author: String(b.author || ''), at: time(b.dateFinished), pages: Math.max(0, Number(b.pageCount) || 0) }));
+  const finishedThisWeek = finished.filter(b => inWeek(b.at)).sort((a, b) => b.at - a.at);
+  const pagesFinished = finishedThisWeek.reduce((sum, b) => sum + b.pages, 0);
+
+  // Books put on the shelf this week, apart from ones that were also finished.
+  const added = books
+    .filter(b => inWeek(time(b.dateAdded)) && !(b.status === 'finished' && inWeek(time(b.dateFinished))))
+    .sort((a, b) => time(b.dateAdded) - time(a.dateAdded));
+
+  // Quotes saved this week. Only the newest is shown; notes are only counted.
+  const quotes = [];
+  for (const b of books) {
+    if (!Array.isArray(b.quotes)) continue;
+    for (const q of b.quotes) {
+      const text = typeof q?.text === 'string' ? q.text.trim() : '';
+      const at = time(q?.createdAt);
+      if (text && inWeek(at)) quotes.push({ at, text, title: String(b.title || 'Untitled'), author: String(b.author || ''), page: q.page ?? null });
+    }
+  }
+  quotes.sort((a, b) => b.at - a.at);
+  const newest = quotes[0];
+  const featuredQuote = newest
+    ? { text: newest.text.length > QUOTE_MAX ? `${newest.text.slice(0, QUOTE_MAX).trimEnd()}…` : newest.text, title: newest.title, author: newest.author, page: newest.page }
+    : null;
+  const notesUpdated = books.filter(b => typeof b.notes === 'string' && b.notes.trim() && inWeek(time(b.notesUpdatedAt))).length;
 
   const reading = books.filter(b => b.status === 'reading');
   const readingNow = reading.slice(0, 3).map(b => {
@@ -60,11 +85,18 @@ export function summarizeWeek({ books = [], streak = null, goals = null, now = D
   return {
     finishedThisWeek: finishedThisWeek.slice(0, 5).map(({ title, author }) => ({ title, author })),
     finishedCount: finishedThisWeek.length,
+    pagesFinished,
     readingNow,
     readingCount: reading.length,
+    addedThisWeek: added.slice(0, 3).map(b => ({ title: String(b.title || 'Untitled'), author: String(b.author || '') })),
+    addedCount: added.length,
+    quotesSaved: quotes.length,
+    featuredQuote,
+    notesUpdated,
     streak: activeStreak,
     goal,
-    hasNews: finishedThisWeek.length > 0 || reading.length > 0 || activeStreak > 0,
+    hasNews: finishedThisWeek.length > 0 || reading.length > 0 || activeStreak > 0
+      || added.length > 0 || quotes.length > 0 || notesUpdated > 0,
   };
 }
 
@@ -78,11 +110,12 @@ export function renderDigest({ name = '', summary, unsubscribeUrl }) {
   const greeting = first ? `Hi ${first},` : 'Hi,';
   const subject = summary.finishedCount > 0 ? `Your reading week: ${plural(summary.finishedCount, 'book')} finished` : 'Your reading week';
 
-  // Each block is [heading, lines]; the same data renders as HTML and text.
+  // Each block is [heading, lines, kind?]; the same data renders as HTML and text.
   const blocks = [];
   if (summary.finishedCount > 0) {
     const lines = summary.finishedThisWeek.map(b => (b.author ? `${b.title} by ${b.author}` : b.title));
     if (summary.finishedCount > lines.length) lines.push(`and ${summary.finishedCount - lines.length} more`);
+    if (summary.pagesFinished > 0) lines.push(`${summary.pagesFinished.toLocaleString('en-US')} pages in the books you finished.`);
     blocks.push([`Finished this week (${summary.finishedCount})`, lines]);
   }
   if (summary.readingCount > 0) {
@@ -90,6 +123,18 @@ export function renderDigest({ name = '', summary, unsubscribeUrl }) {
     if (summary.readingCount > lines.length) lines.push(`and ${summary.readingCount - lines.length} more`);
     blocks.push(['Reading now', lines]);
   }
+  if (summary.addedCount > 0) {
+    const lines = summary.addedThisWeek.map(b => b.title);
+    if (summary.addedCount > lines.length) lines.push(`and ${summary.addedCount - lines.length} more`);
+    blocks.push([`Added to your library (${summary.addedCount})`, lines]);
+  }
+  if (summary.featuredQuote) {
+    const { text: quote, title, page } = summary.featuredQuote;
+    const lines = [`“${quote}”`, page == null || page === '' ? title : `${title}, p. ${page}`];
+    if (summary.quotesSaved > 1) lines.push(`and ${summary.quotesSaved - 1} more`);
+    blocks.push([summary.quotesSaved > 1 ? `Quotes saved (${summary.quotesSaved})` : 'A quote you saved', lines, 'quote']);
+  }
+  if (summary.notesUpdated > 0) blocks.push(['Your notes', [`Updated on ${plural(summary.notesUpdated, 'book')}.`]]);
   if (summary.streak > 0) blocks.push(['Streak', [`${summary.streak}-day streak. Keep it going.`]]);
   if (summary.goal) {
     const { finished, target, year, pace } = summary.goal;
@@ -109,9 +154,12 @@ export function renderDigest({ name = '', summary, unsubscribeUrl }) {
     `Unsubscribe: ${unsubscribeUrl}`,
   ].join('\n');
 
-  const htmlBlocks = blocks.map(([heading, lines]) => `
+  const lineStyle = 'margin:0 0 6px;font:17px/1.5 Georgia,Cambria,serif;color:#f1ece4;';
+  const quoteStyle = 'margin:0 0 6px;padding-left:14px;border-left:2px solid #d4a373;font:italic 18px/1.5 Georgia,Cambria,serif;color:#f1ece4;';
+  const sourceStyle = 'margin:0 0 6px;padding-left:16px;font:14px/1.5 Helvetica,Arial,sans-serif;color:#a8a399;';
+  const htmlBlocks = blocks.map(([heading, lines, kind]) => `
       <h2 style="margin:28px 0 8px;font:600 13px/1.2 Helvetica,Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#d4a373;">${escapeHtml(heading)}</h2>
-      ${lines.map(line => `<p style="margin:0 0 6px;font:17px/1.5 Georgia,Cambria,serif;color:#f1ece4;">${escapeHtml(line)}</p>`).join('')}`).join('');
+      ${lines.map((line, i) => `<p style="${kind === 'quote' ? (i === 0 ? quoteStyle : sourceStyle) : lineStyle}">${escapeHtml(line)}</p>`).join('')}`).join('');
   const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(subject)}</title></head>
 <body style="margin:0;padding:0;background:#07080c;">
@@ -187,7 +235,14 @@ export function createWeeklyDigestHandler({ getAdmin, sendBatch, env = process.e
     const admin = await getAdmin();
     if (!admin) return res.status(503).json({ ok: false, code: 'not-configured' });
 
-    const result = { ok: true, dryRun, optedIn: 0, mailed: 0, skippedQuiet: 0, skippedUnverified: 0, failed: 0 };
+    // The name set in LibriQ beats the sign-in account's name (often a Google
+    // or email name). The profile's default "Reader" is not a real name.
+    const greetingName = (profile, fallback) => {
+      const own = String(profile?.displayName || profile?.name || '').trim();
+      return own && own !== 'Reader' ? own : fallback;
+    };
+
+    const result ={ ok: true, dryRun, optedIn: 0, mailed: 0, skippedQuiet: 0, skippedUnverified: 0, failed: 0 };
     const candidates = [];
     let pageToken;
     do {
@@ -208,7 +263,7 @@ export function createWeeklyDigestHandler({ getAdmin, sendBatch, env = process.e
         const summary = summarizeWeek({ ...data, now: now() });
         if (!summary.hasNews) { result.skippedQuiet += 1; return; }
         const link = unsubscribeUrl(secret, user.uid);
-        const mail = renderDigest({ name: user.displayName, summary, unsubscribeUrl: link });
+        const mail = renderDigest({ name: greetingName(data.profile, user.displayName), summary, unsubscribeUrl: link });
         messages.push({
           uid: user.uid,
           payload: {

@@ -5,9 +5,13 @@ Every Monday at 14:00 UTC a Vercel cron calls `GET /api/weekly-digest`, which
 emails a short summary to each opted-in reader with a verified address.
 
 What is in it, from the data Account Sync stores for that reader: books finished
-in the last 7 days, books being read, the streak (only if they read in the last
-2 days) and goal progress. A reader with nothing to report that week gets no
-email. A reader without Account Sync has no server-side data, so they are skipped.
+in the last 7 days (with the pages in them), books being read, books added, the
+newest quote saved and how many quotes there were, how many notes were updated
+(a count only, never the text), the streak (only if they read in the last 2
+days) and goal progress. The greeting uses the name from the reader's LibriQ
+profile (`users/{uid}/profile/current`), and falls back to the sign-in
+account's name when that is empty or the default "Reader". A reader with
+nothing to report that week gets no email. A reader without Account Sync has no server-side data, so they are skipped.
 
 ## Pieces
 
