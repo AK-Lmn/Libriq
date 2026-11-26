@@ -64,7 +64,7 @@ test('sign-in marks the device and the session screen uses initialAuthMode', asy
   const storage = await read('frontend/js/storage.js');
   const setter = storage.slice(storage.indexOf('function setActiveAccountUid'), storage.indexOf('function clearActiveAccountScope'));
   assert.ok(setter.includes('markReturningReader(localStorage)'));
-  const nav = await read('frontend/js/navigation.js');
+  const nav = (await read('frontend/js/navigation.js')) + (await read('frontend/js/features/session/sessionPage.js'));
   assert.ok(nav.includes("Navigation.setEmailAuthMode?.(initialAuthMode({ inAppBrowser, storage: localStorage }))"));
 });
 

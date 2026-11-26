@@ -62,7 +62,7 @@ test('policy pages point their canonical at the www host', async () => {
 });
 
 test('the sign-in route keeps the descriptive title', async () => {
-  const nav = await read('frontend/js/navigation.js');
+  const nav = (await read('frontend/js/navigation.js')) + (await read('frontend/js/features/session/sessionPage.js'));
   assert.doesNotMatch(nav, /: 'LibriQ';/, 'no hard-coded bare title');
 });
 
