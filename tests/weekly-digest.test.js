@@ -357,6 +357,74 @@ test('a retry of the same week reuses the idempotency key', async () => {
   assert.match(sent[0].key, /^weekly-digest-2026-W49-[\w-]+$/);
 });
 
+// ?only=<email> is for test sends: one verified, opted-in address, and a fresh
+// idempotency key each time so Resend does not refuse a repeat as a duplicate.
+
+function makeClockHandler(admin = makeAdmin()) {
+  const sent = [];
+  const clock = { now: NOW };
+  const handler = createWeeklyDigestHandler({
+    getAdmin: async () => admin,
+    sendBatch: async (messages, key) => { sent.push({ messages, key }); },
+    env: ENV,
+    now: () => clock.now,
+  });
+  return { handler, sent, clock };
+}
+const only = (address, extra = {}) => req({ query: { only: address, ...extra } });
+
+test('?only= mails that one address, ignores the case, and never anyone else', async () => {
+  const { handler, sent } = makeClockHandler();
+  const res = makeRes();
+  await handler(only('BUSY@Example.test'), res);
+  assert.deepEqual(res.body, { ok: true, dryRun: false, optedIn: 1, mailed: 1, skippedQuiet: 0, skippedUnverified: 0, failed: 0 });
+  assert.deepEqual(sent.flatMap(call => call.messages.map(m => m.to[0])), ['busy@example.test']);
+});
+
+test('?only= uses a fresh idempotency key each time, and the normal run keeps its stable one', async () => {
+  const { handler, sent, clock } = makeClockHandler();
+  await handler(only('busy@example.test'), makeRes());
+  clock.now += 1000;
+  await handler(only('busy@example.test'), makeRes());
+  assert.equal(sent.length, 2);
+  assert.notEqual(sent[0].key, sent[1].key, 'a second test send is not a duplicate');
+  assert.match(sent[0].key, /^weekly-digest-2026-W49-[\w-]+-test-\d+$/);
+  await handler(req(), makeRes());
+  await handler(req(), makeRes());
+  const normal = sent.slice(2);
+  assert.match(normal[0].key, /^weekly-digest-2026-W49-[0-9a-f]+$/, 'no test suffix on the real run');
+  assert.equal(normal[0].key, normal[normal.length / 2].key, 'the real run is still idempotent');
+});
+
+test('?only= sends nothing for an address that is off, unknown, unverified or quiet', async () => {
+  for (const [address, expected] of [
+    ['off@example.test', { optedIn: 0, mailed: 0, skippedQuiet: 0, skippedUnverified: 0 }],
+    ['nobody@example.test', { optedIn: 0, mailed: 0, skippedQuiet: 0, skippedUnverified: 0 }],
+    ['unverified@example.test', { optedIn: 1, mailed: 0, skippedQuiet: 0, skippedUnverified: 1 }],
+    ['quiet@example.test', { optedIn: 1, mailed: 0, skippedQuiet: 1, skippedUnverified: 0 }],
+  ]) {
+    const { handler, sent } = makeClockHandler();
+    const res = makeRes();
+    await handler(only(address), res);
+    assert.equal(sent.length, 0, `${address} sends nothing`);
+    assert.deepEqual({ ...res.body, ok: undefined, dryRun: undefined, failed: undefined }, { ...expected, ok: undefined, dryRun: undefined, failed: undefined }, address);
+  }
+});
+
+test('?only= still honours a dry run, and a malformed value is refused', async () => {
+  const { handler, sent } = makeClockHandler();
+  const dry = makeRes();
+  await handler(only('busy@example.test', { dryRun: '1' }), dry);
+  assert.equal(dry.body.mailed, 1);
+  assert.equal(sent.length, 0);
+  for (const bad of ['', '   ', ['a@example.test', 'b@example.test']]) {
+    const res = makeRes();
+    await handler(only(bad), res);
+    assert.equal(res.statusCode, 400, JSON.stringify(bad));
+  }
+  assert.equal(sent.length, 0);
+});
+
 test('sends in batches of at most 50, and counts a failed batch instead of crashing', async () => {
   const many = {};
   for (let i = 0; i < 120; i += 1) many[`u${i}`] = { email: `u${i}@example.test`, emailVerified: true, books: [book('R', { status: 'reading' })], digest: true };

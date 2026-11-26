@@ -232,6 +232,14 @@ export function createWeeklyDigestHandler({ getAdmin, sendBatch, env = process.e
     // Previews share the production Firebase project, so they never send.
     const dryRun = req.query?.dryRun === '1' || env.VERCEL_ENV !== 'production';
     if (!dryRun && !env.RESEND_API_KEY) return res.status(503).json({ ok: false, code: 'not-configured' });
+
+    // ?only=<email> is for test sends: it narrows the run to one address (still
+    // opted in, verified and with news) and sends under a fresh idempotency key.
+    let only = null;
+    if (req.query?.only !== undefined) {
+      only = typeof req.query.only === 'string' ? req.query.only.trim().toLowerCase() : '';
+      if (!only) return res.status(400).json({ ok: false, code: 'bad-only' });
+    }
     const admin = await getAdmin();
     if (!admin) return res.status(503).json({ ok: false, code: 'not-configured' });
 
@@ -249,6 +257,7 @@ export function createWeeklyDigestHandler({ getAdmin, sendBatch, env = process.e
       const page = await admin.listAuthUsers(pageToken);
       const optedIn = await admin.readDigestOptIns(page.users.map(user => user.uid));
       for (const user of page.users.filter(u => optedIn.has(u.uid))) {
+        if (only && String(user.email || '').toLowerCase() !== only) continue;
         result.optedIn += 1;
         if (!user.emailVerified || !user.email) result.skippedUnverified += 1;
         else if (candidates.length < MAX_READERS_PER_RUN) candidates.push(user);
@@ -289,7 +298,7 @@ export function createWeeklyDigestHandler({ getAdmin, sendBatch, env = process.e
     await inChunks(messages, BATCH_SIZE, async batch => {
       const digest = createHash('sha1').update(batch.map(m => m.uid).sort().join(',')).digest('hex').slice(0, 12);
       try {
-        await sendBatch(batch.map(m => m.payload), `weekly-digest-${week}-${digest}`);
+        await sendBatch(batch.map(m => m.payload), `weekly-digest-${week}-${digest}${only ? `-test-${now()}` : ''}`);
         result.mailed += batch.length;
       } catch (error) {
         result.failed += batch.length;
