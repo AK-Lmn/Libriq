@@ -10,6 +10,7 @@ const calls = [];
 const user = { uid: 'user-1', displayName: 'Test Reader', email: 'reader@example.com', photoURL: '' };
 let firebaseState = { initialized: true, available: true, user };
 let sessionPreference = 'account';
+let weeklyDigest = { loaded: true, enabled: false };
 let firestore = true;
 const render = createSettingsPage({
   storage: {
@@ -55,6 +56,8 @@ const render = createSettingsPage({
     toggleSync: enabled => calls.push(`sync:${enabled}`),
     accountAction: mode => calls.push(`account:${mode}`),
     signOutAndRemoveDeviceData: () => calls.push('remove-device-data'),
+    getWeeklyDigest: () => weeklyDigest,
+    toggleWeeklyDigest: enabled => calls.push(`digest:${enabled}`),
     importDataFromFile: file => calls.push(file),
   },
   documentRoot: {
@@ -90,6 +93,19 @@ assert.ok(main.innerHTML.lastIndexOf("settings-panel-danger") > main.innerHTML.l
 assert.match(main.innerHTML, /data-action="remove-device-data"[^>]*>\s*Sign out and remove/, "signed-in readers can sign out and remove this device's copy");
 assert.doesNotMatch(danger, /remove-device-data/, 'removing the device copy is not in the danger zone: the cloud copy stays');
 
+// The weekly email is an opt-in row in the Account panel, off by default.
+assert.match(main.innerHTML, /data-action="toggle-weekly-digest" data-weekly-digest="0"[^>]*>\s*Turn on weekly email/);
+assert.match(main.innerHTML, /Weekly reading email/);
+assert.match(main.innerHTML, /reader@example\.com/, 'says which address it goes to');
+weeklyDigest = { loaded: true, enabled: true };
+render();
+assert.match(main.innerHTML, /data-weekly-digest="1"[^>]*>\s*Turn off weekly email/);
+weeklyDigest = { loaded: false, enabled: false };
+render();
+assert.match(main.innerHTML, /data-action="toggle-weekly-digest"[^>]*disabled/, 'disabled until the saved choice has loaded');
+weeklyDigest = { loaded: true, enabled: false };
+render();
+
 const click = listeners.get('click');
 click({ target: { closest: () => ({ dataset: { action: 'toggle-theme' } }) } });
 click({ target: { closest: () => ({ dataset: { action: 'refresh-sync' } }) } });
@@ -105,9 +121,10 @@ for (const name of ['export-data', 'prompt-import', 'delete-library', 'delete-ac
 action('toggle-sync', { syncEnabled: '1' });
 action('account-action', { accountAction: 'signout' });
 action('remove-device-data');
-assert.deepEqual(calls, ['theme', 'export', 'import', 'confirm-library', 'confirm-account', 'backup', 'restore-preview', 'merge-preview', 'sync:true', 'account:signout', 'remove-device-data']);
+action('toggle-weekly-digest', { weeklyDigest: '0' });
+assert.deepEqual(calls, ['theme', 'export', 'import', 'confirm-library', 'confirm-account', 'backup', 'restore-preview', 'merge-preview', 'sync:true', 'account:signout', 'remove-device-data', 'digest:false']);
 action('backup-cloud', {}, true);
-assert.equal(calls.length, 11, 'Disabled controls must not execute');
+assert.equal(calls.length, 12, 'Disabled controls must not execute');
 const file = { name: 'backup.json' };
 listeners.get('change')({ target: { matches: () => true, files: [file] } });
 assert.equal(calls.at(-1), file);

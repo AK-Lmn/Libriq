@@ -143,3 +143,22 @@ test('poll vote: valid choice accepted on both paths, anything else rejected', a
   await assertFails(getDoc(doc(fs, 'polls', 'mobile_app', 'votes', ALICE)));
   await assertFails(setDoc(doc(fs, 'users', ALICE, 'polls', 'mobile_app'), { ...vote, choice: 'blackberry' }));
 });
+
+test('email prefs: the owner can read, write, and delete their own weekly-digest choice; nothing else gets in', async () => {
+  const fs = db(ALICE);
+  const prefs = { weeklyDigest: true, updatedAt: NOW };
+  await assertSucceeds(setDoc(doc(fs, 'users', ALICE, 'prefs', 'email'), prefs));
+  await assertSucceeds(getDoc(doc(fs, 'users', ALICE, 'prefs', 'email')));
+  await assertSucceeds(setDoc(doc(fs, 'users', ALICE, 'prefs', 'email'), { weeklyDigest: false, updatedAt: NOW }));
+  await assertFails(setDoc(doc(fs, 'users', ALICE, 'prefs', 'email'), { ...prefs, extra: 1 }));
+  await assertFails(setDoc(doc(fs, 'users', ALICE, 'prefs', 'email'), { weeklyDigest: 'yes', updatedAt: NOW }));
+  await assertFails(setDoc(doc(fs, 'users', ALICE, 'prefs', 'email'), { weeklyDigest: true, updatedAt: 'x'.repeat(41) }));
+  await assertFails(setDoc(doc(fs, 'users', ALICE, 'prefs', 'email'), { weeklyDigest: true }));
+  await assertFails(setDoc(doc(fs, 'users', ALICE, 'prefs', 'other'), prefs));
+  await assertSucceeds(deleteDoc(doc(fs, 'users', ALICE, 'prefs', 'email')));
+  // Another account, and signed-out visitors, cannot touch it.
+  await assertSucceeds(setDoc(doc(fs, 'users', ALICE, 'prefs', 'email'), prefs));
+  await assertFails(getDoc(doc(db(BOB), 'users', ALICE, 'prefs', 'email')));
+  await assertFails(setDoc(doc(db(BOB), 'users', ALICE, 'prefs', 'email'), prefs));
+  await assertFails(getDoc(doc(anon(), 'users', ALICE, 'prefs', 'email')));
+});

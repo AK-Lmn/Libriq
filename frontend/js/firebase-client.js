@@ -1149,6 +1149,34 @@ async function writeGoalsDoc(uid, goals) {
   return true;
 }
 
+// Email preferences: users/{uid}/prefs/email, { weeklyDigest, updatedAt }.
+// Off until the reader turns it on; the weekly digest route only mails readers
+// whose document says true.
+function emailPrefsRef(uid) {
+  return TEST_MODE ? testFirestore.doc('users', uid, 'prefs', 'email') : doc(firestore, 'users', uid, 'prefs', 'email');
+}
+
+async function readEmailPrefs(uid = null) {
+  const prefsUid = uid || getCurrentUser()?.uid || null;
+  if (!prefsUid || !firestore || !hasActiveUser()) return null;
+  const ref = emailPrefsRef(prefsUid);
+  const snap = TEST_MODE ? await testFirestore.getDoc(ref) : await getDoc(ref);
+  const data = snap?.data ? snap.data() : null;
+  return {
+    weeklyDigest: data?.weeklyDigest === true,
+    updatedAt: typeof data?.updatedAt === 'string' ? data.updatedAt : null,
+  };
+}
+
+async function writeEmailPrefs({ weeklyDigest } = {}) {
+  const prefsUid = getCurrentUser()?.uid || null;
+  if (!prefsUid || !firestore || !hasActiveUser()) throw new Error('Firestore is unavailable.');
+  const payload = { weeklyDigest: weeklyDigest === true, updatedAt: new Date().toISOString() };
+  const ref = emailPrefsRef(prefsUid);
+  await (TEST_MODE ? testFirestore.setDoc(ref, payload) : setDoc(ref, payload));
+  return payload;
+}
+
 async function readGoalsDoc(uid = null) {
   const goalsUid = uid || getCurrentUser()?.uid || null;
   if (!goalsUid || !firestore || !hasActiveUser()) return null;
@@ -1581,6 +1609,7 @@ async function deleteCurrentUserAccount() {
   await deleteCurrentUserLibraryData();
   await deleteFirestoreDocPath(['users', user.uid, 'profile', 'current']);
   await deleteFirestoreDocPath(['users', user.uid, 'polls', 'mobile_app']);
+  await deleteFirestoreDocPath(['users', user.uid, 'prefs', 'email']);
   if (!TEST_MODE) {
     // Aggregate vote lives outside users/{uid}; best effort so it never blocks account deletion.
     await deleteFirestoreDocPath(['polls', 'mobile_app', 'votes', user.uid]).catch((err) => {
@@ -1639,6 +1668,8 @@ export const LibriqFirebase = {
   syncActivityFromCloud,
   writeProfileDoc,
   readProfileDoc,
+  readEmailPrefs,
+  writeEmailPrefs,
   syncProfileFromCloud,
   queueProfileSync,
   queueActivitySync,
