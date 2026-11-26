@@ -1,6 +1,12 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "frontend",
+  "crons": [
+    { "path": "/api/weekly-digest", "schedule": "0 14 * * 1" }
+  ],
+  "functions": {
+    "api/weekly-digest.js": { "maxDuration": 60 }
+  },
   "headers": [
     {
       "source": "/service-worker.js",
