@@ -94,5 +94,10 @@
   "dependencies": {
     "firebase": "^13.4.0",
     "firebase-admin": "^14.5.1"
+  },
+  "overrides": {
+    "jwks-rsa": {
+      "jose": "5.10.0"
+    }
   }
 }
