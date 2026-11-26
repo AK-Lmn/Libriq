@@ -47,9 +47,11 @@ test('CI runs every test script, not a hand-picked few', async () => {
 });
 
 test('Node version is pinned in one place', async () => {
-  assert.equal((await read('.nvmrc')).trim(), '22');
+  // Not ">=22": Vercel then picks the newest Node (26), where firebase-admin's
+  // jwks-rsa cannot load the ESM-only jose, so every Admin API route fails.
+  assert.equal((await read('.nvmrc')).trim(), '24');
   const pkg = JSON.parse(await read('package.json'));
-  assert.equal(pkg.engines?.node, '>=22');
+  assert.equal(pkg.engines?.node, '24.x');
 });
 
 test('line endings are normalised to LF', async () => {
