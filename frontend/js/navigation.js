@@ -244,8 +244,43 @@ export const Navigation = (() => {
     getCurrentUser: () => LibriqFirebase.getCurrentUser(),
     openGoodreadsImport: () => goodreadsImportFeature.open(),
   };
+  // The weekly-email choice lives in Firestore (users/{uid}/prefs/email). It is
+  // read once per signed-in account when Settings first asks, then kept here.
+  let weeklyDigest = { uid: null, loaded: false, enabled: false, loading: false };
+  const loadWeeklyDigest = uid => {
+    weeklyDigest = { uid, loaded: false, enabled: false, loading: true };
+    LibriqFirebase.readEmailPrefs?.(uid).then(prefs => {
+      if (weeklyDigest.uid !== uid) return;
+      weeklyDigest = { uid, loaded: Boolean(prefs), enabled: prefs?.weeklyDigest === true, loading: false };
+      if (_currentPage === 'settings') Navigation.renderCurrentPage?.();
+    }).catch(err => {
+      if (weeklyDigest.uid === uid) weeklyDigest = { ...weeklyDigest, loading: false };
+      console.warn('[Libriq] Could not read the weekly email choice:', err);
+    });
+  };
   const settingsActions = {
     ...featureActions,
+    getWeeklyDigest: () => {
+      const uid = LibriqFirebase.getCurrentUser?.()?.uid || null;
+      if (uid && weeklyDigest.uid !== uid) loadWeeklyDigest(uid);
+      return { loaded: weeklyDigest.loaded, enabled: weeklyDigest.enabled };
+    },
+    toggleWeeklyDigest: async enabled => {
+      const uid = LibriqFirebase.getCurrentUser?.()?.uid || null;
+      if (!uid) {
+        Utils.toast('Sign in first to change the weekly email.', 'warning');
+        return;
+      }
+      try {
+        const saved = await LibriqFirebase.writeEmailPrefs({ weeklyDigest: !enabled });
+        weeklyDigest = { uid, loaded: true, enabled: saved.weeklyDigest, loading: false };
+        Utils.toast(saved.weeklyDigest ? 'Weekly email turned on' : 'Weekly email turned off', 'success');
+      } catch (err) {
+        console.warn('[Libriq] Weekly email choice not saved:', err);
+        Utils.toast('Could not save that right now. Try again in a moment.', 'error');
+      }
+      Navigation.renderCurrentPage?.();
+    },
     getActiveTheme: () => Navigation.getActiveTheme?.(),
     getSessionPreference: () => Navigation.getSessionPreference?.(),
     getFirebaseState: () => LibriqFirebase.getState(),

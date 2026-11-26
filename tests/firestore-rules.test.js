@@ -54,7 +54,7 @@ test('every top-level key of the cloud backup is allowed by the backup rule', as
 test('rules deny anything under users/{uid} that is not on the allowlist', async () => {
   const rules = await read('firestore.rules');
   assert.doesNotMatch(rules, /\{document=\*\*\}/, 'no recursive wildcard');
-  for (const path of ['sync/v1/books/{bookId}', 'activity/{eventId}', 'profile/current', 'goals/current', 'streak/current', 'backups/current', 'polls/mobile_app']) {
+  for (const path of ['sync/v1/books/{bookId}', 'activity/{eventId}', 'profile/current', 'goals/current', 'streak/current', 'backups/current', 'polls/mobile_app', 'prefs/email']) {
     assert.match(rules, new RegExp(`match /${path.replace(/[{}/]/g, '\\$&')} \\{`), path);
   }
   assert.doesNotMatch(rules, /allow (read|write)[^;]*: if true/);

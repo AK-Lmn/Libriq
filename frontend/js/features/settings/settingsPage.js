@@ -247,6 +247,7 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
             </div>
           </div>
         </div>` : (isGoogleOnly ? `<div class="settings-callout">Your email is managed by Google.</div>` : '')}
+        ${_buildWeeklyDigestRow(emailInfo)}
         <div class="settings-account-row settings-account-signout-row">
           <div class="activity-text">
             <div class="activity-title">Sign out</div>
@@ -266,6 +267,28 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
           </button>
         </div>
       </div>`;
+  }
+
+  // Opt-in weekly email. The server can only summarise readers who turned on
+  // Account Sync, so the row says so; the choice itself is stored per account.
+  function _buildWeeklyDigestRow(emailInfo) {
+    if (!emailInfo?.hasEmail || !emailInfo.email) return '';
+    const digest = actions.getWeeklyDigest?.() || { loaded: false, enabled: false };
+    const syncOn = Boolean(actions.getSyncState?.()?.enabled);
+    const note = digest.enabled && !syncOn
+      ? '<div class="activity-subtitle settings-digest-note">Account Sync is off, so there is nothing to summarise yet. Turn it on in the Account Sync card.</div>'
+      : '';
+    return `
+        <div class="settings-account-row settings-account-digest-row">
+          <div class="activity-text">
+            <div class="activity-title">Weekly reading email</div>
+            <div class="activity-subtitle">A short Monday summary of your week: books finished, streak and goal progress. Sent to ${utils.sanitize(emailInfo.email)}. Needs Account Sync.</div>
+            ${note}
+          </div>
+          <button class="btn btn-secondary btn-sm" type="button" data-action="toggle-weekly-digest" data-weekly-digest="${digest.enabled ? '1' : '0'}" ${digest.loaded ? '' : 'disabled'}>
+            ${digest.enabled ? 'Turn off weekly email' : 'Turn on weekly email'}
+          </button>
+        </div>`;
   }
 
   function _buildCloudBackupSection(firebase, cloudBackupMeta) {
@@ -473,6 +496,7 @@ export function createSettingsPage({ storage, utils, constants, actions, documen
         'restore-cloud': () => actions.openCloudRestorePreview?.(),
         'merge-cloud': () => actions.openCloudMergePreview?.(),
         'toggle-sync': () => actions.toggleSync?.(trigger.dataset.syncEnabled === '1'),
+        'toggle-weekly-digest': () => actions.toggleWeeklyDigest?.(trigger.dataset.weeklyDigest === '1'),
         'refresh-sync': () => actions.refreshSync?.(),
       };
       handlers[trigger.dataset.action]?.();
