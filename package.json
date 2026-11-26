@@ -79,7 +79,7 @@
     "test:rules": "npx -y firebase-tools@14 emulators:exec --only firestore,auth --project demo-libriq \"node --test --test-force-exit tests-emulator/*.test.mjs\""
   },
   "engines": {
-    "node": ">=22"
+    "node": "24.x"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
