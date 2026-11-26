@@ -67,7 +67,107 @@ test('a week with nothing to report has no news', () => {
   assert.equal(summarizeWeek({ now: NOW, books: [], streak: { currentStreak: 2, lastReadDate: day(0) } }).hasNews, true);
 });
 
+// ---------- the extra sections: added, pages, quotes, notes ----------
+
+test('books added this week are counted, unless they were also finished this week', () => {
+  const summary = summarizeWeek({
+    now: NOW,
+    books: [
+      book('Old', { dateAdded: day(9) }),
+      book('New 1', { dateAdded: day(1) }),
+      book('New 2', { dateAdded: day(3), status: 'reading' }),
+      book('Added and finished', { dateAdded: day(2), status: 'finished', dateFinished: day(1) }),
+      book('No date'),
+    ],
+  });
+  assert.equal(summary.addedCount, 2);
+  assert.deepEqual(summary.addedThisWeek.map(b => b.title), ['New 1', 'New 2']);
+});
+
+test('pages come from the books finished this week, all of them, not just the five listed', () => {
+  const books = Array.from({ length: 7 }, (_, i) => book(`F${i}`, { status: 'finished', dateFinished: day(1), pageCount: 100 }));
+  books.push(book('Old finish', { status: 'finished', dateFinished: day(20), pageCount: 999 }));
+  books.push(book('No pages', { status: 'finished', dateFinished: day(1) }));
+  const summary = summarizeWeek({ now: NOW, books });
+  assert.equal(summary.finishedThisWeek.length, 5);
+  assert.equal(summary.pagesFinished, 700);
+});
+
+test('quotes saved this week are counted, and the newest one is featured and trimmed', () => {
+  const long = 'word '.repeat(80).trim();
+  const summary = summarizeWeek({
+    now: NOW,
+    books: [
+      book('A', { author: 'Ann', quotes: [
+        { id: 'q1', text: 'Too old to count.', createdAt: day(12) },
+        { id: 'q2', text: 'Saved on Monday.', page: 12, createdAt: day(5) },
+      ] }),
+      book('B', { author: 'Bo', quotes: [{ id: 'q3', text: long, createdAt: day(1) }, { id: 'q4', text: '   ', createdAt: day(1) }, 'not a quote'] }),
+      book('C', { quotes: 'broken' }),
+    ],
+  });
+  assert.equal(summary.quotesSaved, 2);
+  assert.equal(summary.featuredQuote.title, 'B');
+  assert.equal(summary.featuredQuote.author, 'Bo');
+  assert.ok(summary.featuredQuote.text.length <= 221 && summary.featuredQuote.text.endsWith('…'), 'long quotes are cut with an ellipsis');
+  const other = summarizeWeek({ now: NOW, books: [book('A', { quotes: [{ text: 'Short one.', page: 7, createdAt: day(2) }] })] });
+  assert.deepEqual(other.featuredQuote, { text: 'Short one.', title: 'A', author: 'An Author', page: 7 });
+});
+
+test('notes updated this week are only counted, and their text never reaches the summary', () => {
+  const summary = summarizeWeek({
+    now: NOW,
+    books: [
+      book('A', { notes: 'my private thoughts', notesUpdatedAt: day(2) }),
+      book('B', { notes: 'older private thoughts', notesUpdatedAt: day(30) }),
+      book('C', { notes: '', notesUpdatedAt: day(1) }),
+    ],
+  });
+  assert.equal(summary.notesUpdated, 1);
+  assert.doesNotMatch(JSON.stringify(summary), /private thoughts/);
+});
+
+test('adding a book, saving a quote or writing a note is news on its own', () => {
+  assert.equal(summarizeWeek({ now: NOW, books: [book('X', { dateAdded: day(1) })] }).hasNews, true);
+  assert.equal(summarizeWeek({ now: NOW, books: [book('X', { quotes: [{ text: 'q', createdAt: day(1) }] })] }).hasNews, true);
+  assert.equal(summarizeWeek({ now: NOW, books: [book('X', { notes: 'n', notesUpdatedAt: day(1) })] }).hasNews, true);
+  assert.equal(summarizeWeek({ now: NOW, books: [book('X', { dateAdded: day(30) })] }).hasNews, false);
+});
+
 // ---------- renderDigest ----------
+
+const extrasSummary = summarizeWeek({
+  now: NOW,
+  books: [
+    book('Piranesi', { author: 'Susanna Clarke', status: 'finished', dateFinished: day(1), dateAdded: day(30), pageCount: 272,
+      quotes: [{ text: 'The Beauty of the House is immeasurable <i>.</i>', page: 41, createdAt: day(2) }] }),
+    book('Fresh <b>Arrival</b>', { dateAdded: day(2) }),
+    book('Notes only', { notes: 'secret', notesUpdatedAt: day(3) }),
+  ],
+});
+
+test('the email shows pages, the featured quote, added books and note counts, escaped', () => {
+  const { html, text } = renderDigest({ name: 'Bea', summary: extrasSummary, unsubscribeUrl: 'https://x/u' });
+  assert.match(text, /272 pages/);
+  assert.match(text, /The Beauty of the House is immeasurable <i>\.<\/i>/, 'plain text keeps the quote as written');
+  assert.match(text, /Piranesi, p\. 41/);
+  assert.match(text, /Added to your library \(1\)/);
+  assert.match(text, /Fresh <b>Arrival<\/b>/);
+  assert.match(text, /Your notes\n {2}Updated on 1 book\./);
+  assert.match(html, /immeasurable &lt;i&gt;\.&lt;\/i&gt;/);
+  assert.match(html, /Fresh &lt;b&gt;Arrival&lt;\/b&gt;/);
+  assert.doesNotMatch(html + text, /secret/, 'note text is never in the email');
+  assert.doesNotMatch(html + text, /\p{Extended_Pictographic}/u, 'no emoji');
+});
+
+test('quotes saved are counted in the heading when there is more than one', () => {
+  const summary = summarizeWeek({ now: NOW, books: [book('A', { quotes: [
+    { text: 'One.', createdAt: day(1) }, { text: 'Two.', createdAt: day(2) }, { text: 'Three.', createdAt: day(3) },
+  ] })] });
+  const { text } = renderDigest({ summary, unsubscribeUrl: 'https://x/u' });
+  assert.match(text, /Quotes saved \(3\)/);
+  assert.match(text, /and 2 more/);
+});
 
 const fullSummary = summarizeWeek({
   now: NOW,
@@ -153,7 +253,7 @@ function makeAdmin(readers = READERS, { pageSize = 2 } = {}) {
       };
     },
     async readDigestOptIns(list) { return new Set(list.filter(uid => readers[uid].digest)); },
-    async readReaderData(uid) { return { books: readers[uid].books, streak: null, goals: null }; },
+    async readReaderData(uid) { return { books: readers[uid].books, streak: null, goals: null, profile: readers[uid].profile || null }; },
   };
 }
 
@@ -207,6 +307,25 @@ test('mails opted-in, verified readers who had a week to report, and nobody else
   assert.match(message.html, /Bea/);
   const uid = new URL(message.headers['List-Unsubscribe'].slice(1, -1)).searchParams;
   assert.equal(verifyUnsubscribeToken('cron-secret', uid.get('u'), uid.get('t')), true, 'the link in the mail verifies');
+});
+
+test('the greeting uses the name set in LibriQ, not the sign-in account name', async () => {
+  const done = [book('Done', { status: 'finished', dateFinished: day(1) })];
+  const readers = {
+    named: { email: 'a@example.test', emailVerified: true, displayName: 'Kim', profile: { displayName: 'Bea Busy' }, books: done, digest: true },
+    generic: { email: 'b@example.test', emailVerified: true, displayName: 'Kim', profile: { displayName: 'Reader' }, books: done, digest: true },
+    blank: { email: 'c@example.test', emailVerified: true, displayName: 'Cy Auth', profile: { displayName: '   ' }, books: done, digest: true },
+    none: { email: 'd@example.test', emailVerified: true, displayName: 'Dee Auth', books: done, digest: true },
+    nameless: { email: 'e@example.test', emailVerified: true, profile: { name: 'Eve Old' }, books: done, digest: true },
+  };
+  const { handler, sent } = makeHandler({ admin: makeAdmin(readers) });
+  await handler(req(), makeRes());
+  const greetingFor = to => sent.flatMap(call => call.messages).find(m => m.to[0] === to).text.split('\n')[0];
+  assert.equal(greetingFor('a@example.test'), 'Hi Bea,', 'the LibriQ name wins');
+  assert.equal(greetingFor('b@example.test'), 'Hi Kim,', 'the default name "Reader" is not a real name');
+  assert.equal(greetingFor('c@example.test'), 'Hi Cy,', 'a blank LibriQ name falls back');
+  assert.equal(greetingFor('d@example.test'), 'Hi Dee,', 'no profile falls back');
+  assert.equal(greetingFor('e@example.test'), 'Hi Eve,', 'an older profile that only has name still works');
 });
 
 test('a dry run counts but sends nothing, and previews never send', async () => {

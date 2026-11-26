@@ -22,12 +22,13 @@ export function createDigestAdmin({ auth, db }) {
       return optedIn;
     },
     async readReaderData(uid) {
-      const [books, streak, goals] = await Promise.all([
-        db.collection(`users/${uid}/sync/v1/books`).select('title', 'author', 'status', 'dateFinished', 'currentPage', 'pageCount').get(),
+      const [books, streak, goals, profile] = await Promise.all([
+        db.collection(`users/${uid}/sync/v1/books`).select('title', 'author', 'status', 'dateFinished', 'dateAdded', 'currentPage', 'pageCount', 'quotes', 'notes', 'notesUpdatedAt').get(),
         db.doc(`users/${uid}/streak/current`).get(),
         db.doc(`users/${uid}/goals/current`).get(),
+        db.doc(`users/${uid}/profile/current`).get(),
       ]);
-      return { books: books.docs.map(doc => doc.data()), streak: streak.data() || null, goals: goals.data() || null };
+      return { books: books.docs.map(doc => doc.data()), streak: streak.data() || null, goals: goals.data() || null, profile: profile.data() || null };
     },
   };
 }
