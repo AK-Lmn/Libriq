@@ -33,7 +33,7 @@ export function selectScripts(scripts, tier) {
   return tier === 'all' ? scripts : scripts.filter(script => script.tier === tier);
 }
 
-async function discover(dir) {
+export async function discover(dir) {
   const all = (await readdir(dir)).filter(name => name.endsWith('.mjs'));
   const sources = new Map(await Promise.all(all.map(async name => [name, await readFile(path.join(dir, name), 'utf8')])));
   const readSibling = name => sources.get(name) ?? null;

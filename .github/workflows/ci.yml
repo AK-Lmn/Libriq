@@ -39,11 +39,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # Also runs every browser-free scripts/test-*.mjs (tests/unit-scripts.test.js).
       - name: node --test suite
         run: npm test
-
-      - name: Unit test scripts (no browser)
-        run: npm run test:unit
 
   browser:
     name: Browser tests (Playwright)
