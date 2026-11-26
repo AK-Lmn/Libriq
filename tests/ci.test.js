@@ -32,7 +32,9 @@ test('test scripts are split into a unit tier and a browser tier', () => {
 
 test('CI runs every test script, not a hand-picked few', async () => {
   const ci = await read('.github/workflows/ci.yml');
-  assert.match(ci, /npm run test:unit/);
+  // The unit scripts run inside `npm test` through tests/unit-scripts.test.js.
+  assert.match(ci, /run: npm test$/m);
+  assert.match(await read('tests/unit-scripts.test.js'), /tier === 'unit'/);
   assert.match(ci, /npm run test:browser/);
   assert.match(ci, /npx playwright install --with-deps chromium/);
   assert.match(ci, /node-version-file: \.nvmrc/);
