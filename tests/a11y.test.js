@@ -17,7 +17,7 @@ test('theme toggle has a stable name that matches its visible text', async () =>
   const button = html.match(/<button[^>]*id="themeToggle"[^>]*>/)[0];
   assert.doesNotMatch(button, /aria-label=/, 'visible text names the button');
   assert.match(button, /aria-pressed="(true|false)"/);
-  const nav = await read('frontend/js/navigation.js');
+  const nav = (await read('frontend/js/navigation.js')) + (await read('frontend/js/features/session/sessionPage.js'));
   assert.doesNotMatch(nav, /'Light mode'/, 'label no longer flips between Dark mode and Light mode');
 });
 

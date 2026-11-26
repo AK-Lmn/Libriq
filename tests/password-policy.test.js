@@ -21,7 +21,7 @@ test('very long passwords are refused before Firebase sees them', () => {
 });
 
 test('sign-up checks the password before creating the account and says 8 everywhere', async () => {
-  const nav = await read('frontend/js/navigation.js');
+  const nav = (await read('frontend/js/navigation.js')) + (await read('frontend/js/features/session/sessionPage.js'));
   const submit = nav.slice(nav.indexOf("getElementById('emailAuthForm')?.addEventListener('submit'"));
   const check = submit.indexOf('newPasswordProblem(password)');
   assert.ok(check !== -1, 'submit handler validates the new password');

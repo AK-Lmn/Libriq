@@ -70,7 +70,7 @@ test('every cover <img> goes through coverImgAttrs, and error fallbacks clear sr
   has(utils, "doc.addEventListener('error', _handleImageError, true);");
   has(utils, "img.removeAttribute('srcset');\n    img.src = img.dataset.fallbackSrc;");
   has(await read('frontend/js/features/library/libraryDesign.js'), "<img ${coverImgAttrs(book.coverUrl, 'cover-sm', sanitize)}");
-  const nav = await read('frontend/js/navigation.js');
+  const nav = (await read('frontend/js/navigation.js')) + (await read('frontend/js/features/session/sessionPage.js'));
   has(nav, "<img ${coverImgAttrs(b.coverUrl, 'cover-sm', Utils.sanitize)} loading=\"lazy\"");
   has(nav, 'data-fallback-src="./assets/icons/icon-192.png"');
 });
