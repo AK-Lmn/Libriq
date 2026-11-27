@@ -47,6 +47,19 @@ links) and only turns the email off on the button press or a mail app's POST.
    where `mailed` is how many it would send.
 5. Opt your own account in and run the same URL without `dryRun=1` to send once.
 
+### Test sends
+
+A real run reuses one Resend idempotency key per ISO week and recipient list, so
+a second send in the same week is refused as a duplicate (Resend answers 409 and
+the run reports `failed`). To check a template change, add `only=<email>`:
+
+`curl -H "Authorization: Bearer $CRON_SECRET" "https://www.libriq.app/api/weekly-digest?only=you@example.com"`
+
+It mails just that address, and only if it is opted in, verified and has
+something to report. Each call uses a fresh key, so it can be repeated. It never
+reaches other readers. `only` also works with `dryRun=1`. An empty or repeated
+`only` is refused with a 400.
+
 ## Turning it off
 
 Remove the cron from `vercel.json`, or delete `CRON_SECRET` (the route then answers
