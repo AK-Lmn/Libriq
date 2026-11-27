@@ -137,8 +137,14 @@ export function renderDigest({ name = '', summary, unsubscribeUrl }) {
   if (summary.notesUpdated > 0) blocks.push(['Your notes', [`Updated on ${plural(summary.notesUpdated, 'book')}.`]]);
   if (summary.streak > 0) blocks.push(['Streak', [`${summary.streak}-day streak. Keep it going.`]]);
   if (summary.goal) {
+    // The count and what is left. Pace is only mentioned when it is good news,
+    // so a quiet year never reads as a scolding.
     const { finished, target, year, pace } = summary.goal;
-    blocks.push([`${year} goal`, [`${finished} of ${target} books, ${pace}.`]]);
+    const line = finished >= target ? `${finished} of ${target} books. Goal reached.`
+      : pace === 'ahead' ? `${finished} of ${target} books so far, ahead of pace.`
+      : pace === 'on pace' ? `${finished} of ${target} books so far, right on pace.`
+      : `${finished} of ${target} books so far, ${target - finished} to go.`;
+    blocks.push([`${year} goal`, [line]]);
   }
 
   const text = [
@@ -165,12 +171,15 @@ export function renderDigest({ name = '', summary, unsubscribeUrl }) {
 <style>@media (max-width:600px){body{padding:0!important}.card{border-radius:0!important}}</style></head>
 <body style="margin:0;padding:24px 12px;">
   <div class="card" style="max-width:560px;margin:0 auto;padding:40px 24px;background:#0d1017;border-radius:14px;">
-    <p style="margin:0 0 4px;font:600 13px/1.2 Helvetica,Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#d4a373;">LibriQ</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 22px;"><tr>
+      <td style="padding-right:10px;vertical-align:middle;"><img src="${SITE}/assets/icons/icon-192.png" width="36" height="36" alt="LibriQ" style="display:block;width:36px;height:36px;border:0;border-radius:8px;"></td>
+      <td style="vertical-align:middle;font:600 13px/1.2 Helvetica,Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#d4a373;">LibriQ</td>
+    </tr></table>
     <h1 style="margin:0 0 20px;font:400 30px/1.2 Georgia,Cambria,serif;color:#f1ece4;">Your reading week</h1>
     <p style="margin:0;font:17px/1.5 Georgia,Cambria,serif;color:#c9c3ba;">${escapeHtml(greeting)} here is how your week went.</p>${htmlBlocks}
     <p style="margin:36px 0 0;"><a href="${SITE}" style="display:inline-block;padding:12px 22px;background:#d4a373;color:#07080c;font:600 15px/1 Helvetica,Arial,sans-serif;text-decoration:none;border-radius:6px;">Open LibriQ</a></p>
     <hr style="margin:36px 0 16px;border:0;border-top:1px solid #232733;">
-    <p style="margin:0;font:13px/1.6 Helvetica,Arial,sans-serif;color:#8b8780;">You get this because you turned on the weekly email in Settings. <a href="${escapeHtml(unsubscribeUrl)}" style="color:#d4a373;">Unsubscribe</a></p>
+    <p style="margin:0;font:13px/1.6 Helvetica,Arial,sans-serif;color:#b0aba1;">You get this because you turned on the weekly email in Settings. <a href="${escapeHtml(unsubscribeUrl)}" style="color:#d4a373;">Unsubscribe</a></p>
   </div>
 </body></html>`;
 

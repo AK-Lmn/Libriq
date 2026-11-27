@@ -168,6 +168,66 @@ test('on a wide screen the email is a dark card, not a full-width dark band, and
   assert.match(html, /@media \(max-width:\s*600px\)[\s\S]*?body\s*\{[^}]*padding:\s*0\s*!important/, 'and the page padding goes away');
 });
 
+// The goal line states the count and what is left. It only mentions pace when
+// the reader is on or ahead of it, so a quiet year never reads as a scolding.
+const goalText = (finishedCount, target, nowIso) => {
+  const books = Array.from({ length: finishedCount }, (_, i) => book(`G${i}`, { status: 'finished', dateFinished: '2026-03-01T00:00:00.000Z' }));
+  const summary = summarizeWeek({ now: Date.parse(nowIso), books, goals: { year: 2026, yearly: target } });
+  return renderDigest({ summary, unsubscribeUrl: 'https://x/u' }).text;
+};
+
+test('the goal line says what is left, not that the reader is behind', () => {
+  const behind = goalText(1, 12, '2026-11-30T14:00:00.000Z');
+  assert.match(behind, /2026 goal\n {2}1 of 12 books so far, 11 to go\./);
+  assert.doesNotMatch(behind, /behind/i);
+  assert.match(goalText(3, 12, '2026-11-30T14:00:00.000Z'), /3 of 12 books so far, 9 to go\./);
+});
+
+test('the goal line mentions pace only when the reader is on it or ahead', () => {
+  assert.match(goalText(6, 12, '2026-05-01T12:00:00.000Z'), /6 of 12 books so far, ahead of pace\./);
+  assert.match(goalText(4, 12, '2026-05-01T12:00:00.000Z'), /4 of 12 books so far, right on pace\./);
+});
+
+test('a reached goal says so', () => {
+  assert.match(goalText(12, 12, '2026-11-30T14:00:00.000Z'), /12 of 12 books\. Goal reached\./);
+  assert.match(goalText(14, 12, '2026-11-30T14:00:00.000Z'), /14 of 12 books\. Goal reached\./);
+});
+
+// ---------- colour contrast and the brand mark ----------
+
+const luminance = hex => {
+  const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255)
+    .map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const contrast = (a, b) => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+
+test('every text colour on the dark card has at least 7:1 contrast', () => {
+  const { html } = renderDigest({ name: 'Bea', summary: extrasSummary, unsubscribeUrl: 'https://x/u' });
+  const bg = '#0d1017';
+  const styles = [...html.matchAll(/style="([^"]*)"/g)].map(m => m[1]).filter(s => /(^|;)color:#[0-9a-f]{6}/i.test(s) && !/background:/.test(s));
+  assert.ok(styles.length >= 8, 'found the text styles');
+  for (const style of styles) {
+    const color = style.match(/(?:^|;)color:(#[0-9a-f]{6})/i)[1];
+    assert.ok(contrast(color, bg) >= 7, `${color} on ${bg} is ${contrast(color, bg).toFixed(1)}:1`);
+  }
+});
+
+test('the header carries the LibriQ mark from the app icons, with alt text and a size', async () => {
+  const { html, text } = renderDigest({ name: 'Bea', summary: fullSummary, unsubscribeUrl: 'https://x/u' });
+  const img = html.match(/<img[^>]*>/)?.[0] || '';
+  assert.match(img, /src="https:\/\/www\.libriq\.app\/assets\/icons\/icon-192\.png"/);
+  assert.match(img, /alt="LibriQ"/);
+  assert.match(img, /width="36"/);
+  assert.match(img, /height="36"/);
+  assert.doesNotMatch(text, /icon-192/, 'the plain-text version has no image');
+  const { readFile } = await import('node:fs/promises');
+  await readFile(new URL('../frontend/assets/icons/icon-192.png', import.meta.url));
+});
+
 test('quotes saved are counted in the heading when there is more than one', () => {
   const summary = summarizeWeek({ now: NOW, books: [book('A', { quotes: [
     { text: 'One.', createdAt: day(1) }, { text: 'Two.', createdAt: day(2) }, { text: 'Three.', createdAt: day(3) },
