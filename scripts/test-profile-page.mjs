@@ -99,7 +99,8 @@ fallbackProfilePage();
 assert.match(fallbackProfileMain.innerHTML, /Joined March 10, 2024/);
 
 const dashboardSource = fs.readFileSync('frontend/js/dashboard.js', 'utf8');
-assert.match(dashboardSource, /resolveAccountDisplayName\(profile, LibriqFirebase\.getState\(\)\.user\)/);
+// The dashboard title is the page, not a greeting, so it no longer renders an account name.
+assert.doesNotMatch(dashboardSource, /resolveAccountDisplayName|Welcome back/);
 
 let prevented = false;
 listeners.get('submit')({

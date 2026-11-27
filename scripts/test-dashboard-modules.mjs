@@ -98,8 +98,24 @@ assert.doesNotMatch(main.innerHTML, /dashboard-mini-card|Quick Workspace/);
 assert.match(main.innerHTML, /data-action="update-progress" data-book-id="reading-1"/);
 assert.match(main.innerHTML, /data-action="show-book-details" data-book-id="reading-1"/);
 assert.doesNotMatch(main.innerHTML, /onclick=/);
-assert.match(main.innerHTML, /Page 40 \/ 200/);
-assert.match(main.innerHTML, /A quiet moment\. A few more pages\./);
+// The title is the page, not a greeting, and filler lines are gone.
+assert.match(main.innerHTML, /<h1 class="greeting-title">Dashboard<\/h1>/);
+assert.doesNotMatch(main.innerHTML, /Welcome back|Good (morning|afternoon|evening)|A quiet moment|greeting-label|greeting-subtitle/);
+assert.doesNotMatch(main.innerHTML, /Continue from where you left off|dashboard-hero-quote/, 'no filler quote when the book has no note');
+assert.doesNotMatch(main.innerHTML, /dashboard-pill">Reading now/, 'no pill that repeats the card title');
+assert.match(main.innerHTML, /<span class="dashboard-pill">Fiction<\/span>/, 'the pill carries the real genre from genres[]');
+assert.match(main.innerHTML, /<p class="dashboard-hero-author">by Reader<\/p>/, 'pages left is said once, in the progress row');
+assert.match(main.innerHTML, /Page 40 of 200/);
+// Reading Momentum is numbers and labels, with no icons or restated labels.
+assert.doesNotMatch(main.innerHTML, /dashboard-compact-card">\s*<span class="dashboard-icon"/);
+assert.doesNotMatch(main.innerHTML, /All saved titles|Active progress updates|Since January 1|Consecutive reading days/);
+// The goal is said once: the ring, then what is left.
+assert.doesNotMatch(main.innerHTML, /more stor|Every story|challenge|Keep reading at your own pace|goal-stat/);
+assert.match(main.innerHTML, /<p class="dashboard-goal-togo">\d+ books? to go<\/p>/);
+assert.match(main.innerHTML, /<p class="dashboard-goal-time">\d+ weeks? left in \d{4}<\/p>/);
+// One series in Top Genres: the leader takes the accent, the rest stay neutral.
+assert.match(main.innerHTML, /class="genre-row" data-tone="accent"/);
+assert.doesNotMatch(main.innerHTML, /genre-row[^>]*>[\s\S]*?progress-fill" style="[^"]*background/);
 assert.doesNotMatch(main.innerHTML, /monthly reading goal|Active focus session/);
 assert.match(main.innerHTML, /id="goalRingFill"/);
 
