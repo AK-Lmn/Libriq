@@ -161,9 +161,10 @@ export function renderDigest({ name = '', summary, unsubscribeUrl }) {
       <h2 style="margin:28px 0 8px;font:600 13px/1.2 Helvetica,Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#d4a373;">${escapeHtml(heading)}</h2>
       ${lines.map((line, i) => `<p style="${kind === 'quote' ? (i === 0 ? quoteStyle : sourceStyle) : lineStyle}">${escapeHtml(line)}</p>`).join('')}`).join('');
   const html = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(subject)}</title></head>
-<body style="margin:0;padding:0;background:#07080c;">
-  <div style="max-width:560px;margin:0 auto;padding:40px 24px;background:#0d1017;">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(subject)}</title>
+<style>@media (max-width:600px){body{padding:0!important}.card{border-radius:0!important}}</style></head>
+<body style="margin:0;padding:24px 12px;">
+  <div class="card" style="max-width:560px;margin:0 auto;padding:40px 24px;background:#0d1017;border-radius:14px;">
     <p style="margin:0 0 4px;font:600 13px/1.2 Helvetica,Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#d4a373;">LibriQ</p>
     <h1 style="margin:0 0 20px;font:400 30px/1.2 Georgia,Cambria,serif;color:#f1ece4;">Your reading week</h1>
     <p style="margin:0;font:17px/1.5 Georgia,Cambria,serif;color:#c9c3ba;">${escapeHtml(greeting)} here is how your week went.</p>${htmlBlocks}
