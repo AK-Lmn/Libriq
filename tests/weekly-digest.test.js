@@ -160,6 +160,14 @@ test('the email shows pages, the featured quote, added books and note counts, es
   assert.doesNotMatch(html + text, /\p{Extended_Pictographic}/u, 'no emoji');
 });
 
+test('on a wide screen the email is a dark card, not a full-width dark band, and on a phone it fills the screen', () => {
+  const { html } = renderDigest({ name: 'Bea', summary: fullSummary, unsubscribeUrl: 'https://x/u' });
+  assert.doesNotMatch(html, /<body[^>]*background/, 'the page behind the card is left to the mail client');
+  assert.match(html, /<div[^>]*class="card"[^>]*max-width:560px[^>]*border-radius:\d+px/, 'a fixed-width rounded card');
+  assert.match(html, /@media \(max-width:\s*600px\)[\s\S]*?\.card\s*\{[^}]*border-radius:\s*0\s*!important/, 'the card goes edge to edge on phones');
+  assert.match(html, /@media \(max-width:\s*600px\)[\s\S]*?body\s*\{[^}]*padding:\s*0\s*!important/, 'and the page padding goes away');
+});
+
 test('quotes saved are counted in the heading when there is more than one', () => {
   const summary = summarizeWeek({ now: NOW, books: [book('A', { quotes: [
     { text: 'One.', createdAt: day(1) }, { text: 'Two.', createdAt: day(2) }, { text: 'Three.', createdAt: day(3) },
