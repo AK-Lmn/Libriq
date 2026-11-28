@@ -1,8 +1,6 @@
 import { LIBRIQ } from './data.js';
 import { Storage } from './storage.js';
 import { Utils } from './utils.js';
-import { LibriqFirebase } from './firebase-client.js';
-import { resolveAccountDisplayName } from './accountDisplayName.js';
 import { isPollDismissedOrVoted, detectUserOS } from './services/mobileAppPoll.js';
 import { chartDataTable, chartGroupAttrs, chartBarAttrs } from './shared/chartTable.js';
 
@@ -22,14 +20,12 @@ export const Dashboard = {
     const stats = Storage.getStats();
     const streak = Storage.getStreak();
     const goals = Storage.getGoals();
-    const profile = Storage.getProfile();
     const reading = Storage.getBooksByStatus(LIBRIQ.STATUS.READING);
     const books = Storage.getBooks();
     const featuredBook = pickFeaturedReadingBook(reading);
     const recentBooks = buildRecentBooks(books);
     const recentActivity = buildRecentActivity();
     const topGenres = stats.topGenres || [];
-    const accountName = resolveAccountDisplayName(profile, LibriqFirebase.getState().user);
     const syncState = window.LibriqSyncBeta?.getState?.() || { status: 'off', message: 'Account sync off', pending: false };
     const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
     const syncLabel = offline
@@ -48,8 +44,6 @@ export const Dashboard = {
 
     const now = new Date();
     const localDate = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
-    const hour = now.getHours();
-    const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
     const goalPct = goals.yearly > 0 ? Math.min(100, Math.round((stats.finishedThisYear / goals.yearly) * 100)) : 0;
     const ringOffset = Math.round(283 - (283 * goalPct / 100));
     const booksLeft = Math.max(0, goals.yearly - stats.finishedThisYear);
@@ -59,7 +53,6 @@ export const Dashboard = {
       <div class="page dashboard-page" id="dashboardPage">
         <div class="dashboard-topbar">
           <div class="dashboard-page-context">
-            <strong>Dashboard</strong>
             <time datetime="${localDate}">${now.toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</time>
           </div>
           <div class="dashboard-actions">
@@ -76,9 +69,7 @@ export const Dashboard = {
 
         <div class="dashboard-hero-shell">
           <div class="dashboard-greeting">
-            <span class="greeting-label">${greeting}</span>
-            <h1 class="greeting-title">Welcome back, <span>${Utils.sanitize(accountName)}</span>.</h1>
-            <p class="greeting-subtitle">A quiet moment. A few more pages.</p>
+            <h1 class="greeting-title">Dashboard</h1>
           </div>
         </div>
 
@@ -111,28 +102,20 @@ export const Dashboard = {
               </div>
               <div class="dashboard-compact-grid">
                 <div class="dashboard-compact-card">
-                  ${dashboardIcon('library')}
                   <span class="dashboard-compact-label">Books in library</span>
                   <strong>${stats.total}</strong>
-                  <span>All saved titles</span>
                 </div>
                 <div class="dashboard-compact-card">
-                  ${dashboardIcon('book-open')}
                   <span class="dashboard-compact-label">Currently reading</span>
                   <strong>${stats.reading}</strong>
-                  <span>Active progress updates</span>
                 </div>
                 <div class="dashboard-compact-card">
-                  ${dashboardIcon('circle-check')}
                   <span class="dashboard-compact-label">Finished this year</span>
                   <strong>${stats.finishedThisYear}</strong>
-                  <span>Since January 1</span>
                 </div>
                 <div class="dashboard-compact-card">
-                  ${dashboardIcon('flame')}
                   <span class="dashboard-compact-label">Day streak</span>
                   <strong>${streak.current}</strong>
-                  <span>Consecutive reading days</span>
                 </div>
               </div>
             </section>
@@ -175,19 +158,8 @@ export const Dashboard = {
                   </div>
                 </div>
                 <div class="dashboard-goal-copy">
-                  <span class="dashboard-quote-label">${new Date().getFullYear()} challenge</span>
-                  <h3>${booksLeft > 0 ? `${booksLeft} more ${booksLeft === 1 ? 'story' : 'stories'}.` : 'Every story counts.'}</h3>
-                  <p>${goalPct >= 100 ? 'Your goal is complete. Keep exploring.' : 'Keep reading at your own pace.'}</p>
-                </div>
-                <div class="goal-stats">
-                  <div class="goal-stat">
-                    <div class="goal-stat-value">${goalPct}%</div>
-                    <div class="goal-stat-label">Complete</div>
-                  </div>
-                  <div class="goal-stat">
-                    <div class="goal-stat-value">${weeksLeft}</div>
-                    <div class="goal-stat-label">Weeks left</div>
-                  </div>
+                  <p class="dashboard-goal-togo">${booksLeft > 0 ? `${booksLeft} ${booksLeft === 1 ? 'book' : 'books'} to go` : 'Goal complete'}</p>
+                  <p class="dashboard-goal-time">${weeksLeft} ${weeksLeft === 1 ? 'week' : 'weeks'} left in ${new Date().getFullYear()}</p>
                 </div>
               </div>
             </section>
@@ -198,7 +170,7 @@ export const Dashboard = {
                   <h2 class="section-title">Top Genres</h2>
                 </div>
                 <div class="genre-list">
-                  ${topGenres.map(([genre, count]) => buildGenreRow(genre, count, stats.total)).join('')}
+                  ${topGenres.map(([genre, count], i) => buildGenreRow(genre, count, stats.total, { tone: i === 0 ? 'accent' : 'neutral' })).join('')}
                 </div>
               </section>` : ''
             }
@@ -227,15 +199,17 @@ function pickFeaturedReadingBook(reading) {
 function buildFeaturedReadingHero(book) {
   const pct = Utils.readingProgress(book.currentPage, book.pageCount);
   const timeLeft = book.pageCount && book.currentPage ? Math.max(0, book.pageCount - book.currentPage) : null;
+  const genre = book.genre || (Array.isArray(book.genres) ? book.genres[0] : '') || book.subject || book.category || '';
+  const quote = buildFeaturedQuote(book);
   return `
     <div class="dashboard-hero-card">
       <div class="dashboard-hero-cover">
         ${Utils.buildCover(book, 'cover-xl')}
       </div>
       <div class="dashboard-hero-content">
-        <span class="dashboard-pill">${Utils.sanitize(book.genre || book.subject || book.category || 'Reading now')}</span>
+        ${genre ? `<span class="dashboard-pill">${Utils.sanitize(genre)}</span>` : ''}
         <h3 class="dashboard-hero-title">${Utils.sanitize(book.title)}</h3>
-        <p class="dashboard-hero-author">by ${Utils.sanitize(book.author || 'Unknown author')}${timeLeft !== null ? ` • ${timeLeft} pages left` : ''}</p>
+        <p class="dashboard-hero-author">by ${Utils.sanitize(book.author || 'Unknown author')}</p>
         <div class="dashboard-progress-meta">
           <span>${timeLeft !== null ? `${timeLeft} pages left` : 'Progress'}</span>
           <strong>${pct}%</strong>
@@ -243,8 +217,8 @@ function buildFeaturedReadingHero(book) {
         <div class="progress-bar dashboard-progress-bar" role="progressbar" aria-label="Reading progress for ${Utils.sanitize(book.title)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-valuetext="${pct}%, page ${Number(book.currentPage) || 0} of ${Number(book.pageCount) || 0}">
           <div class="progress-fill ${pct >= 100 ? 'complete' : ''}" style="width:${pct}%"></div>
         </div>
-        <p class="dashboard-page-count">Page ${Number(book.currentPage) || 0} / ${Number(book.pageCount) || 0}</p>
-        <p class="dashboard-hero-quote">${Utils.sanitize(buildFeaturedQuote(book))}</p>
+        <p class="dashboard-page-count">Page ${Number(book.currentPage) || 0} of ${Number(book.pageCount) || 0}</p>
+        ${quote ? `<p class="dashboard-hero-quote">${Utils.sanitize(quote)}</p>` : ''}
         <div class="dashboard-hero-actions">
           <button class="btn btn-primary" type="button" data-action="update-progress" data-book-id="${Utils.sanitize(book.id)}">
             ${dashboardIcon('book-open')}
@@ -266,7 +240,6 @@ function buildFeaturedEmptyHero() {
     <div class="dashboard-hero-card dashboard-hero-card-empty">
       <div class="dashboard-hero-cover dashboard-empty-cover">${dashboardIcon('book-open')}</div>
       <div class="dashboard-hero-content">
-        <span class="dashboard-pill">Reading now</span>
         <h3 class="dashboard-hero-title">Your next session starts here</h3>
         <p class="dashboard-hero-author">Add a book to surface a featured reading card with progress and quick actions.</p>
         <div class="dashboard-hero-actions">
@@ -288,8 +261,7 @@ function buildFeaturedEmptyHero() {
 
 function buildFeaturedQuote(book) {
   const source = String(book.notes?.[0]?.text || book.quote || book.description || '').trim();
-  if (source) return source.slice(0, 220);
-  return 'Continue from where you left off and keep the reading momentum flowing.';
+  return source ? source.slice(0, 220) : '';
 }
 
 function buildRecentBooksRow(books) {
@@ -300,9 +272,11 @@ function buildRecentBooksRow(books) {
           ${Utils.buildCover(book, 'cover-md')}
           <div class="dashboard-recent-copy">
             <strong>${Utils.sanitize(book.title)}</strong>
-            <span>${Utils.formatDate(book.dateUpdated || book.dateStarted || book.dateAdded || new Date())}</span>
             <span class="dashboard-recent-author">${Utils.sanitize(book.author || 'Unknown author')}</span>
-            <span class="dashboard-recent-status" data-status="${Utils.sanitize(book.status || '')}">${Utils.statusLabel(book.status)}</span>
+            <span class="dashboard-recent-meta">
+              <span class="dashboard-recent-status" data-status="${Utils.sanitize(book.status || '')}">${Utils.statusLabel(book.status)}</span>
+              <time>${Utils.formatDate(book.dateUpdated || book.dateStarted || book.dateAdded || new Date())}</time>
+            </span>
           </div>
         </button>
       `).join('')}
@@ -431,17 +405,20 @@ function buildActivityFromEvent(event) {
   };
 }
 
-export function buildGenreRow(genre, count, total) {
+// `tone` ('accent' or 'neutral') lets a caller draw one series in the palette,
+// with the leader in the accent. Without it each genre keeps its own colour, as
+// the Statistics page shows them.
+export function buildGenreRow(genre, count, total, { tone } = {}) {
   const pct = Math.round((count / total) * 100);
-  const color = Utils.genreColor(genre);
+  const fillStyle = tone ? `width:${pct}%` : `width:${pct}%; background: ${Utils.genreColor(genre)}`;
   return `
-    <div class="genre-row">
+    <div class="genre-row"${tone ? ` data-tone="${tone}"` : ''}>
       <div class="genre-info">
         <span class="genre-name">${Utils.sanitize(genre)}</span>
         <span class="genre-count">${count}</span>
       </div>
       <div class="progress-bar" aria-hidden="true">
-        <div class="progress-fill" style="width:${pct}%; background: ${color}"></div>
+        <div class="progress-fill" style="${fillStyle}"></div>
       </div>
     </div>`;
 }
@@ -460,7 +437,6 @@ function buildOnboardingChecklist(books, goals) {
     <section class="onboarding-checklist" aria-label="Getting started with LibriQ">
       <div class="onboarding-header">
         <div class="onboarding-header-copy">
-          <span class="onboarding-pill"><i class="ph ph-sparkle" aria-hidden="true"></i> Quick Setup</span>
           <h2 class="onboarding-title">Getting started with your reading space</h2>
           <p class="onboarding-subtitle">Complete these 3 quick steps to personalize your reading life.</p>
         </div>
@@ -520,13 +496,10 @@ export function buildMobileAppPollCard() {
     <section class="dashboard-panel dashboard-poll-card" id="dashboardMobilePoll" aria-label="Mobile app survey">
       <div class="dashboard-poll-content">
         <div class="dashboard-poll-main">
-          <div class="dashboard-poll-badge">
-            <span class="dashboard-poll-badge-dot"></span>
-            <span>Community Poll</span>
-          </div>
+          <span class="dashboard-poll-label">Community poll</span>
           <h2 class="dashboard-poll-title">Would you like a native mobile app for LibriQ?</h2>
           <p class="dashboard-poll-subtitle">
-            We're deciding whether to prioritize an <strong>iOS (Apple App Store)</strong> or <strong>Android (Google Play)</strong> app next. Cast your vote to help us choose!
+            We're deciding whether to build an <strong>iOS</strong> or an <strong>Android</strong> app first. Which would you use?
           </p>
         </div>
         <div class="dashboard-poll-actions" id="dashboardPollActionRow">
@@ -547,7 +520,7 @@ export function buildMobileAppPollCard() {
         </div>
         <div class="dashboard-poll-success" id="dashboardPollSuccess" hidden>
           <span class="poll-success-icon"><i class="ph ph-check" aria-hidden="true"></i></span>
-          <span>Vote recorded! Thank you for shaping LibriQ&apos;s roadmap.</span>
+          <span>Vote recorded. Thanks for helping decide.</span>
         </div>
       </div>
       <button class="dashboard-poll-close" type="button" data-action="dismiss-mobile-poll" aria-label="Dismiss survey">

@@ -51,6 +51,12 @@ assert.ok(cardHtmlInitial.includes('dashboard-poll-card'));
 assert.ok(cardHtmlInitial.includes('data-poll-choice="ios"'));
 assert.ok(cardHtmlInitial.includes('data-poll-choice="android"'));
 assert.ok(cardHtmlInitial.includes('data-poll-choice="web_ok"'));
+// Plain statements, a quiet label instead of a pill, and no emoji or sparkle.
+assert.doesNotMatch(cardHtmlInitial.replace(/<[^>]+>/g, ' '), /!/, 'no exclamation marks in the poll copy');
+assert.doesNotMatch(cardHtmlInitial, /dashboard-poll-badge-dot|Community Poll/);
+assert.match(cardHtmlInitial, /<span class="dashboard-poll-label">Community poll<\/span>/);
+// The success message starts hidden, and nothing but the hidden attribute shows it.
+assert.match(cardHtmlInitial, /id="dashboardPollSuccess" hidden/);
 
 // Dismiss poll
 dismissPoll();
